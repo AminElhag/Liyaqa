@@ -1,0 +1,7 @@
+TEAM_ID=
+
+PRODUCT_NAME=liyaqa_dashborad
+PRODUCT_BUNDLE_IDENTIFIER=com.liyaqa.liyaqa_dashborad.liyaqa_dashborad$(TEAM_ID)
+
+CURRENT_PROJECT_VERSION=1
+MARKETING_VERSION=1.0

@@ -1,0 +1,2709 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="001-create-tenant-table" author="liyaqa">
+        <createTable tableName="tenants">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(50)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="version" type="BIGINT" defaultValue="0"/>
+        </createTable>
+
+        <createIndex tableName="tenants" indexName="idx_tenant_id">
+            <column name="tenant_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="002-create-employee-groups-table" author="liyaqa">
+        <createTable tableName="internal_employee_groups">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_system" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="version" type="BIGINT" defaultValue="0"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="003-create-group-permissions-table" author="liyaqa">
+        <createTable tableName="group_permissions">
+            <column name="group_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_group_permissions_group" references="internal_employee_groups(id)"/>
+            </column>
+            <column name="permission" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="004-create-internal-employees-table" author="liyaqa">
+        <createTable tableName="internal_employees">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="first_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="password_hash" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="phone_number" type="VARCHAR(20)"/>
+            <column name="department" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="job_title" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_concurrent_tickets" type="INT" defaultValueNumeric="10"/>
+            <column name="current_active_tickets" type="INT" defaultValueNumeric="0"/>
+            <column name="last_login_at" type="TIMESTAMP"/>
+            <column name="failed_login_attempts" type="INT" defaultValueNumeric="0"/>
+            <column name="locked_until" type="TIMESTAMP"/>
+            <column name="must_change_password" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="version" type="BIGINT" defaultValue="0"/>
+        </createTable>
+
+        <createIndex tableName="internal_employees" indexName="idx_employee_email">
+            <column name="email"/>
+        </createIndex>
+
+        <createIndex tableName="internal_employees" indexName="idx_employee_status">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="005-create-employee-groups-join-table" author="liyaqa">
+        <createTable tableName="employee_groups">
+            <column name="employee_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_employee_groups_employee" references="internal_employees(id)"/>
+            </column>
+            <column name="group_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_employee_groups_group" references="internal_employee_groups(id)"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="employee_groups" columnNames="employee_id,group_id"/>
+    </changeSet>
+
+    <changeSet id="006-create-audit-logs-table" author="liyaqa">
+        <createTable tableName="internal_audit_logs">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="employee_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="employee_email" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="employee_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="action" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entity_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entity_id" type="VARCHAR(255)"/>
+            <column name="description" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="old_value" type="TEXT"/>
+            <column name="new_value" type="TEXT"/>
+            <column name="ip_address" type="VARCHAR(45)"/>
+            <column name="user_agent" type="VARCHAR(500)"/>
+            <column name="session_id" type="VARCHAR(255)"/>
+            <column name="affected_tenant_id" type="VARCHAR(100)"/>
+            <column name="risk_level" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="result" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="error_message" type="TEXT"/>
+            <column name="duration_ms" type="BIGINT"/>
+            <column name="timestamp" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="internal_audit_logs" indexName="idx_audit_employee">
+            <column name="employee_id"/>
+        </createIndex>
+
+        <createIndex tableName="internal_audit_logs" indexName="idx_audit_entity">
+            <column name="entity_type"/>
+            <column name="entity_id"/>
+        </createIndex>
+
+        <createIndex tableName="internal_audit_logs" indexName="idx_audit_action">
+            <column name="action"/>
+        </createIndex>
+
+        <createIndex tableName="internal_audit_logs" indexName="idx_audit_timestamp">
+            <column name="timestamp"/>
+        </createIndex>
+
+        <createIndex tableName="internal_audit_logs" indexName="idx_audit_tenant">
+            <column name="affected_tenant_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="007-enhance-tenant-table" author="liyaqa">
+        <comment>
+            Add comprehensive fields for tenant management including contact info,
+            billing, subscription plans, contracts, and terms acceptance.
+            This supports the full lifecycle of sports facility organizations.
+        </comment>
+
+        <!-- Contact Information -->
+        <addColumn tableName="tenants">
+            <column name="contact_email" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="tenants">
+            <column name="contact_phone" type="VARCHAR(50)"/>
+        </addColumn>
+
+        <addColumn tableName="tenants">
+            <column name="contact_person" type="VARCHAR(255)"/>
+        </addColumn>
+
+        <!-- Billing Information -->
+        <addColumn tableName="tenants">
+            <column name="billing_email" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="tenants">
+            <column name="billing_address" type="TEXT"/>
+        </addColumn>
+
+        <addColumn tableName="tenants">
+            <column name="tax_id" type="VARCHAR(100)"/>
+        </addColumn>
+
+        <!-- Subscription & Plan -->
+        <addColumn tableName="tenants">
+            <column name="plan_tier" type="VARCHAR(50)" defaultValue="FREE">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="tenants">
+            <column name="subscription_status" type="VARCHAR(50)" defaultValue="TRIAL">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <!-- Multi-tenancy Support -->
+        <addColumn tableName="tenants">
+            <column name="subdomain" type="VARCHAR(100)">
+                <constraints unique="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Contract & Legal -->
+        <addColumn tableName="tenants">
+            <column name="contract_start_date" type="DATE"/>
+        </addColumn>
+
+        <addColumn tableName="tenants">
+            <column name="contract_end_date" type="DATE"/>
+        </addColumn>
+
+        <addColumn tableName="tenants">
+            <column name="terms_accepted_at" type="TIMESTAMP"/>
+        </addColumn>
+
+        <addColumn tableName="tenants">
+            <column name="terms_accepted_by" type="VARCHAR(255)"/>
+        </addColumn>
+
+        <addColumn tableName="tenants">
+            <column name="terms_version" type="VARCHAR(50)"/>
+        </addColumn>
+
+        <!-- Additional Metadata -->
+        <addColumn tableName="tenants">
+            <column name="description" type="TEXT"/>
+        </addColumn>
+
+        <addColumn tableName="tenants">
+            <column name="facility_type" type="VARCHAR(100)"/>
+        </addColumn>
+
+        <addColumn tableName="tenants">
+            <column name="timezone" type="VARCHAR(50)" defaultValue="UTC"/>
+        </addColumn>
+
+        <addColumn tableName="tenants">
+            <column name="locale" type="VARCHAR(10)" defaultValue="en_US"/>
+        </addColumn>
+
+        <!-- Tracking -->
+        <addColumn tableName="tenants">
+            <column name="suspended_at" type="TIMESTAMP"/>
+        </addColumn>
+
+        <addColumn tableName="tenants">
+            <column name="suspended_by_id" type="UUID"/>
+        </addColumn>
+
+        <addColumn tableName="tenants">
+            <column name="suspension_reason" type="TEXT"/>
+        </addColumn>
+
+        <addColumn tableName="tenants">
+            <column name="created_by_id" type="UUID">
+                <constraints foreignKeyName="fk_tenant_created_by" references="internal_employees(id)"/>
+            </column>
+        </addColumn>
+
+        <!-- Indexes for performance -->
+        <createIndex tableName="tenants" indexName="idx_tenant_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex tableName="tenants" indexName="idx_tenant_subscription_status">
+            <column name="subscription_status"/>
+        </createIndex>
+
+        <createIndex tableName="tenants" indexName="idx_tenant_plan_tier">
+            <column name="plan_tier"/>
+        </createIndex>
+
+        <createIndex tableName="tenants" indexName="idx_tenant_contact_email">
+            <column name="contact_email"/>
+        </createIndex>
+
+        <createIndex tableName="tenants" indexName="idx_tenant_subdomain">
+            <column name="subdomain"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 008: Create Sport Facilities Table -->
+    <changeSet id="008-create-sport-facilities-table" author="liyaqa">
+        <comment>
+            Create sport_facilities table to represent sports clubs/facilities that belong to tenants.
+            Each tenant can have multiple sport facilities (clubs), and each facility can have multiple branches.
+        </comment>
+
+        <createTable tableName="sport_facilities">
+            <!-- Primary Key -->
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <!-- Multi-tenancy -->
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Foreign Key to Tenant -->
+            <column name="owner_tenant_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_facility_tenant"
+                             references="tenants(id)"/>
+            </column>
+
+            <!-- Basic Information -->
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="description" type="TEXT"/>
+
+            <column name="facility_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Contact Information -->
+            <column name="contact_email" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="contact_phone" type="VARCHAR(50)"/>
+
+            <column name="website" type="VARCHAR(255)"/>
+
+            <!-- Social Media -->
+            <column name="social_facebook" type="VARCHAR(255)"/>
+            <column name="social_instagram" type="VARCHAR(255)"/>
+            <column name="social_twitter" type="VARCHAR(255)"/>
+
+            <!-- Business Information -->
+            <column name="established_date" type="DATE"/>
+            <column name="registration_number" type="VARCHAR(100)"/>
+
+            <!-- Amenities (JSON or comma-separated) -->
+            <column name="amenities" type="TEXT"/>
+
+            <!-- Operating Hours (JSON format) -->
+            <column name="operating_hours" type="TEXT"/>
+
+            <!-- Status -->
+            <column name="status" type="VARCHAR(50)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Settings -->
+            <column name="timezone" type="VARCHAR(50)" defaultValue="UTC"/>
+            <column name="locale" type="VARCHAR(10)" defaultValue="en_US"/>
+            <column name="currency" type="VARCHAR(3)" defaultValue="USD"/>
+
+            <!-- Audit Fields -->
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP"/>
+
+            <column name="created_by_id" type="UUID">
+                <constraints foreignKeyName="fk_facility_created_by"
+                             references="internal_employees(id)"/>
+            </column>
+
+            <column name="version" type="BIGINT" defaultValue="0"/>
+        </createTable>
+
+        <!-- Indexes for performance -->
+        <createIndex tableName="sport_facilities" indexName="idx_facility_tenant">
+            <column name="owner_tenant_id"/>
+        </createIndex>
+
+        <createIndex tableName="sport_facilities" indexName="idx_facility_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex tableName="sport_facilities" indexName="idx_facility_type">
+            <column name="facility_type"/>
+        </createIndex>
+
+        <createIndex tableName="sport_facilities" indexName="idx_facility_name">
+            <column name="name"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 009: Create Facility Branches Table -->
+    <changeSet id="009-create-facility-branches-table" author="liyaqa">
+        <comment>
+            Create facility_branches table to represent physical locations/branches of sport facilities.
+            Each sport facility can have multiple branches (locations).
+        </comment>
+
+        <createTable tableName="facility_branches">
+            <!-- Primary Key -->
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <!-- Multi-tenancy -->
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Foreign Key to Sport Facility -->
+            <column name="facility_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_branch_facility"
+                             references="sport_facilities(id)
+                             ON DELETE CASCADE"/>
+            </column>
+
+            <!-- Basic Information -->
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="description" type="TEXT"/>
+
+            <column name="is_main_branch" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Address -->
+            <column name="address_line1" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="address_line2" type="VARCHAR(255)"/>
+
+            <column name="city" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="state_province" type="VARCHAR(100)"/>
+
+            <column name="postal_code" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="country" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Geographic Coordinates -->
+            <column name="latitude" type="DECIMAL(10, 8)"/>
+            <column name="longitude" type="DECIMAL(11, 8)"/>
+
+            <!-- Contact Information -->
+            <column name="contact_email" type="VARCHAR(255)"/>
+            <column name="contact_phone" type="VARCHAR(50)"/>
+
+            <!-- Capacity & Facilities -->
+            <column name="total_courts" type="INTEGER" defaultValueNumeric="0"/>
+            <column name="total_capacity" type="INTEGER" defaultValueNumeric="0"/>
+
+            <!-- Amenities specific to this branch -->
+            <column name="amenities" type="TEXT"/>
+
+            <!-- Operating Hours (JSON format) -->
+            <column name="operating_hours" type="TEXT"/>
+
+            <!-- Status -->
+            <column name="status" type="VARCHAR(50)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Settings -->
+            <column name="timezone" type="VARCHAR(50)" defaultValue="UTC"/>
+
+            <!-- Audit Fields -->
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP"/>
+
+            <column name="created_by_id" type="UUID">
+                <constraints foreignKeyName="fk_branch_created_by"
+                             references="internal_employees(id)"/>
+            </column>
+
+            <column name="version" type="BIGINT" defaultValue="0"/>
+        </createTable>
+
+        <!-- Indexes for performance -->
+        <createIndex tableName="facility_branches" indexName="idx_branch_facility">
+            <column name="facility_id"/>
+        </createIndex>
+
+        <createIndex tableName="facility_branches" indexName="idx_branch_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex tableName="facility_branches" indexName="idx_branch_main">
+            <column name="is_main_branch"/>
+        </createIndex>
+
+        <createIndex tableName="facility_branches" indexName="idx_branch_city">
+            <column name="city"/>
+        </createIndex>
+
+        <createIndex tableName="facility_branches" indexName="idx_branch_postal_code">
+            <column name="postal_code"/>
+        </createIndex>
+
+        <!-- Composite index for geographic queries -->
+        <createIndex tableName="facility_branches" indexName="idx_branch_coordinates">
+            <column name="latitude"/>
+            <column name="longitude"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Employee enhancement for system initialization -->
+    <changeSet id="014-add-employee-number-column" author="liyaqa">
+        <addColumn tableName="internal_employees">
+            <column name="employee_number" type="VARCHAR(50)">
+                <constraints unique="true" nullable="true"/>
+            </column>
+        </addColumn>
+
+        <createIndex tableName="internal_employees" indexName="idx_employee_number">
+            <column name="employee_number"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="015-add-is-system-account-column" author="liyaqa">
+        <addColumn tableName="internal_employees">
+            <column name="is_system_account" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <createIndex tableName="internal_employees" indexName="idx_employee_system_account">
+            <column name="is_system_account"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 016: Create Facility Employee Branch Assignments Junction Table -->
+    <changeSet id="016-create-facility-employee-branches-table" author="liyaqa">
+        <comment>
+            Create facility_employee_branches junction table to support branch-level employee assignments.
+            Employees can be assigned to specific branches within their facility.
+            If no assignments exist, the employee has access to all branches.
+        </comment>
+
+        <createTable tableName="facility_employee_branches">
+            <column name="employee_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_fac_emp_branch_employee"
+                             references="facility_employees(id)"
+                             deleteCascade="true"/>
+            </column>
+
+            <column name="branch_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_fac_emp_branch_branch"
+                             references="facility_branches(id)"
+                             deleteCascade="true"/>
+            </column>
+        </createTable>
+
+        <!-- Composite primary key -->
+        <addPrimaryKey tableName="facility_employee_branches"
+                       columnNames="employee_id,branch_id"
+                       constraintName="pk_facility_employee_branches"/>
+
+        <!-- Indexes for performance -->
+        <createIndex tableName="facility_employee_branches" indexName="idx_fac_emp_branch_employee">
+            <column name="employee_id"/>
+        </createIndex>
+
+        <createIndex tableName="facility_employee_branches" indexName="idx_fac_emp_branch_branch">
+            <column name="branch_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 017: Create Members Table -->
+    <changeSet id="017-create-members-table" author="liyaqa">
+        <comment>
+            Create members table for facility customers who can book and purchase memberships.
+        </comment>
+
+        <createTable tableName="members">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <!-- Tenant and Facility -->
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="facility_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_member_facility"
+                             references="sport_facilities(id)"/>
+            </column>
+
+            <!-- Basic Information -->
+            <column name="first_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="last_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="phone_number" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Identification -->
+            <column name="member_number" type="VARCHAR(50)"/>
+            <column name="date_of_birth" type="DATE"/>
+            <column name="gender" type="VARCHAR(10)"/>
+            <column name="national_id" type="VARCHAR(100)"/>
+
+            <!-- Address -->
+            <column name="address_line1" type="VARCHAR(255)"/>
+            <column name="address_line2" type="VARCHAR(255)"/>
+            <column name="city" type="VARCHAR(100)"/>
+            <column name="postal_code" type="VARCHAR(20)"/>
+            <column name="country" type="VARCHAR(100)"/>
+
+            <!-- Emergency Contact -->
+            <column name="emergency_contact_name" type="VARCHAR(255)"/>
+            <column name="emergency_contact_phone" type="VARCHAR(50)"/>
+            <column name="emergency_contact_relationship" type="VARCHAR(50)"/>
+
+            <!-- Medical Information -->
+            <column name="blood_type" type="VARCHAR(10)"/>
+            <column name="medical_conditions" type="TEXT"/>
+            <column name="allergies" type="TEXT"/>
+            <column name="medications" type="TEXT"/>
+
+            <!-- Status -->
+            <column name="status" type="VARCHAR(50)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="status_reason" type="TEXT"/>
+            <column name="status_changed_at" type="TIMESTAMP"/>
+
+            <!-- Preferences -->
+            <column name="preferred_language" type="VARCHAR(10)" defaultValue="en"/>
+            <column name="marketing_consent" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="sms_notifications" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="email_notifications" type="BOOLEAN" defaultValueBoolean="true"/>
+
+            <!-- Notes and Profile -->
+            <column name="notes" type="TEXT"/>
+            <column name="profile_picture_url" type="VARCHAR(500)"/>
+
+            <!-- Audit Fields -->
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP"/>
+
+            <column name="version" type="BIGINT" defaultValue="0"/>
+        </createTable>
+
+        <!-- Indexes -->
+        <createIndex tableName="members" indexName="idx_member_facility">
+            <column name="facility_id"/>
+        </createIndex>
+
+        <createIndex tableName="members" indexName="idx_member_email">
+            <column name="email"/>
+        </createIndex>
+
+        <createIndex tableName="members" indexName="idx_member_phone">
+            <column name="phone_number"/>
+        </createIndex>
+
+        <createIndex tableName="members" indexName="idx_member_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex tableName="members" indexName="idx_member_member_number">
+            <column name="member_number"/>
+        </createIndex>
+
+        <!-- Unique Constraints -->
+        <addUniqueConstraint tableName="members"
+                             columnNames="facility_id,email"
+                             constraintName="uk_facility_member_email"/>
+
+        <addUniqueConstraint tableName="members"
+                             columnNames="facility_id,member_number"
+                             constraintName="uk_facility_member_number"/>
+    </changeSet>
+
+    <!-- Changeset 018: Create Membership Plans Table -->
+    <changeSet id="018-create-membership-plans-table" author="liyaqa">
+        <comment>
+            Create membership_plans table for branch-level membership offerings.
+        </comment>
+
+        <createTable tableName="membership_plans">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <!-- Tenant, Branch, and Facility -->
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="branch_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_plan_branch"
+                             references="facility_branches(id)"/>
+            </column>
+
+            <column name="facility_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_plan_facility"
+                             references="sport_facilities(id)"/>
+            </column>
+
+            <!-- Basic Information -->
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="description" type="TEXT"/>
+
+            <column name="plan_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Pricing -->
+            <column name="price" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="currency" type="VARCHAR(3)" defaultValue="USD">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="billing_cycle" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="duration_months" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Features & Benefits -->
+            <column name="features" type="TEXT"/>
+            <column name="max_bookings_per_month" type="INTEGER"/>
+            <column name="max_concurrent_bookings" type="INTEGER"/>
+            <column name="advance_booking_days" type="INTEGER"/>
+            <column name="cancellation_hours" type="INTEGER"/>
+            <column name="guest_passes" type="INTEGER"/>
+
+            <!-- Access Control -->
+            <column name="has_court_access" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="has_class_access" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="has_gym_access" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="has_locker_access" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="priority_level" type="INTEGER" defaultValueNumeric="0"/>
+
+            <!-- Discounts -->
+            <column name="setup_fee" type="DECIMAL(10,2)"/>
+            <column name="discount_percentage" type="DECIMAL(5,2)"/>
+
+            <!-- Status -->
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="is_visible" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="max_members" type="INTEGER"/>
+            <column name="current_members" type="INTEGER" defaultValueNumeric="0"/>
+
+            <!-- Terms -->
+            <column name="terms_and_conditions" type="TEXT"/>
+            <column name="auto_renew" type="BOOLEAN" defaultValueBoolean="true"/>
+
+            <!-- Audit Fields -->
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP"/>
+
+            <column name="version" type="BIGINT" defaultValue="0"/>
+        </createTable>
+
+        <!-- Indexes -->
+        <createIndex tableName="membership_plans" indexName="idx_membership_plan_branch">
+            <column name="branch_id"/>
+        </createIndex>
+
+        <createIndex tableName="membership_plans" indexName="idx_membership_plan_facility">
+            <column name="facility_id"/>
+        </createIndex>
+
+        <createIndex tableName="membership_plans" indexName="idx_membership_plan_name">
+            <column name="name"/>
+        </createIndex>
+
+        <createIndex tableName="membership_plans" indexName="idx_membership_plan_status">
+            <column name="is_active"/>
+        </createIndex>
+
+        <!-- Unique Constraints -->
+        <addUniqueConstraint tableName="membership_plans"
+                             columnNames="branch_id,name"
+                             constraintName="uk_branch_plan_name"/>
+    </changeSet>
+
+    <!-- Changeset 019: Create Memberships Table -->
+    <changeSet id="019-create-memberships-table" author="liyaqa">
+        <comment>
+            Create memberships table linking members to membership plans with dates and payment info.
+        </comment>
+
+        <createTable tableName="memberships">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <!-- Tenant and Relationships -->
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="member_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_membership_member"
+                             references="members(id)"/>
+            </column>
+
+            <column name="plan_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_membership_plan"
+                             references="membership_plans(id)"/>
+            </column>
+
+            <column name="branch_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_membership_branch"
+                             references="facility_branches(id)"/>
+            </column>
+
+            <column name="facility_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_membership_facility"
+                             references="sport_facilities(id)"/>
+            </column>
+
+            <!-- Membership Details -->
+            <column name="membership_number" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <column name="start_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="end_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Status -->
+            <column name="status" type="VARCHAR(50)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="status_changed_at" type="TIMESTAMP"/>
+            <column name="status_reason" type="TEXT"/>
+
+            <!-- Pricing & Payment -->
+            <column name="price_paid" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="setup_fee_paid" type="DECIMAL(10,2)"/>
+
+            <column name="currency" type="VARCHAR(3)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="payment_method" type="VARCHAR(50)"/>
+            <column name="payment_reference" type="VARCHAR(255)"/>
+            <column name="paid_at" type="TIMESTAMP"/>
+
+            <!-- Auto-Renewal -->
+            <column name="auto_renew" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="next_billing_date" type="DATE"/>
+            <column name="renewal_reminder_sent" type="BOOLEAN" defaultValueBoolean="false"/>
+
+            <!-- Usage Tracking -->
+            <column name="bookings_used" type="INTEGER" defaultValueNumeric="0"/>
+            <column name="guest_passes_used" type="INTEGER" defaultValueNumeric="0"/>
+            <column name="last_used_at" type="TIMESTAMP"/>
+
+            <!-- Cancellation -->
+            <column name="cancelled_at" type="TIMESTAMP"/>
+            <column name="cancelled_by" type="VARCHAR(255)"/>
+            <column name="cancellation_reason" type="TEXT"/>
+
+            <!-- Notes -->
+            <column name="notes" type="TEXT"/>
+
+            <!-- Audit Fields -->
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP"/>
+
+            <column name="version" type="BIGINT" defaultValue="0"/>
+        </createTable>
+
+        <!-- Indexes -->
+        <createIndex tableName="memberships" indexName="idx_membership_member">
+            <column name="member_id"/>
+        </createIndex>
+
+        <createIndex tableName="memberships" indexName="idx_membership_plan">
+            <column name="plan_id"/>
+        </createIndex>
+
+        <createIndex tableName="memberships" indexName="idx_membership_branch">
+            <column name="branch_id"/>
+        </createIndex>
+
+        <createIndex tableName="memberships" indexName="idx_membership_facility">
+            <column name="facility_id"/>
+        </createIndex>
+
+        <createIndex tableName="memberships" indexName="idx_membership_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex tableName="memberships" indexName="idx_membership_start_date">
+            <column name="start_date"/>
+        </createIndex>
+
+        <createIndex tableName="memberships" indexName="idx_membership_end_date">
+            <column name="end_date"/>
+        </createIndex>
+
+        <createIndex tableName="memberships" indexName="idx_membership_number">
+            <column name="membership_number"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 020: Create discounts table -->
+    <changeSet id="020-create-discounts-table" author="claude">
+        <createTable tableName="discounts">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="code" type="varchar(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="name" type="varchar(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="text">
+                <constraints nullable="true"/>
+            </column>
+            <column name="discount_type" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="value" type="decimal(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="varchar(3)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="application_method" type="varchar(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="scope" type="varchar(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="facility_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_discount_facility" references="sport_facilities(id)"/>
+            </column>
+            <column name="branch_id" type="uuid">
+                <constraints nullable="true" foreignKeyName="fk_discount_branch" references="facility_branches(id)"/>
+            </column>
+            <column name="valid_from" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="valid_until" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_total_usage" type="integer">
+                <constraints nullable="true"/>
+            </column>
+            <column name="max_usage_per_member" type="integer">
+                <constraints nullable="true"/>
+            </column>
+            <column name="current_usage_count" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="min_purchase_amount" type="decimal(10,2)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="max_discount_amount" type="decimal(10,2)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="internal_notes" type="text">
+                <constraints nullable="true"/>
+            </column>
+            <column name="tenant_id" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Indexes for discounts -->
+        <createIndex tableName="discounts" indexName="idx_discount_code">
+            <column name="code"/>
+        </createIndex>
+
+        <createIndex tableName="discounts" indexName="idx_discount_facility">
+            <column name="facility_id"/>
+        </createIndex>
+
+        <createIndex tableName="discounts" indexName="idx_discount_branch">
+            <column name="branch_id"/>
+        </createIndex>
+
+        <createIndex tableName="discounts" indexName="idx_discount_active">
+            <column name="is_active"/>
+        </createIndex>
+
+        <createIndex tableName="discounts" indexName="idx_discount_dates">
+            <column name="valid_from"/>
+            <column name="valid_until"/>
+        </createIndex>
+
+        <createIndex tableName="discounts" indexName="idx_discount_tenant">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <!-- Unique constraint -->
+        <addUniqueConstraint tableName="discounts" columnNames="code,facility_id" constraintName="uk_discount_code_facility"/>
+    </changeSet>
+
+    <!-- Changeset 021: Create discount_applicable_plans junction table -->
+    <changeSet id="021-create-discount-applicable-plans-table" author="claude">
+        <createTable tableName="discount_applicable_plans">
+            <column name="discount_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_discount_applicable_plans_discount" references="discounts(id)"/>
+            </column>
+            <column name="plan_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_discount_applicable_plans_plan" references="membership_plans(id)"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="discount_applicable_plans" columnNames="discount_id,plan_id" constraintName="pk_discount_applicable_plans"/>
+
+        <createIndex tableName="discount_applicable_plans" indexName="idx_discount_applicable_discount">
+            <column name="discount_id"/>
+        </createIndex>
+
+        <createIndex tableName="discount_applicable_plans" indexName="idx_discount_applicable_plan">
+            <column name="plan_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 022: Create discount_applicable_types table -->
+    <changeSet id="022-create-discount-applicable-types-table" author="claude">
+        <createTable tableName="discount_applicable_types">
+            <column name="discount_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_discount_applicable_types_discount" references="discounts(id)"/>
+            </column>
+            <column name="plan_type" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="discount_applicable_types" indexName="idx_discount_types_discount">
+            <column name="discount_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 023: Create discount_usages table -->
+    <changeSet id="023-create-discount-usages-table" author="claude">
+        <createTable tableName="discount_usages">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="discount_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_usage_discount" references="discounts(id)"/>
+            </column>
+            <column name="member_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_usage_member" references="members(id)"/>
+            </column>
+            <column name="membership_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_usage_membership" references="memberships(id)"/>
+            </column>
+            <column name="facility_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_usage_facility" references="sport_facilities(id)"/>
+            </column>
+            <column name="original_price" type="decimal(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="discount_amount" type="decimal(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="final_price" type="decimal(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="used_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="applied_by_employee_id" type="uuid">
+                <constraints nullable="true" foreignKeyName="fk_usage_employee" references="employees(id)"/>
+            </column>
+            <column name="notes" type="text">
+                <constraints nullable="true"/>
+            </column>
+            <column name="tenant_id" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Indexes for discount_usages -->
+        <createIndex tableName="discount_usages" indexName="idx_usage_discount">
+            <column name="discount_id"/>
+        </createIndex>
+
+        <createIndex tableName="discount_usages" indexName="idx_usage_member">
+            <column name="member_id"/>
+        </createIndex>
+
+        <createIndex tableName="discount_usages" indexName="idx_usage_membership">
+            <column name="membership_id"/>
+        </createIndex>
+
+        <createIndex tableName="discount_usages" indexName="idx_usage_employee">
+            <column name="applied_by_employee_id"/>
+        </createIndex>
+
+        <createIndex tableName="discount_usages" indexName="idx_usage_facility">
+            <column name="facility_id"/>
+        </createIndex>
+
+        <createIndex tableName="discount_usages" indexName="idx_usage_date">
+            <column name="used_at"/>
+        </createIndex>
+
+        <createIndex tableName="discount_usages" indexName="idx_usage_tenant">
+            <column name="tenant_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 024: Update members table for branch-level scoping -->
+    <changeSet id="024-add-branch-to-members" author="liyaqa">
+        <comment>
+            Add branch_id column to members table and update unique constraints
+            to support branch-level member scoping. Members are now unique per branch
+            instead of per facility.
+        </comment>
+
+        <!-- Add branch_id column -->
+        <addColumn tableName="members">
+            <column name="branch_id" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_member_branch"
+                             references="facility_branches(id)"/>
+            </column>
+        </addColumn>
+
+        <!-- Add index for branch_id -->
+        <createIndex tableName="members" indexName="idx_member_branch">
+            <column name="branch_id"/>
+        </createIndex>
+
+        <!-- Add tenant_id index -->
+        <createIndex tableName="members" indexName="idx_member_tenant">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <!-- Drop old facility-level unique constraints -->
+        <dropUniqueConstraint tableName="members" constraintName="uk_facility_member_email"/>
+        <dropUniqueConstraint tableName="members" constraintName="uk_facility_member_number"/>
+
+        <!-- Add new branch-level unique constraints -->
+        <addUniqueConstraint tableName="members"
+                             columnNames="branch_id,email"
+                             constraintName="uk_branch_member_email"/>
+
+        <addUniqueConstraint tableName="members"
+                             columnNames="branch_id,member_number"
+                             constraintName="uk_branch_member_number"/>
+    </changeSet>
+
+    <!-- Changeset 025: Create Courts Table -->
+    <changeSet id="025-create-courts-table" author="liyaqa">
+        <comment>
+            Create courts table for bookable resources (tennis courts, padel courts, etc.)
+        </comment>
+
+        <createTable tableName="courts">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <!-- Tenant and Facility/Branch -->
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="facility_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_court_facility"
+                             references="sport_facilities(id)"/>
+            </column>
+
+            <column name="branch_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_court_branch"
+                             references="facility_branches(id)"/>
+            </column>
+
+            <!-- Basic Information -->
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="description" type="TEXT"/>
+
+            <column name="court_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Specifications -->
+            <column name="surface_type" type="VARCHAR(50)"/>
+            <column name="is_indoor" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="has_lighting" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="max_players" type="INTEGER" defaultValueNumeric="4"/>
+
+            <!-- Pricing -->
+            <column name="hourly_rate" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="currency" type="VARCHAR(3)" defaultValue="USD"/>
+            <column name="peak_hour_rate" type="DECIMAL(10,2)"/>
+
+            <!-- Booking Settings -->
+            <column name="min_booking_duration" type="INTEGER" defaultValueNumeric="60"/>
+            <column name="max_booking_duration" type="INTEGER" defaultValueNumeric="120"/>
+            <column name="booking_interval" type="INTEGER" defaultValueNumeric="30"/>
+            <column name="advance_booking_days" type="INTEGER" defaultValueNumeric="14"/>
+            <column name="cancellation_hours" type="INTEGER" defaultValueNumeric="24"/>
+
+            <!-- Status -->
+            <column name="status" type="VARCHAR(50)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="maintenance_notes" type="TEXT"/>
+
+            <!-- Amenities -->
+            <column name="amenities" type="TEXT"/>
+
+            <!-- Display -->
+            <column name="display_order" type="INTEGER" defaultValueNumeric="0"/>
+            <column name="image_url" type="VARCHAR(500)"/>
+
+            <!-- Audit Fields -->
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Indexes -->
+        <createIndex tableName="courts" indexName="idx_court_branch">
+            <column name="branch_id"/>
+        </createIndex>
+
+        <createIndex tableName="courts" indexName="idx_court_facility">
+            <column name="facility_id"/>
+        </createIndex>
+
+        <createIndex tableName="courts" indexName="idx_court_type">
+            <column name="court_type"/>
+        </createIndex>
+
+        <createIndex tableName="courts" indexName="idx_court_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex tableName="courts" indexName="idx_court_tenant">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <!-- Unique Constraints -->
+        <addUniqueConstraint tableName="courts"
+                             columnNames="branch_id,name"
+                             constraintName="uk_branch_court_name"/>
+    </changeSet>
+
+    <!-- Changeset 026: Create Bookings Table -->
+    <changeSet id="026-create-bookings-table" author="liyaqa">
+        <comment>
+            Create bookings table for court reservations/bookings
+        </comment>
+
+        <createTable tableName="bookings">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <!-- Tenant and Relationships -->
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="member_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_booking_member"
+                             references="members(id)"/>
+            </column>
+
+            <column name="court_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_booking_court"
+                             references="courts(id)"/>
+            </column>
+
+            <column name="branch_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_booking_branch"
+                             references="facility_branches(id)"/>
+            </column>
+
+            <column name="facility_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_booking_facility"
+                             references="sport_facilities(id)"/>
+            </column>
+
+            <column name="membership_id" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_booking_membership"
+                             references="memberships(id)"/>
+            </column>
+
+            <!-- Booking Details -->
+            <column name="booking_number" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <column name="booking_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="start_time" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="end_time" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="duration_minutes" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Status -->
+            <column name="status" type="VARCHAR(50)" defaultValue="CONFIRMED">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="status_reason" type="TEXT"/>
+            <column name="status_changed_at" type="TIMESTAMP"/>
+
+            <!-- Pricing -->
+            <column name="original_price" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="discount_amount" type="DECIMAL(10,2)" defaultValueNumeric="0"/>
+
+            <column name="final_price" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="currency" type="VARCHAR(3)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Payment -->
+            <column name="payment_status" type="VARCHAR(50)" defaultValue="PENDING"/>
+            <column name="payment_method" type="VARCHAR(50)"/>
+            <column name="payment_reference" type="VARCHAR(255)"/>
+            <column name="paid_at" type="TIMESTAMP"/>
+
+            <!-- Participants -->
+            <column name="number_of_players" type="INTEGER" defaultValueNumeric="2"/>
+            <column name="additional_players" type="TEXT"/>
+            <column name="special_requests" type="TEXT"/>
+
+            <!-- Cancellation -->
+            <column name="cancelled_at" type="TIMESTAMP"/>
+            <column name="cancelled_by" type="VARCHAR(255)"/>
+            <column name="cancellation_reason" type="TEXT"/>
+            <column name="refund_amount" type="DECIMAL(10,2)"/>
+
+            <!-- Check-in/Check-out -->
+            <column name="checked_in_at" type="TIMESTAMP"/>
+            <column name="checked_out_at" type="TIMESTAMP"/>
+
+            <!-- Notes -->
+            <column name="notes" type="TEXT"/>
+
+            <!-- Notifications -->
+            <column name="reminder_sent" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="confirmation_sent" type="BOOLEAN" defaultValueBoolean="false"/>
+
+            <!-- Audit Fields -->
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Indexes -->
+        <createIndex tableName="bookings" indexName="idx_booking_member">
+            <column name="member_id"/>
+        </createIndex>
+
+        <createIndex tableName="bookings" indexName="idx_booking_court">
+            <column name="court_id"/>
+        </createIndex>
+
+        <createIndex tableName="bookings" indexName="idx_booking_branch">
+            <column name="branch_id"/>
+        </createIndex>
+
+        <createIndex tableName="bookings" indexName="idx_booking_facility">
+            <column name="facility_id"/>
+        </createIndex>
+
+        <createIndex tableName="bookings" indexName="idx_booking_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex tableName="bookings" indexName="idx_booking_date">
+            <column name="booking_date"/>
+        </createIndex>
+
+        <createIndex tableName="bookings" indexName="idx_booking_start_time">
+            <column name="start_time"/>
+        </createIndex>
+
+        <createIndex tableName="bookings" indexName="idx_booking_number">
+            <column name="booking_number"/>
+        </createIndex>
+
+        <createIndex tableName="bookings" indexName="idx_booking_tenant">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <!-- Unique Constraints -->
+        <addUniqueConstraint tableName="bookings"
+                             columnNames="booking_number"
+                             constraintName="uk_booking_number"/>
+    </changeSet>
+
+    <!-- Changeset 027: Add Court Booking Discount to Membership Plans -->
+    <changeSet id="027-add-court-booking-discount-to-membership-plans" author="liyaqa">
+        <comment>
+            Add court_booking_discount field to membership_plans table to enable percentage discounts on court bookings
+        </comment>
+
+        <addColumn tableName="membership_plans">
+            <column name="court_booking_discount" type="DECIMAL(5,2)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- Changeset 028: Create Payment Transactions Table -->
+    <changeSet id="028-create-payment-transactions-table" author="liyaqa">
+        <comment>
+            Create payment_transactions table for tracking all payment operations across different gateways.
+            Supports multiple payment gateways (Stripe, PayPal, etc.) with gateway-agnostic tracking.
+            Includes full audit trail, refund tracking, and multi-tenancy support.
+        </comment>
+
+        <createTable tableName="payment_transactions">
+            <!-- Primary Key -->
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <!-- Multi-tenancy -->
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Relationships -->
+            <column name="booking_id" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_payment_booking"
+                             references="bookings(id)"/>
+            </column>
+
+            <column name="membership_id" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_payment_membership"
+                             references="memberships(id)"/>
+            </column>
+
+            <column name="member_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_payment_member"
+                             references="members(id)"/>
+            </column>
+
+            <column name="branch_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_payment_branch"
+                             references="facility_branches(id)"/>
+            </column>
+
+            <column name="facility_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_payment_facility"
+                             references="sport_facilities(id)"/>
+            </column>
+
+            <!-- Transaction Details -->
+            <column name="transaction_number" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <column name="transaction_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Gateway Information -->
+            <column name="gateway" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="gateway_payment_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="gateway_client_secret" type="VARCHAR(500)"/>
+
+            <!-- Amount Information -->
+            <column name="amount" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="currency" type="VARCHAR(3)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="original_amount" type="DECIMAL(10,2)"/>
+
+            <!-- Status -->
+            <column name="status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="status_message" type="TEXT"/>
+
+            <!-- Payment Method Details -->
+            <column name="payment_method" type="VARCHAR(50)"/>
+            <column name="payment_brand" type="VARCHAR(50)"/>
+            <column name="last_four" type="VARCHAR(4)"/>
+
+            <!-- Timing -->
+            <column name="authorized_at" type="TIMESTAMP"/>
+            <column name="captured_at" type="TIMESTAMP"/>
+            <column name="failed_at" type="TIMESTAMP"/>
+            <column name="refunded_at" type="TIMESTAMP"/>
+
+            <!-- Refund Information -->
+            <column name="refund_amount" type="DECIMAL(10,2)"/>
+            <column name="refund_reason" type="VARCHAR(100)"/>
+
+            <column name="parent_transaction_id" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_payment_parent"
+                             references="payment_transactions(id)"/>
+            </column>
+
+            <!-- Receipt and Records -->
+            <column name="receipt_url" type="VARCHAR(500)"/>
+            <column name="receipt_number" type="VARCHAR(100)"/>
+
+            <!-- Metadata -->
+            <column name="description" type="TEXT"/>
+            <column name="customer_email" type="VARCHAR(255)"/>
+            <column name="metadata" type="TEXT"/>
+
+            <!-- Error Details -->
+            <column name="error_code" type="VARCHAR(100)"/>
+            <column name="error_message" type="TEXT"/>
+            <column name="decline_code" type="VARCHAR(100)"/>
+
+            <!-- Idempotency -->
+            <column name="idempotency_key" type="VARCHAR(255)"/>
+
+            <!-- Audit Fields -->
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP"/>
+
+            <column name="version" type="BIGINT" defaultValue="0"/>
+        </createTable>
+
+        <!-- Indexes for performance -->
+        <createIndex tableName="payment_transactions" indexName="idx_payment_booking">
+            <column name="booking_id"/>
+        </createIndex>
+
+        <createIndex tableName="payment_transactions" indexName="idx_payment_member">
+            <column name="member_id"/>
+        </createIndex>
+
+        <createIndex tableName="payment_transactions" indexName="idx_payment_gateway_ref">
+            <column name="gateway"/>
+            <column name="gateway_payment_id"/>
+        </createIndex>
+
+        <createIndex tableName="payment_transactions" indexName="idx_payment_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex tableName="payment_transactions" indexName="idx_payment_tenant">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <createIndex tableName="payment_transactions" indexName="idx_payment_created">
+            <column name="created_at"/>
+        </createIndex>
+
+        <createIndex tableName="payment_transactions" indexName="idx_payment_transaction_number">
+            <column name="transaction_number"/>
+        </createIndex>
+
+        <createIndex tableName="payment_transactions" indexName="idx_payment_branch">
+            <column name="branch_id"/>
+        </createIndex>
+
+        <createIndex tableName="payment_transactions" indexName="idx_payment_facility">
+            <column name="facility_id"/>
+        </createIndex>
+
+        <!-- Unique Constraints -->
+        <addUniqueConstraint tableName="payment_transactions"
+                             columnNames="transaction_number"
+                             constraintName="uk_payment_transaction_number"/>
+
+        <addUniqueConstraint tableName="payment_transactions"
+                             columnNames="gateway,gateway_payment_id"
+                             constraintName="uk_gateway_payment_id"/>
+    </changeSet>
+
+    <!-- Changeset 029: Add Member Authentication Fields -->
+    <changeSet id="029-add-member-authentication-fields" author="liyaqa">
+        <comment>
+            Add authentication fields to members table for customer self-service authentication.
+            Includes password hash, email verification, password reset, and account security fields.
+        </comment>
+
+        <!-- Authentication Fields -->
+        <addColumn tableName="members">
+            <column name="password_hash" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="members">
+            <column name="email_verified" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="members">
+            <column name="email_verification_token" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="members">
+            <column name="email_verification_sent_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Password Reset Fields -->
+        <addColumn tableName="members">
+            <column name="password_reset_token" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="members">
+            <column name="password_reset_expires_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Security Fields -->
+        <addColumn tableName="members">
+            <column name="last_login_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="members">
+            <column name="failed_login_attempts" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="members">
+            <column name="locked_until" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Indexes for Authentication -->
+        <createIndex tableName="members" indexName="idx_member_email_verification_token">
+            <column name="email_verification_token"/>
+        </createIndex>
+
+        <createIndex tableName="members" indexName="idx_member_password_reset_token">
+            <column name="password_reset_token"/>
+        </createIndex>
+
+        <createIndex tableName="members" indexName="idx_member_email_verified">
+            <column name="email_verified"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 030: Notification System -->
+    <changeSet id="030-create-notification-system" author="liyaqa">
+        <comment>
+            Create comprehensive notification system with multi-channel delivery,
+            template management, user preferences, and delivery tracking.
+        </comment>
+
+        <!-- Notifications Table -->
+        <createTable tableName="notifications">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="recipient_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="recipient_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="recipient_email" type="VARCHAR(255)"/>
+            <column name="recipient_phone" type="VARCHAR(50)"/>
+            <column name="recipient_name" type="VARCHAR(255)"/>
+            <column name="type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="channel" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="priority" type="VARCHAR(50)" defaultValue="MEDIUM">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subject" type="VARCHAR(500)"/>
+            <column name="message" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="html_content" type="TEXT"/>
+            <column name="template_id" type="VARCHAR(100)"/>
+            <column name="template_variables" type="TEXT"/>
+            <column name="status" type="VARCHAR(50)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sent_at" type="TIMESTAMP"/>
+            <column name="delivered_at" type="TIMESTAMP"/>
+            <column name="read_at" type="TIMESTAMP"/>
+            <column name="failed_at" type="TIMESTAMP"/>
+            <column name="error_message" type="TEXT"/>
+            <column name="retry_count" type="INTEGER" defaultValue="0"/>
+            <column name="max_retries" type="INTEGER" defaultValue="3"/>
+            <column name="scheduled_at" type="TIMESTAMP"/>
+            <column name="expires_at" type="TIMESTAMP"/>
+            <column name="context_type" type="VARCHAR(100)"/>
+            <column name="context_id" type="UUID"/>
+            <column name="metadata" type="TEXT"/>
+            <column name="provider" type="VARCHAR(100)"/>
+            <column name="provider_message_id" type="VARCHAR(255)"/>
+            <column name="provider_response" type="TEXT"/>
+            <column name="click_tracked" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="clicked_at" type="TIMESTAMP"/>
+            <column name="unsubscribed" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="unsubscribed_at" type="TIMESTAMP"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createIndex tableName="notifications" indexName="idx_notification_recipient">
+            <column name="recipient_type"/>
+            <column name="recipient_id"/>
+        </createIndex>
+        <createIndex tableName="notifications" indexName="idx_notification_tenant">
+            <column name="tenant_id"/>
+            <column name="created_at"/>
+        </createIndex>
+        <createIndex tableName="notifications" indexName="idx_notification_status">
+            <column name="status"/>
+            <column name="created_at"/>
+        </createIndex>
+        <createIndex tableName="notifications" indexName="idx_notification_channel">
+            <column name="channel"/>
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="notifications" indexName="idx_notification_type">
+            <column name="type"/>
+            <column name="created_at"/>
+        </createIndex>
+        <createIndex tableName="notifications" indexName="idx_notification_scheduled">
+            <column name="scheduled_at"/>
+            <column name="status"/>
+        </createIndex>
+
+        <!-- Notification Templates Table -->
+        <createTable tableName="notification_templates">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)"/>
+            <column name="template_code" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="notification_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="channel" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="language" type="VARCHAR(10)" defaultValue="en"/>
+            <column name="subject_template" type="VARCHAR(500)"/>
+            <column name="body_template" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="html_template" type="TEXT"/>
+            <column name="variables" type="TEXT"/>
+            <column name="example_data" type="TEXT"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="version" type="INTEGER" defaultValue="1"/>
+            <column name="priority" type="VARCHAR(50)" defaultValue="MEDIUM"/>
+            <column name="max_retries" type="INTEGER" defaultValue="3"/>
+            <column name="ab_test_variant" type="VARCHAR(50)"/>
+            <column name="ab_test_weight" type="DOUBLE"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createIndex tableName="notification_templates" indexName="idx_template_code" unique="true">
+            <column name="template_code"/>
+            <column name="tenant_id"/>
+        </createIndex>
+        <createIndex tableName="notification_templates" indexName="idx_template_type">
+            <column name="notification_type"/>
+            <column name="channel"/>
+        </createIndex>
+        <createIndex tableName="notification_templates" indexName="idx_template_active">
+            <column name="is_active"/>
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <!-- Notification Preferences Table -->
+        <createTable tableName="notification_preferences">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email_enabled" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="sms_enabled" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="push_enabled" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="in_app_enabled" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="transactional_enabled" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="operational_enabled" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="marketing_enabled" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="reminder_enabled" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="type_overrides" type="TEXT"/>
+            <column name="quiet_hours_enabled" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="quiet_hours_start" type="INTEGER"/>
+            <column name="quiet_hours_end" type="INTEGER"/>
+            <column name="quiet_hours_timezone" type="VARCHAR(50)"/>
+            <column name="digest_mode_enabled" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="digest_frequency" type="VARCHAR(50)"/>
+            <column name="preferred_language" type="VARCHAR(10)" defaultValue="en"/>
+            <column name="email" type="VARCHAR(255)"/>
+            <column name="phone_number" type="VARCHAR(50)"/>
+            <column name="device_tokens" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createIndex tableName="notification_preferences" indexName="idx_notif_pref_user" unique="true">
+            <column name="user_type"/>
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex tableName="notification_preferences" indexName="idx_notif_pref_tenant">
+            <column name="tenant_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 031: Analytics and Reporting System -->
+    <changeSet id="031-create-analytics-reporting-system" author="liyaqa">
+        <comment>
+            Create reports table for scheduled and ad-hoc analytics reporting.
+            Supports multiple report types, scheduling, and various output formats.
+        </comment>
+
+        <!-- Reports Table -->
+        <createTable tableName="reports">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <!-- Multi-tenancy -->
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Report Definition -->
+            <column name="report_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="description" type="TEXT"/>
+
+            <!-- Time Range -->
+            <column name="start_date" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="end_date" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="period_type" type="VARCHAR(50)"/>
+
+            <!-- Filters -->
+            <column name="facility_id" type="UUID"/>
+
+            <column name="branch_id" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_report_branch"
+                             references="facility_branches(id)"/>
+            </column>
+
+            <column name="filters" type="TEXT"/>
+
+            <!-- Generation Status -->
+            <column name="status" type="VARCHAR(50)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="generated_at" type="TIMESTAMP"/>
+
+            <column name="generation_duration_ms" type="BIGINT"/>
+
+            <column name="error_message" type="TEXT"/>
+
+            <!-- Results -->
+            <column name="data" type="TEXT"/>
+
+            <column name="summary" type="TEXT"/>
+
+            <column name="file_path" type="VARCHAR(500)"/>
+
+            <column name="format" type="VARCHAR(50)" defaultValue="JSON">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Scheduling -->
+            <column name="is_scheduled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="schedule_frequency" type="VARCHAR(50)"/>
+
+            <column name="next_run_at" type="TIMESTAMP"/>
+
+            <column name="last_run_at" type="TIMESTAMP"/>
+
+            <column name="recipient_emails" type="TEXT"/>
+
+            <column name="notify_on_completion" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Metadata -->
+            <column name="created_by_id" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_report_created_by"
+                             references="internal_employees(id)"/>
+            </column>
+
+            <column name="created_by_name" type="VARCHAR(255)"/>
+
+            <!-- Audit Fields -->
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP"/>
+
+            <column name="version" type="BIGINT" defaultValue="0"/>
+        </createTable>
+
+        <!-- Indexes for performance -->
+        <createIndex tableName="reports" indexName="idx_report_tenant">
+            <column name="tenant_id"/>
+            <column name="created_at"/>
+        </createIndex>
+
+        <createIndex tableName="reports" indexName="idx_report_type">
+            <column name="report_type"/>
+            <column name="created_at"/>
+        </createIndex>
+
+        <createIndex tableName="reports" indexName="idx_report_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex tableName="reports" indexName="idx_report_schedule">
+            <column name="is_scheduled"/>
+            <column name="next_run_at"/>
+        </createIndex>
+
+        <createIndex tableName="reports" indexName="idx_report_branch">
+            <column name="branch_id"/>
+        </createIndex>
+
+        <createIndex tableName="reports" indexName="idx_report_created_by">
+            <column name="created_by_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 032: Public API - API Keys -->
+    <changeSet id="032-create-public-api-keys" author="liyaqa">
+        <comment>
+            Create API keys table for Public API v1 authentication.
+            Enables external integrations to access platform functionality securely.
+        </comment>
+
+        <!-- API Keys Table -->
+        <createTable tableName="api_keys">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <!-- Multi-tenancy -->
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Key Information -->
+            <column name="key_prefix" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="key_hash" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="description" type="TEXT"/>
+
+            <!-- Ownership -->
+            <column name="facility_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_apikey_facility"
+                             references="sport_facilities(id)"/>
+            </column>
+
+            <!-- Status -->
+            <column name="status" type="VARCHAR(50)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Permissions -->
+            <column name="scopes" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Rate Limiting -->
+            <column name="rate_limit_per_hour" type="INTEGER" defaultValueNumeric="1000"/>
+
+            <column name="rate_limit_per_day" type="INTEGER" defaultValueNumeric="10000"/>
+
+            <!-- Expiration -->
+            <column name="expires_at" type="TIMESTAMP"/>
+
+            <!-- Usage Tracking -->
+            <column name="last_used_at" type="TIMESTAMP"/>
+
+            <column name="total_requests" type="BIGINT" defaultValueNumeric="0"/>
+
+            <!-- Environment -->
+            <column name="environment" type="VARCHAR(20)" defaultValue="LIVE">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Metadata -->
+            <column name="created_by_id" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_apikey_created_by"
+                             references="internal_employees(id)"/>
+            </column>
+
+            <column name="created_by_name" type="VARCHAR(255)"/>
+
+            <column name="revoked_at" type="TIMESTAMP"/>
+
+            <column name="revoked_by_id" type="UUID"/>
+
+            <column name="revoked_reason" type="TEXT"/>
+
+            <!-- Audit Fields -->
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP"/>
+
+            <column name="version" type="BIGINT" defaultValue="0"/>
+        </createTable>
+
+        <!-- Indexes for performance -->
+        <createIndex tableName="api_keys" indexName="idx_apikey_tenant">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <createIndex tableName="api_keys" indexName="idx_apikey_prefix">
+            <column name="key_prefix"/>
+        </createIndex>
+
+        <createIndex tableName="api_keys" indexName="idx_apikey_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex tableName="api_keys" indexName="idx_apikey_facility">
+            <column name="facility_id"/>
+        </createIndex>
+
+        <createIndex tableName="api_keys" indexName="idx_apikey_expires">
+            <column name="expires_at"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 033: Personal Trainer Booking System -->
+    <changeSet id="033-create-trainer-booking-system" author="liyaqa">
+        <comment>
+            Create trainer booking system tables for personal training sessions.
+            Enables members to book one-on-one or group sessions with trainers.
+        </comment>
+
+        <!-- Trainers Table -->
+        <createTable tableName="trainers">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="facility_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_trainer_facility" references="sport_facilities(id)"/>
+            </column>
+
+            <column name="branch_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_trainer_branch" references="facility_branches(id)"/>
+            </column>
+
+            <!-- Personal Info -->
+            <column name="first_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="last_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="phone_number" type="VARCHAR(20)"/>
+
+            <column name="date_of_birth" type="TIMESTAMP"/>
+
+            <column name="gender" type="VARCHAR(20)"/>
+
+            <!-- Profile -->
+            <column name="bio" type="TEXT"/>
+
+            <column name="profile_photo_url" type="VARCHAR(500)"/>
+
+            <column name="years_of_experience" type="INTEGER"/>
+
+            <column name="specializations" type="TEXT"/>
+
+            <column name="certifications" type="TEXT"/>
+
+            <column name="languages" type="VARCHAR(255)"/>
+
+            <!-- Status -->
+            <column name="status" type="VARCHAR(50)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="available_for_booking" type="BOOLEAN" defaultValueBoolean="true"/>
+
+            <!-- Pricing -->
+            <column name="hourly_rate" type="DECIMAL(10,2)"/>
+
+            <column name="session_rate_30min" type="DECIMAL(10,2)"/>
+
+            <column name="session_rate_60min" type="DECIMAL(10,2)"/>
+
+            <column name="session_rate_90min" type="DECIMAL(10,2)"/>
+
+            <column name="currency" type="VARCHAR(3)" defaultValue="USD"/>
+
+            <!-- Ratings -->
+            <column name="average_rating" type="DECIMAL(3,2)" defaultValueNumeric="0"/>
+
+            <column name="total_reviews" type="INTEGER" defaultValueNumeric="0"/>
+
+            <column name="total_sessions" type="INTEGER" defaultValueNumeric="0"/>
+
+            <!-- Availability Settings -->
+            <column name="min_booking_notice_hours" type="INTEGER" defaultValueNumeric="24"/>
+
+            <column name="max_advance_booking_days" type="INTEGER" defaultValueNumeric="30"/>
+
+            <column name="session_buffer_minutes" type="INTEGER" defaultValueNumeric="15"/>
+
+            <!-- Employment -->
+            <column name="employee_number" type="VARCHAR(50)"/>
+
+            <column name="hire_date" type="TIMESTAMP"/>
+
+            <column name="employment_type" type="VARCHAR(50)"/>
+
+            <!-- Social -->
+            <column name="instagram_handle" type="VARCHAR(100)"/>
+
+            <column name="website_url" type="VARCHAR(500)"/>
+
+            <!-- Emergency Contact -->
+            <column name="emergency_contact_name" type="VARCHAR(255)"/>
+
+            <column name="emergency_contact_phone" type="VARCHAR(20)"/>
+
+            <!-- Audit -->
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP"/>
+
+            <column name="version" type="BIGINT" defaultValue="0"/>
+        </createTable>
+
+        <!-- Trainer Availabilities Table -->
+        <createTable tableName="trainer_availabilities">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="trainer_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_trainer_avail_trainer" references="trainers(id)"/>
+            </column>
+
+            <column name="availability_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Regular Schedule -->
+            <column name="day_of_week" type="VARCHAR(20)"/>
+
+            <column name="start_time" type="TIME"/>
+
+            <column name="end_time" type="TIME"/>
+
+            <!-- Specific Dates -->
+            <column name="specific_date" type="DATE"/>
+
+            <column name="specific_start_datetime" type="TIMESTAMP"/>
+
+            <column name="specific_end_datetime" type="TIMESTAMP"/>
+
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
+
+            <column name="notes" type="TEXT"/>
+
+            <!-- Audit -->
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP"/>
+
+            <column name="version" type="BIGINT" defaultValue="0"/>
+        </createTable>
+
+        <!-- Trainer Bookings Table -->
+        <createTable tableName="trainer_bookings">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="trainer_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_trainer_booking_trainer" references="trainers(id)"/>
+            </column>
+
+            <column name="member_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_trainer_booking_member" references="members(id)"/>
+            </column>
+
+            <column name="facility_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_trainer_booking_facility" references="sport_facilities(id)"/>
+            </column>
+
+            <column name="branch_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_trainer_booking_branch" references="facility_branches(id)"/>
+            </column>
+
+            <!-- Booking Details -->
+            <column name="booking_number" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <column name="session_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="start_time" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="end_time" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="duration_minutes" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Session Type -->
+            <column name="session_type" type="VARCHAR(50)" defaultValue="PERSONAL">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="session_focus" type="VARCHAR(255)"/>
+
+            <!-- Status -->
+            <column name="status" type="VARCHAR(50)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="status_reason" type="TEXT"/>
+
+            <column name="status_changed_at" type="TIMESTAMP"/>
+
+            <!-- Pricing -->
+            <column name="price" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="discount_amount" type="DECIMAL(10,2)" defaultValueNumeric="0"/>
+
+            <column name="final_price" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="currency" type="VARCHAR(3)" defaultValue="USD">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Payment -->
+            <column name="payment_status" type="VARCHAR(50)" defaultValue="PENDING"/>
+
+            <column name="payment_method" type="VARCHAR(50)"/>
+
+            <column name="payment_reference" type="VARCHAR(255)"/>
+
+            <column name="paid_at" type="TIMESTAMP"/>
+
+            <!-- Session Details -->
+            <column name="location" type="VARCHAR(255)"/>
+
+            <column name="special_requests" type="TEXT"/>
+
+            <column name="member_goals" type="TEXT"/>
+
+            <column name="health_notes" type="TEXT"/>
+
+            <!-- Check-in/out -->
+            <column name="checked_in_at" type="TIMESTAMP"/>
+
+            <column name="checked_out_at" type="TIMESTAMP"/>
+
+            <!-- Session Notes -->
+            <column name="trainer_notes" type="TEXT"/>
+
+            <column name="exercises_performed" type="TEXT"/>
+
+            <column name="member_performance_rating" type="INTEGER"/>
+
+            <!-- Cancellation -->
+            <column name="cancelled_at" type="TIMESTAMP"/>
+
+            <column name="cancelled_by" type="VARCHAR(255)"/>
+
+            <column name="cancellation_reason" type="TEXT"/>
+
+            <column name="refund_amount" type="DECIMAL(10,2)"/>
+
+            <!-- Rescheduling -->
+            <column name="rescheduled_from_id" type="UUID"/>
+
+            <column name="rescheduled_to_id" type="UUID"/>
+
+            <!-- Notifications -->
+            <column name="reminder_sent" type="BOOLEAN" defaultValueBoolean="false"/>
+
+            <column name="reminder_sent_at" type="TIMESTAMP"/>
+
+            <!-- Audit -->
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP"/>
+
+            <column name="version" type="BIGINT" defaultValue="0"/>
+        </createTable>
+
+        <!-- Trainer Reviews Table -->
+        <createTable tableName="trainer_reviews">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="tenant_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="trainer_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_trainer_review_trainer" references="trainers(id)"/>
+            </column>
+
+            <column name="member_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_trainer_review_member" references="members(id)"/>
+            </column>
+
+            <column name="booking_id" type="UUID">
+                <constraints foreignKeyName="fk_trainer_review_booking" references="trainer_bookings(id)"/>
+            </column>
+
+            <!-- Rating -->
+            <column name="rating" type="DECIMAL(3,2)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Review Content -->
+            <column name="title" type="VARCHAR(255)"/>
+
+            <column name="comment" type="TEXT"/>
+
+            <!-- Specific Ratings -->
+            <column name="professionalism_rating" type="INTEGER"/>
+
+            <column name="knowledge_rating" type="INTEGER"/>
+
+            <column name="communication_rating" type="INTEGER"/>
+
+            <column name="motivation_rating" type="INTEGER"/>
+
+            <!-- Status -->
+            <column name="status" type="VARCHAR(50)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="is_verified_booking" type="BOOLEAN" defaultValueBoolean="false"/>
+
+            <!-- Moderation -->
+            <column name="is_flagged" type="BOOLEAN" defaultValueBoolean="false"/>
+
+            <column name="flag_reason" type="TEXT"/>
+
+            <column name="moderated_at" type="TIMESTAMP"/>
+
+            <column name="moderated_by" type="UUID"/>
+
+            <!-- Trainer Response -->
+            <column name="trainer_response" type="TEXT"/>
+
+            <column name="trainer_responded_at" type="TIMESTAMP"/>
+
+            <!-- Helpful Votes -->
+            <column name="helpful_count" type="INTEGER" defaultValueNumeric="0"/>
+
+            <!-- Audit -->
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP"/>
+
+            <column name="version" type="BIGINT" defaultValue="0"/>
+        </createTable>
+
+        <!-- Indexes -->
+        <createIndex tableName="trainers" indexName="idx_trainer_facility">
+            <column name="facility_id"/>
+        </createIndex>
+
+        <createIndex tableName="trainers" indexName="idx_trainer_branch">
+            <column name="branch_id"/>
+        </createIndex>
+
+        <createIndex tableName="trainers" indexName="idx_trainer_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex tableName="trainers" indexName="idx_trainer_tenant">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <createIndex tableName="trainers" indexName="idx_trainer_email">
+            <column name="email"/>
+        </createIndex>
+
+        <createIndex tableName="trainer_availabilities" indexName="idx_trainer_avail_trainer">
+            <column name="trainer_id"/>
+        </createIndex>
+
+        <createIndex tableName="trainer_availabilities" indexName="idx_trainer_avail_day">
+            <column name="day_of_week"/>
+        </createIndex>
+
+        <createIndex tableName="trainer_availabilities" indexName="idx_trainer_avail_type">
+            <column name="availability_type"/>
+        </createIndex>
+
+        <createIndex tableName="trainer_bookings" indexName="idx_trainer_booking_trainer">
+            <column name="trainer_id"/>
+        </createIndex>
+
+        <createIndex tableName="trainer_bookings" indexName="idx_trainer_booking_member">
+            <column name="member_id"/>
+        </createIndex>
+
+        <createIndex tableName="trainer_bookings" indexName="idx_trainer_booking_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex tableName="trainer_bookings" indexName="idx_trainer_booking_date">
+            <column name="session_date"/>
+        </createIndex>
+
+        <createIndex tableName="trainer_bookings" indexName="idx_trainer_booking_number">
+            <column name="booking_number"/>
+        </createIndex>
+
+        <createIndex tableName="trainer_reviews" indexName="idx_trainer_review_trainer">
+            <column name="trainer_id"/>
+        </createIndex>
+
+        <createIndex tableName="trainer_reviews" indexName="idx_trainer_review_member">
+            <column name="member_id"/>
+        </createIndex>
+
+        <createIndex tableName="trainer_reviews" indexName="idx_trainer_review_rating">
+            <column name="rating"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
