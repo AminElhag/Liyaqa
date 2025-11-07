@@ -48,4 +48,51 @@ class TenantRepository(httpClient: HttpClient) : BaseRepository(httpClient) {
     suspend fun deleteTenant(id: String): Result<Unit> {
         return delete("$basePath/$id")
     }
+
+    suspend fun suspendTenant(id: String): Result<Tenant> {
+        return when (val result = post<TenantDto, Unit>("$basePath/$id/suspend", Unit)) {
+            is Result.Success -> Result.Success(result.data.toDomain())
+            is Result.Error -> Result.Error(result.exception, result.message)
+            is Result.Loading -> Result.Loading
+        }
+    }
+
+    suspend fun reactivateTenant(id: String): Result<Tenant> {
+        return when (val result = post<TenantDto, Unit>("$basePath/$id/reactivate", Unit)) {
+            is Result.Success -> Result.Success(result.data.toDomain())
+            is Result.Error -> Result.Error(result.exception, result.message)
+            is Result.Loading -> Result.Loading
+        }
+    }
+
+    suspend fun acceptTerms(id: String): Result<Tenant> {
+        return when (val result = post<TenantDto, Unit>("$basePath/$id/accept-terms", Unit)) {
+            is Result.Success -> Result.Success(result.data.toDomain())
+            is Result.Error -> Result.Error(result.exception, result.message)
+            is Result.Loading -> Result.Loading
+        }
+    }
+
+    suspend fun changePlan(id: String, newTier: String): Result<Tenant> {
+        return when (val result = post<TenantDto, Map<String, String>>(
+            "$basePath/$id/change-plan",
+            mapOf("subscriptionTier" to newTier)
+        )) {
+            is Result.Success -> Result.Success(result.data.toDomain())
+            is Result.Error -> Result.Error(result.exception, result.message)
+            is Result.Loading -> Result.Loading
+        }
+    }
+
+    suspend fun getTenantsNeedingAttention(): Result<List<Tenant>> {
+        return when (val result = get<List<TenantDto>>("$basePath/attention-needed")) {
+            is Result.Success -> Result.Success(result.data.map { it.toDomain() })
+            is Result.Error -> Result.Error(result.exception, result.message)
+            is Result.Loading -> Result.Loading
+        }
+    }
+
+    suspend fun getTenantAnalytics(): Result<TenantAnalyticsDto> {
+        return get("$basePath/analytics")
+    }
 }

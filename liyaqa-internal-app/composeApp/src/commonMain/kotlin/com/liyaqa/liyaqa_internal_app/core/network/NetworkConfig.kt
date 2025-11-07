@@ -13,10 +13,35 @@ object NetworkConfig {
     // API Endpoints
     object Endpoints {
         // Auth endpoints (matching backend structure)
-        const val AUTH_LOGIN = "/auth/login"
-        const val AUTH_LOGOUT = "/auth/logout"
-        const val AUTH_REFRESH = "/auth/refresh"
-        const val AUTH_ME = "/auth/me"
+        const val AUTH_LOGIN = "/internal/auth/login"
+        const val AUTH_LOGOUT = "/internal/auth/logout"
+        const val AUTH_REFRESH = "/internal/auth/refresh"
+        const val AUTH_VALIDATE = "/internal/auth/validate"
+        const val AUTH_PASSWORD_RESET_REQUEST = "/internal/auth/password-reset/request"
+        const val AUTH_PASSWORD_RESET_COMPLETE = "/internal/auth/password-reset/complete"
+
+        // Employee endpoints
+        const val EMPLOYEES_ME = "/internal/employees/me"
+        const val EMPLOYEES_ME_CHANGE_PASSWORD = "/internal/employees/me/change-password"
+
+        // Tenant endpoints
+        const val TENANTS_SUSPEND = "/internal/tenants/{id}/suspend"
+        const val TENANTS_REACTIVATE = "/internal/tenants/{id}/reactivate"
+        const val TENANTS_ACCEPT_TERMS = "/internal/tenants/{id}/accept-terms"
+        const val TENANTS_CHANGE_PLAN = "/internal/tenants/{id}/change-plan"
+        const val TENANTS_ATTENTION_NEEDED = "/internal/tenants/attention-needed"
+        const val TENANTS_ANALYTICS = "/internal/tenants/analytics"
+
+        // Facility endpoints
+        const val FACILITIES_BY_TENANT = "/internal/facilities/by-tenant/{tenantId}"
+        const val FACILITY_BRANCHES = "/internal/facilities/{facilityId}/branches"
+        const val FACILITY_BRANCHES_CREATE = "/internal/facilities/branches"
+        const val FACILITY_BRANCH_BY_ID = "/internal/facilities/branches/{id}"
+
+        // System initialization endpoints
+        const val SYSTEM_INIT_STATUS = "/internal/system/init-status"
+        const val SYSTEM_INITIALIZE = "/internal/system/initialize"
+        const val SYSTEM_ENSURE_GROUPS = "/internal/system/ensure-groups"
     }
 
     // Header keys

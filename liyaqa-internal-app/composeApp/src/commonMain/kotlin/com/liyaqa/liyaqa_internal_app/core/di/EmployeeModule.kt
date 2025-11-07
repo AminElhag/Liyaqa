@@ -26,6 +26,9 @@ val employeeModule = module {
     factory { CreateEmployeeUseCase(get()) }
     factory { UpdateEmployeeUseCase(get()) }
     factory { DeleteEmployeeUseCase(get()) }
+    factory { com.liyaqa.liyaqa_internal_app.features.employee.domain.usecase.GetCurrentEmployeeUseCase(get()) }
+    factory { com.liyaqa.liyaqa_internal_app.features.employee.domain.usecase.UpdateCurrentEmployeeUseCase(get()) }
+    factory { com.liyaqa.liyaqa_internal_app.features.employee.domain.usecase.ChangePasswordUseCase(get()) }
 
     // ViewModels
     viewModel { EmployeeListViewModel(get(), get()) }

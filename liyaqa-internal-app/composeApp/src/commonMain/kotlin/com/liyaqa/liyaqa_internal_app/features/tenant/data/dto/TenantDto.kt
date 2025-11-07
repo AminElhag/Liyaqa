@@ -73,6 +73,18 @@ data class TenantPageResponse(
     val last: Boolean
 )
 
+@Serializable
+data class TenantAnalyticsDto(
+    val totalTenants: Long,
+    val activeTenants: Long,
+    val suspendedTenants: Long,
+    val terminatedTenants: Long,
+    val bySubscriptionTier: Map<String, Long>,
+    val byCountry: Map<String, Long>,
+    val recentSignups: Int,
+    val needingAttention: Int
+)
+
 fun TenantDto.toDomain(): Tenant {
     return Tenant(
         id = id,

@@ -15,7 +15,11 @@ val tenantModule = module {
     factory { CreateTenantUseCase(get()) }
     factory { UpdateTenantUseCase(get()) }
     factory { DeleteTenantUseCase(get()) }
+    factory { SuspendTenantUseCase(get()) }
+    factory { ReactivateTenantUseCase(get()) }
+    factory { ChangeTenantPlanUseCase(get()) }
+    factory { GetTenantAnalyticsUseCase(get()) }
     viewModel { TenantListViewModel(get(), get()) }
-    viewModel { parameters -> TenantDetailViewModel(get(), parameters.get()) }
+    viewModel { parameters -> TenantDetailViewModel(get(), get(), get(), get(), parameters.get()) }
     viewModel { parameters -> TenantFormViewModel(get(), get(), get(), parameters.getOrNull()) }
 }
