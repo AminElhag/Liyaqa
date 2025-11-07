@@ -81,6 +81,35 @@ data class FacilityPageResponse(
     val last: Boolean
 )
 
+@Serializable
+data class CreateBranchRequest(
+    val facilityId: String,
+    val name: String,
+    val address: String,
+    val city: String,
+    val state: String? = null,
+    val country: String,
+    val postalCode: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val contactPhone: String? = null,
+    val contactEmail: String? = null
+)
+
+@Serializable
+data class UpdateBranchRequest(
+    val name: String? = null,
+    val address: String? = null,
+    val city: String? = null,
+    val state: String? = null,
+    val postalCode: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val contactPhone: String? = null,
+    val contactEmail: String? = null,
+    val status: String? = null
+)
+
 fun FacilityDto.toDomain() = Facility(
     id, tenantId, name, slug,
     FacilityType.valueOf(facilityType),

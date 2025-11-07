@@ -61,8 +61,37 @@ class AuthRepository(
     /**
      * Refresh authentication token
      */
-    suspend fun refreshToken(refreshToken: String): Result<String> {
-        // TODO: Implement token refresh logic based on backend API
-        return Result.Error(Exception("Not implemented"))
+    suspend fun refreshToken(refreshToken: String): Result<LoginResponse> {
+        return post<LoginResponse, Map<String, String>>(
+            path = NetworkConfig.Endpoints.AUTH_REFRESH,
+            body = mapOf("refreshToken" to refreshToken)
+        )
+    }
+
+    /**
+     * Validate current token
+     */
+    suspend fun validateToken(): Result<Unit> {
+        return get(NetworkConfig.Endpoints.AUTH_VALIDATE)
+    }
+
+    /**
+     * Request password reset via email
+     */
+    suspend fun requestPasswordReset(email: String): Result<Unit> {
+        return post<Unit, Map<String, String>>(
+            path = NetworkConfig.Endpoints.AUTH_PASSWORD_RESET_REQUEST,
+            body = mapOf("email" to email)
+        )
+    }
+
+    /**
+     * Complete password reset with token
+     */
+    suspend fun completePasswordReset(token: String, newPassword: String): Result<Unit> {
+        return post<Unit, Map<String, String>>(
+            path = NetworkConfig.Endpoints.AUTH_PASSWORD_RESET_COMPLETE,
+            body = mapOf("token" to token, "newPassword" to newPassword)
+        )
     }
 }

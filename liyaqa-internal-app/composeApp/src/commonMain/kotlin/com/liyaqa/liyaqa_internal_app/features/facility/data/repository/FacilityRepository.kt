@@ -58,4 +58,40 @@ class FacilityRepository(httpClient: HttpClient) : BaseRepository(httpClient) {
             is Result.Loading -> Result.Loading
         }
     }
+
+    suspend fun getBranchById(branchId: String): Result<FacilityBranch> {
+        return when (val result = get<FacilityBranchDto>("$basePath/branches/$branchId")) {
+            is Result.Success -> Result.Success(result.data.toDomain())
+            is Result.Error -> Result.Error(result.exception, result.message)
+            is Result.Loading -> Result.Loading
+        }
+    }
+
+    suspend fun createBranch(request: CreateBranchRequest): Result<FacilityBranch> {
+        return when (val result = post<FacilityBranchDto, CreateBranchRequest>("$basePath/branches", request)) {
+            is Result.Success -> Result.Success(result.data.toDomain())
+            is Result.Error -> Result.Error(result.exception, result.message)
+            is Result.Loading -> Result.Loading
+        }
+    }
+
+    suspend fun updateBranch(branchId: String, request: UpdateBranchRequest): Result<FacilityBranch> {
+        return when (val result = put<FacilityBranchDto, UpdateBranchRequest>("$basePath/branches/$branchId", request)) {
+            is Result.Success -> Result.Success(result.data.toDomain())
+            is Result.Error -> Result.Error(result.exception, result.message)
+            is Result.Loading -> Result.Loading
+        }
+    }
+
+    suspend fun deleteBranch(branchId: String): Result<Unit> {
+        return delete("$basePath/branches/$branchId")
+    }
+
+    suspend fun getFacilitiesByTenant(tenantId: String): Result<List<Facility>> {
+        return when (val result = get<List<FacilityDto>>("$basePath/by-tenant/$tenantId")) {
+            is Result.Success -> Result.Success(result.data.map { it.toDomain() })
+            is Result.Error -> Result.Error(result.exception, result.message)
+            is Result.Loading -> Result.Loading
+        }
+    }
 }

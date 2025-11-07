@@ -16,6 +16,9 @@ val authModule = module {
 
     // Use Cases
     factory { LoginUseCase(get()) }
+    factory { com.liyaqa.liyaqa_internal_app.features.auth.domain.usecase.RefreshTokenUseCase(get()) }
+    factory { com.liyaqa.liyaqa_internal_app.features.auth.domain.usecase.RequestPasswordResetUseCase(get()) }
+    factory { com.liyaqa.liyaqa_internal_app.features.auth.domain.usecase.CompletePasswordResetUseCase(get()) }
 
     // ViewModels
     viewModel { LoginViewModel(get()) }

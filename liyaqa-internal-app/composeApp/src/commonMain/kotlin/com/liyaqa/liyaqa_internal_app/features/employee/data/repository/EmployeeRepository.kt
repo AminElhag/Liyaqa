@@ -132,4 +132,38 @@ class EmployeeRepository(
     suspend fun resetPassword(id: String): Result<Unit> {
         return post("$basePath/$id/reset-password", Unit)
     }
+
+    /**
+     * Get current employee profile
+     */
+    suspend fun getCurrentEmployee(): Result<Employee> {
+        return when (val result = get<EmployeeDto>("$basePath/me")) {
+            is Result.Success -> Result.Success(result.data.toDomain())
+            is Result.Error -> Result.Error(result.exception, result.message)
+            is Result.Loading -> Result.Loading
+        }
+    }
+
+    /**
+     * Update current employee profile
+     */
+    suspend fun updateCurrentEmployee(request: UpdateEmployeeRequest): Result<Employee> {
+        return when (val result = patch<EmployeeDto, UpdateEmployeeRequest>(
+            "$basePath/me", request
+        )) {
+            is Result.Success -> Result.Success(result.data.toDomain())
+            is Result.Error -> Result.Error(result.exception, result.message)
+            is Result.Loading -> Result.Loading
+        }
+    }
+
+    /**
+     * Change current employee password
+     */
+    suspend fun changePassword(currentPassword: String, newPassword: String): Result<Unit> {
+        return post<Unit, Map<String, String>>(
+            "$basePath/me/change-password",
+            mapOf("currentPassword" to currentPassword, "newPassword" to newPassword)
+        )
+    }
 }

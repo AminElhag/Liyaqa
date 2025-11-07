@@ -16,6 +16,11 @@ val facilityModule = module {
     factory { UpdateFacilityUseCase(get()) }
     factory { DeleteFacilityUseCase(get()) }
     factory { GetBranchesUseCase(get()) }
+    factory { GetBranchByIdUseCase(get()) }
+    factory { CreateBranchUseCase(get()) }
+    factory { UpdateBranchUseCase(get()) }
+    factory { DeleteBranchUseCase(get()) }
+    factory { GetFacilitiesByTenantUseCase(get()) }
     viewModel { FacilityListViewModel(get(), get()) }
     viewModel { parameters -> FacilityDetailViewModel(get(), parameters.get()) }
     viewModel { parameters -> FacilityFormViewModel(get(), get(), get(), parameters.getOrNull()) }
