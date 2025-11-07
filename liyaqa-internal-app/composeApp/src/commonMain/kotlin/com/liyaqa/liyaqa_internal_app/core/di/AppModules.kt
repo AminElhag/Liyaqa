@@ -16,6 +16,7 @@ object AppModules {
         employeeModule,
         tenantModule,
         facilityModule,
-        auditModule
+        auditModule,
+        systemModule
     )
 }

@@ -37,6 +37,11 @@ object NetworkConfig {
         const val FACILITY_BRANCHES = "/internal/facilities/{facilityId}/branches"
         const val FACILITY_BRANCHES_CREATE = "/internal/facilities/branches"
         const val FACILITY_BRANCH_BY_ID = "/internal/facilities/branches/{id}"
+
+        // System initialization endpoints
+        const val SYSTEM_INIT_STATUS = "/internal/system/init-status"
+        const val SYSTEM_INITIALIZE = "/internal/system/initialize"
+        const val SYSTEM_ENSURE_GROUPS = "/internal/system/ensure-groups"
     }
 
     // Header keys
