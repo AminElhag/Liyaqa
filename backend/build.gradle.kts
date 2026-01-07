@@ -49,6 +49,12 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.5")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.5")
 
+    // PDF Generation
+    implementation("com.github.librepdf:openpdf:2.0.3")
+
+    // Email (optional)
+    implementation("org.springframework.boot:spring-boot-starter-mail")
+
     // Development
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 

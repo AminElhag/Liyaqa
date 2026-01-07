@@ -98,6 +98,39 @@ data class ChangePasswordRequest(
     )
 }
 
+data class ForgotPasswordRequest(
+    @field:NotBlank(message = "Email is required")
+    @field:Email(message = "Email must be valid")
+    val email: String,
+
+    @field:NotNull(message = "Tenant ID is required")
+    val tenantId: UUID
+) {
+    fun toCommand() = com.liyaqa.auth.application.commands.ForgotPasswordCommand(
+        email = email,
+        tenantId = tenantId
+    )
+}
+
+data class ResetPasswordRequest(
+    @field:NotBlank(message = "Token is required")
+    val token: String,
+
+    @field:NotBlank(message = "New password is required")
+    @field:Size(min = 8, message = "New password must be at least 8 characters")
+    val newPassword: String
+) {
+    fun toCommand() = com.liyaqa.auth.application.commands.ResetPasswordCommand(
+        token = token,
+        newPassword = newPassword
+    )
+}
+
+data class MessageResponse(
+    val message: String,
+    val messageAr: String? = null
+)
+
 // === Response DTOs ===
 
 data class AuthResponse(

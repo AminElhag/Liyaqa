@@ -62,9 +62,28 @@ src/main/kotlin/com/liyaqa/
 │   │   ├── commands/           # Command objects
 │   │   └── services/           # Application services
 │   └── api/                    # Controllers, DTOs
-├── attendance/                 # Attendance bounded context (pending)
-├── scheduling/                 # Scheduling bounded context (pending)
-└── billing/                    # Billing bounded context (pending)
+├── attendance/                 # Attendance bounded context
+│   ├── domain/
+│   │   ├── model/              # AttendanceRecord, AttendanceEnums
+│   │   └── ports/              # Repository interfaces
+│   ├── infrastructure/
+│   │   └── persistence/        # JPA implementations
+│   ├── application/
+│   │   ├── commands/           # Attendance commands
+│   │   └── services/           # AttendanceService
+│   └── api/                    # Controllers, DTOs
+├── billing/                    # Billing bounded context
+│   ├── domain/
+│   │   ├── model/              # Invoice, InvoiceLineItem, InvoiceSequence
+│   │   └── ports/              # Repository interfaces
+│   ├── infrastructure/
+│   │   ├── persistence/        # JPA implementations
+│   │   └── pdf/                # InvoicePdfGenerator (OpenPDF)
+│   ├── application/
+│   │   ├── commands/           # Invoice commands
+│   │   └── services/           # InvoiceService
+│   └── api/                    # Controllers, DTOs
+└── scheduling/                 # Scheduling bounded context (pending)
 ```
 
 ---
@@ -329,9 +348,9 @@ Example: `V2__create_organization_tables.sql`
 ## Current Modules
 
 ### Authentication Module (Implemented)
-- **Entities:** User, RefreshToken
+- **Entities:** User, RefreshToken, PasswordResetToken
 - **Enums:** Role (SUPER_ADMIN, CLUB_ADMIN, STAFF, MEMBER), UserStatus
-- **Features:** JWT authentication, login/register, token refresh, password management
+- **Features:** JWT authentication, login/register, token refresh, password management, password reset flow
 - **Endpoints:** `/api/auth/*`, `/api/users/*`
 - **Security:** Stateless JWT, role-based authorization with @PreAuthorize
 
@@ -345,10 +364,53 @@ Example: `V2__create_organization_tables.sql`
 - **Features:** Member CRUD, plan management, subscription lifecycle (freeze/unfreeze/cancel/renew)
 - **Endpoints:** `/api/members/*`, `/api/membership-plans/*`, `/api/subscriptions/*`
 
+### Attendance Module (Implemented)
+- **Entities:** AttendanceRecord
+- **Enums:** CheckInMethod (MANUAL, QR_CODE, CARD, BIOMETRIC), AttendanceStatus (CHECKED_IN, CHECKED_OUT, AUTO_CHECKED_OUT)
+- **Features:** Member check-in/check-out, subscription validation, class deduction for limited plans
+- **Endpoints:** `/api/members/{id}/check-in`, `/api/members/{id}/check-out`, `/api/attendance/*`, `/api/locations/{id}/attendance`
+- **Business Rules:**
+  - Validates active subscription before check-in
+  - Prevents double check-in (must check-out first)
+  - Auto-deducts class from limited subscriptions
+  - Auto-checkout via scheduled job at midnight
+
+### Billing Module (Implemented)
+- **Entities:** Invoice, InvoiceLineItem (embedded), InvoiceSequence
+- **Enums:** InvoiceStatus (DRAFT, ISSUED, PAID, PARTIALLY_PAID, OVERDUE, CANCELLED), PaymentMethod, LineItemType
+- **Features:** Invoice CRUD, VAT calculation (15% Saudi), PDF generation (OpenPDF), subscription-based invoicing
+- **Endpoints:** `/api/invoices/*`, `/api/subscriptions/{id}/invoice`, `/api/invoices/{id}/pdf`
+- **PDF Generation:** Bilingual invoices (EN/AR) using OpenPDF library
+- **Business Rules:**
+  - Auto-generated invoice numbers: `INV-{YYYY}-{5-digit-seq}`
+  - 15% VAT for Saudi Arabia
+  - Status transitions: DRAFT → ISSUED → PAID/OVERDUE
+
+### Dashboard & Reporting (Implemented)
+- **Endpoints:**
+  - `GET /api/dashboard/summary` - Total members, active subscriptions, today's check-ins, pending invoices
+  - `GET /api/dashboard/attendance/today` - Today's attendance list
+  - `GET /api/dashboard/subscriptions/expiring` - Subscriptions expiring this week
+  - `GET /api/dashboard/invoices/pending` - Unpaid invoices
+
+### Scheduled Jobs (Implemented)
+- **Location:** `shared/infrastructure/jobs/ScheduledJobs.kt`
+- **Jobs:**
+  - `processExpiredSubscriptions` - Daily 1 AM: Expires active subscriptions past end date
+  - `processOverdueInvoices` - Daily 2 AM: Marks issued invoices as overdue
+  - `autoCheckoutAttendance` - Daily midnight: Auto-checkouts all checked-in members
+  - `cleanupExpiredTokens` - Daily 3 AM: Removes expired password reset tokens
+
+### Email Service (Implemented)
+- **Location:** `shared/infrastructure/email/`
+- **Configuration:** `liyaqa.email.enabled` in application.yml
+- **Implementations:**
+  - `SmtpEmailService` - Production SMTP email (enabled when `liyaqa.email.enabled=true`)
+  - `ConsoleEmailService` - Development console logging (enabled when `liyaqa.email.enabled=false`)
+- **Features:** Password reset emails, bilingual support (EN/AR)
+
 ### Pending Modules
-- Attendance
-- Scheduling
-- Billing
+- Scheduling (class/session booking)
 
 ---
 

@@ -61,3 +61,19 @@ data class UpdateUserCommand(
     val role: Role? = null,
     val memberId: UUID? = null
 )
+
+/**
+ * Command for requesting a password reset.
+ */
+data class ForgotPasswordCommand(
+    val email: String,
+    val tenantId: UUID
+)
+
+/**
+ * Command for resetting password with token.
+ */
+data class ResetPasswordCommand(
+    val token: String,
+    val newPassword: String
+)
