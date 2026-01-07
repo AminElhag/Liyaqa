@@ -1,5 +1,6 @@
 package com.liyaqa.shared.infrastructure
 
+import com.liyaqa.shared.domain.OrganizationId
 import com.liyaqa.shared.domain.TenantContext
 import com.liyaqa.shared.domain.TenantId
 import jakarta.servlet.http.HttpServletRequest
@@ -9,8 +10,13 @@ import org.springframework.web.servlet.HandlerInterceptor
 import org.springframework.web.servlet.ModelAndView
 
 /**
- * HTTP interceptor that extracts tenant information from requests
- * and sets up the tenant context for the current thread.
+ * HTTP interceptor that extracts tenant and organization information from requests
+ * and sets up the context for the current thread.
+ *
+ * Supports:
+ * - Tenant context (X-Tenant-ID header) - for club-level data isolation
+ * - Organization context (X-Organization-ID header) - for organization-level access
+ * - Super-tenant mode (X-Super-Tenant header) - for cross-club queries
  *
  * Tenant can be identified via:
  * 1. X-Tenant-ID header
@@ -22,6 +28,8 @@ class TenantInterceptor : HandlerInterceptor {
 
     companion object {
         const val TENANT_HEADER = "X-Tenant-ID"
+        const val ORGANIZATION_HEADER = "X-Organization-ID"
+        const val SUPER_TENANT_HEADER = "X-Super-Tenant"
     }
 
     override fun preHandle(
@@ -30,9 +38,19 @@ class TenantInterceptor : HandlerInterceptor {
         handler: Any
     ): Boolean {
         val tenantId = extractTenantId(request)
+        val organizationId = extractOrganizationId(request)
+        val isSuperTenant = request.getHeader(SUPER_TENANT_HEADER)?.toBoolean() ?: false
 
         if (tenantId != null) {
             TenantContext.setCurrentTenant(tenantId)
+        }
+
+        if (organizationId != null) {
+            TenantContext.setCurrentOrganization(organizationId)
+        }
+
+        if (isSuperTenant && organizationId != null) {
+            TenantContext.enableSuperTenantMode()
         }
 
         return true
@@ -77,6 +95,18 @@ class TenantInterceptor : HandlerInterceptor {
             return null
         }
 
+        return null
+    }
+
+    private fun extractOrganizationId(request: HttpServletRequest): OrganizationId? {
+        val headerOrgId = request.getHeader(ORGANIZATION_HEADER)
+        if (!headerOrgId.isNullOrBlank()) {
+            return try {
+                OrganizationId.fromString(headerOrgId)
+            } catch (e: IllegalArgumentException) {
+                null
+            }
+        }
         return null
     }
 

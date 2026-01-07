@@ -1,9 +1,94 @@
 package com.liyaqa.shared.domain
 
+import jakarta.persistence.AttributeOverride
+import jakarta.persistence.AttributeOverrides
+import jakarta.persistence.Column
 import jakarta.persistence.Embeddable
+import jakarta.persistence.Embedded
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Currency
+
+/**
+ * Value object for bilingual text fields (Arabic/English).
+ * Embeddable for use in JPA entities.
+ * Designed to be extensible for additional languages.
+ */
+@Embeddable
+data class LocalizedText(
+    @Column(name = "_en", nullable = false)
+    val en: String,
+
+    @Column(name = "_ar")
+    val ar: String? = null
+) {
+    /**
+     * Get localized value based on locale preference.
+     * Falls back to English if the requested locale is not available.
+     */
+    fun get(locale: String = "en"): String {
+        return when (locale.lowercase()) {
+            "ar" -> ar ?: en
+            else -> en
+        }
+    }
+
+    companion object {
+        fun of(en: String, ar: String? = null) = LocalizedText(en, ar)
+    }
+}
+
+/**
+ * Localized address for Zatca compliance and general use.
+ * All text fields support Arabic/English localization.
+ */
+@Embeddable
+data class LocalizedAddress(
+    @Embedded
+    @AttributeOverrides(
+        AttributeOverride(name = "en", column = Column(name = "street_en")),
+        AttributeOverride(name = "ar", column = Column(name = "street_ar"))
+    )
+    val street: LocalizedText? = null,
+
+    @Embedded
+    @AttributeOverrides(
+        AttributeOverride(name = "en", column = Column(name = "building_en")),
+        AttributeOverride(name = "ar", column = Column(name = "building_ar"))
+    )
+    val building: LocalizedText? = null,
+
+    @Embedded
+    @AttributeOverrides(
+        AttributeOverride(name = "en", column = Column(name = "city_en")),
+        AttributeOverride(name = "ar", column = Column(name = "city_ar"))
+    )
+    val city: LocalizedText? = null,
+
+    @Embedded
+    @AttributeOverrides(
+        AttributeOverride(name = "en", column = Column(name = "district_en")),
+        AttributeOverride(name = "ar", column = Column(name = "district_ar"))
+    )
+    val district: LocalizedText? = null,
+
+    @Column(name = "postal_code")
+    val postalCode: String? = null,
+
+    @Column(name = "country_code", length = 2)
+    val countryCode: String? = null  // ISO 3166-1 alpha-2
+) {
+    fun toFormattedString(locale: String = "en"): String {
+        return listOfNotNull(
+            building?.get(locale),
+            street?.get(locale),
+            district?.get(locale),
+            city?.get(locale),
+            postalCode,
+            countryCode
+        ).filter { it.isNotBlank() }.joinToString(", ")
+    }
+}
 
 /**
  * Value object representing monetary amounts.
