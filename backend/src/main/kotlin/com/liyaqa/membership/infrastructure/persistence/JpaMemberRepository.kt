@@ -45,6 +45,10 @@ class JpaMemberRepository(
         return springDataRepository.findAll(pageable)
     }
 
+    override fun existsById(id: UUID): Boolean {
+        return springDataRepository.existsById(id)
+    }
+
     override fun existsByEmail(email: String): Boolean {
         return springDataRepository.existsByEmail(email)
     }

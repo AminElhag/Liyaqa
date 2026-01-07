@@ -23,13 +23,16 @@ import java.util.UUID
 class Member(
     id: UUID = UUID.randomUUID(),
 
+    @Column(name = "user_id")
+    var userId: UUID? = null,
+
     @Column(name = "first_name", nullable = false)
     var firstName: String,
 
     @Column(name = "last_name", nullable = false)
     var lastName: String,
 
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(name = "email", nullable = false)
     var email: String,
 
     @Column(name = "phone")
@@ -83,6 +86,25 @@ class Member(
         require(status == MemberStatus.FROZEN) { "Only frozen members can be unfrozen" }
         status = MemberStatus.ACTIVE
     }
+
+    /**
+     * Links this member to a user account.
+     */
+    fun linkToUser(userId: UUID) {
+        this.userId = userId
+    }
+
+    /**
+     * Unlinks this member from any user account.
+     */
+    fun unlinkUser() {
+        this.userId = null
+    }
+
+    /**
+     * Checks if this member has a linked user account.
+     */
+    fun hasUserAccount(): Boolean = userId != null
 }
 
 enum class MemberStatus {

@@ -14,7 +14,12 @@ class WebConfig(
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(tenantInterceptor)
             .addPathPatterns("/api/**")
-            .excludePathPatterns("/api/public/**", "/api/health/**")
+            .excludePathPatterns(
+                "/api/public/**",
+                "/api/health/**",
+                "/api/organizations/**",  // Orgs don't require tenant context
+                "/api/clubs/**"           // Clubs are accessed via organization context
+            )
     }
 
     override fun addCorsMappings(registry: CorsRegistry) {
