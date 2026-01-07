@@ -31,6 +31,17 @@ src/main/kotlin/com/liyaqa/
 ├── shared/                     # Shared kernel
 │   ├── domain/                 # Value objects, base entities
 │   └── infrastructure/         # Cross-cutting concerns
+├── auth/                       # Authentication bounded context
+│   ├── domain/
+│   │   ├── model/              # User, RefreshToken, Role, UserStatus
+│   │   └── ports/              # Repository interfaces
+│   ├── infrastructure/
+│   │   ├── persistence/        # JPA implementations
+│   │   └── security/           # JWT provider, filters
+│   ├── application/
+│   │   ├── commands/           # Auth commands
+│   │   └── services/           # AuthService, UserService
+│   └── api/                    # Controllers, DTOs
 ├── organization/               # Organization bounded context
 │   ├── domain/
 │   │   ├── model/              # Entities, value objects, enums
@@ -42,9 +53,18 @@ src/main/kotlin/com/liyaqa/
 │   │   └── services/           # Application services
 │   └── api/                    # Controllers, DTOs
 ├── membership/                 # Membership bounded context
-├── attendance/                 # Attendance bounded context
-├── scheduling/                 # Scheduling bounded context
-└── billing/                    # Billing bounded context
+│   ├── domain/
+│   │   ├── model/              # Member, MembershipPlan, Subscription
+│   │   └── ports/              # Repository interfaces
+│   ├── infrastructure/
+│   │   └── persistence/        # JPA implementations
+│   ├── application/
+│   │   ├── commands/           # Command objects
+│   │   └── services/           # Application services
+│   └── api/                    # Controllers, DTOs
+├── attendance/                 # Attendance bounded context (pending)
+├── scheduling/                 # Scheduling bounded context (pending)
+└── billing/                    # Billing bounded context (pending)
 ```
 
 ---
@@ -308,20 +328,27 @@ Example: `V2__create_organization_tables.sql`
 
 ## Current Modules
 
+### Authentication Module (Implemented)
+- **Entities:** User, RefreshToken
+- **Enums:** Role (SUPER_ADMIN, CLUB_ADMIN, STAFF, MEMBER), UserStatus
+- **Features:** JWT authentication, login/register, token refresh, password management
+- **Endpoints:** `/api/auth/*`, `/api/users/*`
+- **Security:** Stateless JWT, role-based authorization with @PreAuthorize
+
 ### Organization Module (Implemented)
 - **Entities:** Organization, Club, Location
 - **Features:** CRUD, status transitions, Zatca compliance fields
 - **Endpoints:** `/api/organizations`, `/api/clubs`, `/api/locations`
 
-### Membership Module (Partial)
-- **Entities:** Member, MembershipPlan
-- **Features:** Member CRUD, status lifecycle
+### Membership Module (Implemented)
+- **Entities:** Member, MembershipPlan, Subscription
+- **Features:** Member CRUD, plan management, subscription lifecycle (freeze/unfreeze/cancel/renew)
+- **Endpoints:** `/api/members/*`, `/api/membership-plans/*`, `/api/subscriptions/*`
 
 ### Pending Modules
 - Attendance
 - Scheduling
 - Billing
-- Authentication & Authorization
 
 ---
 

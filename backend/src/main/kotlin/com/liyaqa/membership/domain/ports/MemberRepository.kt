@@ -15,6 +15,7 @@ interface MemberRepository {
     fun findById(id: UUID): Optional<Member>
     fun findByEmail(email: String): Optional<Member>
     fun findAll(pageable: Pageable): Page<Member>
+    fun existsById(id: UUID): Boolean
     fun existsByEmail(email: String): Boolean
     fun deleteById(id: UUID)
     fun count(): Long
