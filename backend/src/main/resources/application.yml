@@ -43,6 +43,14 @@ jwt:
   access-token-expiration: 900000      # 15 minutes in milliseconds
   refresh-token-expiration: 604800000  # 7 days in milliseconds
 
+# Liyaqa Custom Configuration
+liyaqa:
+  email:
+    enabled: ${EMAIL_ENABLED:false}  # Set to true to enable SMTP email
+    from-address: ${EMAIL_FROM:noreply@liyaqa.com}
+    from-name: Liyaqa
+    base-url: ${EMAIL_BASE_URL:http://localhost:3000}
+
 logging:
   level:
     root: INFO
@@ -100,6 +108,29 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: false
+
+  # SMTP Email Configuration (for production)
+  mail:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+liyaqa:
+  email:
+    enabled: ${EMAIL_ENABLED:true}
+    from-address: ${EMAIL_FROM:noreply@liyaqa.com}
+    from-name: Liyaqa
+    base-url: ${EMAIL_BASE_URL:https://liyaqa.com}
 
 logging:
   level:

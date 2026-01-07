@@ -87,4 +87,34 @@ class AuthController(
         authService.changePassword(request.toCommand(principal.userId))
         return ResponseEntity.noContent().build()
     }
+
+    /**
+     * Requests a password reset.
+     * Always returns success to prevent email enumeration.
+     */
+    @PostMapping("/forgot-password")
+    fun forgotPassword(@Valid @RequestBody request: ForgotPasswordRequest): ResponseEntity<MessageResponse> {
+        authService.forgotPassword(request.toCommand())
+        // Always return success message to prevent email enumeration
+        return ResponseEntity.ok(
+            MessageResponse(
+                message = "If an account exists with this email, a password reset link will be sent.",
+                messageAr = "إذا كان هناك حساب بهذا البريد الإلكتروني، سيتم إرسال رابط إعادة تعيين كلمة المرور."
+            )
+        )
+    }
+
+    /**
+     * Resets password using a valid reset token.
+     */
+    @PostMapping("/reset-password")
+    fun resetPassword(@Valid @RequestBody request: ResetPasswordRequest): ResponseEntity<MessageResponse> {
+        authService.resetPassword(request.toCommand())
+        return ResponseEntity.ok(
+            MessageResponse(
+                message = "Password has been reset successfully. Please login with your new password.",
+                messageAr = "تم إعادة تعيين كلمة المرور بنجاح. يرجى تسجيل الدخول بكلمة المرور الجديدة."
+            )
+        )
+    }
 }

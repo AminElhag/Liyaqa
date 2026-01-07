@@ -30,10 +30,12 @@ class SecurityConfig(
                     .requestMatchers("/actuator/**").permitAll()
                     .requestMatchers("/h2-console/**").permitAll()
 
-                    // Auth endpoints - login and register are public
+                    // Auth endpoints - login, register, and password reset are public
                     .requestMatchers("/api/auth/login").permitAll()
                     .requestMatchers("/api/auth/register").permitAll()
                     .requestMatchers("/api/auth/refresh").permitAll()
+                    .requestMatchers("/api/auth/forgot-password").permitAll()
+                    .requestMatchers("/api/auth/reset-password").permitAll()
 
                     // Organization endpoints - allow access for org-level operations
                     // These will be further restricted by TenantInterceptor
