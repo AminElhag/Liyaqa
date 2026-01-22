@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   // Enable React strict mode
   reactStrictMode: true,
 
+  // Enable standalone output for Docker deployment
+  output: "standalone",
+
   // Exclude prototype directory from builds
   webpack: (config) => {
     config.watchOptions = {
