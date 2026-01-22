@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Member - Liyaqa Admin</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <!-- Sidebar (same as other pages) -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>Liyaqa</h1>
+      <p class="text-xs text-muted mt-1" data-en="Gym Management" data-ar="ادارة النادي">Gym Management</p>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title" data-en="Main" data-ar="الرئيسية">Main</div>
+        <a href="admin-dashboard.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+          <span data-en="Dashboard" data-ar="لوحة التحكم">Dashboard</span>
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title" data-en="Membership" data-ar="العضوية">Membership</div>
+        <a href="admin-members.html" class="nav-item active">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <span data-en="Members" data-ar="الاعضاء">Members</span>
+        </a>
+        <a href="admin-subscriptions.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+          </svg>
+          <span data-en="Subscriptions" data-ar="الاشتراكات">Subscriptions</span>
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title" data-en="Billing" data-ar="الفواتير">Billing</div>
+        <a href="admin-invoices.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span data-en="Invoices" data-ar="الفواتير">Invoices</span>
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="lang-switcher">
+        <button class="lang-btn active" onclick="setLanguage('en')">EN</button>
+        <button class="lang-btn" onclick="setLanguage('ar')">عربي</button>
+      </div>
+      <div class="user-menu">
+        <div class="user-info">
+          <div class="user-name">Ahmed Al-Rashid</div>
+          <div class="user-role" data-en="Club Admin" data-ar="مدير النادي">Club Admin</div>
+        </div>
+        <div class="avatar">AR</div>
+      </div>
+    </header>
+
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-sm mb-6">
+      <a href="admin-members.html" class="text-primary" data-en="Members" data-ar="الاعضاء">Members</a>
+      <span class="text-muted">/</span>
+      <span class="text-muted" data-en="Add New Member" data-ar="اضافة عضو جديد">Add New Member</span>
+    </div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title" data-en="Add New Member" data-ar="اضافة عضو جديد">Add New Member</h1>
+        <p class="page-subtitle" data-en="Fill in the member information below" data-ar="املأ معلومات العضو ادناه">Fill in the member information below</p>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <form id="memberForm" onsubmit="return handleSubmit(event)">
+      <!-- Personal Information -->
+      <div class="card mb-6">
+        <div class="card-header">
+          <h3 class="card-title" data-en="Personal Information" data-ar="المعلومات الشخصية">Personal Information</h3>
+        </div>
+        <div class="card-body">
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" data-en="First Name" data-ar="الاسم الاول">First Name <span class="required">*</span></label>
+              <input type="text" name="firstName" class="form-input" required placeholder="Enter first name" data-en="Enter first name" data-ar="ادخل الاسم الاول">
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-en="Last Name" data-ar="الاسم الاخير">Last Name <span class="required">*</span></label>
+              <input type="text" name="lastName" class="form-input" required placeholder="Enter last name" data-en="Enter last name" data-ar="ادخل الاسم الاخير">
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-en="Email" data-ar="البريد الالكتروني">Email <span class="required">*</span></label>
+              <input type="email" name="email" class="form-input" required placeholder="member@email.com">
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-en="Phone Number" data-ar="رقم الهاتف">Phone Number</label>
+              <input type="tel" name="phone" class="form-input" dir="ltr" placeholder="+966 5X XXX XXXX">
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-en="Date of Birth" data-ar="تاريخ الميلاد">Date of Birth</label>
+              <input type="date" name="dateOfBirth" class="form-input">
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-en="Gender" data-ar="الجنس">Gender</label>
+              <select name="gender" class="form-select">
+                <option value="" data-en="Select gender" data-ar="اختر الجنس">Select gender</option>
+                <option value="male" data-en="Male" data-ar="ذكر">Male</option>
+                <option value="female" data-en="Female" data-ar="انثى">Female</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Address -->
+      <div class="card mb-6">
+        <div class="card-header">
+          <h3 class="card-title" data-en="Address" data-ar="العنوان">Address</h3>
+        </div>
+        <div class="card-body">
+          <div class="grid-2">
+            <div class="form-group" style="grid-column: span 2;">
+              <label class="form-label" data-en="Street Address" data-ar="عنوان الشارع">Street Address</label>
+              <input type="text" name="street" class="form-input" placeholder="Enter street address" data-en="Enter street address" data-ar="ادخل عنوان الشارع">
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-en="City" data-ar="المدينة">City</label>
+              <input type="text" name="city" class="form-input" placeholder="Enter city" data-en="Enter city" data-ar="ادخل المدينة">
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-en="State/Province" data-ar="المنطقة">State/Province</label>
+              <input type="text" name="state" class="form-input" placeholder="Enter state" data-en="Enter state" data-ar="ادخل المنطقة">
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-en="Postal Code" data-ar="الرمز البريدي">Postal Code</label>
+              <input type="text" name="postalCode" class="form-input" dir="ltr" placeholder="12345">
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-en="Country" data-ar="الدولة">Country</label>
+              <select name="country" class="form-select">
+                <option value="SA" data-en="Saudi Arabia" data-ar="المملكة العربية السعودية">Saudi Arabia</option>
+                <option value="AE" data-en="United Arab Emirates" data-ar="الامارات">United Arab Emirates</option>
+                <option value="KW" data-en="Kuwait" data-ar="الكويت">Kuwait</option>
+                <option value="BH" data-en="Bahrain" data-ar="البحرين">Bahrain</option>
+                <option value="QA" data-en="Qatar" data-ar="قطر">Qatar</option>
+                <option value="OM" data-en="Oman" data-ar="عمان">Oman</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Emergency Contact -->
+      <div class="card mb-6">
+        <div class="card-header">
+          <h3 class="card-title" data-en="Emergency Contact" data-ar="جهة الاتصال للطوارئ">Emergency Contact</h3>
+        </div>
+        <div class="card-body">
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" data-en="Contact Name" data-ar="اسم جهة الاتصال">Contact Name</label>
+              <input type="text" name="emergencyContactName" class="form-input" placeholder="Enter emergency contact name" data-en="Enter emergency contact name" data-ar="ادخل اسم جهة الاتصال">
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-en="Contact Phone" data-ar="هاتف جهة الاتصال">Contact Phone</label>
+              <input type="tel" name="emergencyContactPhone" class="form-input" dir="ltr" placeholder="+966 5X XXX XXXX">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Notes -->
+      <div class="card mb-6">
+        <div class="card-header">
+          <h3 class="card-title" data-en="Additional Information" data-ar="معلومات اضافية">Additional Information</h3>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label" data-en="Notes" data-ar="ملاحظات">Notes</label>
+            <textarea name="notes" class="form-textarea" rows="3" placeholder="Any additional notes about this member..." data-en="Any additional notes about this member..." data-ar="اي ملاحظات اضافية عن هذا العضو..."></textarea>
+            <p class="form-hint" data-en="Internal notes, not visible to the member" data-ar="ملاحظات داخلية، غير مرئية للعضو">Internal notes, not visible to the member</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subscription (Optional on create) -->
+      <div class="card mb-6">
+        <div class="card-header">
+          <h3 class="card-title" data-en="Subscription (Optional)" data-ar="الاشتراك (اختياري)">Subscription (Optional)</h3>
+        </div>
+        <div class="card-body">
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" data-en="Membership Plan" data-ar="باقة العضوية">Membership Plan</label>
+              <select name="planId" class="form-select">
+                <option value="" data-en="No subscription" data-ar="بدون اشتراك">No subscription</option>
+                <option value="1">Premium Monthly - 500 SAR</option>
+                <option value="2">Basic Quarterly - 1,200 SAR</option>
+                <option value="3">VIP Annual - 4,500 SAR</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-en="Start Date" data-ar="تاريخ البدء">Start Date</label>
+              <input type="date" name="startDate" class="form-input">
+              <p class="form-hint" data-en="Leave empty for today" data-ar="اتركه فارغا لليوم">Leave empty for today</p>
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-en="Auto-Renew" data-ar="تجديد تلقائي">Auto-Renew</label>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" name="autoRenew">
+                <span data-en="Enable automatic renewal" data-ar="تفعيل التجديد التلقائي">Enable automatic renewal</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="flex justify-end gap-3">
+        <a href="admin-members.html" class="btn btn-secondary" data-en="Cancel" data-ar="الغاء">Cancel</a>
+        <button type="button" class="btn btn-secondary" data-en="Save as Draft" data-ar="حفظ كمسودة">Save as Draft</button>
+        <button type="submit" class="btn btn-primary" data-en="Create Member" data-ar="انشاء العضو">Create Member</button>
+      </div>
+    </form>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    function handleSubmit(event) {
+      event.preventDefault();
+
+      if (!validateForm('memberForm')) {
+        showToast('Please fill in all required fields', 'error');
+        return false;
+      }
+
+      // Simulate API call
+      showToast('Member created successfully!', 'success');
+
+      // Redirect after delay
+      setTimeout(() => {
+        window.location.href = 'admin-members.html';
+      }, 1500);
+
+      return false;
+    }
+  </script>
+</body>
+</html>

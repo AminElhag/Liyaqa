@@ -21,9 +21,29 @@ interface SubscriptionRepository {
     fun findByStatus(status: SubscriptionStatus, pageable: Pageable): Page<Subscription>
     fun findAll(pageable: Pageable): Page<Subscription>
     fun findExpiringBefore(date: LocalDate, pageable: Pageable): Page<Subscription>
+    fun findByStatusAndEndDateBetween(status: SubscriptionStatus, startDate: LocalDate, endDate: LocalDate, pageable: Pageable): Page<Subscription>
     fun existsById(id: UUID): Boolean
     fun existsActiveByMemberId(memberId: UUID): Boolean
     fun deleteById(id: UUID)
     fun count(): Long
     fun countByMemberId(memberId: UUID): Long
+
+    /**
+     * Find pending payment subscriptions for a member.
+     * Used by wallet service for auto-payment.
+     */
+    fun findByMemberIdAndStatus(memberId: UUID, status: SubscriptionStatus): List<Subscription>
+
+    /**
+     * Search subscriptions with various filters.
+     * @param planId Filter by membership plan
+     * @param status Filter by subscription status
+     * @param expiringBefore Filter subscriptions expiring before this date
+     */
+    fun search(
+        planId: UUID?,
+        status: SubscriptionStatus?,
+        expiringBefore: LocalDate?,
+        pageable: Pageable
+    ): Page<Subscription>
 }

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Class - Liyaqa Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+                    colors: {
+                        primary: { 50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#3730a3', 900: '#312e81' },
+                        sidebar: { DEFAULT: '#1e1e2d', light: '#2a2a3c', lighter: '#3a3a4d' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        [dir="rtl"] .sidebar-icon { margin-left: 0.75rem; margin-right: 0; }
+        [dir="ltr"] .sidebar-icon { margin-right: 0.75rem; margin-left: 0; }
+    </style>
+</head>
+<body class="font-sans bg-gray-50 text-gray-900">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-sidebar text-white flex-shrink-0 fixed h-full">
+            <div class="p-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xl font-bold">Liyaqa</span>
+                </div>
+            </div>
+            <nav class="mt-2 px-3">
+                <div class="text-xs uppercase text-gray-500 font-semibold px-3 mb-3">Main Menu</div>
+                <a href="../index.html" class="flex items-center px-3 py-2.5 rounded-lg text-gray-400 hover:bg-sidebar-light hover:text-white transition-colors mb-1">
+                    <svg class="w-5 h-5 sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    Dashboard
+                </a>
+                <a href="../members/list.html" class="flex items-center px-3 py-2.5 rounded-lg text-gray-400 hover:bg-sidebar-light hover:text-white transition-colors mb-1">
+                    <svg class="w-5 h-5 sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    Members
+                </a>
+                <a href="list.html" class="flex items-center px-3 py-2.5 rounded-lg bg-sidebar-light text-white mb-1">
+                    <svg class="w-5 h-5 sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    Classes
+                </a>
+                <a href="../bookings/list.html" class="flex items-center px-3 py-2.5 rounded-lg text-gray-400 hover:bg-sidebar-light hover:text-white transition-colors mb-1">
+                    <svg class="w-5 h-5 sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    Bookings
+                </a>
+                <a href="../trainers/list.html" class="flex items-center px-3 py-2.5 rounded-lg text-gray-400 hover:bg-sidebar-light hover:text-white transition-colors mb-1">
+                    <svg class="w-5 h-5 sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    Trainers
+                </a>
+            </nav>
+            <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-sidebar-light">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-white font-semibold">AE</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white truncate">Ahmed Al-Rashid</p>
+                        <p class="text-xs text-gray-400 truncate">Club Admin</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 ml-64">
+            <header class="bg-white border-b border-gray-200 sticky top-0 z-10">
+                <div class="flex items-center justify-between px-6 py-4">
+                    <div class="flex items-center gap-4">
+                        <a href="list.html" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        </a>
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Add New Class</h1>
+                            <p class="text-sm text-gray-500 mt-0.5">Create a new gym class with schedules</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleRTL()" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg hover:bg-gray-50">
+                        <span id="langLabel">العربية</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="p-6">
+                <form class="max-w-4xl">
+                    <!-- Basic Information -->
+                    <div class="bg-white rounded-xl border border-gray-200 mb-6">
+                        <div class="p-6 border-b border-gray-200">
+                            <h2 class="text-lg font-semibold text-gray-900">Basic Information</h2>
+                            <p class="text-sm text-gray-500 mt-1">Class name and description in both languages</p>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Name (English) <span class="text-red-500">*</span></label>
+                                    <input type="text" required class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" placeholder="Morning Yoga">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Name (Arabic) <span class="text-red-500">*</span></label>
+                                    <input type="text" dir="rtl" required class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" placeholder="صباح اليوغا">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Description (English)</label>
+                                    <textarea rows="3" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none" placeholder="Describe this class..."></textarea>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Description (Arabic)</label>
+                                    <textarea rows="3" dir="rtl" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none" placeholder="وصف هذا الصف..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Class Details -->
+                    <div class="bg-white rounded-xl border border-gray-200 mb-6">
+                        <div class="p-6 border-b border-gray-200">
+                            <h2 class="text-lg font-semibold text-gray-900">Class Details</h2>
+                            <p class="text-sm text-gray-500 mt-1">Configure class type, level, and capacity</p>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Class Type <span class="text-red-500">*</span></label>
+                                    <select class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white">
+                                        <option value="">Select type...</option>
+                                        <option value="GROUP_FITNESS">Group Fitness</option>
+                                        <option value="PERSONAL_TRAINING">Personal Training</option>
+                                        <option value="YOGA">Yoga</option>
+                                        <option value="PILATES">Pilates</option>
+                                        <option value="SPINNING">Spinning</option>
+                                        <option value="CROSSFIT">CrossFit</option>
+                                        <option value="SWIMMING">Swimming</option>
+                                        <option value="MARTIAL_ARTS">Martial Arts</option>
+                                        <option value="DANCE">Dance</option>
+                                        <option value="OTHER">Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Difficulty Level <span class="text-red-500">*</span></label>
+                                    <select class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white">
+                                        <option value="BEGINNER">Beginner</option>
+                                        <option value="INTERMEDIATE">Intermediate</option>
+                                        <option value="ADVANCED">Advanced</option>
+                                        <option value="ALL_LEVELS" selected>All Levels</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Location <span class="text-red-500">*</span></label>
+                                    <select class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white">
+                                        <option value="">Select location...</option>
+                                        <option value="loc1">Main Gym - Riyadh</option>
+                                        <option value="loc2">Studio A - Riyadh</option>
+                                        <option value="loc3">Pool Area - Riyadh</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Duration (minutes) <span class="text-red-500">*</span></label>
+                                    <input type="number" min="15" max="180" value="60" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Max Capacity <span class="text-red-500">*</span></label>
+                                    <input type="number" min="1" max="100" value="20" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Default Trainer</label>
+                                    <select class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white">
+                                        <option value="">Select trainer...</option>
+                                        <option value="t1">Sara Ahmed</option>
+                                        <option value="t2">Mohammed Ali</option>
+                                        <option value="t3">Fatima Hassan</option>
+                                        <option value="t4">Layla Omar</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Waitlist & Subscription -->
+                    <div class="bg-white rounded-xl border border-gray-200 mb-6">
+                        <div class="p-6 border-b border-gray-200">
+                            <h2 class="text-lg font-semibold text-gray-900">Booking Settings</h2>
+                            <p class="text-sm text-gray-500 mt-1">Configure waitlist and subscription requirements</p>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="flex items-center gap-3 cursor-pointer">
+                                        <input type="checkbox" checked class="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                        <div>
+                                            <span class="text-sm font-medium text-gray-700">Enable Waitlist</span>
+                                            <p class="text-xs text-gray-500">Allow members to join waitlist when class is full</p>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Max Waitlist Size</label>
+                                    <input type="number" min="0" max="50" value="5" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="flex items-center gap-3 cursor-pointer">
+                                        <input type="checkbox" checked class="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                        <div>
+                                            <span class="text-sm font-medium text-gray-700">Requires Active Subscription</span>
+                                            <p class="text-xs text-gray-500">Only members with active subscription can book</p>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label class="flex items-center gap-3 cursor-pointer">
+                                        <input type="checkbox" checked class="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                        <div>
+                                            <span class="text-sm font-medium text-gray-700">Deducts Class from Plan</span>
+                                            <p class="text-xs text-gray-500">Attendance deducts from limited class packages</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appearance -->
+                    <div class="bg-white rounded-xl border border-gray-200 mb-6">
+                        <div class="p-6 border-b border-gray-200">
+                            <h2 class="text-lg font-semibold text-gray-900">Appearance</h2>
+                            <p class="text-sm text-gray-500 mt-1">Color and image for the class card</p>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Color Theme</label>
+                                    <div class="flex gap-3">
+                                        <button type="button" class="w-10 h-10 rounded-lg bg-purple-500 ring-2 ring-primary-500 ring-offset-2"></button>
+                                        <button type="button" class="w-10 h-10 rounded-lg bg-orange-500 hover:ring-2 hover:ring-gray-300 hover:ring-offset-2"></button>
+                                        <button type="button" class="w-10 h-10 rounded-lg bg-blue-500 hover:ring-2 hover:ring-gray-300 hover:ring-offset-2"></button>
+                                        <button type="button" class="w-10 h-10 rounded-lg bg-pink-500 hover:ring-2 hover:ring-gray-300 hover:ring-offset-2"></button>
+                                        <button type="button" class="w-10 h-10 rounded-lg bg-teal-500 hover:ring-2 hover:ring-gray-300 hover:ring-offset-2"></button>
+                                        <button type="button" class="w-10 h-10 rounded-lg bg-red-500 hover:ring-2 hover:ring-gray-300 hover:ring-offset-2"></button>
+                                        <button type="button" class="w-10 h-10 rounded-lg bg-green-500 hover:ring-2 hover:ring-gray-300 hover:ring-offset-2"></button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Class Image</label>
+                                    <button type="button" class="px-4 py-2 text-sm font-medium text-primary-600 border border-primary-600 rounded-lg hover:bg-primary-50 transition-colors">
+                                        Upload Image
+                                    </button>
+                                    <p class="text-xs text-gray-500 mt-2">Recommended: 400x200px, JPG or PNG</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Schedule (Optional) -->
+                    <div class="bg-white rounded-xl border border-gray-200 mb-6">
+                        <div class="p-6 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h2 class="text-lg font-semibold text-gray-900">Recurring Schedule</h2>
+                                    <p class="text-sm text-gray-500 mt-1">Set up weekly recurring sessions (optional)</p>
+                                </div>
+                                <button type="button" class="text-sm text-primary-600 hover:text-primary-700 font-medium">+ Add Time Slot</button>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div class="space-y-4">
+                                <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                                    <select class="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white">
+                                        <option>Sunday</option>
+                                        <option>Monday</option>
+                                        <option>Tuesday</option>
+                                        <option>Wednesday</option>
+                                        <option>Thursday</option>
+                                        <option>Friday</option>
+                                        <option>Saturday</option>
+                                    </select>
+                                    <input type="time" value="07:00" class="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                                    <span class="text-gray-400">to</span>
+                                    <input type="time" value="08:00" class="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                                    <button type="button" class="p-2 text-gray-400 hover:text-red-500">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                </div>
+                                <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                                    <select class="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white">
+                                        <option>Sunday</option>
+                                        <option>Monday</option>
+                                        <option>Tuesday</option>
+                                        <option selected>Wednesday</option>
+                                        <option>Thursday</option>
+                                        <option>Friday</option>
+                                        <option>Saturday</option>
+                                    </select>
+                                    <input type="time" value="07:00" class="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                                    <span class="text-gray-400">to</span>
+                                    <input type="time" value="08:00" class="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                                    <button type="button" class="p-2 text-gray-400 hover:text-red-500">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex items-center justify-end gap-4">
+                        <a href="list.html" class="px-6 py-2.5 text-gray-700 font-medium border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Cancel</a>
+                        <button type="submit" class="px-6 py-2.5 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors">Create Class</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function toggleRTL() {
+            const html = document.documentElement;
+            const langLabel = document.getElementById('langLabel');
+            if (html.getAttribute('dir') === 'rtl') {
+                html.setAttribute('dir', 'ltr');
+                html.setAttribute('lang', 'en');
+                langLabel.textContent = 'العربية';
+            } else {
+                html.setAttribute('dir', 'rtl');
+                html.setAttribute('lang', 'ar');
+                langLabel.textContent = 'English';
+            }
+        }
+    </script>
+</body>
+</html>

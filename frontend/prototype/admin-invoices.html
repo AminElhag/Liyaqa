@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoices - Liyaqa Admin</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>Liyaqa</h1>
+      <p class="text-xs text-muted mt-1" data-en="Gym Management" data-ar="ادارة النادي">Gym Management</p>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title" data-en="Main" data-ar="الرئيسية">Main</div>
+        <a href="admin-dashboard.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+          <span data-en="Dashboard" data-ar="لوحة التحكم">Dashboard</span>
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title" data-en="Membership" data-ar="العضوية">Membership</div>
+        <a href="admin-members.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <span data-en="Members" data-ar="الاعضاء">Members</span>
+        </a>
+        <a href="admin-subscriptions.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+          </svg>
+          <span data-en="Subscriptions" data-ar="الاشتراكات">Subscriptions</span>
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title" data-en="Billing" data-ar="الفواتير">Billing</div>
+        <a href="admin-invoices.html" class="nav-item active">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span data-en="Invoices" data-ar="الفواتير">Invoices</span>
+        </a>
+        <a href="#" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+          <span data-en="Payments" data-ar="المدفوعات">Payments</span>
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="lang-switcher">
+        <button class="lang-btn active" onclick="setLanguage('en')">EN</button>
+        <button class="lang-btn" onclick="setLanguage('ar')">عربي</button>
+      </div>
+      <div class="user-menu">
+        <div class="user-info">
+          <div class="user-name">Ahmed Al-Rashid</div>
+          <div class="user-role" data-en="Club Admin" data-ar="مدير النادي">Club Admin</div>
+        </div>
+        <div class="avatar">AR</div>
+      </div>
+    </header>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title" data-en="Invoices" data-ar="الفواتير">Invoices</h1>
+        <p class="page-subtitle" data-en="Manage billing and payments" data-ar="ادارة الفواتير والمدفوعات">Manage billing and payments</p>
+      </div>
+      <div class="flex gap-3">
+        <button class="btn btn-secondary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span data-en="Export" data-ar="تصدير">Export</span>
+        </button>
+        <button class="btn btn-primary" onclick="openModal('newInvoiceModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span data-en="Create Invoice" data-ar="انشاء فاتورة">Create Invoice</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid mb-6">
+      <div class="stat-card">
+        <div class="stat-icon primary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <div class="stat-value">1,847</div>
+        <div class="stat-label" data-en="Total Invoices" data-ar="اجمالي الفواتير">Total Invoices</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon warning">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="stat-value">15</div>
+        <div class="stat-label" data-en="Pending" data-ar="معلقة">Pending</div>
+        <div class="text-sm text-muted mt-1">32,500 SAR</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon danger">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div class="stat-value">8</div>
+        <div class="stat-label" data-en="Overdue" data-ar="متاخرة">Overdue</div>
+        <div class="text-sm text-danger mt-1">12,350 SAR</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon success">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="stat-value">1,824</div>
+        <div class="stat-label" data-en="Paid" data-ar="مدفوعة">Paid</div>
+        <div class="text-sm text-success mt-1">845,000 SAR</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" data-tab="all" data-tab-group="invoices" onclick="switchTab('all', 'invoices')" data-en="All Invoices" data-ar="كل الفواتير">All Invoices</div>
+      <div class="tab" data-tab="pending" data-tab-group="invoices" onclick="switchTab('pending', 'invoices')" data-en="Pending" data-ar="معلقة">Pending (15)</div>
+      <div class="tab" data-tab="overdue" data-tab-group="invoices" onclick="switchTab('overdue', 'invoices')" data-en="Overdue" data-ar="متاخرة">Overdue (8)</div>
+      <div class="tab" data-tab="paid" data-tab-group="invoices" onclick="switchTab('paid', 'invoices')" data-en="Paid" data-ar="مدفوعة">Paid</div>
+      <div class="tab" data-tab="draft" data-tab-group="invoices" onclick="switchTab('draft', 'invoices')" data-en="Draft" data-ar="مسودة">Draft</div>
+    </div>
+
+    <!-- Search & Filters -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="filter-bar">
+          <div class="search-input-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input type="text" class="form-input search-input" placeholder="Search by invoice # or member..." data-en="Search by invoice # or member..." data-ar="البحث برقم الفاتورة او العضو...">
+          </div>
+          <select class="form-select filter-select">
+            <option value="" data-en="All Status" data-ar="كل الحالات">All Status</option>
+            <option value="DRAFT" data-en="Draft" data-ar="مسودة">Draft</option>
+            <option value="ISSUED" data-en="Issued" data-ar="صادرة">Issued</option>
+            <option value="PAID" data-en="Paid" data-ar="مدفوعة">Paid</option>
+            <option value="OVERDUE" data-en="Overdue" data-ar="متاخرة">Overdue</option>
+            <option value="CANCELLED" data-en="Cancelled" data-ar="ملغاة">Cancelled</option>
+          </select>
+          <input type="date" class="form-input" style="width: auto;" placeholder="Date from">
+          <input type="date" class="form-input" style="width: auto;" placeholder="Date to">
+        </div>
+      </div>
+    </div>
+
+    <!-- Invoices Table -->
+    <div class="card">
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="checkbox-cell">
+                <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)">
+              </th>
+              <th data-en="Invoice #" data-ar="رقم الفاتورة">Invoice #</th>
+              <th data-en="Member" data-ar="العضو">Member</th>
+              <th data-en="Issue Date" data-ar="تاريخ الاصدار">Issue Date</th>
+              <th data-en="Due Date" data-ar="تاريخ الاستحقاق">Due Date</th>
+              <th data-en="Amount" data-ar="المبلغ">Amount</th>
+              <th data-en="Status" data-ar="الحالة">Status</th>
+              <th class="actions-cell" data-en="Actions" data-ar="اجراءات">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="checkbox-cell">
+                <input type="checkbox" class="row-checkbox" value="1" onchange="toggleSelectItem(this)">
+              </td>
+              <td class="font-medium">INV-2024-0856</td>
+              <td>
+                <div class="item-row">
+                  <div class="avatar avatar-sm">RN</div>
+                  <div class="item-info">
+                    <span class="item-name">Rania Nasser</span>
+                    <span class="item-detail">Premium Monthly</span>
+                  </div>
+                </div>
+              </td>
+              <td>Feb 10, 2024</td>
+              <td class="text-warning font-medium">Today</td>
+              <td>
+                <span class="money money-lg">2,200.00</span>
+                <span class="currency">SAR</span>
+              </td>
+              <td><span class="badge badge-issued" data-en="Issued" data-ar="صادرة">Issued</span></td>
+              <td class="actions-cell">
+                <div class="flex gap-1">
+                  <button class="btn btn-sm btn-success" data-en="Record Payment" data-ar="تسجيل دفع">Pay</button>
+                  <div class="dropdown">
+                    <button class="btn btn-ghost btn-sm" onclick="toggleDropdown('inv-dropdown-1')">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                      </svg>
+                    </button>
+                    <div id="inv-dropdown-1" class="dropdown-menu">
+                      <a href="#" class="dropdown-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <span data-en="View" data-ar="عرض">View</span>
+                      </a>
+                      <a href="#" class="dropdown-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <span data-en="Download PDF" data-ar="تحميل PDF">Download PDF</span>
+                      </a>
+                      <a href="#" class="dropdown-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <span data-en="Send Reminder" data-ar="ارسال تذكير">Send Reminder</span>
+                      </a>
+                      <a href="#" class="dropdown-item danger">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        <span data-en="Cancel" data-ar="الغاء">Cancel</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="checkbox-cell">
+                <input type="checkbox" class="row-checkbox" value="2" onchange="toggleSelectItem(this)">
+              </td>
+              <td class="font-medium">INV-2024-0851</td>
+              <td>
+                <div class="item-row">
+                  <div class="avatar avatar-sm">HM</div>
+                  <div class="item-info">
+                    <span class="item-name">Hassan Mohammed</span>
+                    <span class="item-detail">Basic Quarterly</span>
+                  </div>
+                </div>
+              </td>
+              <td>Feb 5, 2024</td>
+              <td class="text-danger font-medium">2 days ago</td>
+              <td>
+                <span class="money money-lg">850.00</span>
+                <span class="currency">SAR</span>
+              </td>
+              <td><span class="badge badge-overdue" data-en="Overdue" data-ar="متاخرة">Overdue</span></td>
+              <td class="actions-cell">
+                <div class="flex gap-1">
+                  <button class="btn btn-sm btn-success" data-en="Pay" data-ar="دفع">Pay</button>
+                  <div class="dropdown">
+                    <button class="btn btn-ghost btn-sm" onclick="toggleDropdown('inv-dropdown-2')">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                      </svg>
+                    </button>
+                    <div id="inv-dropdown-2" class="dropdown-menu">
+                      <a href="#" class="dropdown-item" data-en="View" data-ar="عرض">View</a>
+                      <a href="#" class="dropdown-item" data-en="Download PDF" data-ar="تحميل PDF">Download PDF</a>
+                      <a href="#" class="dropdown-item" data-en="Send Reminder" data-ar="ارسال تذكير">Send Reminder</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="checkbox-cell">
+                <input type="checkbox" class="row-checkbox" value="3" onchange="toggleSelectItem(this)">
+              </td>
+              <td class="font-medium">INV-2024-0847</td>
+              <td>
+                <div class="item-row">
+                  <div class="avatar avatar-sm">AK</div>
+                  <div class="item-info">
+                    <span class="item-name">Ahmed Khalil</span>
+                    <span class="item-detail">VIP Annual</span>
+                  </div>
+                </div>
+              </td>
+              <td>Feb 1, 2024</td>
+              <td class="text-danger font-medium">5 days ago</td>
+              <td>
+                <span class="money money-lg">1,500.00</span>
+                <span class="currency">SAR</span>
+              </td>
+              <td><span class="badge badge-overdue" data-en="Overdue" data-ar="متاخرة">Overdue</span></td>
+              <td class="actions-cell">
+                <div class="flex gap-1">
+                  <button class="btn btn-sm btn-success" data-en="Pay" data-ar="دفع">Pay</button>
+                  <div class="dropdown">
+                    <button class="btn btn-ghost btn-sm" onclick="toggleDropdown('inv-dropdown-3')">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                      </svg>
+                    </button>
+                    <div id="inv-dropdown-3" class="dropdown-menu">
+                      <a href="#" class="dropdown-item" data-en="View" data-ar="عرض">View</a>
+                      <a href="#" class="dropdown-item" data-en="Download PDF" data-ar="تحميل PDF">Download PDF</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="checkbox-cell">
+                <input type="checkbox" class="row-checkbox" value="4" onchange="toggleSelectItem(this)">
+              </td>
+              <td class="font-medium">INV-2024-0845</td>
+              <td>
+                <div class="item-row">
+                  <div class="avatar avatar-sm">MK</div>
+                  <div class="item-info">
+                    <span class="item-name">Mohammed Khalid</span>
+                    <span class="item-detail">Premium Monthly</span>
+                  </div>
+                </div>
+              </td>
+              <td>Jan 28, 2024</td>
+              <td>Feb 4, 2024</td>
+              <td>
+                <span class="money money-lg">500.00</span>
+                <span class="currency">SAR</span>
+              </td>
+              <td><span class="badge badge-paid" data-en="Paid" data-ar="مدفوعة">Paid</span></td>
+              <td class="actions-cell">
+                <div class="flex gap-1">
+                  <button class="btn btn-sm btn-secondary" data-en="View" data-ar="عرض">View</button>
+                  <div class="dropdown">
+                    <button class="btn btn-ghost btn-sm" onclick="toggleDropdown('inv-dropdown-4')">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                      </svg>
+                    </button>
+                    <div id="inv-dropdown-4" class="dropdown-menu">
+                      <a href="#" class="dropdown-item" data-en="Download PDF" data-ar="تحميل PDF">Download PDF</a>
+                      <a href="#" class="dropdown-item" data-en="Download Receipt" data-ar="تحميل الايصال">Download Receipt</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="checkbox-cell">
+                <input type="checkbox" class="row-checkbox" value="5" onchange="toggleSelectItem(this)">
+              </td>
+              <td class="font-medium">INV-2024-0857</td>
+              <td>
+                <div class="item-row">
+                  <div class="avatar avatar-sm">SA</div>
+                  <div class="item-info">
+                    <span class="item-name">Sara Ahmed</span>
+                    <span class="item-detail">Basic Quarterly</span>
+                  </div>
+                </div>
+              </td>
+              <td>-</td>
+              <td>-</td>
+              <td>
+                <span class="money money-lg">1,200.00</span>
+                <span class="currency">SAR</span>
+              </td>
+              <td><span class="badge badge-draft" data-en="Draft" data-ar="مسودة">Draft</span></td>
+              <td class="actions-cell">
+                <div class="flex gap-1">
+                  <button class="btn btn-sm btn-primary" data-en="Issue" data-ar="اصدار">Issue</button>
+                  <div class="dropdown">
+                    <button class="btn btn-ghost btn-sm" onclick="toggleDropdown('inv-dropdown-5')">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                      </svg>
+                    </button>
+                    <div id="inv-dropdown-5" class="dropdown-menu">
+                      <a href="#" class="dropdown-item" data-en="Edit" data-ar="تعديل">Edit</a>
+                      <a href="#" class="dropdown-item" data-en="Preview" data-ar="معاينة">Preview</a>
+                      <a href="#" class="dropdown-item danger" data-en="Delete" data-ar="حذف">Delete</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination">
+        <div class="pagination-info">
+          <span data-en="Showing" data-ar="عرض">Showing</span> 1-5 <span data-en="of" data-ar="من">of</span> 1,847 <span data-en="invoices" data-ar="فاتورة">invoices</span>
+        </div>
+        <div class="pagination-buttons">
+          <button class="pagination-btn" disabled>&laquo;</button>
+          <button class="pagination-btn" disabled>&lsaquo;</button>
+          <button class="pagination-btn active">1</button>
+          <button class="pagination-btn">2</button>
+          <button class="pagination-btn">3</button>
+          <button class="pagination-btn">...</button>
+          <button class="pagination-btn">370</button>
+          <button class="pagination-btn">&rsaquo;</button>
+          <button class="pagination-btn">&raquo;</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Create Invoice Modal -->
+  <div id="newInvoiceModal" class="modal-backdrop" style="display: none;">
+    <div class="modal" style="max-width: 40rem;">
+      <div class="modal-header">
+        <h2 class="modal-title" data-en="Create Invoice" data-ar="انشاء فاتورة">Create Invoice</h2>
+        <button class="modal-close" onclick="closeModal('newInvoiceModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" data-en="Select Member" data-ar="اختر العضو">Select Member <span class="required">*</span></label>
+          <select class="form-select" required>
+            <option value="" data-en="Search and select member..." data-ar="ابحث واختر العضو...">Search and select member...</option>
+            <option value="1">Mohammed Khalid</option>
+            <option value="2">Sara Ahmed</option>
+            <option value="3">Fatima Ali</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-en="Line Items" data-ar="البنود">Line Items</label>
+          <div class="card" style="background: var(--neutral-50);">
+            <div class="card-body">
+              <div class="flex gap-3 mb-3">
+                <div style="flex: 2;">
+                  <input type="text" class="form-input" placeholder="Description (English)" data-en="Description (English)" data-ar="الوصف (بالانجليزية)">
+                </div>
+                <div style="flex: 1;">
+                  <input type="number" class="form-input" placeholder="Qty" value="1" min="1">
+                </div>
+                <div style="flex: 1;">
+                  <input type="number" class="form-input" placeholder="Price" dir="ltr">
+                </div>
+                <div>
+                  <button type="button" class="btn btn-ghost btn-sm" style="padding: 0.625rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span data-en="Add Line Item" data-ar="اضافة بند">Add Line Item</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" data-en="VAT Rate (%)" data-ar="نسبة الضريبة (%)">VAT Rate (%)</label>
+            <input type="number" class="form-input" value="15" dir="ltr">
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-en="Payment Due Days" data-ar="ايام الاستحقاق">Payment Due Days</label>
+            <input type="number" class="form-input" value="7" dir="ltr">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-en="Notes (English)" data-ar="ملاحظات (بالانجليزية)">Notes (English)</label>
+          <textarea class="form-textarea" rows="2" placeholder="Optional notes..." data-en="Optional notes..." data-ar="ملاحظات اختيارية..."></textarea>
+        </div>
+
+        <!-- Invoice Summary -->
+        <div class="card" style="background: var(--neutral-50);">
+          <div class="card-body">
+            <div class="flex justify-between mb-2">
+              <span class="text-muted" data-en="Subtotal" data-ar="المجموع الفرعي">Subtotal</span>
+              <span class="money">0.00 <span class="currency">SAR</span></span>
+            </div>
+            <div class="flex justify-between mb-2">
+              <span class="text-muted" data-en="VAT (15%)" data-ar="الضريبة (15%)">VAT (15%)</span>
+              <span class="money">0.00 <span class="currency">SAR</span></span>
+            </div>
+            <div class="flex justify-between font-semibold text-lg" style="border-top: 1px solid var(--neutral-200); padding-top: 0.5rem; margin-top: 0.5rem;">
+              <span data-en="Total" data-ar="الاجمالي">Total</span>
+              <span class="money">0.00 <span class="currency">SAR</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('newInvoiceModal')" data-en="Cancel" data-ar="الغاء">Cancel</button>
+        <button class="btn btn-secondary" data-en="Save as Draft" data-ar="حفظ كمسودة">Save as Draft</button>
+        <button class="btn btn-primary" data-en="Create & Issue" data-ar="انشاء واصدار">Create & Issue</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

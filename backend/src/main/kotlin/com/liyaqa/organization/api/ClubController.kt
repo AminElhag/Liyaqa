@@ -4,12 +4,18 @@ import com.liyaqa.organization.application.commands.CreateClubCommand
 import com.liyaqa.organization.application.commands.UpdateClubCommand
 import com.liyaqa.organization.application.services.ClubService
 import com.liyaqa.shared.domain.LocalizedText
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
 import jakarta.validation.Valid
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
@@ -25,6 +31,7 @@ class ClubController(
     private val clubService: ClubService
 ) {
     @PostMapping
+    @PreAuthorize("hasAuthority('clubs_create')")
     fun createClub(
         @Valid @RequestBody request: CreateClubRequest
     ): ResponseEntity<ClubResponse> {
@@ -38,12 +45,14 @@ class ClubController(
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('clubs_view')")
     fun getClub(@PathVariable id: UUID): ResponseEntity<ClubResponse> {
         val club = clubService.getClub(id)
         return ResponseEntity.ok(ClubResponse.from(club))
     }
 
     @GetMapping("/organization/{organizationId}")
+    @PreAuthorize("hasAuthority('clubs_view')")
     fun getClubsByOrganization(
         @PathVariable organizationId: UUID,
         @RequestParam(defaultValue = "0") page: Int,
@@ -68,6 +77,7 @@ class ClubController(
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('clubs_update')")
     fun updateClub(
         @PathVariable id: UUID,
         @Valid @RequestBody request: UpdateClubRequest
@@ -81,20 +91,50 @@ class ClubController(
     }
 
     @PostMapping("/{id}/activate")
+    @PreAuthorize("hasAuthority('clubs_update')")
     fun activateClub(@PathVariable id: UUID): ResponseEntity<ClubResponse> {
         val club = clubService.activateClub(id)
         return ResponseEntity.ok(ClubResponse.from(club))
     }
 
     @PostMapping("/{id}/suspend")
+    @PreAuthorize("hasAuthority('clubs_update')")
     fun suspendClub(@PathVariable id: UUID): ResponseEntity<ClubResponse> {
         val club = clubService.suspendClub(id)
         return ResponseEntity.ok(ClubResponse.from(club))
     }
 
     @PostMapping("/{id}/close")
+    @PreAuthorize("hasAuthority('clubs_update')")
     fun closeClub(@PathVariable id: UUID): ResponseEntity<ClubResponse> {
         val club = clubService.closeClub(id)
+        return ResponseEntity.ok(ClubResponse.from(club))
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('clubs_delete')")
+    fun deleteClub(@PathVariable id: UUID): ResponseEntity<Unit> {
+        clubService.deleteClub(id)
+        return ResponseEntity.noContent().build()
+    }
+
+    @Operation(
+        summary = "Update Club Slug",
+        description = "Updates the subdomain slug for a club (e.g., 'fitness-gym' for fitness-gym.liyaqa.com). " +
+                "Warning: Changing the slug will change the login URL for all users of this club."
+    )
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Slug updated successfully"),
+        ApiResponse(responseCode = "400", description = "Invalid slug format or slug already in use"),
+        ApiResponse(responseCode = "404", description = "Club not found")
+    ])
+    @PatchMapping("/{id}/slug")
+    @PreAuthorize("hasAuthority('clubs_update')")
+    fun updateSlug(
+        @PathVariable id: UUID,
+        @Valid @RequestBody request: UpdateSlugRequest
+    ): ResponseEntity<ClubResponse> {
+        val club = clubService.updateSlug(id, request.slug)
         return ResponseEntity.ok(ClubResponse.from(club))
     }
 }

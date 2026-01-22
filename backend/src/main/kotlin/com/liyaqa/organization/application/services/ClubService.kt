@@ -61,6 +61,14 @@ class ClubService(
         return clubRepository.save(club)
     }
 
+    /**
+     * Saves a club directly. Used for updating fields not in UpdateClubCommand,
+     * such as prayer settings.
+     */
+    fun saveClub(club: Club): Club {
+        return clubRepository.save(club)
+    }
+
     fun activateClub(id: UUID): Club {
         val club = getClub(id)
         club.activate()
@@ -76,6 +84,47 @@ class ClubService(
     fun closeClub(id: UUID): Club {
         val club = getClub(id)
         club.close()
+        return clubRepository.save(club)
+    }
+
+    /**
+     * Deletes a club.
+     * Only CLOSED clubs can be deleted.
+     */
+    fun deleteClub(id: UUID) {
+        val club = getClub(id)
+        require(club.status == ClubStatus.CLOSED) {
+            "Only CLOSED clubs can be deleted. Current status: ${club.status}"
+        }
+        clubRepository.deleteById(id)
+    }
+
+    /**
+     * Updates the subdomain slug for a club.
+     * Validates that the slug is not already in use.
+     *
+     * @throws IllegalArgumentException if slug is invalid or already in use
+     */
+    fun updateSlug(id: UUID, newSlug: String): Club {
+        val club = getClub(id)
+        val normalizedSlug = newSlug.lowercase().trim()
+
+        // Check if slug is unchanged
+        if (club.slug == normalizedSlug) {
+            return club
+        }
+
+        // Check if slug is already in use by another club
+        val existingClub = clubRepository.findBySlug(normalizedSlug)
+        if (existingClub.isPresent && existingClub.get().id != id) {
+            throw IllegalArgumentException(
+                "Slug '$normalizedSlug' is already in use. | " +
+                "الاسم المختصر '$normalizedSlug' مستخدم بالفعل."
+            )
+        }
+
+        // Set and validate slug
+        club.setSlugValidated(normalizedSlug)
         return clubRepository.save(club)
     }
 }

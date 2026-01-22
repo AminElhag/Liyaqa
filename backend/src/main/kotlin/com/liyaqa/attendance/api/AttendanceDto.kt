@@ -1,27 +1,27 @@
 package com.liyaqa.attendance.api
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.liyaqa.attendance.application.commands.CheckInCommand
 import com.liyaqa.attendance.application.commands.CheckOutCommand
 import com.liyaqa.attendance.domain.model.AttendanceRecord
 import com.liyaqa.attendance.domain.model.AttendanceStatus
 import com.liyaqa.attendance.domain.model.CheckInMethod
-import jakarta.validation.constraints.NotNull
 import java.time.Instant
 import java.util.UUID
 
 // Request DTOs
 
 data class CheckInRequest(
-    @field:NotNull(message = "Location ID is required")
-    val locationId: UUID,
+    val locationId: UUID? = null,  // Optional - will use default location if not provided
 
+    @field:JsonProperty("method")  // Accept "method" from frontend (alias for checkInMethod)
     val checkInMethod: CheckInMethod = CheckInMethod.MANUAL,
 
     val notes: String? = null
 ) {
     fun toCommand(memberId: UUID, createdBy: UUID? = null) = CheckInCommand(
         memberId = memberId,
-        locationId = locationId,
+        locationId = locationId,  // Pass as nullable, let service handle default
         checkInMethod = checkInMethod,
         notes = notes,
         createdBy = createdBy

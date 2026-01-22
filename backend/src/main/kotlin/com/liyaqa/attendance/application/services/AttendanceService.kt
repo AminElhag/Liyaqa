@@ -8,7 +8,9 @@ import com.liyaqa.attendance.domain.ports.AttendanceRepository
 import com.liyaqa.membership.domain.ports.MemberRepository
 import com.liyaqa.membership.domain.ports.SubscriptionRepository
 import com.liyaqa.organization.domain.ports.LocationRepository
+import com.liyaqa.shared.domain.TenantContext
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -40,12 +42,20 @@ class AttendanceService(
             throw IllegalStateException("Member is not active: ${command.memberId}")
         }
 
+        // Get location - use provided or get first active location from tenant
+        val locationId = command.locationId ?: run {
+            val tenantId = TenantContext.getCurrentTenant().value
+            locationRepository.findByClubId(tenantId, PageRequest.of(0, 1))
+                .content.firstOrNull()?.id
+                ?: throw IllegalStateException("No locations found for this club")
+        }
+
         // Validate location exists and is active
-        val location = locationRepository.findById(command.locationId)
-            .orElseThrow { NoSuchElementException("Location not found: ${command.locationId}") }
+        val location = locationRepository.findById(locationId)
+            .orElseThrow { NoSuchElementException("Location not found: $locationId") }
 
         if (location.status != com.liyaqa.organization.domain.model.LocationStatus.ACTIVE) {
-            throw IllegalStateException("Location is not active: ${command.locationId}")
+            throw IllegalStateException("Location is not active: $locationId")
         }
 
         // Check if member has active subscription
@@ -71,7 +81,7 @@ class AttendanceService(
         // Create attendance record
         val attendanceRecord = AttendanceRecord(
             memberId = command.memberId,
-            locationId = command.locationId,
+            locationId = locationId,
             checkInMethod = command.checkInMethod,
             notes = command.notes,
             createdBy = command.createdBy
@@ -235,5 +245,49 @@ class AttendanceService(
         }
 
         return count
+    }
+
+    // ==================== BULK OPERATIONS ====================
+
+    /**
+     * Bulk check-in members.
+     * @return Map of member ID to success/failure status
+     */
+    fun bulkCheckIn(
+        memberIds: List<UUID>,
+        locationId: UUID,
+        checkInMethod: com.liyaqa.attendance.domain.model.CheckInMethod,
+        notes: String?,
+        createdBy: UUID?
+    ): Map<UUID, Result<AttendanceRecord>> {
+        return memberIds.associateWith { memberId ->
+            runCatching {
+                checkIn(CheckInCommand(
+                    memberId = memberId,
+                    locationId = locationId,
+                    checkInMethod = checkInMethod,
+                    notes = notes,
+                    createdBy = createdBy
+                ))
+            }
+        }
+    }
+
+    /**
+     * Bulk check-out members.
+     * @return Map of member ID to success/failure status
+     */
+    fun bulkCheckOut(
+        memberIds: List<UUID>,
+        notes: String?
+    ): Map<UUID, Result<AttendanceRecord>> {
+        return memberIds.associateWith { memberId ->
+            runCatching {
+                checkOut(CheckOutCommand(
+                    memberId = memberId,
+                    notes = notes
+                ))
+            }
+        }
     }
 }

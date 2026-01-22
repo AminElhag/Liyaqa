@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classes & Bookings - Liyaqa Member Portal</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+  <!-- Mobile Header -->
+  <header class="member-header">
+    <div class="flex items-center gap-3">
+      <a href="member-home.html" class="icon-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </a>
+      <h1 class="text-lg font-semibold" data-en="Classes & Bookings" data-ar="الحصص والحجوزات">Classes & Bookings</h1>
+    </div>
+    <div class="lang-switcher">
+      <button class="lang-btn active" onclick="setLanguage('en')">EN</button>
+      <button class="lang-btn" onclick="setLanguage('ar')">ع</button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="member-content">
+    <!-- Tabs -->
+    <div class="tabs mb-4">
+      <button class="tab active" onclick="switchTab(this, 'available')" data-en="Available Classes" data-ar="الحصص المتاحة">Available Classes</button>
+      <button class="tab" onclick="switchTab(this, 'myBookings')" data-en="My Bookings" data-ar="حجوزاتي">My Bookings</button>
+    </div>
+
+    <!-- Available Classes Tab -->
+    <div id="available" class="tab-content active">
+      <!-- Date Selector -->
+      <div class="date-selector mb-4">
+        <button class="date-nav-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <div class="date-chips">
+          <button class="date-chip">
+            <span class="day">Thu</span>
+            <span class="date">9</span>
+          </button>
+          <button class="date-chip active">
+            <span class="day">Fri</span>
+            <span class="date">10</span>
+          </button>
+          <button class="date-chip">
+            <span class="day">Sat</span>
+            <span class="date">11</span>
+          </button>
+          <button class="date-chip">
+            <span class="day">Sun</span>
+            <span class="date">12</span>
+          </button>
+          <button class="date-chip">
+            <span class="day">Mon</span>
+            <span class="date">13</span>
+          </button>
+        </div>
+        <button class="date-nav-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Classes List -->
+      <div class="space-y-3">
+        <!-- Class Card 1 -->
+        <div class="card class-card">
+          <div class="card-body">
+            <div class="flex items-start gap-3">
+              <div class="class-time-block">
+                <span class="time">09:00</span>
+                <span class="period">AM</span>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <h4 class="font-semibold">Yoga Flow</h4>
+                    <p class="text-sm text-muted">60 min</p>
+                  </div>
+                  <span class="spots-badge available" data-en="5 spots left" data-ar="5 اماكن متبقية">5 spots left</span>
+                </div>
+                <div class="flex items-center gap-2 mt-2 text-sm text-muted">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>Sarah Ahmed</span>
+                </div>
+                <div class="flex items-center gap-2 mt-1 text-sm text-muted">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span data-en="Studio A" data-ar="استديو أ">Studio A</span>
+                </div>
+                <button class="btn btn-primary btn-sm mt-3 w-full" onclick="showToast('Class booked successfully!', 'success')" data-en="Book Now" data-ar="احجز الان">Book Now</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Class Card 2 -->
+        <div class="card class-card">
+          <div class="card-body">
+            <div class="flex items-start gap-3">
+              <div class="class-time-block">
+                <span class="time">10:30</span>
+                <span class="period">AM</span>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <h4 class="font-semibold">Spinning</h4>
+                    <p class="text-sm text-muted">45 min</p>
+                  </div>
+                  <span class="spots-badge warning" data-en="2 spots left" data-ar="مكانان متبقيان">2 spots left</span>
+                </div>
+                <div class="flex items-center gap-2 mt-2 text-sm text-muted">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>Omar Hassan</span>
+                </div>
+                <div class="flex items-center gap-2 mt-1 text-sm text-muted">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span data-en="Cycling Room" data-ar="غرفة السايكل">Cycling Room</span>
+                </div>
+                <button class="btn btn-primary btn-sm mt-3 w-full" onclick="showToast('Class booked successfully!', 'success')" data-en="Book Now" data-ar="احجز الان">Book Now</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Class Card 3 - Full -->
+        <div class="card class-card">
+          <div class="card-body">
+            <div class="flex items-start gap-3">
+              <div class="class-time-block">
+                <span class="time">12:00</span>
+                <span class="period">PM</span>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <h4 class="font-semibold">CrossFit</h4>
+                    <p class="text-sm text-muted">60 min</p>
+                  </div>
+                  <span class="spots-badge full" data-en="Full" data-ar="ممتلئ">Full</span>
+                </div>
+                <div class="flex items-center gap-2 mt-2 text-sm text-muted">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>Khalid Al-Farsi</span>
+                </div>
+                <div class="flex items-center gap-2 mt-1 text-sm text-muted">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span data-en="Main Gym" data-ar="الصالة الرئيسية">Main Gym</span>
+                </div>
+                <button class="btn btn-secondary btn-sm mt-3 w-full" onclick="showToast('Added to waitlist', 'success')" data-en="Join Waitlist" data-ar="انضم لقائمة الانتظار">Join Waitlist</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Class Card 4 -->
+        <div class="card class-card">
+          <div class="card-body">
+            <div class="flex items-start gap-3">
+              <div class="class-time-block">
+                <span class="time">06:00</span>
+                <span class="period">PM</span>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <h4 class="font-semibold">HIIT Training</h4>
+                    <p class="text-sm text-muted">45 min</p>
+                  </div>
+                  <span class="spots-badge available" data-en="8 spots left" data-ar="8 اماكن متبقية">8 spots left</span>
+                </div>
+                <div class="flex items-center gap-2 mt-2 text-sm text-muted">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>Fatima Al-Rashid</span>
+                </div>
+                <div class="flex items-center gap-2 mt-1 text-sm text-muted">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span data-en="Studio B" data-ar="استديو ب">Studio B</span>
+                </div>
+                <button class="btn btn-primary btn-sm mt-3 w-full" onclick="showToast('Class booked successfully!', 'success')" data-en="Book Now" data-ar="احجز الان">Book Now</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Class Card 5 -->
+        <div class="card class-card">
+          <div class="card-body">
+            <div class="flex items-start gap-3">
+              <div class="class-time-block">
+                <span class="time">07:30</span>
+                <span class="period">PM</span>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <h4 class="font-semibold">Strength Training</h4>
+                    <p class="text-sm text-muted">60 min</p>
+                  </div>
+                  <span class="spots-badge available" data-en="10 spots left" data-ar="10 اماكن متبقية">10 spots left</span>
+                </div>
+                <div class="flex items-center gap-2 mt-2 text-sm text-muted">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>Ahmed Mohammed</span>
+                </div>
+                <div class="flex items-center gap-2 mt-1 text-sm text-muted">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span data-en="Weight Room" data-ar="غرفة الاثقال">Weight Room</span>
+                </div>
+                <button class="btn btn-primary btn-sm mt-3 w-full" onclick="showToast('Class booked successfully!', 'success')" data-en="Book Now" data-ar="احجز الان">Book Now</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Bookings Tab -->
+    <div id="myBookings" class="tab-content">
+      <!-- Upcoming Bookings -->
+      <div class="mb-6">
+        <h3 class="text-sm font-semibold text-muted uppercase mb-3" data-en="Upcoming" data-ar="القادمة">Upcoming</h3>
+        <div class="space-y-3">
+          <!-- Booking 1 -->
+          <div class="card">
+            <div class="card-body">
+              <div class="flex items-start justify-between">
+                <div class="flex items-start gap-3">
+                  <div class="class-time-block small">
+                    <span class="day">Jan</span>
+                    <span class="date-num">10</span>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold">Yoga Flow</h4>
+                    <p class="text-sm text-muted">09:00 AM - 10:00 AM</p>
+                    <p class="text-sm text-muted" data-en="Studio A" data-ar="استديو أ">Studio A</p>
+                  </div>
+                </div>
+                <span class="status-badge success" data-en="Confirmed" data-ar="مؤكد">Confirmed</span>
+              </div>
+              <div class="flex gap-2 mt-3">
+                <button class="btn btn-secondary btn-sm flex-1" onclick="openModal('cancelModal')" data-en="Cancel" data-ar="الغاء">Cancel</button>
+                <button class="btn btn-primary btn-sm flex-1" data-en="View Details" data-ar="عرض التفاصيل">View Details</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Booking 2 -->
+          <div class="card">
+            <div class="card-body">
+              <div class="flex items-start justify-between">
+                <div class="flex items-start gap-3">
+                  <div class="class-time-block small">
+                    <span class="day">Jan</span>
+                    <span class="date-num">12</span>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold">HIIT Training</h4>
+                    <p class="text-sm text-muted">06:00 PM - 07:00 PM</p>
+                    <p class="text-sm text-muted" data-en="Studio B" data-ar="استديو ب">Studio B</p>
+                  </div>
+                </div>
+                <span class="status-badge success" data-en="Confirmed" data-ar="مؤكد">Confirmed</span>
+              </div>
+              <div class="flex gap-2 mt-3">
+                <button class="btn btn-secondary btn-sm flex-1" onclick="openModal('cancelModal')" data-en="Cancel" data-ar="الغاء">Cancel</button>
+                <button class="btn btn-primary btn-sm flex-1" data-en="View Details" data-ar="عرض التفاصيل">View Details</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Booking 3 - Waitlisted -->
+          <div class="card">
+            <div class="card-body">
+              <div class="flex items-start justify-between">
+                <div class="flex items-start gap-3">
+                  <div class="class-time-block small">
+                    <span class="day">Jan</span>
+                    <span class="date-num">14</span>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold">CrossFit</h4>
+                    <p class="text-sm text-muted">12:00 PM - 01:00 PM</p>
+                    <p class="text-sm text-muted" data-en="Main Gym" data-ar="الصالة الرئيسية">Main Gym</p>
+                  </div>
+                </div>
+                <span class="status-badge warning" data-en="Waitlist #2" data-ar="قائمة الانتظار #2">Waitlist #2</span>
+              </div>
+              <div class="flex gap-2 mt-3">
+                <button class="btn btn-secondary btn-sm flex-1" onclick="openModal('cancelModal')" data-en="Leave Waitlist" data-ar="مغادرة القائمة">Leave Waitlist</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Past Bookings -->
+      <div>
+        <h3 class="text-sm font-semibold text-muted uppercase mb-3" data-en="Past" data-ar="السابقة">Past</h3>
+        <div class="space-y-3">
+          <!-- Past Booking 1 -->
+          <div class="card opacity-75">
+            <div class="card-body">
+              <div class="flex items-start justify-between">
+                <div class="flex items-start gap-3">
+                  <div class="class-time-block small past">
+                    <span class="day">Jan</span>
+                    <span class="date-num">8</span>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold">Spinning</h4>
+                    <p class="text-sm text-muted">10:30 AM - 11:15 AM</p>
+                    <p class="text-sm text-muted" data-en="Cycling Room" data-ar="غرفة السايكل">Cycling Room</p>
+                  </div>
+                </div>
+                <span class="status-badge" data-en="Attended" data-ar="حضر">Attended</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Past Booking 2 -->
+          <div class="card opacity-75">
+            <div class="card-body">
+              <div class="flex items-start justify-between">
+                <div class="flex items-start gap-3">
+                  <div class="class-time-block small past">
+                    <span class="day">Jan</span>
+                    <span class="date-num">5</span>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold">Yoga Flow</h4>
+                    <p class="text-sm text-muted">09:00 AM - 10:00 AM</p>
+                    <p class="text-sm text-muted" data-en="Studio A" data-ar="استديو أ">Studio A</p>
+                  </div>
+                </div>
+                <span class="status-badge" data-en="Attended" data-ar="حضر">Attended</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Past Booking 3 - Cancelled -->
+          <div class="card opacity-75">
+            <div class="card-body">
+              <div class="flex items-start justify-between">
+                <div class="flex items-start gap-3">
+                  <div class="class-time-block small past">
+                    <span class="day">Jan</span>
+                    <span class="date-num">3</span>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold">HIIT Training</h4>
+                    <p class="text-sm text-muted">06:00 PM - 06:45 PM</p>
+                    <p class="text-sm text-muted" data-en="Studio B" data-ar="استديو ب">Studio B</p>
+                  </div>
+                </div>
+                <span class="status-badge danger" data-en="Cancelled" data-ar="ملغي">Cancelled</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Cancel Booking Modal -->
+  <div id="cancelModal" class="modal-overlay" onclick="closeModal('cancelModal')">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title" data-en="Cancel Booking" data-ar="الغاء الحجز">Cancel Booking</h3>
+        <button class="modal-close" onclick="closeModal('cancelModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-center mb-4" data-en="Are you sure you want to cancel this booking?" data-ar="هل انت متاكد من الغاء هذا الحجز؟">Are you sure you want to cancel this booking?</p>
+        <div class="card bg-gray-50">
+          <div class="card-body">
+            <h4 class="font-semibold">Yoga Flow</h4>
+            <p class="text-sm text-muted">Jan 10, 2026 - 09:00 AM</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('cancelModal')" data-en="Keep Booking" data-ar="ابقاء الحجز">Keep Booking</button>
+        <button class="btn btn-danger" onclick="closeModal('cancelModal'); showToast('Booking cancelled', 'success')" data-en="Cancel Booking" data-ar="الغاء الحجز">Cancel Booking</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="member-nav">
+    <a href="member-home.html" class="nav-tab">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+      </svg>
+      <span data-en="Home" data-ar="الرئيسية">Home</span>
+    </a>
+    <a href="member-bookings.html" class="nav-tab active">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+      <span data-en="Classes" data-ar="الحصص">Classes</span>
+    </a>
+    <a href="member-qr.html" class="nav-tab qr-tab">
+      <div class="qr-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h2M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+        </svg>
+      </div>
+    </a>
+    <a href="member-invoices.html" class="nav-tab">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+      <span data-en="Invoices" data-ar="الفواتير">Invoices</span>
+    </a>
+    <a href="member-profile.html" class="nav-tab">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+      <span data-en="Profile" data-ar="الملف">Profile</span>
+    </a>
+  </nav>
+
+  <script src="js/app.js"></script>
+  <script>
+    function switchTab(btn, tabId) {
+      // Update tab buttons
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+    }
+  </script>
+</body>
+</html>

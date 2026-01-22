@@ -27,15 +27,21 @@ data class LoginRequest(
     @field:NotBlank(message = "Password is required")
     val password: String,
 
-    @field:NotNull(message = "Tenant ID is required")
-    val tenantId: UUID,
+    /**
+     * Tenant ID can be optional when accessed via subdomain.
+     * If null, the tenant will be resolved from the subdomain.
+     */
+    val tenantId: UUID? = null,
 
     val deviceInfo: String? = null
 ) {
-    fun toCommand() = LoginCommand(
+    /**
+     * Creates a command with the provided tenant ID (from subdomain resolution).
+     */
+    fun toCommand(resolvedTenantId: UUID) = LoginCommand(
         email = email,
         password = password,
-        tenantId = tenantId,
+        tenantId = resolvedTenantId,
         deviceInfo = deviceInfo
     )
 }
@@ -141,11 +147,11 @@ data class AuthResponse(
     val user: UserResponse
 ) {
     companion object {
-        fun from(result: AuthResult) = AuthResponse(
+        fun from(result: AuthResult, organizationId: UUID? = null, permissions: List<String> = emptyList()) = AuthResponse(
             accessToken = result.accessToken,
             refreshToken = result.refreshToken,
             expiresIn = result.expiresIn,
-            user = UserResponse.from(result.user)
+            user = UserResponse.from(result.user, organizationId, permissions)
         )
     }
 }
@@ -157,21 +163,61 @@ data class UserResponse(
     val role: Role,
     val status: UserStatus,
     val memberId: UUID?,
+    val tenantId: UUID?,
+    val organizationId: UUID?,
+    val isPlatformUser: Boolean,
+    val permissions: List<String>,
     val lastLoginAt: Instant?,
     val createdAt: Instant,
     val updatedAt: Instant
 ) {
     companion object {
-        fun from(user: User) = UserResponse(
+        /**
+         * Creates a UserResponse from a User entity.
+         * @param user The user entity
+         * @param organizationId Optional organization ID (looked up from club if needed)
+         * @param permissions Optional list of permission codes
+         */
+        fun from(user: User, organizationId: UUID? = null, permissions: List<String> = emptyList()) = UserResponse(
             id = user.id,
             email = user.email,
             displayName = LocalizedTextResponse.from(user.displayName),
             role = user.role,
             status = user.status,
             memberId = user.memberId,
+            tenantId = if (user.isPlatformUser) null else user.tenantId,
+            organizationId = organizationId,
+            isPlatformUser = user.isPlatformUser,
+            permissions = permissions,
             lastLoginAt = user.lastLoginAt,
             createdAt = user.createdAt,
             updatedAt = user.updatedAt
         )
     }
 }
+
+/**
+ * Response for subdomain-based tenant resolution.
+ * Used by frontend to determine if tenant ID field should be shown on login.
+ */
+data class TenantInfoResponse(
+    /**
+     * True if the tenant was resolved from subdomain.
+     */
+    val resolved: Boolean,
+
+    /**
+     * The resolved tenant (club) ID, if resolved is true.
+     */
+    val tenantId: UUID? = null,
+
+    /**
+     * The club name (bilingual).
+     */
+    val clubName: LocalizedTextResponse? = null,
+
+    /**
+     * The subdomain slug used to resolve the tenant.
+     */
+    val slug: String? = null
+)

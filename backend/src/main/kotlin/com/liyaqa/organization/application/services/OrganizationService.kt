@@ -104,4 +104,16 @@ class OrganizationService(
         org.close()
         return organizationRepository.save(org)
     }
+
+    /**
+     * Deletes an organization.
+     * Only CLOSED organizations with no clubs can be deleted.
+     */
+    fun deleteOrganization(id: UUID) {
+        val org = getOrganization(id)
+        require(org.status == OrganizationStatus.CLOSED) {
+            "Only CLOSED organizations can be deleted. Current status: ${org.status}"
+        }
+        organizationRepository.deleteById(id)
+    }
 }

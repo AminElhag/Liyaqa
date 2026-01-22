@@ -1,6 +1,9 @@
 package com.liyaqa.membership.domain.model
 
 import com.liyaqa.shared.domain.BaseEntity
+import com.liyaqa.shared.domain.LocalizedText
+import jakarta.persistence.AttributeOverride
+import jakarta.persistence.AttributeOverrides
 import jakarta.persistence.Column
 import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
@@ -26,11 +29,19 @@ class Member(
     @Column(name = "user_id")
     var userId: UUID? = null,
 
-    @Column(name = "first_name", nullable = false)
-    var firstName: String,
+    @Embedded
+    @AttributeOverrides(
+        AttributeOverride(name = "en", column = Column(name = "first_name_en", nullable = true)),
+        AttributeOverride(name = "ar", column = Column(name = "first_name_ar"))
+    )
+    var firstName: LocalizedText,
 
-    @Column(name = "last_name", nullable = false)
-    var lastName: String,
+    @Embedded
+    @AttributeOverrides(
+        AttributeOverride(name = "en", column = Column(name = "last_name_en", nullable = true)),
+        AttributeOverride(name = "ar", column = Column(name = "last_name_ar"))
+    )
+    var lastName: LocalizedText,
 
     @Column(name = "email", nullable = false)
     var email: String,
@@ -55,12 +66,51 @@ class Member(
     var emergencyContactPhone: String? = null,
 
     @Column(name = "notes", columnDefinition = "TEXT")
-    var notes: String? = null
+    var notes: String? = null,
+
+    // New fields for enhanced registration
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gender")
+    var gender: Gender? = null,
+
+    @Column(name = "nationality")
+    var nationality: String? = null,
+
+    @Column(name = "national_id")
+    var nationalId: String? = null,
+
+    @Column(name = "registration_notes", columnDefinition = "TEXT")
+    var registrationNotes: String? = null,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "preferred_language")
+    var preferredLanguage: Language = Language.EN,
+
+    // WhatsApp communication preferences (Saudi market)
+    @Column(name = "whatsapp_opted_in")
+    var whatsappOptedIn: Boolean = false,
+
+    @Column(name = "whatsapp_number")
+    var whatsappNumber: String? = null
 
 ) : BaseEntity(id) {
 
-    val fullName: String
-        get() = "$firstName $lastName"
+    val fullName: LocalizedText
+        get() {
+            // Build English full name (use Arabic fallback if English is empty)
+            val enFirst = firstName.en.ifBlank { firstName.ar ?: "" }
+            val enLast = lastName.en.ifBlank { lastName.ar ?: "" }
+            val fullEn = listOf(enFirst, enLast).filter { it.isNotBlank() }.joinToString(" ")
+
+            // Build Arabic full name
+            val fullAr = if (firstName.ar != null || lastName.ar != null) {
+                val arFirst = firstName.ar ?: firstName.en
+                val arLast = lastName.ar ?: lastName.en
+                listOf(arFirst, arLast).filter { it.isNotBlank() }.joinToString(" ")
+            } else null
+
+            return LocalizedText(en = fullEn, ar = fullAr)
+        }
 
     fun activate() {
         require(status != MemberStatus.ACTIVE) { "Member is already active" }
@@ -105,6 +155,16 @@ class Member(
      * Checks if this member has a linked user account.
      */
     fun hasUserAccount(): Boolean = userId != null
+
+    /**
+     * Calculates the member's current age based on date of birth.
+     * @return Age in years, or null if date of birth is not set
+     */
+    fun getAge(): Int? {
+        val dob = dateOfBirth ?: return null
+        val today = LocalDate.now()
+        return java.time.Period.between(dob, today).years
+    }
 }
 
 enum class MemberStatus {
@@ -113,4 +173,14 @@ enum class MemberStatus {
     FROZEN,
     CANCELLED,
     PENDING
+}
+
+enum class Gender {
+    MALE,
+    FEMALE
+}
+
+enum class Language {
+    EN,
+    AR
 }

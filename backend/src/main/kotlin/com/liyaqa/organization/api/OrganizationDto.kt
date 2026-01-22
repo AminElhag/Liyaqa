@@ -132,11 +132,28 @@ data class UpdateClubRequest(
     val descriptionAr: String? = null
 )
 
+/**
+ * Request to update a club's subdomain slug.
+ */
+data class UpdateSlugRequest(
+    @field:jakarta.validation.constraints.NotBlank(message = "Slug is required")
+    @field:jakarta.validation.constraints.Size(min = 3, max = 63, message = "Slug must be 3-63 characters")
+    @field:jakarta.validation.constraints.Pattern(
+        regexp = "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+        message = "Slug must be lowercase alphanumeric with hyphens, cannot start/end with hyphen"
+    )
+    val slug: String
+)
+
 data class ClubResponse(
     val id: UUID,
     val organizationId: UUID,
     val name: LocalizedTextResponse,
     val description: LocalizedTextResponse?,
+    /**
+     * Subdomain slug for this club (e.g., "fitness-gym" for fitness-gym.liyaqa.com).
+     */
+    val slug: String?,
     val status: ClubStatus,
     val createdAt: Instant,
     val updatedAt: Instant
@@ -147,6 +164,7 @@ data class ClubResponse(
             organizationId = club.organizationId,
             name = LocalizedTextResponse.from(club.name),
             description = LocalizedTextResponse.fromNullable(club.description),
+            slug = club.slug,
             status = club.status,
             createdAt = club.createdAt,
             updatedAt = club.updatedAt

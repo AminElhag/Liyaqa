@@ -98,17 +98,17 @@ data class RecordPaymentRequest(
     @field:Positive(message = "Amount must be positive")
     val amount: BigDecimal,
 
-    val currency: String = "SAR",
+    val currency: String? = null,  // Nullable for Jackson 3.0 compatibility
 
     @field:NotNull(message = "Payment method is required")
     val paymentMethod: PaymentMethod,
 
-    val reference: String? = null
+    val paymentReference: String? = null
 ) {
     fun toCommand() = RecordPaymentCommand(
-        amount = Money.of(amount, currency),
+        amount = Money.of(amount, currency ?: "SAR"),  // Default applied here
         paymentMethod = paymentMethod,
-        reference = reference
+        reference = paymentReference
     )
 }
 
@@ -127,6 +127,8 @@ data class InvoiceResponse(
     val id: UUID,
     val invoiceNumber: String,
     val memberId: UUID,
+    val memberName: LocalizedTextResponse?,
+    val memberEmail: String?,
     val subscriptionId: UUID?,
     val status: InvoiceStatus,
     val issueDate: LocalDate?,
@@ -146,10 +148,16 @@ data class InvoiceResponse(
     val updatedAt: Instant
 ) {
     companion object {
-        fun from(invoice: Invoice) = InvoiceResponse(
+        fun from(
+            invoice: Invoice,
+            memberName: LocalizedTextResponse? = null,
+            memberEmail: String? = null
+        ) = InvoiceResponse(
             id = invoice.id,
             invoiceNumber = invoice.invoiceNumber,
             memberId = invoice.memberId,
+            memberName = memberName,
+            memberEmail = memberEmail,
             subscriptionId = invoice.subscriptionId,
             status = invoice.status,
             issueDate = invoice.issueDate,

@@ -28,7 +28,7 @@ class MembershipPlanController(
      * Creates a new membership plan.
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CLUB_ADMIN')")
+    @PreAuthorize("hasAuthority('plans_create')")
     fun createPlan(@Valid @RequestBody request: CreateMembershipPlanRequest): ResponseEntity<MembershipPlanResponse> {
         val plan = membershipPlanService.createPlan(request.toCommand())
         return ResponseEntity.status(HttpStatus.CREATED).body(MembershipPlanResponse.from(plan))
@@ -38,24 +38,31 @@ class MembershipPlanController(
      * Gets a membership plan by ID.
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('plans_view')")
     fun getPlan(@PathVariable id: UUID): ResponseEntity<MembershipPlanResponse> {
         val plan = membershipPlanService.getPlan(id)
         return ResponseEntity.ok(MembershipPlanResponse.from(plan))
     }
 
     /**
-     * Lists all membership plans.
+     * Lists all membership plans with optional filtering by active status.
      */
     @GetMapping
+    @PreAuthorize("hasAuthority('plans_view')")
     fun getAllPlans(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
         @RequestParam(defaultValue = "sortOrder") sortBy: String,
-        @RequestParam(defaultValue = "ASC") sortDirection: String
+        @RequestParam(defaultValue = "ASC") sortDirection: String,
+        @RequestParam(required = false) active: Boolean?
     ): ResponseEntity<PageResponse<MembershipPlanResponse>> {
         val sort = Sort.by(Sort.Direction.valueOf(sortDirection.uppercase()), sortBy)
         val pageable = PageRequest.of(page, size, sort)
-        val plansPage = membershipPlanService.getAllPlans(pageable)
+        val plansPage = if (active != null) {
+            membershipPlanService.getPlansByActiveStatus(active, pageable)
+        } else {
+            membershipPlanService.getAllPlans(pageable)
+        }
 
         return ResponseEntity.ok(
             PageResponse(
@@ -74,6 +81,7 @@ class MembershipPlanController(
      * Lists only active membership plans.
      */
     @GetMapping("/active")
+    @PreAuthorize("hasAuthority('plans_view')")
     fun getActivePlans(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
@@ -101,7 +109,7 @@ class MembershipPlanController(
      * Updates a membership plan.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CLUB_ADMIN')")
+    @PreAuthorize("hasAuthority('plans_update')")
     fun updatePlan(
         @PathVariable id: UUID,
         @Valid @RequestBody request: UpdateMembershipPlanRequest
@@ -114,7 +122,7 @@ class MembershipPlanController(
      * Activates a membership plan.
      */
     @PostMapping("/{id}/activate")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CLUB_ADMIN')")
+    @PreAuthorize("hasAuthority('plans_update')")
     fun activatePlan(@PathVariable id: UUID): ResponseEntity<MembershipPlanResponse> {
         val plan = membershipPlanService.activatePlan(id)
         return ResponseEntity.ok(MembershipPlanResponse.from(plan))
@@ -124,7 +132,7 @@ class MembershipPlanController(
      * Deactivates a membership plan.
      */
     @PostMapping("/{id}/deactivate")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CLUB_ADMIN')")
+    @PreAuthorize("hasAuthority('plans_update')")
     fun deactivatePlan(@PathVariable id: UUID): ResponseEntity<MembershipPlanResponse> {
         val plan = membershipPlanService.deactivatePlan(id)
         return ResponseEntity.ok(MembershipPlanResponse.from(plan))
@@ -134,7 +142,7 @@ class MembershipPlanController(
      * Deletes a membership plan.
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('plans_delete')")
     fun deletePlan(@PathVariable id: UUID): ResponseEntity<Unit> {
         membershipPlanService.deletePlan(id)
         return ResponseEntity.noContent().build()

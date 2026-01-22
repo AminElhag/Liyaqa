@@ -2,6 +2,7 @@ package com.liyaqa.auth.infrastructure.security
 
 import com.liyaqa.auth.domain.model.Role
 import com.liyaqa.auth.domain.model.User
+import com.liyaqa.platform.domain.model.PlatformUser
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.JwtException
@@ -36,6 +37,9 @@ class JwtTokenProvider(
         private const val CLAIM_ROLE = "role"
         private const val CLAIM_EMAIL = "email"
         private const val CLAIM_TOKEN_TYPE = "type"
+        private const val CLAIM_IS_PLATFORM_USER = "is_platform_user"
+        private const val CLAIM_PLATFORM_ORG_ID = "platform_org_id"
+        private const val CLAIM_PERMISSIONS = "permissions"
         private const val TOKEN_TYPE_ACCESS = "access"
         private const val TOKEN_TYPE_REFRESH = "refresh"
     }
@@ -44,15 +48,31 @@ class JwtTokenProvider(
      * Generates an access token for the given user.
      */
     fun generateAccessToken(user: User): String {
+        return generateAccessToken(user, emptyList())
+    }
+
+    /**
+     * Generates an access token for the given user with permissions.
+     */
+    fun generateAccessToken(user: User, permissions: List<String>): String {
         val now = Instant.now()
         val expiry = now.plusMillis(accessTokenExpiration)
 
-        return Jwts.builder()
+        val builder = Jwts.builder()
             .subject(user.id.toString())
             .claim(CLAIM_TENANT_ID, user.tenantId.toString())
             .claim(CLAIM_ROLE, user.role.name)
             .claim(CLAIM_EMAIL, user.email)
             .claim(CLAIM_TOKEN_TYPE, TOKEN_TYPE_ACCESS)
+            .claim(CLAIM_IS_PLATFORM_USER, user.isPlatformUser)
+            .claim(CLAIM_PERMISSIONS, permissions)
+
+        // Add platform organization ID if user is a platform user
+        if (user.isPlatformUser && user.platformOrganizationId != null) {
+            builder.claim(CLAIM_PLATFORM_ORG_ID, user.platformOrganizationId.toString())
+        }
+
+        return builder
             .issuedAt(Date.from(now))
             .expiration(Date.from(expiry))
             .signWith(key)
@@ -70,6 +90,48 @@ class JwtTokenProvider(
         val token = Jwts.builder()
             .subject(user.id.toString())
             .claim(CLAIM_TENANT_ID, user.tenantId.toString())
+            .claim(CLAIM_TOKEN_TYPE, TOKEN_TYPE_REFRESH)
+            .issuedAt(Date.from(now))
+            .expiration(Date.from(expiry))
+            .signWith(key)
+            .compact()
+
+        val tokenHash = hashToken(token)
+        return Pair(token, tokenHash)
+    }
+
+    /**
+     * Generates an access token for a platform user.
+     */
+    fun generatePlatformAccessToken(user: PlatformUser): String {
+        val now = Instant.now()
+        val expiry = now.plusMillis(accessTokenExpiration)
+
+        return Jwts.builder()
+            .subject(user.id.toString())
+            .claim(CLAIM_TENANT_ID, user.id.toString()) // Platform users use their own ID
+            .claim(CLAIM_ROLE, user.role.name)
+            .claim(CLAIM_EMAIL, user.email)
+            .claim(CLAIM_TOKEN_TYPE, TOKEN_TYPE_ACCESS)
+            .claim(CLAIM_IS_PLATFORM_USER, true)
+            .claim(CLAIM_PERMISSIONS, emptyList<String>())
+            .issuedAt(Date.from(now))
+            .expiration(Date.from(expiry))
+            .signWith(key)
+            .compact()
+    }
+
+    /**
+     * Generates a refresh token for a platform user.
+     * Returns a pair of (token, tokenHash) where tokenHash should be stored in the database.
+     */
+    fun generatePlatformRefreshToken(user: PlatformUser): Pair<String, String> {
+        val now = Instant.now()
+        val expiry = now.plusMillis(refreshTokenExpiration)
+
+        val token = Jwts.builder()
+            .subject(user.id.toString())
+            .claim(CLAIM_TENANT_ID, user.id.toString())
             .claim(CLAIM_TOKEN_TYPE, TOKEN_TYPE_REFRESH)
             .issuedAt(Date.from(now))
             .expiration(Date.from(expiry))
@@ -150,6 +212,33 @@ class JwtTokenProvider(
     fun extractEmail(token: String): String {
         val claims = parseToken(token)
         return claims[CLAIM_EMAIL] as String
+    }
+
+    /**
+     * Extracts whether the user is a platform user from the token.
+     */
+    fun extractIsPlatformUser(token: String): Boolean {
+        val claims = parseToken(token)
+        return claims[CLAIM_IS_PLATFORM_USER] as? Boolean ?: false
+    }
+
+    /**
+     * Extracts the platform organization ID from the token.
+     * Returns null if not present or if not a platform user.
+     */
+    fun extractPlatformOrganizationId(token: String): UUID? {
+        val claims = parseToken(token)
+        val platformOrgId = claims[CLAIM_PLATFORM_ORG_ID] as? String
+        return platformOrgId?.let { UUID.fromString(it) }
+    }
+
+    /**
+     * Extracts the permissions from the token.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun extractPermissions(token: String): List<String> {
+        val claims = parseToken(token)
+        return claims[CLAIM_PERMISSIONS] as? List<String> ?: emptyList()
     }
 
     /**

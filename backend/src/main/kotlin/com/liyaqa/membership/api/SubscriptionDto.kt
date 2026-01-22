@@ -3,8 +3,10 @@ package com.liyaqa.membership.api
 import com.liyaqa.membership.application.commands.CreateSubscriptionCommand
 import com.liyaqa.membership.application.commands.RenewSubscriptionCommand
 import com.liyaqa.membership.application.commands.UpdateSubscriptionCommand
+import com.liyaqa.membership.domain.model.MembershipPlan
 import com.liyaqa.membership.domain.model.Subscription
 import com.liyaqa.membership.domain.model.SubscriptionStatus
+import com.liyaqa.organization.api.LocalizedTextResponse
 import com.liyaqa.shared.domain.Money
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Positive
@@ -87,6 +89,7 @@ data class SubscriptionResponse(
     val id: UUID,
     val memberId: UUID,
     val planId: UUID,
+    val planName: LocalizedTextResponse?,
     val status: SubscriptionStatus,
     val startDate: LocalDate,
     val endDate: LocalDate,
@@ -99,14 +102,16 @@ data class SubscriptionResponse(
     val notes: String?,
     val isActive: Boolean,
     val daysRemaining: Long,
+    val invoiceId: UUID? = null,
     val createdAt: Instant,
     val updatedAt: Instant
 ) {
     companion object {
-        fun from(subscription: Subscription) = SubscriptionResponse(
+        fun from(subscription: Subscription, plan: MembershipPlan? = null, invoiceId: UUID? = null) = SubscriptionResponse(
             id = subscription.id,
             memberId = subscription.memberId,
             planId = subscription.planId,
+            planName = plan?.let { LocalizedTextResponse.from(it.name) },
             status = subscription.status,
             startDate = subscription.startDate,
             endDate = subscription.endDate,
@@ -119,6 +124,7 @@ data class SubscriptionResponse(
             notes = subscription.notes,
             isActive = subscription.isActive(),
             daysRemaining = subscription.daysRemaining(),
+            invoiceId = invoiceId,
             createdAt = subscription.createdAt,
             updatedAt = subscription.updatedAt
         )

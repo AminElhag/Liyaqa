@@ -13,6 +13,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.Filter
 import org.hibernate.annotations.FilterDef
 import org.hibernate.annotations.ParamDef
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -66,7 +67,74 @@ class Subscription(
     var frozenAt: LocalDate? = null,
 
     @Column(name = "notes", columnDefinition = "TEXT")
-    var notes: String? = null
+    var notes: String? = null,
+
+    // ==========================================
+    // DISCOUNT FIELDS
+    // ==========================================
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "discount_type")
+    var discountType: DiscountType? = null,
+
+    @Column(name = "discount_value", precision = 10, scale = 2)
+    var discountValue: BigDecimal? = null,
+
+    @Column(name = "discount_reason")
+    var discountReason: String? = null,
+
+    @Column(name = "discount_applied_by_user_id")
+    var discountAppliedByUserId: UUID? = null,
+
+    @Embedded
+    @AttributeOverrides(
+        AttributeOverride(name = "amount", column = Column(name = "original_price")),
+        AttributeOverride(name = "currency", column = Column(name = "original_currency"))
+    )
+    var originalPrice: Money? = null,
+
+    @Embedded
+    @AttributeOverrides(
+        AttributeOverride(name = "amount", column = Column(name = "final_price")),
+        AttributeOverride(name = "currency", column = Column(name = "final_currency"))
+    )
+    var finalPrice: Money? = null,
+
+    // ==========================================
+    // ENHANCED FREEZE TRACKING
+    // ==========================================
+
+    @Column(name = "freeze_reason")
+    var freezeReason: String? = null,
+
+    @Column(name = "freeze_end_date")
+    var freezeEndDate: LocalDate? = null,
+
+    @Column(name = "freeze_document_path")
+    var freezeDocumentPath: String? = null,
+
+    @Column(name = "total_freeze_days_used")
+    var totalFreezeDaysUsed: Int = 0,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "freeze_type")
+    var freezeType: FreezeType? = null,
+
+    // ==========================================
+    // NOTES & ATTRIBUTION
+    // ==========================================
+
+    @Column(name = "contract_notes", columnDefinition = "TEXT")
+    var contractNotes: String? = null,
+
+    @Column(name = "staff_notes", columnDefinition = "TEXT")
+    var staffNotes: String? = null,
+
+    @Column(name = "referred_by_member_id")
+    var referredByMemberId: UUID? = null,
+
+    @Column(name = "sales_rep_user_id")
+    var salesRepUserId: UUID? = null
 
 ) : BaseEntity(id) {
 

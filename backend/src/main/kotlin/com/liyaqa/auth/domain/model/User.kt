@@ -57,7 +57,15 @@ class User(
     var passwordChangedAt: Instant? = null,
 
     @Column(name = "failed_login_attempts", nullable = false)
-    var failedLoginAttempts: Int = 0
+    var failedLoginAttempts: Int = 0,
+
+    /** Indicates if this is a platform (internal Liyaqa team) user */
+    @Column(name = "is_platform_user", nullable = false)
+    var isPlatformUser: Boolean = false,
+
+    /** The platform organization ID for internal users (null for client users) */
+    @Column(name = "platform_organization_id")
+    var platformOrganizationId: UUID? = null
 
 ) : BaseEntity(id) {
 
@@ -136,10 +144,21 @@ class User(
 
     /**
      * Checks if the user has at least the given role level.
+     * Note: Platform roles and client roles are separate hierarchies.
      */
     fun hasRoleAtLeast(requiredRole: Role): Boolean {
         return role.ordinal <= requiredRole.ordinal
     }
+
+    /**
+     * Checks if this user has a platform role.
+     */
+    fun hasPlatformRole(): Boolean = Role.isPlatformRole(role)
+
+    /**
+     * Checks if this user has a client role.
+     */
+    fun hasClientRole(): Boolean = Role.isClientRole(role)
 
     /**
      * Links this user to a member.

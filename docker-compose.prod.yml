@@ -1,0 +1,74 @@
+# ===========================================
+# Liyaqa Production Docker Compose Reference
+# ===========================================
+# This file serves as a reference for production deployment.
+# In production, you typically deploy with orchestration tools
+# or directly via docker run commands.
+#
+# Usage:
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Note: Requires .env file with all production secrets
+
+services:
+  # ===================
+  # Liyaqa Backend API
+  # ===================
+  backend:
+    image: ghcr.io/aminelhag/liyaqa/liyaqa-backend:${IMAGE_TAG:-latest}
+    container_name: liyaqa-backend-prod
+    restart: always
+    environment:
+      # Spring Profile
+      SPRING_PROFILES_ACTIVE: prod
+
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+
+      # Security
+      JWT_SECRET: ${JWT_SECRET}
+
+      # Email Configuration
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-true}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@liyaqa.com}
+      EMAIL_BASE_URL: ${EMAIL_BASE_URL}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+
+      # SMS Configuration
+      SMS_ENABLED: ${SMS_ENABLED:-false}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+
+      # CORS
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+    ports:
+      - "8080:8080"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+networks:
+  default:
+    name: liyaqa-production

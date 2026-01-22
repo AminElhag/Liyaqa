@@ -23,15 +23,15 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("/api/users")
-@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CLUB_ADMIN')")
 class UserController(
     private val userService: UserService
 ) {
     /**
      * Creates a new user.
-     * Requires CLUB_ADMIN or higher role.
+     * Requires users_create permission.
      */
     @PostMapping
+    @PreAuthorize("hasAuthority('users_create')")
     fun createUser(@Valid @RequestBody request: CreateUserRequest): ResponseEntity<UserResponse> {
         val user = userService.createUser(request.toCommand())
         return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(user))
@@ -39,9 +39,10 @@ class UserController(
 
     /**
      * Gets a user by ID.
-     * Requires CLUB_ADMIN or higher role.
+     * Requires users_view permission.
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('users_view')")
     fun getUser(@PathVariable id: UUID): ResponseEntity<UserResponse> {
         val user = userService.getUser(id)
         return ResponseEntity.ok(UserResponse.from(user))
@@ -49,9 +50,10 @@ class UserController(
 
     /**
      * Lists all users with pagination.
-     * Requires CLUB_ADMIN or higher role.
+     * Requires users_view permission.
      */
     @GetMapping
+    @PreAuthorize("hasAuthority('users_view')")
     fun getAllUsers(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
@@ -77,9 +79,10 @@ class UserController(
 
     /**
      * Lists users by status.
-     * Requires CLUB_ADMIN or higher role.
+     * Requires users_view permission.
      */
     @GetMapping("/status/{status}")
+    @PreAuthorize("hasAuthority('users_view')")
     fun getUsersByStatus(
         @PathVariable status: UserStatus,
         @RequestParam(defaultValue = "0") page: Int,
@@ -103,9 +106,10 @@ class UserController(
 
     /**
      * Lists users by role.
-     * Requires CLUB_ADMIN or higher role.
+     * Requires users_view permission.
      */
     @GetMapping("/role/{role}")
+    @PreAuthorize("hasAuthority('users_view')")
     fun getUsersByRole(
         @PathVariable role: Role,
         @RequestParam(defaultValue = "0") page: Int,
@@ -129,9 +133,10 @@ class UserController(
 
     /**
      * Updates a user.
-     * Requires CLUB_ADMIN or higher role.
+     * Requires users_update permission.
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('users_update')")
     fun updateUser(
         @PathVariable id: UUID,
         @Valid @RequestBody request: UpdateUserRequest
@@ -142,9 +147,10 @@ class UserController(
 
     /**
      * Deactivates a user.
-     * Requires CLUB_ADMIN or higher role.
+     * Requires users_update permission.
      */
     @PostMapping("/{id}/deactivate")
+    @PreAuthorize("hasAuthority('users_update')")
     fun deactivateUser(@PathVariable id: UUID): ResponseEntity<UserResponse> {
         val user = userService.deactivateUser(id)
         return ResponseEntity.ok(UserResponse.from(user))
@@ -152,9 +158,10 @@ class UserController(
 
     /**
      * Activates a deactivated user.
-     * Requires CLUB_ADMIN or higher role.
+     * Requires users_update permission.
      */
     @PostMapping("/{id}/activate")
+    @PreAuthorize("hasAuthority('users_update')")
     fun activateUser(@PathVariable id: UUID): ResponseEntity<UserResponse> {
         val user = userService.activateUser(id)
         return ResponseEntity.ok(UserResponse.from(user))
@@ -162,9 +169,10 @@ class UserController(
 
     /**
      * Unlocks a locked user.
-     * Requires CLUB_ADMIN or higher role.
+     * Requires users_update permission.
      */
     @PostMapping("/{id}/unlock")
+    @PreAuthorize("hasAuthority('users_update')")
     fun unlockUser(@PathVariable id: UUID): ResponseEntity<UserResponse> {
         val user = userService.unlockUser(id)
         return ResponseEntity.ok(UserResponse.from(user))
@@ -172,10 +180,10 @@ class UserController(
 
     /**
      * Deletes a user.
-     * Requires SUPER_ADMIN role.
+     * Requires users_delete permission.
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('users_delete')")
     fun deleteUser(@PathVariable id: UUID): ResponseEntity<Unit> {
         userService.deleteUser(id)
         return ResponseEntity.noContent().build()
@@ -183,9 +191,10 @@ class UserController(
 
     /**
      * Links a user to a member.
-     * Requires CLUB_ADMIN or higher role.
+     * Requires users_update permission.
      */
     @PostMapping("/{id}/link-member")
+    @PreAuthorize("hasAuthority('users_update')")
     fun linkToMember(
         @PathVariable id: UUID,
         @Valid @RequestBody request: LinkMemberRequest
@@ -196,9 +205,10 @@ class UserController(
 
     /**
      * Unlinks a user from their member.
-     * Requires CLUB_ADMIN or higher role.
+     * Requires users_update permission.
      */
     @PostMapping("/{id}/unlink-member")
+    @PreAuthorize("hasAuthority('users_update')")
     fun unlinkMember(@PathVariable id: UUID): ResponseEntity<UserResponse> {
         val user = userService.unlinkMember(id)
         return ResponseEntity.ok(UserResponse.from(user))

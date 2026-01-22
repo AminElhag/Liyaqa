@@ -7,6 +7,7 @@ import com.liyaqa.auth.domain.model.User
 import com.liyaqa.auth.domain.model.UserStatus
 import com.liyaqa.auth.domain.ports.RefreshTokenRepository
 import com.liyaqa.auth.domain.ports.UserRepository
+import com.liyaqa.shared.application.services.PermissionService
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -19,7 +20,8 @@ import java.util.UUID
 class UserService(
     private val userRepository: UserRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
-    private val passwordEncoder: PasswordEncoder
+    private val passwordEncoder: PasswordEncoder,
+    private val permissionService: PermissionService
 ) {
     /**
      * Creates a new user (admin operation).
@@ -41,7 +43,12 @@ class UserService(
             memberId = command.memberId
         )
 
-        return userRepository.save(user)
+        val savedUser = userRepository.save(user)
+
+        // Grant default permissions for the user's role
+        permissionService.grantDefaultPermissionsForRole(savedUser.id, savedUser.role.name)
+
+        return savedUser
     }
 
     /**

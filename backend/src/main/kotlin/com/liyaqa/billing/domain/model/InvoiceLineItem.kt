@@ -10,11 +10,13 @@ import jakarta.persistence.Embedded
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.UUID
 
 /**
  * Represents a single line item on an invoice.
  * Embeddable entity that is stored as part of the Invoice.
+ * Supports per-item tax rates for multi-fee invoicing.
  */
 @Embeddable
 data class InvoiceLineItem(
@@ -43,12 +45,35 @@ data class InvoiceLineItem(
     val itemType: LineItemType = LineItemType.OTHER,
 
     @Column(name = "line_sort_order", nullable = false)
-    val sortOrder: Int = 0
+    val sortOrder: Int = 0,
+
+    /**
+     * Per-item tax rate as a percentage (e.g., 15.00 for 15%).
+     * Defaults to 15% (Saudi Arabia VAT rate).
+     */
+    @Column(name = "line_tax_rate", nullable = false)
+    val taxRate: BigDecimal = BigDecimal("15.00")
 ) {
     /**
-     * Calculates the line total (quantity * unit price).
+     * Calculates the line total before tax (quantity * unit price).
      */
     fun lineTotal(): Money {
         return unitPrice * quantity
+    }
+
+    /**
+     * Calculates the tax amount for this line item.
+     */
+    fun lineTaxAmount(): Money {
+        val total = lineTotal()
+        val taxAmount = total.amount.multiply(taxRate).divide(BigDecimal("100"), 2, RoundingMode.HALF_UP)
+        return Money.of(taxAmount, total.currency)
+    }
+
+    /**
+     * Calculates the gross total including tax.
+     */
+    fun lineGrossTotal(): Money {
+        return lineTotal() + lineTaxAmount()
     }
 }

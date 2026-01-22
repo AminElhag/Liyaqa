@@ -93,4 +93,16 @@ class LocationService(
         location.permanentlyClose()
         return locationRepository.save(location)
     }
+
+    /**
+     * Deletes a location.
+     * Only PERMANENTLY_CLOSED locations can be deleted.
+     */
+    fun deleteLocation(id: UUID) {
+        val location = getLocation(id)
+        require(location.status == LocationStatus.PERMANENTLY_CLOSED) {
+            "Only PERMANENTLY_CLOSED locations can be deleted. Current status: ${location.status}"
+        }
+        locationRepository.deleteById(id)
+    }
 }

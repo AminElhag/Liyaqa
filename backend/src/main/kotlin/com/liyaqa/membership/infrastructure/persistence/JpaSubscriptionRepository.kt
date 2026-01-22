@@ -26,10 +26,33 @@ interface SpringDataSubscriptionRepository : JpaRepository<Subscription, UUID> {
     @Query("SELECT s FROM Subscription s WHERE s.status = 'ACTIVE' AND s.endDate <= :date")
     fun findExpiringBefore(@Param("date") date: LocalDate, pageable: Pageable): Page<Subscription>
 
+    @Query("SELECT s FROM Subscription s WHERE s.status = :status AND s.endDate BETWEEN :startDate AND :endDate")
+    fun findByStatusAndEndDateBetween(
+        @Param("status") status: SubscriptionStatus,
+        @Param("startDate") startDate: LocalDate,
+        @Param("endDate") endDate: LocalDate,
+        pageable: Pageable
+    ): Page<Subscription>
+
     @Query("SELECT COUNT(s) > 0 FROM Subscription s WHERE s.memberId = :memberId AND s.status = 'ACTIVE' AND s.endDate >= CURRENT_DATE")
     fun existsActiveByMemberId(@Param("memberId") memberId: UUID): Boolean
 
     fun countByMemberId(memberId: UUID): Long
+
+    fun findByMemberIdAndStatus(memberId: UUID, status: SubscriptionStatus): List<Subscription>
+
+    @Query("""
+        SELECT s FROM Subscription s
+        WHERE (:planId IS NULL OR s.planId = :planId)
+        AND (:status IS NULL OR s.status = :status)
+        AND (:expiringBefore IS NULL OR (s.status = 'ACTIVE' AND s.endDate <= :expiringBefore))
+    """)
+    fun search(
+        @Param("planId") planId: UUID?,
+        @Param("status") status: SubscriptionStatus?,
+        @Param("expiringBefore") expiringBefore: LocalDate?,
+        pageable: Pageable
+    ): Page<Subscription>
 }
 
 @Repository
@@ -61,6 +84,14 @@ class JpaSubscriptionRepository(
     override fun findExpiringBefore(date: LocalDate, pageable: Pageable): Page<Subscription> =
         springDataRepository.findExpiringBefore(date, pageable)
 
+    override fun findByStatusAndEndDateBetween(
+        status: SubscriptionStatus,
+        startDate: LocalDate,
+        endDate: LocalDate,
+        pageable: Pageable
+    ): Page<Subscription> =
+        springDataRepository.findByStatusAndEndDateBetween(status, startDate, endDate, pageable)
+
     override fun existsById(id: UUID): Boolean =
         springDataRepository.existsById(id)
 
@@ -75,4 +106,15 @@ class JpaSubscriptionRepository(
 
     override fun countByMemberId(memberId: UUID): Long =
         springDataRepository.countByMemberId(memberId)
+
+    override fun findByMemberIdAndStatus(memberId: UUID, status: SubscriptionStatus): List<Subscription> =
+        springDataRepository.findByMemberIdAndStatus(memberId, status)
+
+    override fun search(
+        planId: UUID?,
+        status: SubscriptionStatus?,
+        expiringBefore: LocalDate?,
+        pageable: Pageable
+    ): Page<Subscription> =
+        springDataRepository.search(planId, status, expiringBefore, pageable)
 }

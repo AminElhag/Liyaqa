@@ -70,9 +70,30 @@ class Location(
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    var status: LocationStatus = LocationStatus.ACTIVE
+    var status: LocationStatus = LocationStatus.ACTIVE,
+
+    // ==================== GENDER POLICY (Saudi Market) ====================
+
+    /**
+     * AccessGender policy for this location. Default is MIXED.
+     * Options: MIXED, MALE_ONLY, FEMALE_ONLY, TIME_BASED
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gender_policy", length = 20)
+    var genderPolicy: GenderPolicy = GenderPolicy.MIXED
 
 ) : OrganizationAwareEntity(id) {
+
+    /**
+     * Checks if the location allows access for the given gender at the current time.
+     * For TIME_BASED policy, the caller should also check gender schedules.
+     */
+    fun allowsAccessGender(gender: AccessGender): Boolean = when (genderPolicy) {
+        GenderPolicy.MIXED -> true
+        GenderPolicy.MALE_ONLY -> gender == AccessGender.MALE
+        GenderPolicy.FEMALE_ONLY -> gender == AccessGender.FEMALE
+        GenderPolicy.TIME_BASED -> true // Needs schedule check
+    }
 
     /**
      * Initialize tenant and organization IDs from the parent club.

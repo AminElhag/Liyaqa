@@ -1,0 +1,66 @@
+# ===========================================
+# Docker Build Exclusions
+# ===========================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.idea
+*.iml
+*.ipr
+*.iws
+.vscode
+*.swp
+*~
+
+# Gradle build artifacts
+.gradle
+build
+!gradle/wrapper/gradle-wrapper.jar
+
+# Kotlin
+.kotlin
+
+# Logs
+*.log
+logs/
+
+# Documentation (not needed in image)
+docs/
+*.md
+!README.md
+
+# Test files (not needed in production image)
+src/test/
+
+# Local environment files
+.env
+.env.*
+*.local
+*.env.local
+
+# OS specific files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temp files
+*.tmp
+*.temp
+*.bak
+
+# Coverage reports
+coverage/
+*.lcov
+jacoco/
+
+# Claude Code
+.claude/
+
+# Docker files (avoid recursive copy)
+Dockerfile
+docker-compose*.yml
+.dockerignore

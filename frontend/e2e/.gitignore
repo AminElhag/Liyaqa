@@ -1,0 +1,6 @@
+# Playwright auth state files - contain sensitive session data
+.auth/
+
+# Test results
+test-results/
+playwright-report/

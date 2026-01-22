@@ -184,3 +184,64 @@ abstract class OrganizationAwareEntity(
 
     override fun hashCode(): Int = id.hashCode()
 }
+
+/**
+ * Interface for entities that support soft delete.
+ * Entities implementing this should add:
+ * - deleted: Boolean field
+ * - deletedAt: Instant? field
+ * - deletedBy: UUID? field (optional, for tracking who deleted)
+ */
+interface SoftDeletable {
+    var deleted: Boolean
+    var deletedAt: Instant?
+
+    fun softDelete() {
+        deleted = true
+        deletedAt = Instant.now()
+    }
+
+    fun restore() {
+        deleted = false
+        deletedAt = null
+    }
+
+    fun isDeleted(): Boolean = deleted
+}
+
+/**
+ * Base entity with soft delete support.
+ * Entities can extend this to automatically get soft delete functionality.
+ */
+@MappedSuperclass
+@EntityListeners(AuditingEntityListener::class)
+abstract class SoftDeletableBaseEntity(
+    id: UUID = UUID.randomUUID()
+) : BaseEntity(id), SoftDeletable {
+
+    @Column(name = "deleted", nullable = false)
+    override var deleted: Boolean = false
+
+    @Column(name = "deleted_at")
+    override var deletedAt: Instant? = null
+
+    @Column(name = "deleted_by")
+    var deletedBy: UUID? = null
+
+    override fun softDelete() {
+        deleted = true
+        deletedAt = Instant.now()
+    }
+
+    override fun restore() {
+        deleted = false
+        deletedAt = null
+        deletedBy = null
+    }
+
+    fun softDelete(byUserId: UUID) {
+        deleted = true
+        deletedAt = Instant.now()
+        deletedBy = byUserId
+    }
+}

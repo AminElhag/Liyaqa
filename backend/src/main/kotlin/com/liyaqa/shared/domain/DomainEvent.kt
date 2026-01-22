@@ -15,9 +15,11 @@ interface DomainEvent {
 
 /**
  * Abstract base class for domain events providing common properties.
+ * Note: tenantId defaults to current context or a fallback null-safe tenant.
  */
 abstract class BaseDomainEvent(
-    override val tenantId: TenantId = TenantContext.getCurrentTenant(),
+    override val tenantId: TenantId = TenantContext.getCurrentTenantOrNull()
+        ?: TenantId(UUID.fromString("00000000-0000-0000-0000-000000000000")),
     override val eventId: UUID = UUID.randomUUID(),
     override val occurredAt: Instant = Instant.now()
 ) : DomainEvent

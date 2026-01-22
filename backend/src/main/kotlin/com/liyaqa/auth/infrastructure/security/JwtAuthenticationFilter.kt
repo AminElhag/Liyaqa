@@ -38,25 +38,34 @@ class JwtAuthenticationFilter(
                 val tenantId = jwtTokenProvider.extractTenantId(token)
                 val role = jwtTokenProvider.extractRole(token)
                 val email = jwtTokenProvider.extractEmail(token)
+                val permissions = jwtTokenProvider.extractPermissions(token)
 
                 // Set tenant context from JWT
                 TenantContext.setCurrentTenant(TenantId(tenantId))
 
-                // Create authentication with user details
-                val authorities = listOf(SimpleGrantedAuthority("ROLE_${role.name}"))
+                // Create authorities from role and permissions
+                val authorities = mutableListOf<SimpleGrantedAuthority>()
+                // Add role authority (for hasRole checks)
+                authorities.add(SimpleGrantedAuthority("ROLE_${role.name}"))
+                // Add permission authorities (for hasAuthority checks)
+                permissions.forEach { permission ->
+                    authorities.add(SimpleGrantedAuthority(permission))
+                }
+
                 val authentication = UsernamePasswordAuthenticationToken(
                     JwtUserPrincipal(
                         userId = userId,
                         tenantId = tenantId,
                         email = email,
-                        role = role
+                        role = role,
+                        permissions = permissions
                     ),
                     null,
                     authorities
                 )
 
                 SecurityContextHolder.getContext().authentication = authentication
-                log.debug("Authenticated user: $email with role: $role for tenant: $tenantId")
+                log.debug("Authenticated user: $email with role: $role and ${permissions.size} permissions for tenant: $tenantId")
             }
         } catch (e: Exception) {
             log.debug("Could not authenticate user: ${e.message}")
@@ -84,5 +93,6 @@ data class JwtUserPrincipal(
     val userId: java.util.UUID,
     val tenantId: java.util.UUID,
     val email: String,
-    val role: com.liyaqa.auth.domain.model.Role
+    val role: com.liyaqa.auth.domain.model.Role,
+    val permissions: List<String> = emptyList()
 )

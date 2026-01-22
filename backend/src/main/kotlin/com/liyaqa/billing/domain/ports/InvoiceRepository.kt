@@ -26,9 +26,11 @@ interface InvoiceRepository {
     fun findByStatus(status: InvoiceStatus, pageable: Pageable): Page<Invoice>
     fun findOverdueInvoices(pageable: Pageable): Page<Invoice>
     fun findIssuedInvoicesPastDueDate(currentDate: LocalDate, pageable: Pageable): Page<Invoice>
+    fun findIssuedInvoicesDueOn(dueDate: LocalDate, pageable: Pageable): Page<Invoice>
 
-    // Subscription queries
-    fun findBySubscriptionId(subscriptionId: UUID): Optional<Invoice>
+    // Subscription queries (returns most recent invoice for subscription)
+    fun findFirstBySubscriptionIdOrderByCreatedAtDesc(subscriptionId: UUID): Optional<Invoice>
+    fun findBySubscriptionIdAndStatusIn(subscriptionId: UUID, statuses: List<InvoiceStatus>): List<Invoice>
 
     // Organization-level queries
     fun findByOrganizationId(organizationId: UUID, pageable: Pageable): Page<Invoice>
@@ -41,4 +43,38 @@ interface InvoiceRepository {
     // Delete
     fun existsById(id: UUID): Boolean
     fun deleteById(id: UUID)
+
+    /**
+     * Search invoices with various filters.
+     * @param search Search term for invoice number (partial match)
+     * @param status Filter by invoice status
+     * @param memberId Filter by member
+     * @param dateFrom Filter invoices created on or after this date
+     * @param dateTo Filter invoices created on or before this date
+     */
+    fun search(
+        search: String?,
+        status: InvoiceStatus?,
+        memberId: UUID?,
+        dateFrom: LocalDate?,
+        dateTo: LocalDate?,
+        pageable: Pageable
+    ): Page<Invoice>
+
+    // ==================== Saudi Payment Methods ====================
+
+    /**
+     * Find invoice by STC Pay transaction ID.
+     */
+    fun findByStcpayTransactionId(transactionId: String): Invoice?
+
+    /**
+     * Find invoice by SADAD bill number.
+     */
+    fun findBySadadBillNumber(billNumber: String): Invoice?
+
+    /**
+     * Find invoice by Tamara order ID.
+     */
+    fun findByTamaraOrderId(orderId: String): Invoice?
 }

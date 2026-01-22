@@ -5,6 +5,12 @@ spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+
   jpa:
     open-in-view: false
     hibernate:
@@ -16,17 +22,26 @@ spring:
           time_zone: UTC
 
   jackson:
-    serialization:
-      write-dates-as-timestamps: false
-    deserialization:
-      fail-on-unknown-properties: false
-    default-property-inclusion: non_null
+    default-property-inclusion: NON_NULL
 
 server:
   port: ${SERVER_PORT:8080}
   error:
     include-message: always
     include-binding-errors: always
+  compression:
+    enabled: true
+    min-response-size: 1024  # 1KB minimum for compression
+    mime-types:
+      - application/json
+      - application/xml
+      - text/html
+      - text/xml
+      - text/plain
+      - text/css
+      - text/javascript
+      - application/javascript
+      - image/svg+xml
 
 management:
   endpoints:
@@ -45,11 +60,67 @@ jwt:
 
 # Liyaqa Custom Configuration
 liyaqa:
+  # Domain configuration for subdomain-based multi-tenancy
+  domain:
+    base: ${LIYAQA_BASE_DOMAIN:liyaqa.local}  # Base domain for subdomain extraction
+    dev-hosts: ${LIYAQA_DEV_HOSTS:localhost,127.0.0.1,liyaqa.local}  # Hostnames to skip subdomain detection
   email:
     enabled: ${EMAIL_ENABLED:false}  # Set to true to enable SMTP email
     from-address: ${EMAIL_FROM:noreply@liyaqa.com}
     from-name: Liyaqa
     base-url: ${EMAIL_BASE_URL:http://localhost:3000}
+  sms:
+    enabled: ${SMS_ENABLED:false}  # Set to true to enable SMS (Twilio)
+    provider: ${SMS_PROVIDER:twilio}  # twilio or other providers
+    twilio:
+      account-sid: ${TWILIO_ACCOUNT_SID:}
+      auth-token: ${TWILIO_AUTH_TOKEN:}
+      from-number: ${TWILIO_FROM_NUMBER:}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3003,http://localhost:3004,http://localhost:3005,http://liyaqa.local:3000,http://liyaqa.local:3003}
+    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:http://*.liyaqa.local:3000,http://*.liyaqa.local:3003}  # Wildcard patterns for subdomains
+  security:
+    hsts-enabled: ${HSTS_ENABLED:false}  # Enable only in production with HTTPS
+    hsts-max-age-seconds: ${HSTS_MAX_AGE:31536000}  # 1 year
+    content-security-policy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'"
+  payment:
+    paytabs:
+      profile-id: ${PAYTABS_PROFILE_ID:}
+      server-key: ${PAYTABS_SERVER_KEY:}
+      region: ${PAYTABS_REGION:SAU}
+      currency: ${PAYTABS_CURRENCY:SAR}
+      callback-url: ${PAYTABS_CALLBACK_URL:http://localhost:8080/api/payments/callback}
+      return-url: ${PAYTABS_RETURN_URL:http://localhost:3000/payment/complete}
+  storage:
+    type: local
+    max-file-size: ${MAX_FILE_SIZE:10485760}  # 10MB in bytes
+    allowed-types:
+      - image/jpeg
+      - image/png
+      - image/gif
+      - image/webp
+      - application/pdf
+    local:
+      upload-dir: ${UPLOAD_DIR:./uploads}
+  zatca:
+    enabled: ${ZATCA_ENABLED:false}  # Enable Zatca e-invoicing compliance
+    seller-name: ${ZATCA_SELLER_NAME:}  # Business name for QR code
+    vat-registration-number: ${ZATCA_VAT_NUMBER:}  # VAT registration number
+  billing:
+    default-vat-rate: ${DEFAULT_VAT_RATE:15.00}  # Saudi Arabia VAT rate (15%)
+
+# OpenAPI/Swagger Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operationsSorter: method
+    tagsSorter: alpha
+  packages-to-scan: com.liyaqa
+  paths-to-match: /api/**
 
 logging:
   level:
@@ -106,7 +177,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update  # Changed from validate for Docker setup - Hibernate creates tables
     show-sql: false
 
   # SMTP Email Configuration (for production)
@@ -126,11 +197,42 @@ spring:
           writetimeout: 5000
 
 liyaqa:
+  domain:
+    base: ${LIYAQA_BASE_DOMAIN:liyaqa.com}
+    dev-hosts: ${LIYAQA_DEV_HOSTS:}  # Empty in production
   email:
     enabled: ${EMAIL_ENABLED:true}
     from-address: ${EMAIL_FROM:noreply@liyaqa.com}
     from-name: Liyaqa
     base-url: ${EMAIL_BASE_URL:https://liyaqa.com}
+  sms:
+    enabled: ${SMS_ENABLED:true}
+    provider: ${SMS_PROVIDER:twilio}
+    twilio:
+      account-sid: ${TWILIO_ACCOUNT_SID}
+      auth-token: ${TWILIO_AUTH_TOKEN}
+      from-number: ${TWILIO_FROM_NUMBER}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}  # Required in production: comma-separated list of allowed origins
+    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:https://*.liyaqa.com}  # Wildcard for subdomains
+  security:
+    hsts-enabled: true  # Enable HSTS in production (requires HTTPS)
+    hsts-max-age-seconds: 31536000  # 1 year
+    content-security-policy: "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'"
+  payment:
+    paytabs:
+      profile-id: ${PAYTABS_PROFILE_ID}
+      server-key: ${PAYTABS_SERVER_KEY}
+      region: ${PAYTABS_REGION:SAU}
+      currency: ${PAYTABS_CURRENCY:SAR}
+      callback-url: ${PAYTABS_CALLBACK_URL}
+      return-url: ${PAYTABS_RETURN_URL}
+  zatca:
+    enabled: ${ZATCA_ENABLED:true}  # Zatca required in production
+    seller-name: ${ZATCA_SELLER_NAME}
+    vat-registration-number: ${ZATCA_VAT_NUMBER}
+  billing:
+    default-vat-rate: ${DEFAULT_VAT_RATE:15.00}  # Saudi Arabia VAT rate (15%)
 
 logging:
   level:

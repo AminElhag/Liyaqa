@@ -4,6 +4,7 @@ import com.liyaqa.organization.domain.model.Organization
 import com.liyaqa.organization.domain.model.OrganizationStatus
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import java.time.Instant
 import java.util.Optional
 import java.util.UUID
 
@@ -19,4 +20,7 @@ interface OrganizationRepository {
     fun existsById(id: UUID): Boolean
     fun deleteById(id: UUID)
     fun count(): Long
+    fun countByStatus(status: OrganizationStatus): Long
+    fun countCreatedAfter(after: Instant): Long
+    fun countCreatedBetween(start: Instant, end: Instant): Long
 }

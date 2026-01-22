@@ -1,0 +1,344 @@
+# ===========================================
+# Liyaqa Mobile App CI/CD Pipeline
+# ===========================================
+# Builds and tests the KMP mobile app for Android and iOS
+
+name: Mobile CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - 'features/**'
+      - 'fixes/**'
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/mobile-ci.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'mobile/**'
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - staging
+          - release
+
+env:
+  JAVA_VERSION: '17'
+  GRADLE_OPTS: '-Dorg.gradle.daemon=false -Dorg.gradle.caching=true'
+
+jobs:
+  # ====================
+  # Build & Test Android
+  # ====================
+  android-build:
+    name: Android Build & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: wrapper
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run unit tests
+        run: ./gradlew :shared:testDebugUnitTest --no-daemon
+
+      - name: Build debug APK
+        if: github.event.inputs.build_type != 'release'
+        run: ./gradlew :composeApp:assembleProductionDebug --no-daemon
+
+      - name: Build release APK
+        if: github.event.inputs.build_type == 'release' || github.ref == 'refs/heads/main'
+        run: ./gradlew :composeApp:assembleProductionRelease --no-daemon
+        env:
+          RELEASE_STORE_FILE: ${{ secrets.RELEASE_STORE_FILE }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+
+      - name: Build App Bundle (AAB)
+        if: github.event.inputs.build_type == 'release' || github.ref == 'refs/heads/main'
+        run: ./gradlew :composeApp:bundleProductionRelease --no-daemon
+        env:
+          RELEASE_STORE_FILE: ${{ secrets.RELEASE_STORE_FILE }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-test-results
+          path: mobile/shared/build/reports/tests/
+          retention-days: 7
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        if: github.event.inputs.build_type != 'release'
+        with:
+          name: android-debug-apk
+          path: mobile/composeApp/build/outputs/apk/production/debug/*.apk
+          retention-days: 7
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        if: github.event.inputs.build_type == 'release' || github.ref == 'refs/heads/main'
+        with:
+          name: android-release-apk
+          path: mobile/composeApp/build/outputs/apk/production/release/*.apk
+          retention-days: 30
+
+      - name: Upload App Bundle
+        uses: actions/upload-artifact@v4
+        if: github.event.inputs.build_type == 'release' || github.ref == 'refs/heads/main'
+        with:
+          name: android-aab
+          path: mobile/composeApp/build/outputs/bundle/productionRelease/*.aab
+          retention-days: 30
+
+  # ====================
+  # Build iOS
+  # ====================
+  ios-build:
+    name: iOS Build
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: wrapper
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Select Xcode version
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+
+      - name: Build shared framework for iOS
+        run: ./gradlew :shared:linkReleaseFrameworkIosArm64 --no-daemon
+
+      - name: Install CocoaPods dependencies (if any)
+        run: |
+          if [ -f "iosApp/Podfile" ]; then
+            cd iosApp && pod install
+          fi
+
+      - name: Build iOS app (Debug)
+        if: github.event.inputs.build_type != 'release'
+        run: |
+          cd iosApp
+          xcodebuild -project iosApp.xcodeproj \
+            -scheme iosApp \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            clean build
+
+      - name: Build iOS app (Release - Archive)
+        if: github.event.inputs.build_type == 'release' || github.ref == 'refs/heads/main'
+        run: |
+          cd iosApp
+          xcodebuild -project iosApp.xcodeproj \
+            -scheme iosApp \
+            -configuration Release \
+            -archivePath build/iosApp.xcarchive \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGN_IDENTITY="${{ secrets.IOS_CODE_SIGN_IDENTITY }}" \
+            DEVELOPMENT_TEAM="${{ secrets.IOS_DEVELOPMENT_TEAM }}" \
+            PROVISIONING_PROFILE_SPECIFIER="${{ secrets.IOS_PROVISIONING_PROFILE }}" \
+            archive
+        env:
+          IOS_CODE_SIGN_IDENTITY: ${{ secrets.IOS_CODE_SIGN_IDENTITY }}
+          IOS_DEVELOPMENT_TEAM: ${{ secrets.IOS_DEVELOPMENT_TEAM }}
+          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+
+      - name: Export IPA
+        if: github.event.inputs.build_type == 'release' || github.ref == 'refs/heads/main'
+        run: |
+          cd iosApp
+          xcodebuild -exportArchive \
+            -archivePath build/iosApp.xcarchive \
+            -exportPath build/export \
+            -exportOptionsPlist ExportOptions.plist
+
+      - name: Upload iOS build
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: ios-build
+          path: |
+            mobile/iosApp/build/Build/Products/Debug-iphonesimulator/*.app
+            mobile/iosApp/build/export/*.ipa
+          retention-days: 7
+
+  # ====================
+  # Code Quality
+  # ====================
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    needs: android-build
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: wrapper
+          cache-read-only: true
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run lint checks
+        run: ./gradlew :composeApp:lintProductionDebug --no-daemon
+
+      - name: Upload lint results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lint-results
+          path: mobile/composeApp/build/reports/lint*.html
+          retention-days: 7
+
+  # ====================
+  # Deploy to Firebase App Distribution (Optional)
+  # ====================
+  deploy-firebase:
+    name: Deploy to Firebase
+    runs-on: ubuntu-latest
+    needs: [android-build, ios-build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Android APK
+        uses: actions/download-artifact@v4
+        with:
+          name: android-release-apk
+          path: ./apk
+
+      - name: Deploy to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID_ANDROID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_CREDENTIALS }}
+          groups: testers
+          file: ./apk/*.apk
+          releaseNotes: |
+            Build from commit: ${{ github.sha }}
+            Branch: ${{ github.ref_name }}
+
+  # ====================
+  # Publish to Play Store (Internal Testing)
+  # ====================
+  deploy-play-store:
+    name: Deploy to Play Store
+    runs-on: ubuntu-latest
+    needs: android-build
+    if: github.event.inputs.build_type == 'release'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download App Bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: android-aab
+          path: ./aab
+
+      - name: Upload to Play Store (Internal Testing)
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
+          packageName: com.liyaqa.member
+          releaseFiles: ./aab/*.aab
+          track: internal
+          status: completed
+          whatsNewDirectory: ./mobile/whatsnew
+
+  # ====================
+  # Publish to App Store (TestFlight)
+  # ====================
+  deploy-app-store:
+    name: Deploy to App Store
+    runs-on: macos-14
+    needs: ios-build
+    if: github.event.inputs.build_type == 'release'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download IPA
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-build
+          path: ./ipa
+
+      - name: Upload to TestFlight
+        run: |
+          xcrun altool --upload-app \
+            --type ios \
+            --file ./ipa/*.ipa \
+            --apiKey ${{ secrets.APP_STORE_API_KEY_ID }} \
+            --apiIssuer ${{ secrets.APP_STORE_API_ISSUER_ID }}
+        env:
+          APP_STORE_API_KEY_ID: ${{ secrets.APP_STORE_API_KEY_ID }}
+          APP_STORE_API_ISSUER_ID: ${{ secrets.APP_STORE_API_ISSUER_ID }}

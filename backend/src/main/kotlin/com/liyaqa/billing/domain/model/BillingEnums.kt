@@ -20,9 +20,13 @@ enum class PaymentMethod {
     CASH,
     CARD,
     BANK_TRANSFER,
+    ONLINE,         // Generic online payment
     MADA,           // Saudi debit card
     APPLE_PAY,
-    STC_PAY,        // Saudi telecom payment
+    STC_PAY,        // Saudi telecom payment (mobile wallet)
+    SADAD,          // Saudi bill payment system
+    TAMARA,         // Buy Now Pay Later (BNPL)
+    PAYTABS,        // PayTabs online payment
     OTHER
 }
 

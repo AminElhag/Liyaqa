@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liyaqa Admin Portal - Design Prototypes</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="max-w-4xl mx-auto py-12 px-4">
+    <!-- Header -->
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-slate-900 mb-2">Liyaqa</h1>
+      <p class="text-xl text-slate-500" data-en="Gym Management System - Design Prototypes" data-ar="نظام ادارة النوادي - نماذج التصميم">Gym Management System - Design Prototypes</p>
+      <div class="mt-4 flex justify-center gap-4">
+        <div class="lang-switcher">
+          <button class="lang-btn active" onclick="setLanguage('en')">EN</button>
+          <button class="lang-btn" onclick="setLanguage('ar')">عربي</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Portal Selection -->
+    <div class="grid gap-6 md:grid-cols-2 mb-12">
+      <a href="#admin-portal" class="card hover:shadow-lg transition-shadow bg-gradient-to-br from-primary-600 to-primary-800 text-white">
+        <div class="card-body text-center py-8">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="32" height="32">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <h2 class="text-2xl font-bold mb-2" data-en="Admin Portal" data-ar="لوحة الادارة">Admin Portal</h2>
+          <p class="opacity-90" data-en="Dashboard, Members, Subscriptions, Invoices" data-ar="لوحة التحكم، الاعضاء، الاشتراكات، الفواتير">Dashboard, Members, Subscriptions, Invoices</p>
+        </div>
+      </a>
+
+      <a href="#member-portal" class="card hover:shadow-lg transition-shadow bg-gradient-to-br from-success-600 to-success-800 text-white">
+        <div class="card-body text-center py-8">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="32" height="32">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 class="text-2xl font-bold mb-2" data-en="Member Portal" data-ar="بوابة العضو">Member Portal</h2>
+          <p class="opacity-90" data-en="Home, Classes, QR Code, Invoices, Profile" data-ar="الرئيسية، الحصص، رمز QR، الفواتير، الملف">Home, Classes, QR Code, Invoices, Profile</p>
+        </div>
+      </a>
+    </div>
+
+    <!-- Admin Portal Section -->
+    <div id="admin-portal" class="mb-12">
+      <h2 class="text-2xl font-bold text-slate-900 mb-6" data-en="Admin Portal" data-ar="لوحة الادارة">Admin Portal</h2>
+      <div class="grid gap-6 md:grid-cols-2">
+        <!-- Dashboard -->
+      <a href="admin-dashboard.html" class="card hover:shadow-lg transition-shadow">
+        <div class="card-body">
+          <div class="flex items-start gap-4">
+            <div class="stat-icon primary">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-lg text-slate-900" data-en="Dashboard" data-ar="لوحة التحكم">Dashboard</h3>
+              <p class="text-slate-500 text-sm" data-en="Overview with stats, expiring subscriptions, recent check-ins, and pending invoices" data-ar="نظرة عامة مع الاحصائيات والاشتراكات المنتهية وتسجيلات الدخول الاخيرة والفواتير المعلقة">Overview with stats, expiring subscriptions, recent check-ins, and pending invoices</p>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <!-- Members List -->
+      <a href="admin-members.html" class="card hover:shadow-lg transition-shadow">
+        <div class="card-body">
+          <div class="flex items-start gap-4">
+            <div class="stat-icon success">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-lg text-slate-900" data-en="Members List" data-ar="قائمة الاعضاء">Members List</h3>
+              <p class="text-slate-500 text-sm" data-en="Data table with search, filters, bulk actions, and status management" data-ar="جدول بيانات مع البحث والفلاتر والاجراءات الجماعية وادارة الحالة">Data table with search, filters, bulk actions, and status management</p>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <!-- Member Form -->
+      <a href="admin-member-form.html" class="card hover:shadow-lg transition-shadow">
+        <div class="card-body">
+          <div class="flex items-start gap-4">
+            <div class="stat-icon warning">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-lg text-slate-900" data-en="Member Form" data-ar="نموذج العضو">Member Form</h3>
+              <p class="text-slate-500 text-sm" data-en="Create/Edit member with personal info, address, emergency contact, and subscription" data-ar="انشاء/تعديل عضو مع المعلومات الشخصية والعنوان وجهة الاتصال للطوارئ والاشتراك">Create/Edit member with personal info, address, emergency contact, and subscription</p>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <!-- Subscriptions -->
+      <a href="admin-subscriptions.html" class="card hover:shadow-lg transition-shadow">
+        <div class="card-body">
+          <div class="flex items-start gap-4">
+            <div class="stat-icon primary">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-lg text-slate-900" data-en="Subscriptions" data-ar="الاشتراكات">Subscriptions</h3>
+              <p class="text-slate-500 text-sm" data-en="Manage subscriptions with freeze/unfreeze, renew, and status actions" data-ar="ادارة الاشتراكات مع التجميد/الغاء التجميد والتجديد واجراءات الحالة">Manage subscriptions with freeze/unfreeze, renew, and status actions</p>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <!-- Invoices -->
+      <a href="admin-invoices.html" class="card hover:shadow-lg transition-shadow">
+        <div class="card-body">
+          <div class="flex items-start gap-4">
+            <div class="stat-icon danger">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-lg text-slate-900" data-en="Invoices" data-ar="الفواتير">Invoices</h3>
+              <p class="text-slate-500 text-sm" data-en="Billing management with create, issue, pay, PDF download, and status tabs" data-ar="ادارة الفواتير مع الانشاء والاصدار والدفع وتحميل PDF وتبويبات الحالة">Billing management with create, issue, pay, PDF download, and status tabs</p>
+            </div>
+          </div>
+        </div>
+      </a>
+      </div>
+    </div>
+
+    <!-- Member Portal Section -->
+    <div id="member-portal" class="mb-12">
+      <h2 class="text-2xl font-bold text-slate-900 mb-6" data-en="Member Portal" data-ar="بوابة العضو">Member Portal</h2>
+      <div class="grid gap-6 md:grid-cols-2">
+        <!-- Home -->
+        <a href="member-home.html" class="card hover:shadow-lg transition-shadow">
+          <div class="card-body">
+            <div class="flex items-start gap-4">
+              <div class="stat-icon success">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-semibold text-lg text-slate-900" data-en="Home" data-ar="الرئيسية">Home</h3>
+                <p class="text-slate-500 text-sm" data-en="Dashboard with QR code, subscription status, upcoming classes, and activity" data-ar="لوحة التحكم مع رمز QR وحالة الاشتراك والحصص القادمة والنشاط">Dashboard with QR code, subscription status, upcoming classes, and activity</p>
+              </div>
+            </div>
+          </div>
+        </a>
+
+        <!-- Bookings -->
+        <a href="member-bookings.html" class="card hover:shadow-lg transition-shadow">
+          <div class="card-body">
+            <div class="flex items-start gap-4">
+              <div class="stat-icon primary">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-semibold text-lg text-slate-900" data-en="Classes & Bookings" data-ar="الحصص والحجوزات">Classes & Bookings</h3>
+                <p class="text-slate-500 text-sm" data-en="Browse available classes and manage your bookings" data-ar="تصفح الحصص المتاحة وادارة حجوزاتك">Browse available classes and manage your bookings</p>
+              </div>
+            </div>
+          </div>
+        </a>
+
+        <!-- QR Code -->
+        <a href="member-qr.html" class="card hover:shadow-lg transition-shadow">
+          <div class="card-body">
+            <div class="flex items-start gap-4">
+              <div class="stat-icon warning">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h2M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-semibold text-lg text-slate-900" data-en="QR Code" data-ar="رمز QR">QR Code</h3>
+                <p class="text-slate-500 text-sm" data-en="Full-screen QR code for quick gym check-in" data-ar="رمز QR بالحجم الكامل لتسجيل الدخول السريع">Full-screen QR code for quick gym check-in</p>
+              </div>
+            </div>
+          </div>
+        </a>
+
+        <!-- Invoices -->
+        <a href="member-invoices.html" class="card hover:shadow-lg transition-shadow">
+          <div class="card-body">
+            <div class="flex items-start gap-4">
+              <div class="stat-icon danger">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-semibold text-lg text-slate-900" data-en="Invoices" data-ar="الفواتير">Invoices</h3>
+                <p class="text-slate-500 text-sm" data-en="View pending and paid invoices, make payments" data-ar="عرض الفواتير المعلقة والمدفوعة وإجراء المدفوعات">View pending and paid invoices, make payments</p>
+              </div>
+            </div>
+          </div>
+        </a>
+
+        <!-- Profile -->
+        <a href="member-profile.html" class="card hover:shadow-lg transition-shadow">
+          <div class="card-body">
+            <div class="flex items-start gap-4">
+              <div class="stat-icon primary">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-semibold text-lg text-slate-900" data-en="Profile" data-ar="الملف الشخصي">Profile</h3>
+                <p class="text-slate-500 text-sm" data-en="View and edit profile, subscription details, and account settings" data-ar="عرض وتعديل الملف وتفاصيل الاشتراك واعدادات الحساب">View and edit profile, subscription details, and account settings</p>
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="mt-12 card">
+      <div class="card-header">
+        <h3 class="card-title" data-en="How to Use These Prototypes" data-ar="كيفية استخدام هذه النماذج">How to Use These Prototypes</h3>
+      </div>
+      <div class="card-body">
+        <ol class="list-decimal list-inside space-y-3 text-slate-600">
+          <li>
+            <strong data-en="Serve locally:" data-ar="تشغيل محليا:">Serve locally:</strong>
+            <code class="bg-slate-100 px-2 py-1 rounded text-sm ml-2">python -m http.server 3000</code>
+          </li>
+          <li>
+            <strong data-en="Open in browser:" data-ar="فتح في المتصفح:">Open in browser:</strong>
+            <code class="bg-slate-100 px-2 py-1 rounded text-sm ml-2">http://localhost:3000</code>
+          </li>
+          <li>
+            <strong data-en="Convert to Figma:" data-ar="تحويل الى Figma:">Convert to Figma:</strong>
+            <span data-en="Use" data-ar="استخدم">Use</span> <code class="bg-slate-100 px-2 py-1 rounded text-sm">html.to.design</code> <span data-en="Figma plugin" data-ar="اضافة Figma">Figma plugin</span>
+          </li>
+          <li>
+            <strong data-en="Test RTL:" data-ar="اختبار RTL:">Test RTL:</strong>
+            <span data-en="Click the عربي button to switch to Arabic/RTL layout" data-ar="اضغط على زر EN للتبديل الى الانجليزية/LTR">Click the عربي button to switch to Arabic/RTL layout</span>
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Design Tokens -->
+    <div class="mt-6 card">
+      <div class="card-header">
+        <h3 class="card-title" data-en="Design System Files" data-ar="ملفات نظام التصميم">Design System Files</h3>
+      </div>
+      <div class="card-body">
+        <ul class="space-y-2 text-slate-600">
+          <li>
+            <code class="bg-slate-100 px-2 py-1 rounded text-sm">design-tokens.json</code>
+            - <span data-en="Colors, typography, spacing, shadows" data-ar="الالوان، الخطوط، التباعد، الظلال">Colors, typography, spacing, shadows</span>
+          </li>
+          <li>
+            <code class="bg-slate-100 px-2 py-1 rounded text-sm">css/styles.css</code>
+            - <span data-en="Complete design system CSS with RTL support" data-ar="ملف CSS كامل لنظام التصميم مع دعم RTL">Complete design system CSS with RTL support</span>
+          </li>
+          <li>
+            <code class="bg-slate-100 px-2 py-1 rounded text-sm">js/app.js</code>
+            - <span data-en="Language switching, dropdowns, modals, toasts" data-ar="تبديل اللغة، القوائم المنسدلة، النوافذ، الاشعارات">Language switching, dropdowns, modals, toasts</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-12 text-center text-slate-400 text-sm">
+      <p data-en="Liyaqa Gym Management System - Design Prototypes" data-ar="نظام لياقة لادارة النوادي - نماذج التصميم">Liyaqa Gym Management System - Design Prototypes</p>
+      <p class="mt-1" data-en="10 pages: 5 Admin Portal + 5 Member Portal" data-ar="10 صفحات: 5 لوحة الادارة + 5 بوابة العضو">10 pages: 5 Admin Portal + 5 Member Portal</p>
+      <p class="mt-1" data-en="Ready for Figma conversion" data-ar="جاهزة للتحويل الى Figma">Ready for Figma conversion</p>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

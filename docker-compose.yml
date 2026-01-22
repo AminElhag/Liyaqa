@@ -1,0 +1,109 @@
+# ===========================================
+# Liyaqa Local Development Environment
+# ===========================================
+# Usage:
+#   docker compose up -d                    # Start postgres + backend
+#   docker compose --profile email up -d    # Include email testing (Mailhog)
+#   docker compose --profile admin up -d    # Include pgAdmin
+#   docker compose logs -f backend          # View backend logs
+#   docker compose down                     # Stop all services
+#   docker compose down -v                  # Stop and remove volumes
+
+services:
+  # ===================
+  # PostgreSQL Database
+  # ===================
+  postgres:
+    image: postgres:16-alpine
+    container_name: liyaqa-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: liyaqa
+      POSTGRES_USER: liyaqa
+      POSTGRES_PASSWORD: liyaqa_dev_password
+    ports:
+      - "5434:5432"  # Using 5434 to avoid conflict with local PostgreSQL
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U liyaqa -d liyaqa"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ===================
+  # Liyaqa Backend API
+  # ===================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: liyaqa-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DATABASE_URL: jdbc:postgresql://postgres:5432/liyaqa
+      DATABASE_USERNAME: liyaqa
+      DATABASE_PASSWORD: liyaqa_dev_password
+      JWT_SECRET: local-development-jwt-secret-key-must-be-at-least-32-characters-long
+      EMAIL_ENABLED: "false"
+      SMS_ENABLED: "false"
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173,http://localhost:8080
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+  # ===================
+  # Mailhog - Email Testing
+  # ===================
+  # Access web UI at http://localhost:8025
+  # SMTP server at localhost:1025
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: liyaqa-mailhog
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    profiles:
+      - email
+
+  # ===================
+  # pgAdmin - Database Admin
+  # ===================
+  # Access at http://localhost:5050
+  # Default login: admin@liyaqa.com / admin
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: liyaqa-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@liyaqa.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    profiles:
+      - admin
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  default:
+    name: liyaqa-network

@@ -10,6 +10,8 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -26,6 +28,7 @@ class LocationController(
     private val locationService: LocationService
 ) {
     @PostMapping
+    @PreAuthorize("hasAuthority('locations_create')")
     fun createLocation(
         @Valid @RequestBody request: CreateLocationRequest
     ): ResponseEntity<LocationResponse> {
@@ -43,12 +46,14 @@ class LocationController(
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('locations_view')")
     fun getLocation(@PathVariable id: UUID): ResponseEntity<LocationResponse> {
         val location = locationService.getLocation(id)
         return ResponseEntity.ok(LocationResponse.from(location))
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('locations_view')")
     fun getAllLocations(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
@@ -72,6 +77,7 @@ class LocationController(
     }
 
     @GetMapping("/club/{clubId}")
+    @PreAuthorize("hasAuthority('locations_view')")
     fun getLocationsByClub(
         @PathVariable clubId: UUID,
         @RequestParam(defaultValue = "0") page: Int,
@@ -96,6 +102,7 @@ class LocationController(
     }
 
     @GetMapping("/organization/{organizationId}")
+    @PreAuthorize("hasAuthority('locations_view')")
     fun getLocationsByOrganization(
         @PathVariable organizationId: UUID,
         @RequestParam(defaultValue = "0") page: Int,
@@ -120,6 +127,7 @@ class LocationController(
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('locations_update')")
     fun updateLocation(
         @PathVariable id: UUID,
         @Valid @RequestBody request: UpdateLocationRequest
@@ -137,18 +145,21 @@ class LocationController(
     }
 
     @PostMapping("/{id}/temporarily-close")
+    @PreAuthorize("hasAuthority('locations_update')")
     fun temporarilyCloseLocation(@PathVariable id: UUID): ResponseEntity<LocationResponse> {
         val location = locationService.temporarilyCloseLocation(id)
         return ResponseEntity.ok(LocationResponse.from(location))
     }
 
     @PostMapping("/{id}/reopen")
+    @PreAuthorize("hasAuthority('locations_update')")
     fun reopenLocation(@PathVariable id: UUID): ResponseEntity<LocationResponse> {
         val location = locationService.reopenLocation(id)
         return ResponseEntity.ok(LocationResponse.from(location))
     }
 
     @PostMapping("/{id}/permanently-close")
+    @PreAuthorize("hasAuthority('locations_update')")
     fun permanentlyCloseLocation(@PathVariable id: UUID): ResponseEntity<LocationResponse> {
         val location = locationService.permanentlyCloseLocation(id)
         return ResponseEntity.ok(LocationResponse.from(location))
@@ -183,5 +194,12 @@ class LocationController(
                 countryCode = request.countryCode
             )
         } else null
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('locations_delete')")
+    fun deleteLocation(@PathVariable id: UUID): ResponseEntity<Unit> {
+        locationService.deleteLocation(id)
+        return ResponseEntity.noContent().build()
     }
 }

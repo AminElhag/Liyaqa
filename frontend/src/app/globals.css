@@ -1,0 +1,272 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Cairo:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 199 89% 48%;
+    --radius: 0.5rem;
+
+    /* Dashboard gradient accents */
+    --gradient-primary: linear-gradient(135deg, hsl(199 89% 48%) 0%, hsl(199 89% 38%) 100%);
+    --gradient-success: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    --gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    --gradient-info: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    --gradient-purple: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+
+    /* Platform Admin B2B gradients */
+    --gradient-platform: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    --gradient-platform-light: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
+    --gradient-platform-muted: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(124, 58, 237, 0.1) 100%);
+
+    /* Platform metric accent colors */
+    --platform-clients: 217 91% 60%;
+    --platform-revenue: 160 84% 39%;
+    --platform-deals: 38 92% 50%;
+    --platform-health: 263 70% 50%;
+    --platform-subscriptions: 189 94% 43%;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+    --card: 224 71% 6%;
+    --card-foreground: 210 40% 98%;
+    --popover: 224 71% 6%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 263 70% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 224 30% 15%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 224 30% 15%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 224 30% 15%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 224 30% 15%;
+    --input: 224 30% 15%;
+    --ring: 263 70% 50%;
+
+    /* Dark mode platform gradients */
+    --gradient-platform: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+    --gradient-platform-light: linear-gradient(135deg, rgba(167, 139, 250, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+
+    /* Dark mode metric colors - adjusted for better visibility */
+    --platform-clients: 217 91% 65%;
+    --platform-revenue: 160 84% 45%;
+    --platform-deals: 38 92% 55%;
+    --platform-health: 263 70% 55%;
+    --platform-subscriptions: 189 94% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* RTL support */
+[dir="rtl"] {
+  font-family: "Cairo", "Tajawal", sans-serif;
+}
+
+[dir="ltr"] {
+  font-family: "Plus Jakarta Sans", "Cairo", sans-serif;
+}
+
+/* Custom scrollbar - Light mode */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-neutral-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-neutral-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-neutral-400;
+}
+
+/* Custom scrollbar - Dark mode */
+.dark ::-webkit-scrollbar-track {
+  background: hsl(224 30% 10%);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(224 30% 25%);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(224 30% 35%);
+}
+
+/* Theme transition - smooth color changes */
+* {
+  transition-property: background-color, border-color, color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Disable transitions on page load to prevent flash */
+.no-transitions * {
+  transition: none !important;
+}
+
+/* Loading overlay for async operations */
+.loading-overlay {
+  @apply absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50;
+}
+
+.dark .loading-overlay {
+  @apply bg-background/90;
+}
+
+/* Staggered fade-in animation for page elements */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+.animation-delay-100 { animation-delay: 0.1s; }
+.animation-delay-200 { animation-delay: 0.2s; }
+.animation-delay-300 { animation-delay: 0.3s; }
+.animation-delay-400 { animation-delay: 0.4s; }
+
+/* Display font for dashboard stats */
+.font-display {
+  font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
+}
+
+[dir="rtl"] .font-display {
+  font-family: "Cairo", "Space Grotesk", sans-serif;
+}
+
+/* Shimmer effect for loading states */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--muted) / 0.5) 50%,
+    hsl(var(--muted)) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Pulse ring animation for loading indicators */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.5);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px hsl(var(--primary) / 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Slide animations for modals/dialogs */
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in-bottom {
+  animation: slideInFromBottom 0.2s ease-out forwards;
+}
+
+/* Platform-specific utility classes */
+.platform-stat-card {
+  @apply relative overflow-hidden;
+}
+
+.platform-stat-card::before {
+  content: "";
+  @apply absolute top-0 right-0 w-20 h-20 opacity-10 rounded-full -translate-y-1/2 translate-x-1/2;
+  background: var(--gradient-platform);
+}
+
+/* Success state styling */
+.success-highlight {
+  @apply bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800/50;
+}
+
+/* Warning state styling */
+.warning-highlight {
+  @apply bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50;
+}
+
+/* Error state styling */
+.error-highlight {
+  @apply bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800/50;
+}
+
+/* Info state styling */
+.info-highlight {
+  @apply bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800/50;
+}

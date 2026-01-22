@@ -13,6 +13,7 @@ import java.util.UUID
  */
 interface ClubRepository {
     fun save(club: Club): Club
+    fun saveAndFlush(club: Club): Club
     fun findById(id: UUID): Optional<Club>
     fun findByOrganizationId(organizationId: UUID, pageable: Pageable): Page<Club>
     fun findByOrganizationIdAndStatus(organizationId: UUID, status: ClubStatus, pageable: Pageable): Page<Club>
@@ -20,4 +21,15 @@ interface ClubRepository {
     fun existsByOrganizationId(organizationId: UUID): Boolean
     fun deleteById(id: UUID)
     fun countByOrganizationId(organizationId: UUID): Long
+
+    /**
+     * Find a club by its subdomain slug.
+     * Used for subdomain-based tenant resolution.
+     */
+    fun findBySlug(slug: String): Optional<Club>
+
+    /**
+     * Check if a slug is already in use.
+     */
+    fun existsBySlug(slug: String): Boolean
 }

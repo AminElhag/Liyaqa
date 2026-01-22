@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- ===========================================
+         Export Options for Ad-Hoc Distribution
+         (Internal Testing / Firebase App Distribution)
+         =========================================== -->
+
+    <!-- Export Method: ad-hoc for internal testing -->
+    <key>method</key>
+    <string>ad-hoc</string>
+
+    <!-- Team ID from Apple Developer Account -->
+    <key>teamID</key>
+    <string>YOUR_TEAM_ID</string>
+
+    <!-- Don't upload bitcode for ad-hoc -->
+    <key>uploadBitcode</key>
+    <false/>
+
+    <key>compileBitcode</key>
+    <false/>
+
+    <!-- Upload symbols for crash reporting -->
+    <key>uploadSymbols</key>
+    <true/>
+
+    <!-- Signing Style -->
+    <key>signingStyle</key>
+    <string>automatic</string>
+
+    <!-- Strip Swift symbols -->
+    <key>stripSwiftSymbols</key>
+    <true/>
+
+    <!-- Thinning for specific devices -->
+    <key>thinning</key>
+    <string>&lt;thin-for-all-variants&gt;</string>
+</dict>
+</plist>

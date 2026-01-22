@@ -1,0 +1,51 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  mail:
+    host: localhost
+    port: 25
+
+jwt:
+  secret: test-secret-key-that-is-at-least-32-characters-long
+  access-token-expiration: 900000
+  refresh-token-expiration: 604800000
+
+liyaqa:
+  email:
+    enabled: false
+    from-address: test@liyaqa.com
+    from-name: Liyaqa Test
+    base-url: http://localhost:3000
+  sms:
+    enabled: false
+    provider: twilio
+    twilio:
+      account-sid: test-account-sid
+      auth-token: test-auth-token
+      from-number: +1234567890
+  cors:
+    allowed-origins: http://localhost:3000
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+logging:
+  level:
+    root: WARN
+    com.liyaqa: WARN
+    org.hibernate: WARN

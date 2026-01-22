@@ -3,6 +3,7 @@ package com.liyaqa.membership.domain.model
 import com.liyaqa.shared.domain.BaseEntity
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.Money
+import com.liyaqa.shared.domain.TaxableFee
 import jakarta.persistence.AttributeOverride
 import jakarta.persistence.AttributeOverrides
 import jakarta.persistence.Column
@@ -14,6 +15,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.Filter
 import org.hibernate.annotations.FilterDef
 import org.hibernate.annotations.ParamDef
+import java.time.LocalDate
 import java.util.UUID
 
 @Entity
@@ -40,12 +42,44 @@ class MembershipPlan(
     )
     var description: LocalizedText? = null,
 
+    // === DATE RESTRICTIONS ===
+    @Column(name = "available_from")
+    var availableFrom: LocalDate? = null,
+
+    @Column(name = "available_until")
+    var availableUntil: LocalDate? = null,
+
+    // === AGE RESTRICTIONS ===
+    @Column(name = "minimum_age")
+    var minimumAge: Int? = null,
+
+    @Column(name = "maximum_age")
+    var maximumAge: Int? = null,
+
+    // === FEE STRUCTURE ===
     @Embedded
     @AttributeOverrides(
-        AttributeOverride(name = "amount", column = Column(name = "price_amount", nullable = false)),
-        AttributeOverride(name = "currency", column = Column(name = "price_currency", nullable = false))
+        AttributeOverride(name = "amount", column = Column(name = "membership_fee_amount", nullable = false)),
+        AttributeOverride(name = "currency", column = Column(name = "membership_fee_currency", nullable = false)),
+        AttributeOverride(name = "taxRate", column = Column(name = "membership_fee_tax_rate", nullable = false))
     )
-    var price: Money,
+    var membershipFee: TaxableFee = TaxableFee(),
+
+    @Embedded
+    @AttributeOverrides(
+        AttributeOverride(name = "amount", column = Column(name = "admin_fee_amount", nullable = false)),
+        AttributeOverride(name = "currency", column = Column(name = "admin_fee_currency", nullable = false)),
+        AttributeOverride(name = "taxRate", column = Column(name = "admin_fee_tax_rate", nullable = false))
+    )
+    var administrationFee: TaxableFee = TaxableFee(),
+
+    @Embedded
+    @AttributeOverrides(
+        AttributeOverride(name = "amount", column = Column(name = "join_fee_amount", nullable = false)),
+        AttributeOverride(name = "currency", column = Column(name = "join_fee_currency", nullable = false)),
+        AttributeOverride(name = "taxRate", column = Column(name = "join_fee_tax_rate", nullable = false))
+    )
+    var joinFee: TaxableFee = TaxableFee(),
 
     @Enumerated(EnumType.STRING)
     @Column(name = "billing_period", nullable = false)
@@ -95,6 +129,59 @@ class MembershipPlan(
      */
     fun activate() {
         isActive = true
+    }
+
+    /**
+     * Check if the plan is currently available based on date restrictions and active status.
+     */
+    fun isCurrentlyAvailable(): Boolean {
+        val today = LocalDate.now()
+        val afterStart = availableFrom == null || !today.isBefore(availableFrom)
+        val beforeEnd = availableUntil == null || !today.isAfter(availableUntil)
+        return isActive && afterStart && beforeEnd
+    }
+
+    /**
+     * Check if the plan has any date restrictions (start or end date).
+     */
+    fun hasDateRestriction(): Boolean = availableFrom != null || availableUntil != null
+
+    /**
+     * Check if a member's age is eligible for this plan.
+     */
+    fun isAgeEligible(memberAge: Int): Boolean {
+        val meetsMinimum = minimumAge == null || memberAge >= minimumAge!!
+        val meetsMaximum = maximumAge == null || memberAge <= maximumAge!!
+        return meetsMinimum && meetsMaximum
+    }
+
+    /**
+     * Check if the plan has any age restrictions.
+     */
+    fun hasAgeRestriction(): Boolean = minimumAge != null || maximumAge != null
+
+    /**
+     * Calculate total recurring fees (membership + admin).
+     * This is the amount charged on each billing cycle.
+     */
+    fun getRecurringTotal(): Money {
+        return membershipFee.getGrossAmount() + administrationFee.getGrossAmount()
+    }
+
+    /**
+     * Calculate total price including join fee.
+     * This is the amount for the first subscription.
+     */
+    fun getTotalPrice(): Money {
+        return membershipFee.getGrossAmount() + administrationFee.getGrossAmount() + joinFee.getGrossAmount()
+    }
+
+    /**
+     * Get the legacy price for backward compatibility.
+     * Returns the membership fee net amount (before tax).
+     */
+    fun getLegacyPrice(): Money {
+        return membershipFee.getNetAmount()
     }
 
     /**

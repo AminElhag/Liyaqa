@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">Liyaqa</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_classes">Classes</string>
+    <string name="nav_qr">QR Code</string>
+    <string name="nav_invoices">Invoices</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Greetings -->
+    <string name="greeting_hello">Hello</string>
+    <string name="greeting_welcome">Welcome back</string>
+
+    <!-- Status Labels -->
+    <string name="status_active">Active</string>
+    <string name="status_inactive">Inactive</string>
+    <string name="status_suspended">Suspended</string>
+    <string name="status_frozen">Frozen</string>
+    <string name="status_pending">Pending</string>
+    <string name="status_pending_payment">Pending Payment</string>
+    <string name="status_expired">Expired</string>
+    <string name="status_cancelled">Cancelled</string>
+    <string name="status_confirmed">Confirmed</string>
+    <string name="status_waitlisted">Waitlisted</string>
+    <string name="status_checked_in">Checked In</string>
+    <string name="status_checked_out">Checked Out</string>
+    <string name="status_completed">Completed</string>
+    <string name="status_no_show">No Show</string>
+    <string name="status_paid">Paid</string>
+    <string name="status_partially_paid">Partially Paid</string>
+    <string name="status_overdue">Overdue</string>
+    <string name="status_draft">Draft</string>
+    <string name="status_issued">Issued</string>
+
+    <!-- Button Labels -->
+    <string name="btn_book_now">Book Now</string>
+    <string name="btn_join_waitlist">Join Waitlist</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_cancel_booking">Cancel Booking</string>
+    <string name="btn_pay_now">Pay Now</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_submit">Submit</string>
+    <string name="btn_retry">Retry</string>
+    <string name="btn_refresh">Refresh</string>
+    <string name="btn_download_pdf">Download PDF</string>
+    <string name="btn_view_details">View Details</string>
+    <string name="btn_edit_profile">Edit Profile</string>
+    <string name="btn_change_password">Change Password</string>
+    <string name="btn_logout">Logout</string>
+    <string name="btn_login">Login</string>
+    <string name="btn_mark_all_read">Mark All as Read</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_subscription">Subscription</string>
+    <string name="dashboard_days_remaining">Days Remaining</string>
+    <string name="dashboard_classes_remaining">Classes Remaining</string>
+    <string name="dashboard_total_visits">Total Visits</string>
+    <string name="dashboard_this_month">This Month</string>
+    <string name="dashboard_last_month">Last Month</string>
+    <string name="dashboard_average_visits">Avg. Visits/Month</string>
+    <string name="dashboard_upcoming_classes">Upcoming Classes</string>
+    <string name="dashboard_pending_invoices">Pending Invoices</string>
+    <string name="dashboard_quick_qr">Tap to show QR code</string>
+
+    <!-- QR Code Screen -->
+    <string name="qr_title">QR Check-In</string>
+    <string name="qr_valid_until">Valid until</string>
+    <string name="qr_expired">QR Code Expired</string>
+    <string name="qr_instructions">Show this QR code at the reception to check in</string>
+    <string name="qr_refresh">Refresh QR Code</string>
+
+    <!-- Bookings -->
+    <string name="bookings_title">My Bookings</string>
+    <string name="bookings_upcoming">Upcoming</string>
+    <string name="bookings_past">Past</string>
+    <string name="bookings_book_class">Book a Class</string>
+    <string name="bookings_available_sessions">Available Sessions</string>
+    <string name="bookings_spots_remaining">%d spots remaining</string>
+    <string name="bookings_full">Full</string>
+    <string name="bookings_booked">Booked</string>
+    <string name="bookings_cancel_confirm_title">Cancel Booking?</string>
+    <string name="bookings_cancel_confirm_message">Are you sure you want to cancel this booking?</string>
+    <string name="bookings_cancelled_success">Booking cancelled successfully</string>
+    <string name="bookings_booked_success">Class booked successfully</string>
+
+    <!-- Invoices -->
+    <string name="invoices_title">My Invoices</string>
+    <string name="invoices_all">All</string>
+    <string name="invoices_pending">Pending</string>
+    <string name="invoices_paid">Paid</string>
+    <string name="invoices_overdue">Overdue</string>
+    <string name="invoices_total_due">Total Due</string>
+    <string name="invoices_invoice_number">Invoice #%s</string>
+    <string name="invoices_issue_date">Issue Date</string>
+    <string name="invoices_due_date">Due Date</string>
+    <string name="invoices_subtotal">Subtotal</string>
+    <string name="invoices_vat">VAT (15%%)</string>
+    <string name="invoices_discount">Discount</string>
+    <string name="invoices_total">Total</string>
+    <string name="invoices_line_items">Line Items</string>
+
+    <!-- Profile -->
+    <string name="profile_title">Profile</string>
+    <string name="profile_personal_info">Personal Information</string>
+    <string name="profile_first_name">First Name</string>
+    <string name="profile_last_name">Last Name</string>
+    <string name="profile_email">Email</string>
+    <string name="profile_phone">Phone</string>
+    <string name="profile_date_of_birth">Date of Birth</string>
+    <string name="profile_address">Address</string>
+    <string name="profile_street">Street</string>
+    <string name="profile_city">City</string>
+    <string name="profile_state">State</string>
+    <string name="profile_postal_code">Postal Code</string>
+    <string name="profile_country">Country</string>
+    <string name="profile_emergency_contact">Emergency Contact</string>
+    <string name="profile_emergency_name">Contact Name</string>
+    <string name="profile_emergency_phone">Contact Phone</string>
+    <string name="profile_current_password">Current Password</string>
+    <string name="profile_new_password">New Password</string>
+    <string name="profile_confirm_password">Confirm Password</string>
+    <string name="profile_saved_success">Profile updated successfully</string>
+    <string name="profile_password_changed">Password changed successfully</string>
+
+    <!-- Notifications -->
+    <string name="notifications_title">Notifications</string>
+    <string name="notifications_all">All</string>
+    <string name="notifications_unread">Unread</string>
+    <string name="notifications_settings">Notification Settings</string>
+    <string name="notifications_channels">Notification Channels</string>
+    <string name="notifications_email">Email</string>
+    <string name="notifications_sms">SMS</string>
+    <string name="notifications_push">Push Notifications</string>
+    <string name="notifications_types">Notification Types</string>
+    <string name="notifications_subscription_reminders">Subscription Reminders</string>
+    <string name="notifications_invoice_alerts">Invoice Alerts</string>
+    <string name="notifications_booking_updates">Booking Updates</string>
+    <string name="notifications_class_reminders">Class Reminders</string>
+    <string name="notifications_marketing">Marketing</string>
+    <string name="notifications_language">Preferred Language</string>
+
+    <!-- Attendance -->
+    <string name="attendance_title">Attendance History</string>
+    <string name="attendance_check_in_time">Check-in Time</string>
+    <string name="attendance_check_out_time">Check-out Time</string>
+    <string name="attendance_duration">Duration</string>
+    <string name="attendance_location">Location</string>
+    <string name="attendance_method">Check-in Method</string>
+    <string name="attendance_method_manual">Manual</string>
+    <string name="attendance_method_qr">QR Code</string>
+    <string name="attendance_method_card">Card</string>
+    <string name="attendance_method_biometric">Biometric</string>
+
+    <!-- Subscriptions -->
+    <string name="subscriptions_title">Subscriptions</string>
+    <string name="subscriptions_active">Active Subscription</string>
+    <string name="subscriptions_history">Subscription History</string>
+    <string name="subscriptions_plan_name">Plan</string>
+    <string name="subscriptions_start_date">Start Date</string>
+    <string name="subscriptions_end_date">End Date</string>
+    <string name="subscriptions_auto_renew">Auto-Renew</string>
+    <string name="subscriptions_frozen_until">Frozen Until</string>
+
+    <!-- Payment -->
+    <string name="payment_title">Payment</string>
+    <string name="payment_processing">Processing Payment...</string>
+    <string name="payment_success">Payment Successful</string>
+    <string name="payment_failed">Payment Failed</string>
+    <string name="payment_cancelled">Payment Cancelled</string>
+    <string name="payment_amount">Amount</string>
+    <string name="payment_return_to_invoices">Return to Invoices</string>
+    <string name="payment_try_again">Try Again</string>
+
+    <!-- Empty States -->
+    <string name="empty_bookings">No bookings yet</string>
+    <string name="empty_bookings_desc">Book a class to get started with your fitness journey</string>
+    <string name="empty_invoices">No invoices</string>
+    <string name="empty_invoices_desc">Your invoices will appear here</string>
+    <string name="empty_notifications">No notifications</string>
+    <string name="empty_notifications_desc">You\'re all caught up!</string>
+    <string name="empty_attendance">No attendance records</string>
+    <string name="empty_attendance_desc">Your check-in history will appear here</string>
+    <string name="empty_sessions">No sessions available</string>
+    <string name="empty_sessions_desc">Check back later for available classes</string>
+
+    <!-- Error Messages -->
+    <string name="error_generic">Something went wrong</string>
+    <string name="error_network">Network error. Please check your connection.</string>
+    <string name="error_unauthorized">Session expired. Please login again.</string>
+    <string name="error_forbidden">You don\'t have permission for this action.</string>
+    <string name="error_not_found">Not found</string>
+    <string name="error_server">Server error. Please try again later.</string>
+    <string name="error_validation">Please check your input</string>
+    <string name="error_invalid_credentials">Invalid email or password</string>
+    <string name="error_password_mismatch">Passwords do not match</string>
+    <string name="error_weak_password">Password is too weak</string>
+    <string name="error_invalid_phone">Invalid phone number</string>
+    <string name="error_required_field">This field is required</string>
+
+    <!-- Login -->
+    <string name="login_title">Welcome Back</string>
+    <string name="login_email">Email</string>
+    <string name="login_password">Password</string>
+    <string name="login_forgot_password">Forgot Password?</string>
+    <string name="login_signing_in">Signing in...</string>
+
+    <!-- Common -->
+    <string name="common_loading">Loading...</string>
+    <string name="common_yes">Yes</string>
+    <string name="common_no">No</string>
+    <string name="common_ok">OK</string>
+    <string name="common_confirm">Confirm</string>
+    <string name="common_close">Close</string>
+    <string name="common_search">Search</string>
+    <string name="common_filter">Filter</string>
+    <string name="common_sort">Sort</string>
+    <string name="common_from">From</string>
+    <string name="common_to">To</string>
+    <string name="common_date">Date</string>
+    <string name="common_time">Time</string>
+    <string name="common_duration_minutes">%d min</string>
+    <string name="common_currency_sar">SAR</string>
+    <string name="common_unlimited">Unlimited</string>
+    <string name="common_on">On</string>
+    <string name="common_off">Off</string>
+    <string name="common_enabled">Enabled</string>
+    <string name="common_disabled">Disabled</string>
+    <string name="common_language_english">English</string>
+    <string name="common_language_arabic">Arabic</string>
+</resources>

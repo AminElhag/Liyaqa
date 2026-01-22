@@ -15,6 +15,8 @@ interface SpringDataClubRepository : JpaRepository<Club, UUID> {
     fun findByOrganizationIdAndStatus(organizationId: UUID, status: ClubStatus, pageable: Pageable): Page<Club>
     fun existsByOrganizationId(organizationId: UUID): Boolean
     fun countByOrganizationId(organizationId: UUID): Long
+    fun findBySlug(slug: String): Optional<Club>
+    fun existsBySlug(slug: String): Boolean
 }
 
 @Repository
@@ -24,6 +26,9 @@ class JpaClubRepository(
 
     override fun save(club: Club): Club =
         springDataRepository.save(club)
+
+    override fun saveAndFlush(club: Club): Club =
+        springDataRepository.saveAndFlush(club)
 
     override fun findById(id: UUID): Optional<Club> =
         springDataRepository.findById(id)
@@ -48,4 +53,10 @@ class JpaClubRepository(
 
     override fun countByOrganizationId(organizationId: UUID): Long =
         springDataRepository.countByOrganizationId(organizationId)
+
+    override fun findBySlug(slug: String): Optional<Club> =
+        springDataRepository.findBySlug(slug)
+
+    override fun existsBySlug(slug: String): Boolean =
+        springDataRepository.existsBySlug(slug)
 }

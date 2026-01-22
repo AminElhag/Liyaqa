@@ -1,0 +1,205 @@
+# ===========================================
+# Liyaqa Production Deployment
+# ===========================================
+# Triggered on release publish or manual dispatch
+# Requires manual approval before deployment
+
+name: Deploy to Production
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy'
+        required: true
+        default: 'latest'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/liyaqa-backend
+
+jobs:
+  # ====================
+  # Production Approval
+  # ====================
+  approve-deployment:
+    name: Approve Production Deployment
+    runs-on: ubuntu-latest
+    environment:
+      name: production-approval
+
+    steps:
+      - name: Deployment approved
+        run: |
+          echo "Production deployment approved by ${{ github.actor }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Triggered by: ${{ github.event_name }}"
+
+  # ====================
+  # Deploy to Production
+  # ====================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: approve-deployment
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine image tag
+        id: image-tag
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy to production server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script: |
+            # Pull image
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.image-tag.outputs.tag }}
+
+            # Blue-green deployment
+            CURRENT_CONTAINER=$(docker ps -q -f name=liyaqa-backend-prod)
+            NEW_CONTAINER_NAME="liyaqa-backend-prod-$(date +%s)"
+
+            # Start new container on different port
+            docker run -d \
+              --name $NEW_CONTAINER_NAME \
+              --restart unless-stopped \
+              -p 8081:8080 \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              -e DATABASE_URL="${{ secrets.PRODUCTION_DATABASE_URL }}" \
+              -e DATABASE_USERNAME="${{ secrets.PRODUCTION_DATABASE_USERNAME }}" \
+              -e DATABASE_PASSWORD="${{ secrets.PRODUCTION_DATABASE_PASSWORD }}" \
+              -e JWT_SECRET="${{ secrets.PRODUCTION_JWT_SECRET }}" \
+              -e EMAIL_ENABLED="${{ secrets.PRODUCTION_EMAIL_ENABLED }}" \
+              -e EMAIL_FROM="${{ secrets.PRODUCTION_EMAIL_FROM }}" \
+              -e EMAIL_BASE_URL="${{ secrets.PRODUCTION_EMAIL_BASE_URL }}" \
+              -e SMTP_HOST="${{ secrets.PRODUCTION_SMTP_HOST }}" \
+              -e SMTP_PORT="${{ secrets.PRODUCTION_SMTP_PORT }}" \
+              -e SMTP_USERNAME="${{ secrets.PRODUCTION_SMTP_USERNAME }}" \
+              -e SMTP_PASSWORD="${{ secrets.PRODUCTION_SMTP_PASSWORD }}" \
+              -e SMS_ENABLED="${{ secrets.PRODUCTION_SMS_ENABLED }}" \
+              -e TWILIO_ACCOUNT_SID="${{ secrets.PRODUCTION_TWILIO_ACCOUNT_SID }}" \
+              -e TWILIO_AUTH_TOKEN="${{ secrets.PRODUCTION_TWILIO_AUTH_TOKEN }}" \
+              -e TWILIO_FROM_NUMBER="${{ secrets.PRODUCTION_TWILIO_FROM_NUMBER }}" \
+              -e CORS_ALLOWED_ORIGINS="${{ secrets.PRODUCTION_CORS_ORIGINS }}" \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.image-tag.outputs.tag }}
+
+            # Wait for new container health
+            echo "Waiting for new container to be healthy..."
+            sleep 45
+
+            # Verify health
+            if curl -sf http://localhost:8081/actuator/health; then
+              echo "New container is healthy"
+
+              # Stop old container if exists
+              if [ -n "$CURRENT_CONTAINER" ]; then
+                docker stop $CURRENT_CONTAINER 2>/dev/null || true
+                docker rm $CURRENT_CONTAINER 2>/dev/null || true
+              fi
+
+              # Update port mapping - stop new container briefly
+              docker stop $NEW_CONTAINER_NAME
+              docker rm $NEW_CONTAINER_NAME
+
+              # Start on production port
+              docker run -d \
+                --name liyaqa-backend-prod \
+                --restart unless-stopped \
+                -p 8080:8080 \
+                -e SPRING_PROFILES_ACTIVE=prod \
+                -e DATABASE_URL="${{ secrets.PRODUCTION_DATABASE_URL }}" \
+                -e DATABASE_USERNAME="${{ secrets.PRODUCTION_DATABASE_USERNAME }}" \
+                -e DATABASE_PASSWORD="${{ secrets.PRODUCTION_DATABASE_PASSWORD }}" \
+                -e JWT_SECRET="${{ secrets.PRODUCTION_JWT_SECRET }}" \
+                -e EMAIL_ENABLED="${{ secrets.PRODUCTION_EMAIL_ENABLED }}" \
+                -e EMAIL_FROM="${{ secrets.PRODUCTION_EMAIL_FROM }}" \
+                -e EMAIL_BASE_URL="${{ secrets.PRODUCTION_EMAIL_BASE_URL }}" \
+                -e SMTP_HOST="${{ secrets.PRODUCTION_SMTP_HOST }}" \
+                -e SMTP_PORT="${{ secrets.PRODUCTION_SMTP_PORT }}" \
+                -e SMTP_USERNAME="${{ secrets.PRODUCTION_SMTP_USERNAME }}" \
+                -e SMTP_PASSWORD="${{ secrets.PRODUCTION_SMTP_PASSWORD }}" \
+                -e SMS_ENABLED="${{ secrets.PRODUCTION_SMS_ENABLED }}" \
+                -e TWILIO_ACCOUNT_SID="${{ secrets.PRODUCTION_TWILIO_ACCOUNT_SID }}" \
+                -e TWILIO_AUTH_TOKEN="${{ secrets.PRODUCTION_TWILIO_AUTH_TOKEN }}" \
+                -e TWILIO_FROM_NUMBER="${{ secrets.PRODUCTION_TWILIO_FROM_NUMBER }}" \
+                -e CORS_ALLOWED_ORIGINS="${{ secrets.PRODUCTION_CORS_ORIGINS }}" \
+                ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.image-tag.outputs.tag }}
+
+              echo "Deployment successful!"
+            else
+              echo "New container failed health check - rolling back"
+              docker stop $NEW_CONTAINER_NAME 2>/dev/null || true
+              docker rm $NEW_CONTAINER_NAME 2>/dev/null || true
+              exit 1
+            fi
+
+      - name: Verify production health
+        run: |
+          PRODUCTION_URL="${{ vars.PRODUCTION_URL }}"
+          if [ -z "$PRODUCTION_URL" ]; then
+            echo "PRODUCTION_URL not set, skipping remote health check"
+            exit 0
+          fi
+
+          for i in {1..12}; do
+            if curl -sf "${PRODUCTION_URL}/actuator/health"; then
+              echo "Production health check passed!"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying in 15s..."
+            sleep 15
+          done
+          echo "Production health check failed"
+          exit 1
+
+      - name: Create deployment record
+        uses: chrnorm/deployment-action@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          environment: production
+          ref: ${{ github.sha }}
+
+      - name: Notify on success
+        if: success() && vars.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "Production deployment successful! Version: ${{ steps.image-tag.outputs.tag }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ vars.SLACK_WEBHOOK_URL }}
+
+      - name: Notify on failure
+        if: failure() && vars.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "ALERT: Production deployment FAILED for version ${{ steps.image-tag.outputs.tag }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ vars.SLACK_WEBHOOK_URL }}

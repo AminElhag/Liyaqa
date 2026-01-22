@@ -2,9 +2,12 @@ package com.liyaqa.shared.infrastructure.email
 
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.mail.MailException
 import org.springframework.mail.SimpleMailMessage
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
+import org.springframework.retry.annotation.Backoff
+import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
 
 /**
@@ -46,6 +49,15 @@ class SmtpEmailService(
 
     private val logger = LoggerFactory.getLogger(SmtpEmailService::class.java)
 
+    /**
+     * Sends a simple text email.
+     * Retries up to 3 times with exponential backoff on mail delivery failures.
+     */
+    @Retryable(
+        retryFor = [MailException::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 1000, multiplier = 2.0)
+    )
     override fun sendEmail(to: String, subject: String, body: String) {
         try {
             val message = SimpleMailMessage()
@@ -55,13 +67,22 @@ class SmtpEmailService(
             message.text = body
 
             mailSender.send(message)
-            logger.info("Email sent to: $to, subject: $subject")
+            logger.info("Email sent successfully, subject: $subject")
         } catch (e: Exception) {
             logger.error("Failed to send email to: $to", e)
             throw EmailSendException("Failed to send email", e)
         }
     }
 
+    /**
+     * Sends an HTML email.
+     * Retries up to 3 times with exponential backoff on mail delivery failures.
+     */
+    @Retryable(
+        retryFor = [MailException::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 1000, multiplier = 2.0)
+    )
     override fun sendHtmlEmail(to: String, subject: String, htmlBody: String) {
         try {
             val mimeMessage = mailSender.createMimeMessage()
@@ -73,7 +94,7 @@ class SmtpEmailService(
             helper.setText(htmlBody, true)
 
             mailSender.send(mimeMessage)
-            logger.info("HTML email sent to: $to, subject: $subject")
+            logger.info("HTML email sent successfully, subject: $subject")
         } catch (e: Exception) {
             logger.error("Failed to send HTML email to: $to", e)
             throw EmailSendException("Failed to send HTML email", e)
@@ -155,15 +176,26 @@ class ConsoleEmailService : EmailService {
 
     override fun sendPasswordResetEmail(to: String, resetToken: String, locale: String) {
         val subject = if (locale == "ar") "إعادة تعيين كلمة المرور" else "Password Reset"
+        val maskedEmail = maskEmail(to)
+        val maskedToken = if (resetToken.length > 8) "${resetToken.take(4)}****${resetToken.takeLast(4)}" else "********"
         logger.info("""
             |
             |========== PASSWORD RESET EMAIL (Console Mode) ==========
-            |To: $to
+            |To: $maskedEmail
             |Subject: $subject
-            |Reset Token: $resetToken
+            |Reset Token: $maskedToken
             |Locale: $locale
             |==========================================================
         """.trimMargin())
+    }
+
+    private fun maskEmail(email: String): String {
+        val parts = email.split("@")
+        if (parts.size != 2) return "***@***"
+        val local = parts[0]
+        val domain = parts[1]
+        val maskedLocal = if (local.length > 2) "${local.take(2)}***" else "***"
+        return "$maskedLocal@$domain"
     }
 
     override fun isEnabled(): Boolean = false

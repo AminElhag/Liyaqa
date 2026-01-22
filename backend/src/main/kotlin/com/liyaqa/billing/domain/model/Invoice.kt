@@ -116,6 +116,42 @@ class Invoice(
     @Column(name = "zatca_qr_code", columnDefinition = "TEXT")
     var zatcaQrCode: String? = null,
 
+    // ==================== STC PAY FIELDS ====================
+    @Column(name = "stcpay_transaction_id")
+    var stcpayTransactionId: String? = null,
+
+    @Column(name = "stcpay_otp_reference")
+    var stcpayOtpReference: String? = null,
+
+    @Column(name = "stcpay_payment_reference")
+    var stcpayPaymentReference: String? = null,
+
+    // ==================== SADAD FIELDS ====================
+    @Column(name = "sadad_bill_number")
+    var sadadBillNumber: String? = null,
+
+    @Column(name = "sadad_bill_account")
+    var sadadBillAccount: String? = null,
+
+    @Column(name = "sadad_due_date")
+    var sadadDueDate: LocalDate? = null,
+
+    @Column(name = "sadad_status")
+    var sadadStatus: String? = null,
+
+    // ==================== TAMARA FIELDS ====================
+    @Column(name = "tamara_order_id")
+    var tamaraOrderId: String? = null,
+
+    @Column(name = "tamara_checkout_id")
+    var tamaraCheckoutId: String? = null,
+
+    @Column(name = "tamara_status")
+    var tamaraStatus: String? = null,
+
+    @Column(name = "tamara_instalments")
+    var tamaraInstalments: Int? = null,
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "invoice_line_items",
@@ -203,6 +239,7 @@ class Invoice(
 
     /**
      * Recalculates subtotal, VAT, and total from line items.
+     * Uses per-line-item tax rates for multi-fee invoicing.
      */
     fun recalculateTotals() {
         if (lineItems.isEmpty()) {
@@ -215,16 +252,15 @@ class Invoice(
 
         val currency = lineItems.first().unitPrice.currency
         var newSubtotal = Money.of(BigDecimal.ZERO, currency)
+        var newTaxTotal = Money.of(BigDecimal.ZERO, currency)
 
         for (item in lineItems) {
             newSubtotal = newSubtotal + item.lineTotal()
+            newTaxTotal = newTaxTotal + item.lineTaxAmount()
         }
 
         subtotal = newSubtotal
-        vatAmount = Money.of(
-            newSubtotal.amount.multiply(vatRate).divide(BigDecimal("100"), 2, RoundingMode.HALF_UP),
-            currency
-        )
+        vatAmount = newTaxTotal  // Now sum of per-item taxes
         totalAmount = subtotal + vatAmount
     }
 

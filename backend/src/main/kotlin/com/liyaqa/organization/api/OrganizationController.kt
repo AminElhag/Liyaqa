@@ -9,6 +9,8 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -25,6 +27,7 @@ class OrganizationController(
     private val organizationService: OrganizationService
 ) {
     @PostMapping
+    @PreAuthorize("hasAuthority('organizations_create')")
     fun createOrganization(
         @Valid @RequestBody request: CreateOrganizationRequest
     ): ResponseEntity<OrganizationResponse> {
@@ -43,12 +46,14 @@ class OrganizationController(
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('organizations_view')")
     fun getOrganization(@PathVariable id: UUID): ResponseEntity<OrganizationResponse> {
         val org = organizationService.getOrganization(id)
         return ResponseEntity.ok(OrganizationResponse.from(org))
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('organizations_view')")
     fun getAllOrganizations(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
@@ -72,6 +77,7 @@ class OrganizationController(
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('organizations_update')")
     fun updateOrganization(
         @PathVariable id: UUID,
         @Valid @RequestBody request: UpdateOrganizationRequest
@@ -91,20 +97,30 @@ class OrganizationController(
     }
 
     @PostMapping("/{id}/activate")
+    @PreAuthorize("hasAuthority('organizations_update')")
     fun activateOrganization(@PathVariable id: UUID): ResponseEntity<OrganizationResponse> {
         val org = organizationService.activateOrganization(id)
         return ResponseEntity.ok(OrganizationResponse.from(org))
     }
 
     @PostMapping("/{id}/suspend")
+    @PreAuthorize("hasAuthority('organizations_update')")
     fun suspendOrganization(@PathVariable id: UUID): ResponseEntity<OrganizationResponse> {
         val org = organizationService.suspendOrganization(id)
         return ResponseEntity.ok(OrganizationResponse.from(org))
     }
 
     @PostMapping("/{id}/close")
+    @PreAuthorize("hasAuthority('organizations_update')")
     fun closeOrganization(@PathVariable id: UUID): ResponseEntity<OrganizationResponse> {
         val org = organizationService.closeOrganization(id)
         return ResponseEntity.ok(OrganizationResponse.from(org))
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('organizations_delete')")
+    fun deleteOrganization(@PathVariable id: UUID): ResponseEntity<Unit> {
+        organizationService.deleteOrganization(id)
+        return ResponseEntity.noContent().build()
     }
 }

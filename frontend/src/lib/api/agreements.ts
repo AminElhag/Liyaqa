@@ -1,0 +1,132 @@
+import { api } from "./client";
+import type { PaginatedResponse, UUID } from "@/types/api";
+import type {
+  Agreement,
+  MemberAgreement,
+  MemberAgreementStatus,
+  CreateAgreementRequest,
+  UpdateAgreementRequest,
+  SignAgreementRequest,
+  AgreementQueryParams,
+} from "@/types/agreement";
+
+const AGREEMENTS_ENDPOINT = "api/agreements";
+
+/**
+ * Build query string from params
+ */
+function buildQueryString(params: AgreementQueryParams): string {
+  const searchParams = new URLSearchParams();
+  if (params.type) searchParams.set("type", params.type);
+  if (params.active !== undefined) searchParams.set("active", String(params.active));
+  if (params.mandatory !== undefined) searchParams.set("mandatory", String(params.mandatory));
+  if (params.page !== undefined) searchParams.set("page", String(params.page));
+  if (params.size !== undefined) searchParams.set("size", String(params.size));
+  if (params.sortBy) searchParams.set("sortBy", params.sortBy);
+  if (params.sortDirection) searchParams.set("sortDirection", params.sortDirection);
+  return searchParams.toString();
+}
+
+// ==========================================
+// AGREEMENT CRUD (Admin)
+// ==========================================
+
+/**
+ * Get paginated list of agreements
+ */
+export async function getAgreements(
+  params: AgreementQueryParams = {}
+): Promise<PaginatedResponse<Agreement>> {
+  const query = buildQueryString(params);
+  const url = query ? `${AGREEMENTS_ENDPOINT}?${query}` : AGREEMENTS_ENDPOINT;
+  return api.get(url).json();
+}
+
+/**
+ * Get agreement by ID
+ */
+export async function getAgreement(id: UUID): Promise<Agreement> {
+  return api.get(`${AGREEMENTS_ENDPOINT}/${id}`).json();
+}
+
+/**
+ * Get only active agreements
+ */
+export async function getActiveAgreements(): Promise<Agreement[]> {
+  return api.get(`${AGREEMENTS_ENDPOINT}/active`).json();
+}
+
+/**
+ * Create a new agreement
+ */
+export async function createAgreement(data: CreateAgreementRequest): Promise<Agreement> {
+  return api.post(AGREEMENTS_ENDPOINT, { json: data }).json();
+}
+
+/**
+ * Update an existing agreement
+ */
+export async function updateAgreement(
+  id: UUID,
+  data: UpdateAgreementRequest
+): Promise<Agreement> {
+  return api.put(`${AGREEMENTS_ENDPOINT}/${id}`, { json: data }).json();
+}
+
+/**
+ * Delete an agreement
+ */
+export async function deleteAgreement(id: UUID): Promise<void> {
+  await api.delete(`${AGREEMENTS_ENDPOINT}/${id}`);
+}
+
+/**
+ * Activate an agreement
+ */
+export async function activateAgreement(id: UUID): Promise<Agreement> {
+  return api.post(`${AGREEMENTS_ENDPOINT}/${id}/activate`).json();
+}
+
+/**
+ * Deactivate an agreement
+ */
+export async function deactivateAgreement(id: UUID): Promise<Agreement> {
+  return api.post(`${AGREEMENTS_ENDPOINT}/${id}/deactivate`).json();
+}
+
+// ==========================================
+// MEMBER AGREEMENTS
+// ==========================================
+
+/**
+ * Get member's signed agreements
+ */
+export async function getMemberAgreements(memberId: UUID): Promise<MemberAgreement[]> {
+  return api.get(`api/members/${memberId}/agreements`).json();
+}
+
+/**
+ * Get member's agreement status (signed + pending)
+ */
+export async function getMemberAgreementStatus(memberId: UUID): Promise<MemberAgreementStatus> {
+  return api.get(`api/members/${memberId}/agreements/status`).json();
+}
+
+/**
+ * Sign an agreement for a member
+ */
+export async function signAgreement(
+  memberId: UUID,
+  agreementId: UUID,
+  data: SignAgreementRequest = {}
+): Promise<MemberAgreement> {
+  return api.post(`api/members/${memberId}/agreements/${agreementId}/sign`, { json: data }).json();
+}
+
+/**
+ * Get mandatory agreements (convenience wrapper)
+ */
+export async function getMandatoryAgreements(): Promise<Agreement[]> {
+  const response = await getAgreements({ active: true, mandatory: true, size: 100 });
+  return response.content;
+}

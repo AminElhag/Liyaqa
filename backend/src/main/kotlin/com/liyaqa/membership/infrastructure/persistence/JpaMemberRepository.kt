@@ -1,12 +1,17 @@
 package com.liyaqa.membership.infrastructure.persistence
 
 import com.liyaqa.membership.domain.model.Member
+import com.liyaqa.membership.domain.model.MemberStatus
 import com.liyaqa.membership.domain.ports.MemberRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 import java.util.Optional
 import java.util.UUID
 
@@ -16,9 +21,30 @@ import java.util.UUID
 interface SpringDataMemberRepository : JpaRepository<Member, UUID> {
     fun findByEmail(email: String): Optional<Member>
     fun existsByEmail(email: String): Boolean
+    fun findByUserId(userId: UUID): Optional<Member>
 
     @Query("SELECT m FROM Member m WHERE m.email = :email AND m.tenantId = :tenantId")
     fun findByEmailAndTenantId(email: String, tenantId: UUID): Optional<Member>
+
+    @Query("""
+        SELECT m FROM Member m
+        WHERE (:search IS NULL OR (
+            LOWER(m.firstName) LIKE LOWER(CONCAT('%', :search, '%'))
+            OR LOWER(m.lastName) LIKE LOWER(CONCAT('%', :search, '%'))
+            OR LOWER(m.email) LIKE LOWER(CONCAT('%', :search, '%'))
+            OR LOWER(CONCAT(m.firstName, ' ', m.lastName)) LIKE LOWER(CONCAT('%', :search, '%'))
+        ))
+        AND (:status IS NULL OR m.status = :status)
+        AND (:joinedAfter IS NULL OR m.createdAt >= :joinedAfter)
+        AND (:joinedBefore IS NULL OR m.createdAt <= :joinedBefore)
+    """)
+    fun search(
+        @Param("search") search: String?,
+        @Param("status") status: MemberStatus?,
+        @Param("joinedAfter") joinedAfter: Instant?,
+        @Param("joinedBefore") joinedBefore: Instant?,
+        pageable: Pageable
+    ): Page<Member>
 }
 
 /**
@@ -59,5 +85,32 @@ class JpaMemberRepository(
 
     override fun count(): Long {
         return springDataRepository.count()
+    }
+
+    override fun findByUserId(userId: UUID): Optional<Member> {
+        return springDataRepository.findByUserId(userId)
+    }
+
+    override fun search(
+        search: String?,
+        status: MemberStatus?,
+        joinedAfter: LocalDate?,
+        joinedBefore: LocalDate?,
+        pageable: Pageable
+    ): Page<Member> {
+        val joinedAfterInstant = joinedAfter?.atStartOfDay()?.toInstant(ZoneOffset.UTC)
+        val joinedBeforeInstant = joinedBefore?.plusDays(1)?.atStartOfDay()?.toInstant(ZoneOffset.UTC)
+
+        return springDataRepository.search(
+            search = search?.takeIf { it.isNotBlank() },
+            status = status,
+            joinedAfter = joinedAfterInstant,
+            joinedBefore = joinedBeforeInstant,
+            pageable = pageable
+        )
+    }
+
+    override fun findAllByIds(ids: List<UUID>): List<Member> {
+        return springDataRepository.findAllById(ids).toList()
     }
 }

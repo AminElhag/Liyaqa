@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 60" width="180" height="60">
+  <defs>
+    <!-- Light gradient for dark backgrounds -->
+    <linearGradient id="minLightGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#38bdf8"/>
+      <stop offset="100%" style="stop-color:#0ea5e9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Geometric accent - angled bar -->
+  <rect x="0" y="18" width="5" height="24" rx="2.5" fill="url(#minLightGradient)" transform="skewY(-12)"/>
+
+  <!-- Main Arabic text: لياقة -->
+  <text
+    x="18"
+    y="42"
+    font-family="Cairo, Tajawal, 'Noto Sans Arabic', sans-serif"
+    font-size="40"
+    font-weight="800"
+    fill="#ffffff"
+    letter-spacing="-0.5"
+  >لياقة</text>
+
+  <!-- Accent dot -->
+  <circle cx="138" cy="14" r="5" fill="url(#minLightGradient)"/>
+</svg>

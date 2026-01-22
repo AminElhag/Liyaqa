@@ -29,7 +29,7 @@ class DashboardController(
      * Gets the main dashboard summary with key metrics.
      */
     @GetMapping("/summary")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CLUB_ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('dashboard_view')")
     fun getDashboardSummary(): ResponseEntity<DashboardSummaryResponse> {
         val totalMembers = memberRepository.count()
         val activeSubscriptions = subscriptionRepository.findByStatus(
@@ -66,7 +66,7 @@ class DashboardController(
      * Gets today's attendance overview.
      */
     @GetMapping("/attendance/today")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CLUB_ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('dashboard_view')")
     fun getTodayAttendance(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int
@@ -96,7 +96,7 @@ class DashboardController(
      * Gets subscriptions expiring soon.
      */
     @GetMapping("/subscriptions/expiring")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CLUB_ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('dashboard_view')")
     fun getExpiringSubscriptions(
         @RequestParam(defaultValue = "7") daysAhead: Int,
         @RequestParam(defaultValue = "0") page: Int,
@@ -128,7 +128,7 @@ class DashboardController(
      * Gets pending and overdue invoices.
      */
     @GetMapping("/invoices/pending")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CLUB_ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('dashboard_view')")
     fun getPendingInvoices(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int

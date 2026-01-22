@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">لياقة</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_classes">الحصص</string>
+    <string name="nav_qr">رمز QR</string>
+    <string name="nav_invoices">الفواتير</string>
+    <string name="nav_profile">الملف الشخصي</string>
+
+    <!-- Greetings -->
+    <string name="greeting_hello">مرحباً</string>
+    <string name="greeting_welcome">أهلاً بعودتك</string>
+
+    <!-- Status Labels -->
+    <string name="status_active">نشط</string>
+    <string name="status_inactive">غير نشط</string>
+    <string name="status_suspended">معلق</string>
+    <string name="status_frozen">مجمد</string>
+    <string name="status_pending">قيد الانتظار</string>
+    <string name="status_pending_payment">في انتظار الدفع</string>
+    <string name="status_expired">منتهي</string>
+    <string name="status_cancelled">ملغي</string>
+    <string name="status_confirmed">مؤكد</string>
+    <string name="status_waitlisted">قائمة الانتظار</string>
+    <string name="status_checked_in">تم الدخول</string>
+    <string name="status_checked_out">تم الخروج</string>
+    <string name="status_completed">مكتمل</string>
+    <string name="status_no_show">لم يحضر</string>
+    <string name="status_paid">مدفوع</string>
+    <string name="status_partially_paid">مدفوع جزئياً</string>
+    <string name="status_overdue">متأخر</string>
+    <string name="status_draft">مسودة</string>
+    <string name="status_issued">صادر</string>
+
+    <!-- Button Labels -->
+    <string name="btn_book_now">احجز الآن</string>
+    <string name="btn_join_waitlist">انضم لقائمة الانتظار</string>
+    <string name="btn_cancel">إلغاء</string>
+    <string name="btn_cancel_booking">إلغاء الحجز</string>
+    <string name="btn_pay_now">ادفع الآن</string>
+    <string name="btn_save">حفظ</string>
+    <string name="btn_submit">إرسال</string>
+    <string name="btn_retry">إعادة المحاولة</string>
+    <string name="btn_refresh">تحديث</string>
+    <string name="btn_download_pdf">تحميل PDF</string>
+    <string name="btn_view_details">عرض التفاصيل</string>
+    <string name="btn_edit_profile">تعديل الملف الشخصي</string>
+    <string name="btn_change_password">تغيير كلمة المرور</string>
+    <string name="btn_logout">تسجيل الخروج</string>
+    <string name="btn_login">تسجيل الدخول</string>
+    <string name="btn_mark_all_read">تعليم الكل كمقروء</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_subscription">الاشتراك</string>
+    <string name="dashboard_days_remaining">الأيام المتبقية</string>
+    <string name="dashboard_classes_remaining">الحصص المتبقية</string>
+    <string name="dashboard_total_visits">إجمالي الزيارات</string>
+    <string name="dashboard_this_month">هذا الشهر</string>
+    <string name="dashboard_last_month">الشهر الماضي</string>
+    <string name="dashboard_average_visits">متوسط الزيارات/شهر</string>
+    <string name="dashboard_upcoming_classes">الحصص القادمة</string>
+    <string name="dashboard_pending_invoices">الفواتير المعلقة</string>
+    <string name="dashboard_quick_qr">انقر لعرض رمز QR</string>
+
+    <!-- QR Code Screen -->
+    <string name="qr_title">تسجيل QR</string>
+    <string name="qr_valid_until">صالح حتى</string>
+    <string name="qr_expired">انتهت صلاحية رمز QR</string>
+    <string name="qr_instructions">أظهر رمز QR هذا في الاستقبال لتسجيل الدخول</string>
+    <string name="qr_refresh">تحديث رمز QR</string>
+
+    <!-- Bookings -->
+    <string name="bookings_title">حجوزاتي</string>
+    <string name="bookings_upcoming">القادمة</string>
+    <string name="bookings_past">السابقة</string>
+    <string name="bookings_book_class">احجز حصة</string>
+    <string name="bookings_available_sessions">الحصص المتاحة</string>
+    <string name="bookings_spots_remaining">%d أماكن متبقية</string>
+    <string name="bookings_full">ممتلئ</string>
+    <string name="bookings_booked">محجوز</string>
+    <string name="bookings_cancel_confirm_title">إلغاء الحجز؟</string>
+    <string name="bookings_cancel_confirm_message">هل أنت متأكد من إلغاء هذا الحجز؟</string>
+    <string name="bookings_cancelled_success">تم إلغاء الحجز بنجاح</string>
+    <string name="bookings_booked_success">تم حجز الحصة بنجاح</string>
+
+    <!-- Invoices -->
+    <string name="invoices_title">فواتيري</string>
+    <string name="invoices_all">الكل</string>
+    <string name="invoices_pending">معلقة</string>
+    <string name="invoices_paid">مدفوعة</string>
+    <string name="invoices_overdue">متأخرة</string>
+    <string name="invoices_total_due">إجمالي المستحق</string>
+    <string name="invoices_invoice_number">فاتورة #%s</string>
+    <string name="invoices_issue_date">تاريخ الإصدار</string>
+    <string name="invoices_due_date">تاريخ الاستحقاق</string>
+    <string name="invoices_subtotal">المجموع الفرعي</string>
+    <string name="invoices_vat">ضريبة القيمة المضافة (15%%)</string>
+    <string name="invoices_discount">الخصم</string>
+    <string name="invoices_total">المجموع</string>
+    <string name="invoices_line_items">البنود</string>
+
+    <!-- Profile -->
+    <string name="profile_title">الملف الشخصي</string>
+    <string name="profile_personal_info">المعلومات الشخصية</string>
+    <string name="profile_first_name">الاسم الأول</string>
+    <string name="profile_last_name">اسم العائلة</string>
+    <string name="profile_email">البريد الإلكتروني</string>
+    <string name="profile_phone">الهاتف</string>
+    <string name="profile_date_of_birth">تاريخ الميلاد</string>
+    <string name="profile_address">العنوان</string>
+    <string name="profile_street">الشارع</string>
+    <string name="profile_city">المدينة</string>
+    <string name="profile_state">المنطقة</string>
+    <string name="profile_postal_code">الرمز البريدي</string>
+    <string name="profile_country">الدولة</string>
+    <string name="profile_emergency_contact">جهة اتصال الطوارئ</string>
+    <string name="profile_emergency_name">اسم جهة الاتصال</string>
+    <string name="profile_emergency_phone">هاتف جهة الاتصال</string>
+    <string name="profile_current_password">كلمة المرور الحالية</string>
+    <string name="profile_new_password">كلمة المرور الجديدة</string>
+    <string name="profile_confirm_password">تأكيد كلمة المرور</string>
+    <string name="profile_saved_success">تم تحديث الملف الشخصي بنجاح</string>
+    <string name="profile_password_changed">تم تغيير كلمة المرور بنجاح</string>
+
+    <!-- Notifications -->
+    <string name="notifications_title">الإشعارات</string>
+    <string name="notifications_all">الكل</string>
+    <string name="notifications_unread">غير مقروء</string>
+    <string name="notifications_settings">إعدادات الإشعارات</string>
+    <string name="notifications_channels">قنوات الإشعارات</string>
+    <string name="notifications_email">البريد الإلكتروني</string>
+    <string name="notifications_sms">الرسائل النصية</string>
+    <string name="notifications_push">الإشعارات الفورية</string>
+    <string name="notifications_types">أنواع الإشعارات</string>
+    <string name="notifications_subscription_reminders">تذكيرات الاشتراك</string>
+    <string name="notifications_invoice_alerts">تنبيهات الفواتير</string>
+    <string name="notifications_booking_updates">تحديثات الحجز</string>
+    <string name="notifications_class_reminders">تذكيرات الحصص</string>
+    <string name="notifications_marketing">التسويق</string>
+    <string name="notifications_language">اللغة المفضلة</string>
+
+    <!-- Attendance -->
+    <string name="attendance_title">سجل الحضور</string>
+    <string name="attendance_check_in_time">وقت الدخول</string>
+    <string name="attendance_check_out_time">وقت الخروج</string>
+    <string name="attendance_duration">المدة</string>
+    <string name="attendance_location">الموقع</string>
+    <string name="attendance_method">طريقة التسجيل</string>
+    <string name="attendance_method_manual">يدوي</string>
+    <string name="attendance_method_qr">رمز QR</string>
+    <string name="attendance_method_card">بطاقة</string>
+    <string name="attendance_method_biometric">بيومتري</string>
+
+    <!-- Subscriptions -->
+    <string name="subscriptions_title">الاشتراكات</string>
+    <string name="subscriptions_active">الاشتراك الحالي</string>
+    <string name="subscriptions_history">سجل الاشتراكات</string>
+    <string name="subscriptions_plan_name">الخطة</string>
+    <string name="subscriptions_start_date">تاريخ البدء</string>
+    <string name="subscriptions_end_date">تاريخ الانتهاء</string>
+    <string name="subscriptions_auto_renew">التجديد التلقائي</string>
+    <string name="subscriptions_frozen_until">مجمد حتى</string>
+
+    <!-- Payment -->
+    <string name="payment_title">الدفع</string>
+    <string name="payment_processing">جاري معالجة الدفع...</string>
+    <string name="payment_success">تم الدفع بنجاح</string>
+    <string name="payment_failed">فشل الدفع</string>
+    <string name="payment_cancelled">تم إلغاء الدفع</string>
+    <string name="payment_amount">المبلغ</string>
+    <string name="payment_return_to_invoices">العودة إلى الفواتير</string>
+    <string name="payment_try_again">حاول مرة أخرى</string>
+
+    <!-- Empty States -->
+    <string name="empty_bookings">لا توجد حجوزات</string>
+    <string name="empty_bookings_desc">احجز حصة لتبدأ رحلتك الرياضية</string>
+    <string name="empty_invoices">لا توجد فواتير</string>
+    <string name="empty_invoices_desc">ستظهر فواتيرك هنا</string>
+    <string name="empty_notifications">لا توجد إشعارات</string>
+    <string name="empty_notifications_desc">لقد قرأت كل شيء!</string>
+    <string name="empty_attendance">لا توجد سجلات حضور</string>
+    <string name="empty_attendance_desc">سيظهر سجل تسجيل الدخول هنا</string>
+    <string name="empty_sessions">لا توجد حصص متاحة</string>
+    <string name="empty_sessions_desc">عد لاحقاً للاطلاع على الحصص المتاحة</string>
+
+    <!-- Error Messages -->
+    <string name="error_generic">حدث خطأ ما</string>
+    <string name="error_network">خطأ في الشبكة. يرجى التحقق من اتصالك.</string>
+    <string name="error_unauthorized">انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.</string>
+    <string name="error_forbidden">ليس لديك صلاحية لهذا الإجراء.</string>
+    <string name="error_not_found">غير موجود</string>
+    <string name="error_server">خطأ في الخادم. يرجى المحاولة لاحقاً.</string>
+    <string name="error_validation">يرجى التحقق من البيانات المدخلة</string>
+    <string name="error_invalid_credentials">البريد الإلكتروني أو كلمة المرور غير صحيحة</string>
+    <string name="error_password_mismatch">كلمات المرور غير متطابقة</string>
+    <string name="error_weak_password">كلمة المرور ضعيفة جداً</string>
+    <string name="error_invalid_phone">رقم الهاتف غير صالح</string>
+    <string name="error_required_field">هذا الحقل مطلوب</string>
+
+    <!-- Login -->
+    <string name="login_title">أهلاً بعودتك</string>
+    <string name="login_email">البريد الإلكتروني</string>
+    <string name="login_password">كلمة المرور</string>
+    <string name="login_forgot_password">نسيت كلمة المرور؟</string>
+    <string name="login_signing_in">جاري تسجيل الدخول...</string>
+
+    <!-- Common -->
+    <string name="common_loading">جاري التحميل...</string>
+    <string name="common_yes">نعم</string>
+    <string name="common_no">لا</string>
+    <string name="common_ok">حسناً</string>
+    <string name="common_confirm">تأكيد</string>
+    <string name="common_close">إغلاق</string>
+    <string name="common_search">بحث</string>
+    <string name="common_filter">تصفية</string>
+    <string name="common_sort">ترتيب</string>
+    <string name="common_from">من</string>
+    <string name="common_to">إلى</string>
+    <string name="common_date">التاريخ</string>
+    <string name="common_time">الوقت</string>
+    <string name="common_duration_minutes">%d دقيقة</string>
+    <string name="common_currency_sar">ريال</string>
+    <string name="common_unlimited">غير محدود</string>
+    <string name="common_on">مفعل</string>
+    <string name="common_off">معطل</string>
+    <string name="common_enabled">مفعل</string>
+    <string name="common_disabled">معطل</string>
+    <string name="common_language_english">الإنجليزية</string>
+    <string name="common_language_arabic">العربية</string>
+</resources>
