@@ -1,3 +1,22 @@
+# ===========================================
+# AI Assistant / Planning Files
+# ===========================================
+.claude/
+CLAUDE.md
+*SESSION*.md
+*SKILL*.md
+*_PLAN*.md
+*_PLAN.md
+*ANALYSIS*.md
+*RESUME*.md
+
+# ===========================================
+# Internal Documentation (not for public)
+# ===========================================
+MVP_COMPLETION_PLAN.md
+MANUAL_TESTING_PLAN.md
+SESSION_RESUME.md
+
 # Compiled class files
 *.class
 
