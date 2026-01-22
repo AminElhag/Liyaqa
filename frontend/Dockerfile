@@ -27,6 +27,9 @@ ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 # Disable telemetry during build
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Increase Node.js memory limit for build (needed for 1GB droplets)
+ENV NODE_OPTIONS="--max-old-space-size=768"
+
 # Build the application
 RUN npm run build
 
