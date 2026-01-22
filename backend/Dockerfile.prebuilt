@@ -1,0 +1,38 @@
+# ===========================================
+# Liyaqa Backend - Pre-built JAR Dockerfile
+# ===========================================
+# Uses locally built JAR for faster image creation
+
+FROM eclipse-temurin:21-jre-alpine
+
+# Install required packages
+RUN apk add --no-cache \
+    ttf-dejavu \
+    fontconfig \
+    tzdata \
+    curl
+
+# Create non-root user
+RUN addgroup -g 1001 liyaqa && \
+    adduser -u 1001 -G liyaqa -D -s /bin/sh liyaqa
+
+WORKDIR /app
+
+# Copy the pre-built JAR
+COPY build/libs/*.jar app.jar
+
+# Set ownership
+RUN chown -R liyaqa:liyaqa /app
+
+USER liyaqa
+
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
+
+# JVM optimizations for containers
+ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC"
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

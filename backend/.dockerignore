@@ -19,6 +19,7 @@
 # Gradle build artifacts
 .gradle
 build
+!build/libs/*.jar
 !gradle/wrapper/gradle-wrapper.jar
 
 # Kotlin

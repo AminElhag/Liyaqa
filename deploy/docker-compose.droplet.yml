@@ -36,9 +36,7 @@ services:
   # Liyaqa Backend API
   # ===================
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: amegung/liyaqa-backend:latest
     container_name: liyaqa-backend
     restart: always
     depends_on:
@@ -93,11 +91,7 @@ services:
   # Liyaqa Frontend
   # ===================
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+    image: amegung/liyaqa-frontend:latest
     container_name: liyaqa-frontend
     restart: always
     depends_on:
