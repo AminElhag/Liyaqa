@@ -4,8 +4,10 @@ import com.liyaqa.attendance.application.services.AttendanceService
 import com.liyaqa.auth.application.services.AuthService
 import com.liyaqa.billing.application.services.InvoiceService
 import com.liyaqa.membership.application.services.MembershipPlanService
+import com.liyaqa.membership.domain.model.MembershipPlan
 import com.liyaqa.membership.domain.model.Subscription
 import com.liyaqa.platform.application.services.ClientInvoiceService
+import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.membership.domain.model.SubscriptionStatus
 import com.liyaqa.membership.domain.ports.SubscriptionRepository
 import com.liyaqa.shared.infrastructure.jobs.ScheduledJobs
@@ -160,6 +162,47 @@ class ScheduledJobsTest {
         assertEquals(SubscriptionStatus.EXPIRED, expiredSub2.status)
     }
 
+    // ========== Expire Membership Plans Tests ==========
+
+    @Test
+    fun `expireMembershipPlans should call membershipPlanService deactivateExpiredPlans`() {
+        // Given
+        val expiredPlan = createTestMembershipPlan()
+        whenever(membershipPlanService.deactivateExpiredPlans()) doReturn listOf(expiredPlan)
+
+        // When
+        scheduledJobs.expireMembershipPlans()
+
+        // Then
+        verify(membershipPlanService).deactivateExpiredPlans()
+    }
+
+    @Test
+    fun `expireMembershipPlans should handle zero expired plans`() {
+        // Given
+        whenever(membershipPlanService.deactivateExpiredPlans()) doReturn emptyList()
+
+        // When
+        scheduledJobs.expireMembershipPlans()
+
+        // Then
+        verify(membershipPlanService).deactivateExpiredPlans()
+    }
+
+    @Test
+    fun `expireMembershipPlans should handle multiple expired plans`() {
+        // Given
+        val expiredPlan1 = createTestMembershipPlan()
+        val expiredPlan2 = createTestMembershipPlan()
+        whenever(membershipPlanService.deactivateExpiredPlans()) doReturn listOf(expiredPlan1, expiredPlan2)
+
+        // When
+        scheduledJobs.expireMembershipPlans()
+
+        // Then
+        verify(membershipPlanService).deactivateExpiredPlans()
+    }
+
     // ========== Mark Overdue Invoices Tests ==========
 
     @Test
@@ -303,5 +346,15 @@ class ScheduledJobsTest {
         }
 
         return subscription
+    }
+
+    private fun createTestMembershipPlan(
+        id: UUID = UUID.randomUUID(),
+        name: LocalizedText = LocalizedText("Test Plan", "خطة اختبار")
+    ): MembershipPlan {
+        return MembershipPlan(
+            id = id,
+            name = name
+        )
     }
 }
