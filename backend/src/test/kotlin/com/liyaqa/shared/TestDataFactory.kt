@@ -14,7 +14,7 @@ import com.liyaqa.organization.domain.model.Organization
 import com.liyaqa.organization.domain.model.OrganizationStatus
 import com.liyaqa.organization.domain.model.OrganizationType
 import com.liyaqa.shared.domain.LocalizedText
-import com.liyaqa.shared.domain.Money
+import com.liyaqa.shared.domain.TaxableFee
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
@@ -50,14 +50,13 @@ object TestDataFactory {
     fun createTestClub(
         organizationId: UUID,
         id: UUID = UUID.randomUUID(),
-        nameEn: String = "Test Club",
-        nameAr: String? = "نادي اختبار",
+        name: LocalizedText = LocalizedText(en = "Test Club", ar = "نادي اختبار"),
         status: ClubStatus = ClubStatus.ACTIVE
     ): Club {
         return Club(
             id = id,
             organizationId = organizationId,
-            name = LocalizedText(en = nameEn, ar = nameAr),
+            name = name,
             status = status
         )
     }
@@ -87,8 +86,8 @@ object TestDataFactory {
     fun createTestMember(
         tenantId: UUID,
         id: UUID = UUID.randomUUID(),
-        firstName: String = "John",
-        lastName: String = "Doe",
+        firstName: LocalizedText = LocalizedText(en = "John", ar = "جون"),
+        lastName: LocalizedText = LocalizedText(en = "Doe", ar = "دو"),
         email: String = "john.doe.${UUID.randomUUID()}@example.com",
         phone: String? = "+966500000001",
         status: MemberStatus = MemberStatus.ACTIVE
@@ -112,18 +111,18 @@ object TestDataFactory {
     fun createTestMembershipPlan(
         tenantId: UUID,
         id: UUID = UUID.randomUUID(),
-        nameEn: String = "Monthly Plan",
-        nameAr: String? = "خطة شهرية",
-        priceAmount: Double = 299.00,
+        name: LocalizedText = LocalizedText(en = "Monthly Plan", ar = "خطة شهرية"),
+        membershipFeeAmount: BigDecimal = BigDecimal("299.00"),
         currency: String = "SAR",
+        taxRate: BigDecimal = BigDecimal("15.00"),
         billingPeriod: BillingPeriod = BillingPeriod.MONTHLY,
         maxClassesPerPeriod: Int? = null,
         freezeDaysAllowed: Int = 7
     ): MembershipPlan {
         val plan = MembershipPlan(
             id = id,
-            name = LocalizedText(en = nameEn, ar = nameAr),
-            price = Money(BigDecimal.valueOf(priceAmount).setScale(2), currency),
+            name = name,
+            membershipFee = TaxableFee(amount = membershipFeeAmount, currency = currency, taxRate = taxRate),
             billingPeriod = billingPeriod,
             maxClassesPerPeriod = maxClassesPerPeriod,
             freezeDaysAllowed = freezeDaysAllowed,

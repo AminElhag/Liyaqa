@@ -24,6 +24,7 @@ import org.mockito.kotlin.whenever
 import org.mockito.quality.Strictness
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
+import com.liyaqa.shared.domain.LocalizedText
 import java.time.LocalDate
 import java.util.UUID
 
@@ -200,8 +201,8 @@ class ExportServiceTest {
         status: MemberStatus = MemberStatus.ACTIVE
     ) = Member(
         id = id,
-        firstName = firstName,
-        lastName = lastName,
+        firstName = LocalizedText(en = firstName, ar = firstName),
+        lastName = LocalizedText(en = lastName, ar = lastName),
         email = "$firstName.$lastName@example.com",
         status = status
     )

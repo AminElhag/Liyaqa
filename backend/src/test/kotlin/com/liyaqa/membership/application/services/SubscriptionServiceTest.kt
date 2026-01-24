@@ -11,6 +11,8 @@ import com.liyaqa.membership.domain.ports.SubscriptionRepository
 import com.liyaqa.notification.application.services.NotificationService
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.Money
+import com.liyaqa.shared.domain.TaxableFee
+import java.math.BigDecimal
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -67,7 +69,7 @@ class SubscriptionServiceTest {
             id = testPlanId,
             name = LocalizedText(en = "Monthly Plan", ar = "الخطة الشهرية"),
             description = LocalizedText(en = "Monthly membership", ar = "العضوية الشهرية"),
-            price = Money.of(100.00, "SAR"),
+            membershipFee = TaxableFee(amount = BigDecimal("100.00"), currency = "SAR", taxRate = BigDecimal("15.00")),
             billingPeriod = BillingPeriod.MONTHLY,
             maxClassesPerPeriod = 30,
             isActive = true

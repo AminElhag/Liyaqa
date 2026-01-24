@@ -3,6 +3,7 @@ package com.liyaqa.membership.infrastructure.persistence
 import com.liyaqa.membership.domain.model.Member
 import com.liyaqa.membership.domain.model.MemberStatus
 import com.liyaqa.membership.domain.ports.MemberRepository
+import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.TenantContext
 import com.liyaqa.shared.domain.TenantId
 import org.junit.jupiter.api.AfterEach
@@ -51,8 +52,8 @@ class MemberRepositoryIntegrationTest {
     ): Member {
         val member = Member(
             id = UUID.randomUUID(),
-            firstName = firstName,
-            lastName = lastName,
+            firstName = LocalizedText(en = firstName, ar = firstName),
+            lastName = LocalizedText(en = lastName, ar = lastName),
             email = email,
             phone = "+966500000001",
             status = status
@@ -71,7 +72,7 @@ class MemberRepositoryIntegrationTest {
 
         val foundMember = memberRepository.findById(savedMember.id)
         assertTrue(foundMember.isPresent)
-        assertEquals(member.firstName, foundMember.get().firstName)
+        assertEquals(member.firstName.en, foundMember.get().firstName.en)
         assertNotNull(foundMember.get().createdAt)
     }
 
@@ -100,7 +101,7 @@ class MemberRepositoryIntegrationTest {
 
         val result = memberRepository.search("SearchTarget$uniqueSuffix", null, null, null, PageRequest.of(0, 10))
         assertTrue(result.totalElements >= 1, "Expected at least 1 result for unique search term")
-        assertTrue(result.content.any { it.firstName == "SearchTarget$uniqueSuffix" })
+        assertTrue(result.content.any { it.firstName.en == "SearchTarget$uniqueSuffix" })
     }
 
     @Test

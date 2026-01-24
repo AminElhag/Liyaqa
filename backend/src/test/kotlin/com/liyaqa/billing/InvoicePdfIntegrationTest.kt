@@ -96,8 +96,8 @@ class InvoicePdfIntegrationTest {
         // Create member
         testMember = Member(
             id = UUID.randomUUID(),
-            firstName = "John",
-            lastName = "Doe",
+            firstName = LocalizedText(en = "John", ar = "جون"),
+            lastName = LocalizedText(en = "Doe", ar = "دو"),
             email = "john.doe@example.com",
             status = MemberStatus.ACTIVE
         )

@@ -81,8 +81,8 @@ class BookingServiceTest {
         // Create test member
         testMember = Member(
             id = UUID.randomUUID(),
-            firstName = "John",
-            lastName = "Doe",
+            firstName = LocalizedText(en = "John", ar = "جون"),
+            lastName = LocalizedText(en = "Doe", ar = "دو"),
             email = "john.doe@example.com",
             phone = "+966500000000",
             status = MemberStatus.ACTIVE

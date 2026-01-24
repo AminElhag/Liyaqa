@@ -32,6 +32,7 @@ import com.liyaqa.scheduling.domain.ports.ClassSessionRepository
 import com.liyaqa.scheduling.domain.ports.GymClassRepository
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.Money
+import com.liyaqa.shared.domain.TaxableFee
 import com.liyaqa.shared.domain.TenantContext
 import com.liyaqa.shared.domain.TenantId
 import org.junit.jupiter.api.AfterEach
@@ -131,8 +132,8 @@ class BookingWorkflowIntegrationTest {
         // Create member
         testMember = Member(
             id = UUID.randomUUID(),
-            firstName = "John",
-            lastName = "Doe",
+            firstName = LocalizedText(en = "John", ar = "جون"),
+            lastName = LocalizedText(en = "Doe", ar = "دو"),
             email = "john.doe@example.com",
             status = MemberStatus.ACTIVE
         )
@@ -143,7 +144,7 @@ class BookingWorkflowIntegrationTest {
         testPlan = MembershipPlan(
             id = UUID.randomUUID(),
             name = LocalizedText(en = "Monthly Plan", ar = "خطة شهرية"),
-            price = Money(BigDecimal.valueOf(299.00).setScale(2), "SAR"),
+            membershipFee = TaxableFee(amount = BigDecimal("299.00"), currency = "SAR", taxRate = BigDecimal("15.00")),
             billingPeriod = BillingPeriod.MONTHLY,
             maxClassesPerPeriod = 20,
             freezeDaysAllowed = 7,
@@ -261,8 +262,8 @@ class BookingWorkflowIntegrationTest {
         val uniqueId = UUID.randomUUID()
         val newMember = Member(
             id = uniqueId,
-            firstName = "No",
-            lastName = "Subscription",
+            firstName = LocalizedText(en = "No", ar = "لا"),
+            lastName = LocalizedText(en = "Subscription", ar = "اشتراك"),
             email = "nosub.$uniqueId@example.com",
             status = MemberStatus.ACTIVE
         )

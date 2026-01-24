@@ -330,8 +330,8 @@ class InvoiceServiceTest {
         status: MemberStatus = MemberStatus.ACTIVE
     ) = Member(
         id = id,
-        firstName = "Test",
-        lastName = "Member",
+        firstName = LocalizedText(en = "Test", ar = "اختبار"),
+        lastName = LocalizedText(en = "Member", ar = "عضو"),
         email = email,
         status = status
     )

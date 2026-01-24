@@ -71,8 +71,8 @@ class AttendanceServiceTest {
 
         testMember = Member(
             id = UUID.randomUUID(),
-            firstName = "John",
-            lastName = "Doe",
+            firstName = LocalizedText(en = "John", ar = "جون"),
+            lastName = LocalizedText(en = "Doe", ar = "دو"),
             email = "john.doe@example.com",
             phone = "+966500000000",
             status = MemberStatus.ACTIVE
@@ -155,8 +155,8 @@ class AttendanceServiceTest {
         // Given
         val suspendedMember = Member(
             id = UUID.randomUUID(),
-            firstName = "Suspended",
-            lastName = "Member",
+            firstName = LocalizedText(en = "Suspended", ar = "معلق"),
+            lastName = LocalizedText(en = "Member", ar = "عضو"),
             email = "suspended@example.com",
             phone = "+966500000001",
             status = MemberStatus.SUSPENDED

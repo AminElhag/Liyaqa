@@ -19,6 +19,7 @@ import com.liyaqa.organization.domain.ports.ClubRepository
 import com.liyaqa.organization.domain.ports.OrganizationRepository
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.Money
+import com.liyaqa.shared.domain.TaxableFee
 import com.liyaqa.shared.domain.TenantContext
 import com.liyaqa.shared.domain.TenantId
 import org.junit.jupiter.api.AfterEach
@@ -95,8 +96,8 @@ class SubscriptionFreezeIntegrationTest {
         // Create member
         testMember = Member(
             id = UUID.randomUUID(),
-            firstName = "John",
-            lastName = "Doe",
+            firstName = LocalizedText(en = "John", ar = "جون"),
+            lastName = LocalizedText(en = "Doe", ar = "دو"),
             email = "john.doe@example.com",
             status = MemberStatus.ACTIVE
         )
@@ -107,7 +108,7 @@ class SubscriptionFreezeIntegrationTest {
         testPlan = MembershipPlan(
             id = UUID.randomUUID(),
             name = LocalizedText(en = "Monthly Plan", ar = "خطة شهرية"),
-            price = Money(BigDecimal.valueOf(299.00).setScale(2), "SAR"),
+            membershipFee = TaxableFee(amount = BigDecimal("299.00"), currency = "SAR", taxRate = BigDecimal("15.00")),
             billingPeriod = BillingPeriod.MONTHLY,
             freezeDaysAllowed = 7,
             isActive = true

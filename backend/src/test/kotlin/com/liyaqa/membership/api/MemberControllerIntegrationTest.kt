@@ -79,8 +79,8 @@ class MemberControllerIntegrationTest {
         repeat(5) { i ->
             val member = Member(
                 id = UUID.randomUUID(),
-                firstName = "Member$i",
-                lastName = "Test",
+                firstName = LocalizedText(en = "Member$i", ar = "عضو$i"),
+                lastName = LocalizedText(en = "Test", ar = "اختبار"),
                 email = "member$i.${UUID.randomUUID()}@example.com",
                 status = MemberStatus.ACTIVE
             )
@@ -118,8 +118,8 @@ class MemberControllerIntegrationTest {
         // Create a member with unique name
         val member = Member(
             id = UUID.randomUUID(),
-            firstName = "UniqueSearchName",
-            lastName = "UniqueLastName",
+            firstName = LocalizedText(en = "UniqueSearchName", ar = "اسم بحث فريد"),
+            lastName = LocalizedText(en = "UniqueLastName", ar = "اسم عائلة فريد"),
             email = "unique.search.${UUID.randomUUID()}@example.com",
             status = MemberStatus.ACTIVE
         )
@@ -136,7 +136,7 @@ class MemberControllerIntegrationTest {
 
         assertNotNull(members)
         assertTrue(members.content.isNotEmpty())
-        assertTrue(members.content.any { it.firstName == "UniqueSearchName" })
+        assertTrue(members.content.any { it.firstName.en == "UniqueSearchName" })
     }
 
     @Test
@@ -144,8 +144,8 @@ class MemberControllerIntegrationTest {
         // Create a suspended member
         val suspendedMember = Member(
             id = UUID.randomUUID(),
-            firstName = "Suspended",
-            lastName = "Member",
+            firstName = LocalizedText(en = "Suspended", ar = "معلق"),
+            lastName = LocalizedText(en = "Member", ar = "عضو"),
             email = "suspended.${UUID.randomUUID()}@example.com",
             status = MemberStatus.SUSPENDED
         )
@@ -167,8 +167,8 @@ class MemberControllerIntegrationTest {
     @Test
     fun `createMember with valid data creates member`() {
         val command = CreateMemberCommand(
-            firstName = "New",
-            lastName = "Member",
+            firstName = LocalizedText(en = "New", ar = "جديد"),
+            lastName = LocalizedText(en = "Member", ar = "عضو"),
             email = "newmember.${UUID.randomUUID()}@example.com",
             phone = "+966500000001"
         )
@@ -176,8 +176,8 @@ class MemberControllerIntegrationTest {
         val createdMember = memberService.createMember(command)
 
         assertNotNull(createdMember)
-        assertEquals("New", createdMember.firstName)
-        assertEquals("Member", createdMember.lastName)
+        assertEquals("New", createdMember.firstName.en)
+        assertEquals("Member", createdMember.lastName.en)
         assertEquals(MemberStatus.ACTIVE, createdMember.status)
     }
 
@@ -185,8 +185,8 @@ class MemberControllerIntegrationTest {
     fun `getMemberById returns member when exists`() {
         val member = Member(
             id = UUID.randomUUID(),
-            firstName = "GetById",
-            lastName = "Test",
+            firstName = LocalizedText(en = "GetById", ar = "الحصول بالمعرف"),
+            lastName = LocalizedText(en = "Test", ar = "اختبار"),
             email = "getbyid.${UUID.randomUUID()}@example.com",
             status = MemberStatus.ACTIVE
         )
@@ -197,7 +197,7 @@ class MemberControllerIntegrationTest {
 
         assertNotNull(foundMember)
         assertEquals(savedMember.id, foundMember.id)
-        assertEquals("GetById", foundMember.firstName)
+        assertEquals("GetById", foundMember.firstName.en)
     }
 
     @Test
@@ -218,8 +218,8 @@ class MemberControllerIntegrationTest {
         // Create a new member directly via repository (bypassing notification service)
         val member = Member(
             id = UUID.randomUUID(),
-            firstName = "Count",
-            lastName = "Test",
+            firstName = LocalizedText(en = "Count", ar = "عدد"),
+            lastName = LocalizedText(en = "Test", ar = "اختبار"),
             email = "count.test.${UUID.randomUUID()}@example.com",
             status = MemberStatus.ACTIVE
         )

@@ -23,6 +23,7 @@ import org.mockito.kotlin.whenever
 import org.mockito.quality.Strictness
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
+import com.liyaqa.shared.domain.LocalizedText
 import java.time.LocalDate
 import java.util.Optional
 import java.util.UUID
@@ -47,8 +48,8 @@ class MemberServiceTest {
 
         testMember = Member(
             id = UUID.randomUUID(),
-            firstName = "John",
-            lastName = "Doe",
+            firstName = LocalizedText(en = "John", ar = "جون"),
+            lastName = LocalizedText(en = "Doe", ar = "دو"),
             email = "john.doe@example.com",
             phone = "+966500000000",
             status = MemberStatus.ACTIVE
@@ -59,8 +60,8 @@ class MemberServiceTest {
     fun `createMember should create new member when email is unique`() {
         // Given
         val command = CreateMemberCommand(
-            firstName = "John",
-            lastName = "Doe",
+            firstName = LocalizedText(en = "John", ar = "جون"),
+            lastName = LocalizedText(en = "Doe", ar = "دو"),
             email = "john.doe@example.com",
             phone = "+966500000000"
         )
@@ -75,8 +76,8 @@ class MemberServiceTest {
 
         // Then
         assertNotNull(result)
-        assertEquals(command.firstName, result.firstName)
-        assertEquals(command.lastName, result.lastName)
+        assertEquals(command.firstName.en, result.firstName.en)
+        assertEquals(command.lastName.en, result.lastName.en)
         assertEquals(command.email, result.email)
         assertEquals(MemberStatus.ACTIVE, result.status)
         verify(memberRepository).save(any<Member>())
@@ -86,8 +87,8 @@ class MemberServiceTest {
     fun `createMember should throw when email already exists`() {
         // Given
         val command = CreateMemberCommand(
-            firstName = "John",
-            lastName = "Doe",
+            firstName = LocalizedText(en = "John", ar = "جون"),
+            lastName = LocalizedText(en = "Doe", ar = "دو"),
             email = "existing@example.com",
             phone = "+966500000000"
         )
@@ -106,8 +107,8 @@ class MemberServiceTest {
     fun `createMember should send welcome notification`() {
         // Given
         val command = CreateMemberCommand(
-            firstName = "John",
-            lastName = "Doe",
+            firstName = LocalizedText(en = "John", ar = "جون"),
+            lastName = LocalizedText(en = "Doe", ar = "دو"),
             email = "john.doe@example.com",
             phone = "+966500000000"
         )
@@ -194,8 +195,8 @@ class MemberServiceTest {
         // Given
         val memberId = testMember.id
         val command = UpdateMemberCommand(
-            firstName = "Jane",
-            lastName = "Smith",
+            firstName = LocalizedText(en = "Jane", ar = "جين"),
+            lastName = LocalizedText(en = "Smith", ar = "سميث"),
             phone = "+966500000001"
         )
 
@@ -208,8 +209,8 @@ class MemberServiceTest {
         val result = memberService.updateMember(memberId, command)
 
         // Then
-        assertEquals("Jane", result.firstName)
-        assertEquals("Smith", result.lastName)
+        assertEquals("Jane", result.firstName.en)
+        assertEquals("Smith", result.lastName.en)
         assertEquals("+966500000001", result.phone)
     }
 
@@ -234,8 +235,8 @@ class MemberServiceTest {
         // Given
         val suspendedMember = Member(
             id = UUID.randomUUID(),
-            firstName = "John",
-            lastName = "Doe",
+            firstName = LocalizedText(en = "John", ar = "جون"),
+            lastName = LocalizedText(en = "Doe", ar = "دو"),
             email = "john.doe@example.com",
             phone = "+966500000000",
             status = MemberStatus.SUSPENDED
@@ -274,8 +275,8 @@ class MemberServiceTest {
         // Given
         val frozenMember = Member(
             id = UUID.randomUUID(),
-            firstName = "John",
-            lastName = "Doe",
+            firstName = LocalizedText(en = "John", ar = "جون"),
+            lastName = LocalizedText(en = "Doe", ar = "دو"),
             email = "john.doe@example.com",
             phone = "+966500000000",
             status = MemberStatus.FROZEN

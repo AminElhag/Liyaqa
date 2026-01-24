@@ -22,6 +22,7 @@ import com.liyaqa.organization.domain.ports.ClubRepository
 import com.liyaqa.organization.domain.ports.OrganizationRepository
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.Money
+import com.liyaqa.shared.domain.TaxableFee
 import com.liyaqa.shared.domain.TenantContext
 import com.liyaqa.shared.domain.TenantId
 import org.junit.jupiter.api.AfterEach
@@ -133,7 +134,7 @@ class DashboardSummaryIntegrationTest {
         testPlan = MembershipPlan(
             id = UUID.randomUUID(),
             name = LocalizedText(en = "Monthly Plan", ar = "خطة شهرية"),
-            price = Money(BigDecimal.valueOf(299.00).setScale(2), "SAR"),
+            membershipFee = TaxableFee(amount = BigDecimal("299.00"), currency = "SAR", taxRate = BigDecimal("15.00")),
             billingPeriod = BillingPeriod.MONTHLY,
             isActive = true
         )
@@ -144,8 +145,8 @@ class DashboardSummaryIntegrationTest {
         repeat(5) { i ->
             val member = Member(
                 id = UUID.randomUUID(),
-                firstName = "Member$i",
-                lastName = "Test",
+                firstName = LocalizedText(en = "Member$i", ar = "عضو$i"),
+                lastName = LocalizedText(en = "Test", ar = "اختبار"),
                 email = "member$i.${UUID.randomUUID()}@example.com",
                 status = MemberStatus.ACTIVE
             )

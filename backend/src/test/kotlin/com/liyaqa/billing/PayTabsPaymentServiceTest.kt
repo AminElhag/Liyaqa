@@ -504,8 +504,8 @@ class PayTabsPaymentServiceTest {
         email: String = "test@example.com"
     ) = Member(
         id = id,
-        firstName = "Test",
-        lastName = "Member",
+        firstName = LocalizedText(en = "Test", ar = "اختبار"),
+        lastName = LocalizedText(en = "Member", ar = "عضو"),
         email = email,
         phone = "+966501234567",
         status = MemberStatus.ACTIVE
