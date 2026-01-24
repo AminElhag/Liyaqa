@@ -350,7 +350,7 @@ class ScheduledJobsTest {
 
     private fun createTestMembershipPlan(
         id: UUID = UUID.randomUUID(),
-        name: LocalizedText = LocalizedText("Test Plan", "خطة اختبار")
+        name: LocalizedText = LocalizedText(en = "Test Plan", ar = "خطة اختبار")
     ): MembershipPlan {
         return MembershipPlan(
             id = id,
