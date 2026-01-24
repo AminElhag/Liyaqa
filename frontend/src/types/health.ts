@@ -70,7 +70,7 @@ export interface CreateHealthRequest {
   doctorPhone?: string;
 }
 
-export interface UpdateHealthRequest extends CreateHealthRequest {}
+export type UpdateHealthRequest = CreateHealthRequest;
 
 // Helper type for PAR-Q answers
 export interface ParqAnswers {

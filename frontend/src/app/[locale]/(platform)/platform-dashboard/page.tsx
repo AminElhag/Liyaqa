@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useLocale } from "next-intl";
 import { format } from "date-fns";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, AlertCircle } from "lucide-react";
 import { Loading } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -53,6 +53,7 @@ export default function PlatformDashboardPage() {
   const {
     data: dashboard,
     isLoading: isLoadingDashboard,
+    isError: isDashboardError,
     refetch: refetchDashboard,
   } = usePlatformDashboard("Asia/Riyadh", dateRangeParams, {
     refetchInterval: autoRefreshEnabled ? AUTO_REFRESH_INTERVAL : false,
@@ -60,19 +61,33 @@ export default function PlatformDashboardPage() {
   });
 
   // Fetch monthly revenue (PLATFORM_ADMIN only)
-  const { data: monthlyRevenue, isLoading: isLoadingMonthlyRevenue } = useMonthlyRevenue(12, {
+  const {
+    data: monthlyRevenue,
+    isLoading: isLoadingMonthlyRevenue,
+    isError: isMonthlyRevenueError,
+  } = useMonthlyRevenue(12, {
     enabled: isAdmin,
   });
 
   // Fetch platform health (PLATFORM_ADMIN and SUPPORT)
-  const { data: health, isLoading: isLoadingHealth } = usePlatformHealth({
+  const {
+    data: health,
+    isLoading: isLoadingHealth,
+    isError: isHealthError,
+  } = usePlatformHealth({
     enabled: isAdmin || isSupport,
+  });
+
+  // Fetch support stats (SUPPORT only)
+  const { data: supportStatsData, isLoading: isLoadingSupportStats } = useSupportStats({
+    enabled: isSupport,
   });
 
   const isLoading =
     isLoadingDashboard ||
     (isAdmin && isLoadingMonthlyRevenue) ||
-    ((isAdmin || isSupport) && isLoadingHealth);
+    ((isAdmin || isSupport) && isLoadingHealth) ||
+    (isSupport && isLoadingSupportStats);
 
   if (isLoading) {
     return (
@@ -80,6 +95,31 @@ export default function PlatformDashboardPage() {
         <Loading
           text={locale === "ar" ? "جاري تحميل لوحة التحكم..." : "Loading dashboard..."}
         />
+      </div>
+    );
+  }
+
+  // Check for any errors
+  const hasError = isDashboardError || (isAdmin && isMonthlyRevenueError) || ((isAdmin || isSupport) && isHealthError);
+
+  if (hasError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <div className="p-4 rounded-full bg-destructive/10">
+          <AlertCircle className="h-8 w-8 text-destructive" />
+        </div>
+        <div className="text-center">
+          <h3 className="font-semibold text-lg text-destructive">
+            {locale === "ar" ? "حدث خطأ أثناء تحميل لوحة التحكم" : "Error loading dashboard"}
+          </h3>
+          <p className="text-muted-foreground mt-1">
+            {locale === "ar" ? "يرجى المحاولة مرة أخرى لاحقاً" : "Please try again later"}
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => refetchDashboard()} className="gap-2">
+          <RefreshCw className="h-4 w-4" />
+          {locale === "ar" ? "إعادة المحاولة" : "Retry"}
+        </Button>
       </div>
     );
   }
@@ -174,11 +214,6 @@ export default function PlatformDashboardPage() {
   }
 
   if (isSupport) {
-    // Fetch support stats using the real API
-    const { data: supportStatsData, isLoading: isLoadingSupportStats } = useSupportStats({
-      enabled: isSupport,
-    });
-
     // Transform API response to match SupportDashboard component expectations
     const supportStats = supportStatsData
       ? {
@@ -205,7 +240,7 @@ export default function PlatformDashboardPage() {
           supportStats={supportStats}
           health={health}
           recentActivity={dashboard.recentActivity}
-          isLoading={isLoading || isLoadingSupportStats}
+          isLoading={isLoading}
         />
       </>
     );

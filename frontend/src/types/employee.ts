@@ -302,9 +302,7 @@ export interface SetManagerRequest {
   employeeId?: UUID | null;
 }
 
-export interface DepartmentQueryParams extends ListQueryParams {
-  // No additional filters for now
-}
+export type DepartmentQueryParams = ListQueryParams;
 
 export interface DepartmentStats {
   total: number;
