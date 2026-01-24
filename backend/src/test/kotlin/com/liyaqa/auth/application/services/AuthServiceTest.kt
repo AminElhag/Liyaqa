@@ -11,6 +11,7 @@ import com.liyaqa.auth.domain.ports.PasswordResetTokenRepository
 import com.liyaqa.auth.domain.ports.RefreshTokenRepository
 import com.liyaqa.auth.domain.ports.UserRepository
 import com.liyaqa.auth.infrastructure.security.JwtTokenProvider
+import com.liyaqa.shared.application.services.PermissionService
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.infrastructure.email.EmailService
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -55,6 +56,9 @@ class AuthServiceTest {
     @Mock
     private lateinit var emailService: EmailService
 
+    @Mock
+    private lateinit var permissionService: PermissionService
+
     private lateinit var authService: AuthService
 
     private val testTenantId = UUID.randomUUID()
@@ -69,16 +73,18 @@ class AuthServiceTest {
             passwordResetTokenRepository,
             jwtTokenProvider,
             passwordEncoder,
-            emailService
+            emailService,
+            permissionService
         )
 
         // Common mocks
         whenever(passwordEncoder.encode(any())) doReturn encodedPassword
         whenever(passwordEncoder.matches(testPassword, encodedPassword)) doReturn true
-        whenever(jwtTokenProvider.generateAccessToken(any())) doReturn "access-token"
+        whenever(jwtTokenProvider.generateAccessToken(any<User>(), any())) doReturn "access-token"
         whenever(jwtTokenProvider.generateRefreshToken(any())) doReturn Pair("refresh-token", "token-hash")
         whenever(jwtTokenProvider.getAccessTokenExpirationMs()) doReturn 900000L
         whenever(jwtTokenProvider.getRefreshTokenExpirationMs()) doReturn 604800000L
+        whenever(permissionService.getUserPermissionCodes(any())) doReturn emptyList()
     }
 
     @Test

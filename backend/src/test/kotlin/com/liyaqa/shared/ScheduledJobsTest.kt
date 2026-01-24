@@ -3,6 +3,7 @@ package com.liyaqa.shared
 import com.liyaqa.attendance.application.services.AttendanceService
 import com.liyaqa.auth.application.services.AuthService
 import com.liyaqa.billing.application.services.InvoiceService
+import com.liyaqa.membership.application.services.MembershipPlanService
 import com.liyaqa.membership.domain.model.Subscription
 import com.liyaqa.platform.application.services.ClientInvoiceService
 import com.liyaqa.membership.domain.model.SubscriptionStatus
@@ -50,6 +51,9 @@ class ScheduledJobsTest {
     @Mock
     private lateinit var clientInvoiceService: ClientInvoiceService
 
+    @Mock
+    private lateinit var membershipPlanService: MembershipPlanService
+
     private lateinit var scheduledJobs: ScheduledJobs
 
     private val testMemberId = UUID.randomUUID()
@@ -62,7 +66,8 @@ class ScheduledJobsTest {
             invoiceService,
             attendanceService,
             authService,
-            clientInvoiceService
+            clientInvoiceService,
+            membershipPlanService
         )
     }
 

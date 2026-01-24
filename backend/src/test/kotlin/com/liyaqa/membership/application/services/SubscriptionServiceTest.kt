@@ -2,11 +2,14 @@ package com.liyaqa.membership.application.services
 
 import com.liyaqa.membership.application.commands.CreateSubscriptionCommand
 import com.liyaqa.membership.domain.model.BillingPeriod
+import com.liyaqa.membership.domain.model.Member
+import com.liyaqa.membership.domain.model.MemberStatus
 import com.liyaqa.membership.domain.model.MembershipPlan
 import com.liyaqa.membership.domain.model.Subscription
 import com.liyaqa.membership.domain.model.SubscriptionStatus
 import com.liyaqa.membership.domain.ports.MemberRepository
 import com.liyaqa.membership.domain.ports.MembershipPlanRepository
+import com.liyaqa.membership.domain.ports.MemberWalletRepository
 import com.liyaqa.membership.domain.ports.SubscriptionRepository
 import com.liyaqa.notification.application.services.NotificationService
 import com.liyaqa.shared.domain.LocalizedText
@@ -47,12 +50,19 @@ class SubscriptionServiceTest {
     private lateinit var membershipPlanRepository: MembershipPlanRepository
 
     @Mock
+    private lateinit var memberWalletRepository: MemberWalletRepository
+
+    @Mock
     private lateinit var notificationService: NotificationService
+
+    @Mock
+    private lateinit var walletService: WalletService
 
     private lateinit var subscriptionService: SubscriptionService
 
     private lateinit var testPlan: MembershipPlan
     private lateinit var testSubscription: Subscription
+    private lateinit var testMember: Member
     private val testMemberId = UUID.randomUUID()
     private val testPlanId = UUID.randomUUID()
 
@@ -62,7 +72,9 @@ class SubscriptionServiceTest {
             subscriptionRepository,
             memberRepository,
             membershipPlanRepository,
-            notificationService
+            memberWalletRepository,
+            notificationService,
+            walletService
         )
 
         testPlan = MembershipPlan(
@@ -73,6 +85,15 @@ class SubscriptionServiceTest {
             billingPeriod = BillingPeriod.MONTHLY,
             maxClassesPerPeriod = 30,
             isActive = true
+        )
+
+        testMember = Member(
+            id = testMemberId,
+            firstName = LocalizedText(en = "John", ar = "جون"),
+            lastName = LocalizedText(en = "Doe", ar = "دو"),
+            email = "john.doe@example.com",
+            phone = "+966500000000",
+            status = MemberStatus.ACTIVE
         )
 
         testSubscription = Subscription(
@@ -87,7 +108,7 @@ class SubscriptionServiceTest {
         )
 
         // Common mocks
-        whenever(memberRepository.existsById(testMemberId)) doReturn true
+        whenever(memberRepository.findById(testMemberId)) doReturn Optional.of(testMember)
         whenever(membershipPlanRepository.findById(testPlanId)) doReturn Optional.of(testPlan)
     }
 
@@ -124,7 +145,7 @@ class SubscriptionServiceTest {
             startDate = LocalDate.now()
         )
 
-        whenever(memberRepository.existsById(nonExistentMemberId)) doReturn false
+        whenever(memberRepository.findById(nonExistentMemberId)) doReturn Optional.empty()
 
         // When/Then
         assertThrows(NoSuchElementException::class.java) {

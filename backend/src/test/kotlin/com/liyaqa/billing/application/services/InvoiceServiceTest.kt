@@ -17,6 +17,7 @@ import com.liyaqa.membership.domain.ports.MemberRepository
 import com.liyaqa.membership.domain.ports.MembershipPlanRepository
 import com.liyaqa.membership.domain.ports.SubscriptionRepository
 import com.liyaqa.notification.application.services.NotificationService
+import com.liyaqa.organization.domain.ports.ClubRepository
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.Money
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -69,6 +70,9 @@ class InvoiceServiceTest {
     @Mock
     private lateinit var billingConfig: BillingConfig
 
+    @Mock
+    private lateinit var clubRepository: ClubRepository
+
     private lateinit var invoiceService: InvoiceService
 
     private val testMemberId = UUID.randomUUID()
@@ -85,7 +89,8 @@ class InvoiceServiceTest {
             membershipPlanRepository,
             notificationService,
             zatcaService,
-            billingConfig
+            billingConfig,
+            clubRepository
         )
     }
 

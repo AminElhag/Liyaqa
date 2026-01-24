@@ -6,6 +6,7 @@ import com.liyaqa.platform.domain.model.ClientSubscription
 import com.liyaqa.platform.domain.model.ClientSubscriptionStatus
 import com.liyaqa.platform.domain.ports.ClientPlanRepository
 import com.liyaqa.platform.domain.ports.ClientSubscriptionRepository
+import com.liyaqa.organization.domain.ports.OrganizationRepository
 import com.liyaqa.shared.domain.Money
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -36,6 +37,9 @@ class ClientSubscriptionServiceTest {
     @Mock
     private lateinit var planRepository: ClientPlanRepository
 
+    @Mock
+    private lateinit var organizationRepository: OrganizationRepository
+
     private lateinit var subscriptionService: ClientSubscriptionService
 
     private val testOrganizationId = UUID.randomUUID()
@@ -43,7 +47,7 @@ class ClientSubscriptionServiceTest {
 
     @BeforeEach
     fun setUp() {
-        subscriptionService = ClientSubscriptionService(subscriptionRepository, planRepository)
+        subscriptionService = ClientSubscriptionService(subscriptionRepository, planRepository, organizationRepository)
     }
 
     @Test

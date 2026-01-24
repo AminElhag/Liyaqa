@@ -13,6 +13,7 @@ import com.liyaqa.membership.domain.model.Member
 import com.liyaqa.membership.domain.model.MemberStatus
 import com.liyaqa.membership.domain.ports.MemberRepository
 import com.liyaqa.notification.application.services.NotificationService
+import com.liyaqa.shop.application.services.OrderService
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.Money
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -53,6 +54,9 @@ class PayTabsPaymentServiceTest {
     @Mock
     private lateinit var notificationService: NotificationService
 
+    @Mock
+    private lateinit var orderService: OrderService
+
     private lateinit var config: PayTabsConfig
     private lateinit var paymentService: PayTabsPaymentService
 
@@ -66,7 +70,8 @@ class PayTabsPaymentServiceTest {
             config,
             invoiceRepository,
             memberRepository,
-            notificationService
+            notificationService,
+            orderService
         )
     }
 

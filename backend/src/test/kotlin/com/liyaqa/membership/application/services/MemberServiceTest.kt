@@ -5,7 +5,10 @@ import com.liyaqa.membership.application.commands.UpdateMemberCommand
 import com.liyaqa.membership.domain.model.Member
 import com.liyaqa.membership.domain.model.MemberStatus
 import com.liyaqa.membership.domain.ports.MemberRepository
+import com.liyaqa.auth.domain.ports.UserRepository
 import com.liyaqa.notification.application.services.NotificationService
+import com.liyaqa.shared.application.services.PermissionService
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -38,13 +41,36 @@ class MemberServiceTest {
     @Mock
     private lateinit var notificationService: NotificationService
 
+    @Mock
+    private lateinit var memberHealthService: MemberHealthService
+
+    @Mock
+    private lateinit var agreementService: AgreementService
+
+    @Mock
+    private lateinit var userRepository: UserRepository
+
+    @Mock
+    private lateinit var passwordEncoder: PasswordEncoder
+
+    @Mock
+    private lateinit var permissionService: PermissionService
+
     private lateinit var memberService: MemberService
 
     private lateinit var testMember: Member
 
     @BeforeEach
     fun setUp() {
-        memberService = MemberService(memberRepository, notificationService)
+        memberService = MemberService(
+            memberRepository,
+            notificationService,
+            memberHealthService,
+            agreementService,
+            userRepository,
+            passwordEncoder,
+            permissionService
+        )
 
         testMember = Member(
             id = UUID.randomUUID(),
