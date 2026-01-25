@@ -1,0 +1,141 @@
+[versions]
+# Kotlin & KMP
+kotlin = "2.0.21"
+ksp = "2.0.21-1.0.27"
+agp = "8.5.2"
+
+# Compose
+compose-multiplatform = "1.7.1"
+compose-activity = "1.9.3"
+compose-bom = "2024.11.00"
+
+# Ktor
+ktor = "3.0.1"
+
+# SQLDelight
+sqldelight = "2.0.2"
+
+# Koin
+koin = "4.0.0"
+
+# Voyager Navigation
+voyager = "1.1.0-beta03"
+
+# Coroutines
+coroutines = "1.9.0"
+
+# Kotlinx
+kotlinx-serialization = "1.7.3"
+kotlinx-datetime = "0.6.1"
+
+# Image Loading
+coil = "3.0.3"
+
+# QR Code
+zxing = "3.5.3"
+mlkit-barcode = "17.3.0"
+
+# Camera
+camerax = "1.4.0"
+
+# Security (Android)
+security-crypto = "1.1.0-alpha06"
+
+# Firebase
+firebase-bom = "33.6.0"
+
+# Testing
+junit = "4.13.2"
+kotlin-test = "2.0.21"
+mockk = "1.13.13"
+turbine = "1.2.0"
+
+[libraries]
+# Kotlin
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin-test" }
+
+# Compose
+compose-activity = { module = "androidx.activity:activity-compose", version.ref = "compose-activity" }
+compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
+compose-foundation = { module = "androidx.compose.foundation:foundation" }
+compose-material3 = { module = "androidx.compose.material3:material3" }
+compose-ui = { module = "androidx.compose.ui:ui" }
+
+# Ktor Client
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
+ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+
+# SQLDelight
+sqldelight-runtime = { module = "app.cash.sqldelight:runtime", version.ref = "sqldelight" }
+sqldelight-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }
+sqldelight-android-driver = { module = "app.cash.sqldelight:android-driver", version.ref = "sqldelight" }
+sqldelight-native-driver = { module = "app.cash.sqldelight:native-driver", version.ref = "sqldelight" }
+
+# Koin
+koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
+koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
+koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
+koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin" }
+
+# Voyager Navigation
+voyager-navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.ref = "voyager" }
+voyager-screenmodel = { module = "cafe.adriel.voyager:voyager-screenmodel", version.ref = "voyager" }
+voyager-transitions = { module = "cafe.adriel.voyager:voyager-transitions", version.ref = "voyager" }
+voyager-koin = { module = "cafe.adriel.voyager:voyager-koin", version.ref = "voyager" }
+voyager-tab-navigator = { module = "cafe.adriel.voyager:voyager-tab-navigator", version.ref = "voyager" }
+
+# Coroutines
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+
+# Kotlinx Serialization
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+
+# Image Loading
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
+
+# QR Code (Android)
+zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
+mlkit-barcode = { module = "com.google.mlkit:barcode-scanning", version.ref = "mlkit-barcode" }
+
+# Camera (Android)
+camerax-core = { module = "androidx.camera:camera-core", version.ref = "camerax" }
+camerax-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camerax" }
+camerax-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "camerax" }
+camerax-view = { module = "androidx.camera:camera-view", version.ref = "camerax" }
+
+# Security (Android)
+security-crypto = { module = "androidx.security:security-crypto", version.ref = "security-crypto" }
+
+# Firebase
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging-ktx" }
+firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics-ktx" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics-ktx" }
+
+# Testing
+junit = { module = "junit:junit", version.ref = "junit" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+
+[plugins]
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlin-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
+sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+google-services = { id = "com.google.gms.google-services", version = "4.4.2" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.2" }
