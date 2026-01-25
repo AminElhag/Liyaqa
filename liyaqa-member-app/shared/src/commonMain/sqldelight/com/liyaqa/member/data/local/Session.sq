@@ -1,0 +1,62 @@
+-- Session table for available sessions
+CREATE TABLE SessionEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    classId TEXT NOT NULL,
+    classNameEn TEXT NOT NULL,
+    classNameAr TEXT,
+    trainerId TEXT,
+    trainerNameEn TEXT,
+    trainerNameAr TEXT,
+    date TEXT NOT NULL,
+    startTime TEXT NOT NULL,
+    endTime TEXT NOT NULL,
+    capacity INTEGER NOT NULL,
+    bookedCount INTEGER NOT NULL DEFAULT 0,
+    waitlistCount INTEGER NOT NULL DEFAULT 0,
+    availableSpots INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    locationId TEXT,
+    locationNameEn TEXT,
+    locationNameAr TEXT,
+    syncedAt INTEGER NOT NULL DEFAULT 0
+);
+
+-- Indexes
+CREATE INDEX session_date_idx ON SessionEntity(date);
+CREATE INDEX session_class_idx ON SessionEntity(classId);
+CREATE INDEX session_status_idx ON SessionEntity(status);
+
+-- Queries
+selectSessionsByDate:
+SELECT * FROM SessionEntity
+WHERE date = ?
+ORDER BY startTime ASC;
+
+selectSessionsByDateRange:
+SELECT * FROM SessionEntity
+WHERE date >= ? AND date <= ?
+ORDER BY date ASC, startTime ASC;
+
+selectSessionById:
+SELECT * FROM SessionEntity WHERE id = ?;
+
+selectSessionsByClass:
+SELECT * FROM SessionEntity
+WHERE classId = ?
+ORDER BY date ASC, startTime ASC;
+
+insertOrReplaceSession:
+INSERT OR REPLACE INTO SessionEntity (
+    id, classId, classNameEn, classNameAr, trainerId, trainerNameEn, trainerNameAr,
+    date, startTime, endTime, capacity, bookedCount, waitlistCount, availableSpots,
+    status, locationId, locationNameEn, locationNameAr, syncedAt
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteSession:
+DELETE FROM SessionEntity WHERE id = ?;
+
+deleteAllSessions:
+DELETE FROM SessionEntity;
+
+deleteOldSessions:
+DELETE FROM SessionEntity WHERE date < ?;

@@ -25,12 +25,14 @@ import com.liyaqa.notification.domain.model.NotificationPriority
 import com.liyaqa.notification.domain.model.NotificationType
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.TenantContext
+import com.liyaqa.webhook.application.services.WebhookEventPublisher
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
@@ -45,7 +47,8 @@ class InvoiceService(
     private val notificationService: NotificationService,
     private val zatcaService: ZatcaService,
     private val billingConfig: BillingConfig,
-    private val clubRepository: ClubRepository
+    private val clubRepository: ClubRepository,
+    private val webhookPublisher: WebhookEventPublisher
 ) {
     private val logger = LoggerFactory.getLogger(InvoiceService::class.java)
     private val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
@@ -92,7 +95,16 @@ class InvoiceService(
             organizationId
         )
 
-        return invoiceRepository.save(invoice)
+        val savedInvoice = invoiceRepository.save(invoice)
+
+        // Publish webhook event
+        try {
+            webhookPublisher.publishInvoiceCreated(savedInvoice)
+        } catch (e: Exception) {
+            logger.error("Failed to publish invoice created webhook: ${e.message}", e)
+        }
+
+        return savedInvoice
     }
 
     /**
@@ -346,6 +358,13 @@ class InvoiceService(
             logger.error("Failed to send invoice notification: ${e.message}", e)
         }
 
+        // Publish webhook event
+        try {
+            webhookPublisher.publishInvoiceIssued(savedInvoice)
+        } catch (e: Exception) {
+            logger.error("Failed to publish invoice issued webhook: ${e.message}", e)
+        }
+
         return savedInvoice
     }
 
@@ -386,6 +405,13 @@ class InvoiceService(
                     logger.error("Failed to activate subscription: ${e.message}", e)
                 }
             }
+
+            // Publish webhook event
+            try {
+                webhookPublisher.publishInvoicePaid(savedInvoice)
+            } catch (e: Exception) {
+                logger.error("Failed to publish invoice paid webhook: ${e.message}", e)
+            }
         }
 
         return savedInvoice
@@ -399,7 +425,16 @@ class InvoiceService(
             .orElseThrow { NoSuchElementException("Invoice not found: $id") }
 
         invoice.cancel()
-        return invoiceRepository.save(invoice)
+        val savedInvoice = invoiceRepository.save(invoice)
+
+        // Publish webhook event
+        try {
+            webhookPublisher.publishInvoiceVoided(savedInvoice)
+        } catch (e: Exception) {
+            logger.error("Failed to publish invoice voided webhook: ${e.message}", e)
+        }
+
+        return savedInvoice
     }
 
     /**
@@ -424,8 +459,15 @@ class InvoiceService(
 
         for (invoice in overdueInvoices) {
             invoice.markOverdue()
-            invoiceRepository.save(invoice)
+            val savedInvoice = invoiceRepository.save(invoice)
             count++
+
+            // Publish webhook event
+            try {
+                webhookPublisher.publishInvoiceOverdue(savedInvoice)
+            } catch (e: Exception) {
+                logger.error("Failed to publish invoice overdue webhook for ${savedInvoice.invoiceNumber}: ${e.message}", e)
+            }
         }
 
         return count
@@ -446,6 +488,17 @@ class InvoiceService(
     @Transactional(readOnly = true)
     fun countByStatus(status: InvoiceStatus): Long {
         return invoiceRepository.countByStatus(status)
+    }
+
+    /**
+     * Gets the total revenue (sum of paid amounts) for a given month.
+     * Returns value in minor units (e.g., halalas for SAR).
+     */
+    @Transactional(readOnly = true)
+    fun getMonthlyRevenue(yearMonth: YearMonth): Long {
+        val startDate = yearMonth.atDay(1)
+        val endDate = yearMonth.atEndOfMonth()
+        return invoiceRepository.sumPaidAmountBetween(startDate, endDate)
     }
 
     // ==================== NOTIFICATION HELPERS ====================

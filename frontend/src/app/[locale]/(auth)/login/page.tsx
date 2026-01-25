@@ -107,8 +107,15 @@ export default function LoginPage() {
       // Small delay to ensure Zustand persist writes to localStorage
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // Use replace to prevent back-navigation to login
-      router.replace(`/${locale}/dashboard`);
+      // Get the user from the store to determine redirect
+      const { user } = useAuthStore.getState();
+
+      // Redirect based on user role
+      if (user?.role === "MEMBER") {
+        router.replace(`/${locale}/member/dashboard`);
+      } else {
+        router.replace(`/${locale}/dashboard`);
+      }
     } catch {
       // Error is handled in store
     }

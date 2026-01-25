@@ -148,9 +148,36 @@ export function setRefreshTokenFn(fn: () => Promise<boolean>) {
   refreshTokenFn = fn;
 }
 
-// Base API URL
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+/**
+ * Get the API base URL dynamically.
+ * - In browser: derives from window.location.origin (same host as frontend)
+ * - In SSR/build: uses environment variable or defaults to localhost
+ *
+ * This allows the same frontend build to work on any environment (local, staging, production)
+ * without needing to rebuild with different NEXT_PUBLIC_API_URL values.
+ */
+function getApiBaseUrl(): string {
+  // Server-side: use environment variable
+  if (typeof window === "undefined") {
+    return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+  }
+
+  // Client-side: derive from current location
+  const { protocol, hostname, port } = window.location;
+
+  // Local development (localhost or IP without subdomain)
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    // In local dev, frontend is on 3000, backend on 8080
+    return "http://localhost:8080";
+  }
+
+  // Production/staging: API is on same host, proxied through nginx at /api
+  // The frontend and backend share the same domain
+  const portPart = port && port !== "80" && port !== "443" ? `:${port}` : "";
+  return `${protocol}//${hostname}${portPart}`;
+}
+
+const API_BASE_URL = getApiBaseUrl();
 
 /**
  * Create the ky API client with interceptors

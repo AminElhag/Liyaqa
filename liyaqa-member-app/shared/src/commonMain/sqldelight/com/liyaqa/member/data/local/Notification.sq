@@ -1,0 +1,56 @@
+-- Notification table
+CREATE TABLE NotificationEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    type TEXT NOT NULL,
+    titleEn TEXT NOT NULL,
+    titleAr TEXT,
+    messageEn TEXT NOT NULL,
+    messageAr TEXT,
+    readAt TEXT,
+    createdAt TEXT NOT NULL,
+    actionUrl TEXT,
+    syncedAt INTEGER NOT NULL DEFAULT 0
+);
+
+-- Indexes
+CREATE INDEX notification_created_idx ON NotificationEntity(createdAt DESC);
+CREATE INDEX notification_read_idx ON NotificationEntity(readAt);
+
+-- Queries
+selectNotifications:
+SELECT * FROM NotificationEntity
+ORDER BY createdAt DESC
+LIMIT :limit OFFSET :offset;
+
+selectUnreadNotifications:
+SELECT * FROM NotificationEntity
+WHERE readAt IS NULL
+ORDER BY createdAt DESC
+LIMIT :limit OFFSET :offset;
+
+selectNotificationById:
+SELECT * FROM NotificationEntity WHERE id = ?;
+
+countUnread:
+SELECT COUNT(*) FROM NotificationEntity WHERE readAt IS NULL;
+
+countAll:
+SELECT COUNT(*) FROM NotificationEntity;
+
+insertOrReplaceNotification:
+INSERT OR REPLACE INTO NotificationEntity (
+    id, type, titleEn, titleAr, messageEn, messageAr,
+    readAt, createdAt, actionUrl, syncedAt
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+markAsRead:
+UPDATE NotificationEntity SET readAt = ? WHERE id = ?;
+
+markAllAsRead:
+UPDATE NotificationEntity SET readAt = ? WHERE readAt IS NULL;
+
+deleteNotification:
+DELETE FROM NotificationEntity WHERE id = ?;
+
+deleteAllNotifications:
+DELETE FROM NotificationEntity;

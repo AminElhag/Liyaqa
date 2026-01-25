@@ -96,6 +96,10 @@ class AuthService(
         )
 
         val savedUser = userRepository.save(user)
+
+        // Grant default permissions for the user's role
+        permissionService.grantDefaultPermissionsForRole(savedUser.id, savedUser.role.name)
+
         return generateTokens(savedUser, null)
     }
 

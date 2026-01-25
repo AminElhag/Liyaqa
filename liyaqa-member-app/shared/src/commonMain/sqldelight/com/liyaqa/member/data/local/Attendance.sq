@@ -1,0 +1,44 @@
+-- Attendance history table
+CREATE TABLE AttendanceEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    checkInTime TEXT NOT NULL,
+    checkOutTime TEXT,
+    method TEXT NOT NULL,
+    duration INTEGER,
+    locationNameEn TEXT,
+    locationNameAr TEXT,
+    syncedAt INTEGER NOT NULL DEFAULT 0
+);
+
+-- Indexes
+CREATE INDEX attendance_checkin_idx ON AttendanceEntity(checkInTime DESC);
+
+-- Queries
+selectAttendanceHistory:
+SELECT * FROM AttendanceEntity
+ORDER BY checkInTime DESC
+LIMIT :limit OFFSET :offset;
+
+selectAttendanceByRange:
+SELECT * FROM AttendanceEntity
+WHERE checkInTime >= ? AND checkInTime <= ?
+ORDER BY checkInTime DESC
+LIMIT :limit OFFSET :offset;
+
+selectAttendanceById:
+SELECT * FROM AttendanceEntity WHERE id = ?;
+
+countAttendance:
+SELECT COUNT(*) FROM AttendanceEntity;
+
+insertOrReplaceAttendance:
+INSERT OR REPLACE INTO AttendanceEntity (
+    id, checkInTime, checkOutTime, method, duration,
+    locationNameEn, locationNameAr, syncedAt
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteAttendance:
+DELETE FROM AttendanceEntity WHERE id = ?;
+
+deleteAllAttendance:
+DELETE FROM AttendanceEntity;

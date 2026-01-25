@@ -1,0 +1,70 @@
+-- Booking table
+CREATE TABLE BookingEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    sessionId TEXT NOT NULL,
+    sessionDate TEXT NOT NULL,
+    sessionStartTime TEXT NOT NULL,
+    sessionEndTime TEXT NOT NULL,
+    classNameEn TEXT NOT NULL,
+    classNameAr TEXT,
+    trainerNameEn TEXT,
+    trainerNameAr TEXT,
+    locationNameEn TEXT,
+    locationNameAr TEXT,
+    status TEXT NOT NULL,
+    waitlistPosition INTEGER,
+    checkedInAt TEXT,
+    createdAt TEXT NOT NULL,
+    isUpcoming INTEGER NOT NULL DEFAULT 1,
+    syncedAt INTEGER NOT NULL DEFAULT 0
+);
+
+-- Indexes
+CREATE INDEX booking_session_date_idx ON BookingEntity(sessionDate);
+CREATE INDEX booking_upcoming_idx ON BookingEntity(isUpcoming);
+CREATE INDEX booking_status_idx ON BookingEntity(status);
+
+-- Queries
+selectUpcomingBookings:
+SELECT * FROM BookingEntity
+WHERE isUpcoming = 1
+ORDER BY sessionDate ASC, sessionStartTime ASC
+LIMIT :limit OFFSET :offset;
+
+selectPastBookings:
+SELECT * FROM BookingEntity
+WHERE isUpcoming = 0
+ORDER BY sessionDate DESC, sessionStartTime DESC
+LIMIT :limit OFFSET :offset;
+
+selectBookingById:
+SELECT * FROM BookingEntity WHERE id = ?;
+
+countUpcomingBookings:
+SELECT COUNT(*) FROM BookingEntity WHERE isUpcoming = 1;
+
+countPastBookings:
+SELECT COUNT(*) FROM BookingEntity WHERE isUpcoming = 0;
+
+insertOrReplaceBooking:
+INSERT OR REPLACE INTO BookingEntity (
+    id, sessionId, sessionDate, sessionStartTime, sessionEndTime,
+    classNameEn, classNameAr, trainerNameEn, trainerNameAr,
+    locationNameEn, locationNameAr, status, waitlistPosition,
+    checkedInAt, createdAt, isUpcoming, syncedAt
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteBooking:
+DELETE FROM BookingEntity WHERE id = ?;
+
+deleteAllBookings:
+DELETE FROM BookingEntity;
+
+deleteUpcomingBookings:
+DELETE FROM BookingEntity WHERE isUpcoming = 1;
+
+deletePastBookings:
+DELETE FROM BookingEntity WHERE isUpcoming = 0;
+
+updateBookingStatus:
+UPDATE BookingEntity SET status = ?, syncedAt = ? WHERE id = ?;

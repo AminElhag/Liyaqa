@@ -1,0 +1,38 @@
+-- Member profile table
+CREATE TABLE MemberEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    firstName TEXT NOT NULL,
+    lastName TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT,
+    dateOfBirth TEXT,
+    street TEXT,
+    city TEXT,
+    state TEXT,
+    postalCode TEXT,
+    country TEXT,
+    emergencyContactName TEXT,
+    emergencyContactPhone TEXT,
+    status TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL,
+    syncedAt INTEGER NOT NULL DEFAULT 0
+);
+
+-- Queries
+selectMember:
+SELECT * FROM MemberEntity LIMIT 1;
+
+insertOrReplaceMember:
+INSERT OR REPLACE INTO MemberEntity (
+    id, firstName, lastName, email, phone, dateOfBirth,
+    street, city, state, postalCode, country,
+    emergencyContactName, emergencyContactPhone,
+    status, createdAt, updatedAt, syncedAt
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteMember:
+DELETE FROM MemberEntity;
+
+updateSyncedAt:
+UPDATE MemberEntity SET syncedAt = ? WHERE id = ?;

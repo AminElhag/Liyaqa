@@ -12,9 +12,12 @@ import type { Organization } from "@/types/organization";
 
 const organizationFormSchema = z.object({
   name: z.object({
-    en: z.string().min(1, "English name is required"),
+    en: z.string().nullish(),
     ar: z.string().nullish(),
-  }),
+  }).refine(
+    (data) => (data.en?.trim() || data.ar?.trim()),
+    { message: "Name is required in at least one language | الاسم مطلوب بلغة واحدة على الأقل" }
+  ),
   email: z.string().email("Invalid email address"),
   phone: z.string().nullish(),
   website: z.string().url("Invalid URL").or(z.literal("")).nullish(),
@@ -77,16 +80,13 @@ export function OrganizationForm({
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="name.en">
-                {locale === "ar" ? "الاسم (إنجليزي)" : "Name (English)"} *
+                {locale === "ar" ? "الاسم (إنجليزي)" : "Name (English)"}
               </Label>
               <Input
                 id="name.en"
                 {...register("name.en")}
                 placeholder="Organization name"
               />
-              {errors.name?.en && (
-                <p className="text-sm text-danger">{errors.name.en.message}</p>
-              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="name.ar">
@@ -100,6 +100,9 @@ export function OrganizationForm({
               />
             </div>
           </div>
+          {errors.name && (
+            <p className="text-sm text-danger">{errors.name.message}</p>
+          )}
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">

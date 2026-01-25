@@ -123,6 +123,28 @@ export default function ClientDetailPage() {
     copySuccess: locale === "ar" ? "تم النسخ" : "Copied",
   };
 
+  // Get dynamic base domain from current location
+  const getBaseDomain = () => {
+    if (typeof window === "undefined") return "liyaqa.com";
+    const { hostname, port } = window.location;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "liyaqa.local";
+    }
+    const parts = hostname.split(".");
+    return parts.length > 2 ? parts.slice(-2).join(".") : hostname + (port && port !== "80" && port !== "443" ? `:${port}` : "");
+  };
+
+  const getSubdomainUrl = (slug: string) => {
+    if (typeof window === "undefined") return `https://${slug}.liyaqa.com`;
+    const { protocol, hostname, port } = window.location;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return `http://${slug}.liyaqa.local:3000`;
+    }
+    const baseDomain = getBaseDomain();
+    const portPart = port && port !== "80" && port !== "443" ? `:${port}` : "";
+    return `${protocol}//${slug}.${baseDomain}${portPart}`;
+  };
+
   // Copy text to clipboard
   const handleCopy = async (text: string) => {
     try {
@@ -382,28 +404,27 @@ export default function ClientDetailPage() {
           {clubsData?.content && clubsData.content.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {clubsData.content.map((club) => (
-                <Link
+                <Card
                   key={club.id}
-                  href={`/${locale}/clubs/${club.id}?clientId=${clientId}`}
-                  className="block"
+                  className="transition-all hover:shadow-md hover:border-primary/50 cursor-pointer"
+                  onClick={() => router.push(`/${locale}/clubs/${club.id}?clientId=${clientId}`)}
                 >
-                  <Card className="transition-all hover:shadow-md hover:border-primary/50 cursor-pointer">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                          <Store className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-base">
-                            {getLocalizedText(club.name, locale)}
-                          </CardTitle>
-                          <CardDescription>
-                            <ClientStatusBadge status={club.status} />
-                          </CardDescription>
-                        </div>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                        <Store className="h-5 w-5 text-primary" />
                       </div>
-                    </CardHeader>
-                    <CardContent>
+                      <div>
+                        <CardTitle className="text-base">
+                          {getLocalizedText(club.name, locale)}
+                        </CardTitle>
+                        <CardDescription>
+                          <ClientStatusBadge status={club.status} />
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
                     {club.description && (
                       <p className="text-sm text-muted-foreground line-clamp-2">
                         {getLocalizedText(club.description, locale)}
@@ -423,14 +444,13 @@ export default function ClientDetailPage() {
                           <code className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono">
                             {club.id.substring(0, 8)}...
                           </code>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCopy(club.id); }}
+                          <button
+                            type="button"
+                            className="h-6 w-6 inline-flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground"
+                            onClick={(e) => { e.stopPropagation(); handleCopy(club.id); }}
                           >
                             <Copy className="h-3 w-3" />
-                          </Button>
+                          </button>
                         </div>
                       </div>
 
@@ -440,31 +460,28 @@ export default function ClientDetailPage() {
                           <span className="text-muted-foreground">{texts.subdomainUrl}:</span>
                           <div className="flex items-center gap-1">
                             <code className="bg-muted px-1.5 py-0.5 rounded text-[10px]">
-                              {club.slug}.liyaqa.local
+                              {club.slug}.{getBaseDomain()}
                             </code>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCopy(`http://${club.slug}.liyaqa.local:3000`); }}
+                            <button
+                              type="button"
+                              className="h-6 w-6 inline-flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground"
+                              onClick={(e) => { e.stopPropagation(); handleCopy(getSubdomainUrl(club.slug!)); }}
                             >
                               <Copy className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(`http://${club.slug}.liyaqa.local:3000`, '_blank'); }}
+                            </button>
+                            <button
+                              type="button"
+                              className="h-6 w-6 inline-flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground"
+                              onClick={(e) => { e.stopPropagation(); window.open(getSubdomainUrl(club.slug!), '_blank'); }}
                             >
                               <ExternalLink className="h-3 w-3" />
-                            </Button>
+                            </button>
                           </div>
                         </div>
                       )}
                     </div>
                   </CardContent>
                 </Card>
-                </Link>
               ))}
             </div>
           ) : (

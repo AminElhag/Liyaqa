@@ -3,11 +3,21 @@
 # ===========================================
 # Complete stack: PostgreSQL + Backend + Frontend + Nginx
 #
+# Requirements:
+#   - Minimum 1GB RAM droplet (2GB recommended)
+#   - Docker and Docker Compose installed
+#
 # Usage:
 #   cd /opt/liyaqa
-#   docker compose -f docker-compose.droplet.yml up -d
-#   docker compose -f docker-compose.droplet.yml logs -f
-#   docker compose -f docker-compose.droplet.yml down
+#   cp .env.example .env
+#   nano .env  # Edit with your values
+#   docker compose up -d
+#   docker compose logs -f
+#
+# For 512MB droplets, add swap first:
+#   fallocate -l 1G /swapfile && chmod 600 /swapfile
+#   mkswap /swapfile && swapon /swapfile
+#   echo '/swapfile none swap sw 0 0' >> /etc/fstab
 
 services:
   # ===================
@@ -27,10 +37,14 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-liyaqa} -d ${POSTGRES_DB:-liyaqa}"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 10s
+      retries: 10
+      start_period: 30s
     networks:
       - liyaqa-internal
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
   # ===================
   # Liyaqa Backend API
@@ -47,6 +61,9 @@ services:
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
 
+      # JVM Memory Settings (adjust for small droplets)
+      JAVA_OPTS: "-Xms256m -Xmx512m -XX:+UseContainerSupport"
+
       # Database
       DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-liyaqa}
       DATABASE_USERNAME: ${POSTGRES_USER:-liyaqa}
@@ -54,7 +71,7 @@ services:
 
       # Security
       JWT_SECRET: ${JWT_SECRET:?JWT secret is required (min 32 chars)}
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://liyaqa.com}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost}
 
       # Email (Optional)
       EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
@@ -78,14 +95,14 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
-      start_period: 90s
-      retries: 3
+      start_period: 120s
+      retries: 5
     networks:
       - liyaqa-internal
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 768M
 
   # ===================
   # Liyaqa Frontend
@@ -98,19 +115,18 @@ services:
       - backend
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://backend:8080}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 30s
       timeout: 10s
-      start_period: 30s
+      start_period: 60s
       retries: 3
     networks:
       - liyaqa-internal
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 256M
 
   # ===================
   # Nginx Reverse Proxy
@@ -132,10 +148,13 @@ services:
       - frontend
     networks:
       - liyaqa-internal
-    command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
+    deploy:
+      resources:
+        limits:
+          memory: 64M
 
   # ===================
-  # Certbot (SSL)
+  # Certbot (SSL) - Optional
   # ===================
   certbot:
     image: certbot/certbot

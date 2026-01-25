@@ -1,0 +1,24 @@
+-- Sync metadata table for tracking last sync times
+CREATE TABLE SyncMetaEntity (
+    entityType TEXT NOT NULL PRIMARY KEY,
+    lastSyncAt INTEGER NOT NULL DEFAULT 0,
+    etag TEXT
+);
+
+-- Queries
+selectSyncMeta:
+SELECT * FROM SyncMetaEntity WHERE entityType = ?;
+
+insertOrReplaceSyncMeta:
+INSERT OR REPLACE INTO SyncMetaEntity (entityType, lastSyncAt, etag)
+VALUES (?, ?, ?);
+
+deleteSyncMeta:
+DELETE FROM SyncMetaEntity WHERE entityType = ?;
+
+deleteAllSyncMeta:
+DELETE FROM SyncMetaEntity;
+
+-- Common entity types
+-- 'MEMBER', 'SUBSCRIPTION', 'BOOKING', 'SESSION', 'ATTENDANCE',
+-- 'NOTIFICATION', 'INVOICE', 'WALLET', 'DASHBOARD'

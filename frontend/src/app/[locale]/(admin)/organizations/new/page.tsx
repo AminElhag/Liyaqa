@@ -23,7 +23,7 @@ export default function NewOrganizationPage() {
     try {
       const result = await createOrganization.mutateAsync({
         name: {
-          en: data.name.en,
+          en: data.name.en || "",
           ar: data.name.ar || undefined,
         },
         email: data.email,

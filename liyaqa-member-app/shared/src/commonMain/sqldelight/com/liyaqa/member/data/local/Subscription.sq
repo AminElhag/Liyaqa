@@ -1,0 +1,34 @@
+-- Subscription table
+CREATE TABLE SubscriptionEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    planId TEXT NOT NULL,
+    planNameEn TEXT,
+    planNameAr TEXT,
+    status TEXT NOT NULL,
+    startDate TEXT NOT NULL,
+    endDate TEXT NOT NULL,
+    autoRenew INTEGER NOT NULL DEFAULT 0,
+    classesRemaining INTEGER,
+    guestPassesRemaining INTEGER NOT NULL DEFAULT 0,
+    freezeDaysRemaining INTEGER NOT NULL DEFAULT 0,
+    frozenAt TEXT,
+    daysRemaining INTEGER NOT NULL DEFAULT 0,
+    syncedAt INTEGER NOT NULL DEFAULT 0
+);
+
+-- Queries
+selectSubscription:
+SELECT * FROM SubscriptionEntity LIMIT 1;
+
+insertOrReplaceSubscription:
+INSERT OR REPLACE INTO SubscriptionEntity (
+    id, planId, planNameEn, planNameAr, status, startDate, endDate,
+    autoRenew, classesRemaining, guestPassesRemaining, freezeDaysRemaining,
+    frozenAt, daysRemaining, syncedAt
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteSubscription:
+DELETE FROM SubscriptionEntity;
+
+updateSyncedAt:
+UPDATE SubscriptionEntity SET syncedAt = ? WHERE id = ?;

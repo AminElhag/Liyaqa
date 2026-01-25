@@ -18,6 +18,8 @@ import com.liyaqa.scheduling.domain.ports.ClassBookingRepository
 import com.liyaqa.scheduling.domain.ports.ClassSessionRepository
 import com.liyaqa.scheduling.domain.ports.GymClassRepository
 import com.liyaqa.shared.domain.LocalizedText
+import com.liyaqa.shared.domain.TenantContext
+import com.liyaqa.webhook.application.services.WebhookEventPublisher
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -36,7 +38,8 @@ class BookingService(
     private val gymClassRepository: GymClassRepository,
     private val subscriptionRepository: SubscriptionRepository,
     private val memberRepository: MemberRepository,
-    private val notificationService: NotificationService
+    private val notificationService: NotificationService,
+    private val webhookPublisher: WebhookEventPublisher
 ) {
     private val logger = LoggerFactory.getLogger(BookingService::class.java)
     private val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
@@ -123,6 +126,18 @@ class BookingService(
         } catch (e: Exception) {
             logger.error("Failed to send booking notification: ${e.message}", e)
             // Don't fail the booking if notification fails
+        }
+
+        // Publish webhook event
+        try {
+            val tenantId = TenantContext.getCurrentTenant().value
+            if (savedBooking.isConfirmed()) {
+                webhookPublisher.publishBookingConfirmed(savedBooking, tenantId)
+            } else {
+                webhookPublisher.publishBookingCreated(savedBooking, tenantId)
+            }
+        } catch (e: Exception) {
+            logger.error("Failed to publish booking webhook: ${e.message}", e)
         }
 
         return savedBooking
@@ -307,6 +322,14 @@ class BookingService(
             logger.error("Failed to send cancellation notification: ${e.message}", e)
         }
 
+        // Publish webhook event
+        try {
+            val tenantId = TenantContext.getCurrentTenant().value
+            webhookPublisher.publishBookingCancelled(booking, tenantId)
+        } catch (e: Exception) {
+            logger.error("Failed to publish booking cancelled webhook: ${e.message}", e)
+        }
+
         return booking
     }
 
@@ -349,7 +372,17 @@ class BookingService(
         sessionRepository.save(session)
 
         logger.info("Member ${booking.memberId} checked in for session ${booking.sessionId}")
-        return bookingRepository.save(booking)
+        val savedBooking = bookingRepository.save(booking)
+
+        // Publish webhook event
+        try {
+            val tenantId = TenantContext.getCurrentTenant().value
+            webhookPublisher.publishBookingCompleted(savedBooking, tenantId)
+        } catch (e: Exception) {
+            logger.error("Failed to publish booking completed webhook: ${e.message}", e)
+        }
+
+        return savedBooking
     }
 
     /**
@@ -360,7 +393,17 @@ class BookingService(
             .orElseThrow { NoSuchElementException("Booking not found: $bookingId") }
 
         booking.markNoShow()
-        return bookingRepository.save(booking)
+        val savedBooking = bookingRepository.save(booking)
+
+        // Publish webhook event
+        try {
+            val tenantId = TenantContext.getCurrentTenant().value
+            webhookPublisher.publishBookingNoShow(savedBooking, tenantId)
+        } catch (e: Exception) {
+            logger.error("Failed to publish booking no-show webhook: ${e.message}", e)
+        }
+
+        return savedBooking
     }
 
     /**

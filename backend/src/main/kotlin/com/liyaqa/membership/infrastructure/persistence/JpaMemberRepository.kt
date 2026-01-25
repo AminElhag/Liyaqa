@@ -22,6 +22,10 @@ interface SpringDataMemberRepository : JpaRepository<Member, UUID> {
     fun findByEmail(email: String): Optional<Member>
     fun existsByEmail(email: String): Boolean
     fun findByUserId(userId: UUID): Optional<Member>
+    fun countByStatus(status: MemberStatus): Long
+
+    @Query("SELECT COUNT(m) FROM Member m WHERE m.createdAt >= :date")
+    fun countByCreatedAtAfter(@Param("date") date: Instant): Long
 
     @Query("SELECT m FROM Member m WHERE m.email = :email AND m.tenantId = :tenantId")
     fun findByEmailAndTenantId(email: String, tenantId: UUID): Optional<Member>
@@ -85,6 +89,15 @@ class JpaMemberRepository(
 
     override fun count(): Long {
         return springDataRepository.count()
+    }
+
+    override fun countByStatus(status: MemberStatus): Long {
+        return springDataRepository.countByStatus(status)
+    }
+
+    override fun countByJoinedAfter(date: LocalDate): Long {
+        val instant = date.atStartOfDay().toInstant(ZoneOffset.UTC)
+        return springDataRepository.countByCreatedAtAfter(instant)
     }
 
     override fun findByUserId(userId: UUID): Optional<Member> {

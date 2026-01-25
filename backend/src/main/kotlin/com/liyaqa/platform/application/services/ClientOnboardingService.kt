@@ -17,6 +17,7 @@ import com.liyaqa.platform.domain.model.ClientSubscription
 import com.liyaqa.platform.domain.model.ClientSubscriptionStatus
 import com.liyaqa.platform.domain.ports.ClientPlanRepository
 import com.liyaqa.platform.domain.ports.ClientSubscriptionRepository
+import com.liyaqa.shared.application.services.PermissionService
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.Money
 import com.liyaqa.shared.domain.TenantContext
@@ -106,7 +107,8 @@ class ClientOnboardingService(
     private val userRepository: UserRepository,
     private val clientPlanRepository: ClientPlanRepository,
     private val subscriptionRepository: ClientSubscriptionRepository,
-    private val passwordEncoder: PasswordEncoder
+    private val passwordEncoder: PasswordEncoder,
+    private val permissionService: PermissionService
 ) {
     private val logger = LoggerFactory.getLogger(ClientOnboardingService::class.java)
 
@@ -198,6 +200,9 @@ class ClientOnboardingService(
             }
             logger.info("Created admin user: ${savedAdmin.id}")
 
+            // Grant default permissions for the admin role
+            permissionService.grantDefaultPermissionsForRole(savedAdmin.id, savedAdmin.role.name)
+
             // 4. Create Subscription (if plan specified)
             val subscription = if (command.clientPlanId != null && command.agreedPrice != null) {
                 val plan = clientPlanRepository.findById(command.clientPlanId)
@@ -278,12 +283,17 @@ class ClientOnboardingService(
                 status = UserStatus.ACTIVE
             )
 
-            return try {
+            val savedAdmin = try {
                 userRepository.save(adminUser)
             } catch (e: DataIntegrityViolationException) {
                 logger.error("Failed to save admin user - possible duplicate email: ${command.adminEmail}", e)
                 throw IllegalArgumentException("Admin email '${command.adminEmail}' is already in use. Please use a different email address.")
             }
+
+            // Grant default permissions for the admin role
+            permissionService.grantDefaultPermissionsForRole(savedAdmin.id, savedAdmin.role.name)
+
+            return savedAdmin
         } finally {
             TenantContext.clear()
         }

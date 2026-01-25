@@ -1,0 +1,58 @@
+-- Wallet balance table
+CREATE TABLE WalletEntity (
+    memberId TEXT NOT NULL PRIMARY KEY,
+    balanceAmount REAL NOT NULL DEFAULT 0,
+    balanceCurrency TEXT NOT NULL DEFAULT 'SAR',
+    lastTransactionAt TEXT,
+    syncedAt INTEGER NOT NULL DEFAULT 0
+);
+
+-- Wallet transactions table
+CREATE TABLE WalletTransactionEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    type TEXT NOT NULL,
+    amount REAL NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'SAR',
+    descriptionEn TEXT,
+    descriptionAr TEXT,
+    referenceType TEXT,
+    referenceId TEXT,
+    balanceAfterAmount REAL NOT NULL,
+    balanceAfterCurrency TEXT NOT NULL DEFAULT 'SAR',
+    createdAt TEXT NOT NULL
+);
+
+-- Indexes
+CREATE INDEX wallet_transaction_created_idx ON WalletTransactionEntity(createdAt DESC);
+
+-- Queries
+selectWallet:
+SELECT * FROM WalletEntity LIMIT 1;
+
+insertOrReplaceWallet:
+INSERT OR REPLACE INTO WalletEntity (
+    memberId, balanceAmount, balanceCurrency, lastTransactionAt, syncedAt
+) VALUES (?, ?, ?, ?, ?);
+
+deleteWallet:
+DELETE FROM WalletEntity;
+
+selectWalletTransactions:
+SELECT * FROM WalletTransactionEntity
+ORDER BY createdAt DESC
+LIMIT :limit OFFSET :offset;
+
+selectWalletTransactionsByType:
+SELECT * FROM WalletTransactionEntity
+WHERE type = ?
+ORDER BY createdAt DESC
+LIMIT :limit OFFSET :offset;
+
+insertOrReplaceWalletTransaction:
+INSERT OR REPLACE INTO WalletTransactionEntity (
+    id, type, amount, currency, descriptionEn, descriptionAr,
+    referenceType, referenceId, balanceAfterAmount, balanceAfterCurrency, createdAt
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteAllWalletTransactions:
+DELETE FROM WalletTransactionEntity;

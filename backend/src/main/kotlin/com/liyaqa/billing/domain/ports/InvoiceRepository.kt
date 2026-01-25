@@ -40,6 +40,9 @@ interface InvoiceRepository {
     fun countByStatus(status: InvoiceStatus): Long
     fun countByMemberId(memberId: UUID): Long
 
+    // Revenue queries
+    fun sumPaidAmountBetween(startDate: LocalDate, endDate: LocalDate): Long
+
     // Delete
     fun existsById(id: UUID): Boolean
     fun deleteById(id: UUID)

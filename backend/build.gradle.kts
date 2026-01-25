@@ -57,6 +57,9 @@ dependencies {
     // PDF Generation
     implementation("com.github.librepdf:openpdf:2.0.3")
 
+    // Firebase Admin SDK (for push notifications)
+    implementation("com.google.firebase:firebase-admin:9.2.0")
+
     // QR Code Generation
     implementation("com.google.zxing:core:3.5.2")
     implementation("com.google.zxing:javase:3.5.2")

@@ -14,7 +14,11 @@ import com.liyaqa.membership.domain.ports.MemberRepository
 import com.liyaqa.notification.application.services.NotificationService
 import com.liyaqa.notification.domain.model.NotificationPriority
 import com.liyaqa.notification.domain.model.NotificationType
+import com.liyaqa.referral.application.services.ReferralCodeService
+import com.liyaqa.referral.application.services.ReferralTrackingService
+import com.liyaqa.shared.application.services.PermissionService
 import com.liyaqa.shared.domain.LocalizedText
+import com.liyaqa.webhook.application.services.WebhookEventPublisher
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -32,7 +36,11 @@ class MemberService(
     private val memberHealthService: MemberHealthService,
     private val agreementService: AgreementService,
     private val userRepository: UserRepository,
-    private val passwordEncoder: PasswordEncoder
+    private val passwordEncoder: PasswordEncoder,
+    private val permissionService: PermissionService,
+    private val webhookPublisher: WebhookEventPublisher,
+    private val referralCodeService: ReferralCodeService,
+    private val referralTrackingService: ReferralTrackingService
 ) {
     private val logger = LoggerFactory.getLogger(MemberService::class.java)
 
@@ -121,6 +129,34 @@ class MemberService(
             logger.error("Failed to send welcome notification for member ${savedMember.id}: ${e.message}", e)
         }
 
+        // Track referral if code provided
+        command.referralCode?.let { code ->
+            try {
+                val referral = referralTrackingService.trackClick(code)
+                if (referral != null) {
+                    referralTrackingService.markSignedUp(referral.id, savedMember.id)
+                    logger.info("Tracked referral for member ${savedMember.id} with code $code")
+                }
+            } catch (e: Exception) {
+                logger.error("Failed to track referral for member ${savedMember.id}: ${e.message}", e)
+            }
+        }
+
+        // Auto-generate referral code for the new member
+        try {
+            referralCodeService.getOrCreateCode(savedMember.id)
+            logger.info("Generated referral code for member ${savedMember.id}")
+        } catch (e: Exception) {
+            logger.error("Failed to generate referral code for member ${savedMember.id}: ${e.message}", e)
+        }
+
+        // Publish webhook event
+        try {
+            webhookPublisher.publishMemberCreated(savedMember)
+        } catch (e: Exception) {
+            logger.error("Failed to publish member created webhook for member ${savedMember.id}: ${e.message}", e)
+        }
+
         return savedMember
     }
 
@@ -186,7 +222,16 @@ class MemberService(
         command.registrationNotes?.let { member.registrationNotes = it }
         command.preferredLanguage?.let { member.preferredLanguage = it }
 
-        return memberRepository.save(member)
+        val savedMember = memberRepository.save(member)
+
+        // Publish webhook event
+        try {
+            webhookPublisher.publishMemberUpdated(savedMember)
+        } catch (e: Exception) {
+            logger.error("Failed to publish member updated webhook for member ${savedMember.id}: ${e.message}", e)
+        }
+
+        return savedMember
     }
 
     fun suspendMember(id: UUID): Member {
@@ -220,7 +265,16 @@ class MemberService(
     }
 
     fun deleteMember(id: UUID) {
+        val member = getMember(id)
+        val tenantId = member.tenantId
         memberRepository.deleteById(id)
+
+        // Publish webhook event
+        try {
+            webhookPublisher.publishMemberDeleted(id, tenantId)
+        } catch (e: Exception) {
+            logger.error("Failed to publish member deleted webhook for member $id: ${e.message}", e)
+        }
     }
 
     @Transactional(readOnly = true)
@@ -259,6 +313,9 @@ class MemberService(
         )
 
         val savedUser = userRepository.save(user)
+
+        // Grant default permissions for the member role
+        permissionService.grantDefaultPermissionsForRole(savedUser.id, savedUser.role.name)
 
         // Link the member to the user
         member.linkToUser(savedUser.id)

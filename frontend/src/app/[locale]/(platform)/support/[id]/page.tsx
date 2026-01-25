@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import Link from "next/link";
@@ -26,6 +27,8 @@ import { Loading } from "@/components/ui/spinner";
 import { TicketStatusBadge } from "@/components/platform/ticket-status-badge";
 import { TicketPriorityBadge } from "@/components/platform/ticket-priority-badge";
 import { TicketMessages } from "@/components/platform/ticket-messages";
+import { AssignTicketDialog } from "@/components/platform/assign-ticket-dialog";
+import { ChangeStatusDialog } from "@/components/platform/change-status-dialog";
 import { useAuthStore } from "@/stores/auth-store";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -33,7 +36,7 @@ import {
   useTicketMessages,
 } from "@/queries/platform/use-support-tickets";
 import type { LocalizedText } from "@/types/api";
-import type { TicketCategory } from "@/types/platform/support-ticket";
+import type { TicketCategory, SupportTicketSummary } from "@/types/platform/support-ticket";
 
 /**
  * Get localized text based on locale.
@@ -87,6 +90,10 @@ export default function SupportTicketDetailPage() {
   const canEdit = user?.role === "PLATFORM_ADMIN";
   const isClosed = false; // Will be determined from data
 
+  // Dialog state
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [changeStatusDialogOpen, setChangeStatusDialogOpen] = useState(false);
+
   // Data fetching
   const { data: ticket, isLoading, error } = useSupportTicket(ticketId);
   const { data: messages = [], isLoading: messagesLoading } =
@@ -135,14 +142,6 @@ export default function SupportTicketDetailPage() {
     loadingError:
       locale === "ar" ? "حدث خطأ في تحميل البيانات" : "Error loading data",
     notFound: locale === "ar" ? "التذكرة غير موجودة" : "Ticket not found",
-    assignNotImplemented:
-      locale === "ar"
-        ? "سيتم تنفيذ الإسناد قريباً"
-        : "Assignment will be implemented soon",
-    changeStatusNotImplemented:
-      locale === "ar"
-        ? "سيتم تنفيذ تغيير الحالة قريباً"
-        : "Status change will be implemented soon",
   };
 
   // Loading state
@@ -210,7 +209,7 @@ export default function SupportTicketDetailPage() {
                 {!ticketIsResolved && (
                   <Button
                     variant="outline"
-                    onClick={() => toast({ title: texts.assignNotImplemented })}
+                    onClick={() => setAssignDialogOpen(true)}
                   >
                     <UserCheck className="me-2 h-4 w-4" />
                     {texts.assign}
@@ -218,7 +217,7 @@ export default function SupportTicketDetailPage() {
                 )}
                 <Button
                   variant="outline"
-                  onClick={() => toast({ title: texts.changeStatusNotImplemented })}
+                  onClick={() => setChangeStatusDialogOpen(true)}
                 >
                   <Clock className="me-2 h-4 w-4" />
                   {texts.changeStatus}
@@ -414,6 +413,19 @@ export default function SupportTicketDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialogs */}
+      <AssignTicketDialog
+        ticket={ticket as SupportTicketSummary}
+        open={assignDialogOpen}
+        onOpenChange={setAssignDialogOpen}
+      />
+
+      <ChangeStatusDialog
+        ticket={ticket as SupportTicketSummary}
+        open={changeStatusDialogOpen}
+        onOpenChange={setChangeStatusDialogOpen}
+      />
     </div>
   );
 }

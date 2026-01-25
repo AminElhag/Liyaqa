@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import Link from "next/link";
@@ -19,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loading } from "@/components/ui/spinner";
 import { InvoiceStatusBadge } from "@/components/platform/invoice-status-badge";
+import { RecordPaymentDialog } from "@/components/platform/record-payment-dialog";
 import { useAuthStore } from "@/stores/auth-store";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -45,6 +47,9 @@ export default function ClientInvoiceDetailPage() {
 
   // Permissions
   const canEdit = user?.role === "PLATFORM_ADMIN";
+
+  // Dialog state
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
   // Data fetching
   const { data: invoice, isLoading, error } = useClientInvoice(invoiceId);
@@ -108,7 +113,6 @@ export default function ClientInvoiceDetailPage() {
         ? "هل أنت متأكد من إلغاء هذه الفاتورة؟"
         : "Are you sure you want to cancel this invoice?",
     errorTitle: locale === "ar" ? "خطأ" : "Error",
-    comingSoon: locale === "ar" ? "قريباً" : "Coming soon",
   };
 
   const formatCurrency = (money: Money) =>
@@ -170,7 +174,7 @@ export default function ClientInvoiceDetailPage() {
   };
 
   const handleRecordPayment = () => {
-    toast({ title: texts.comingSoon, description: "Payment dialog will be implemented" });
+    setPaymentDialogOpen(true);
   };
 
   const handleCancel = () => {
@@ -517,6 +521,13 @@ export default function ClientInvoiceDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialogs */}
+      <RecordPaymentDialog
+        invoice={invoice}
+        open={paymentDialogOpen}
+        onOpenChange={setPaymentDialogOpen}
+      />
     </div>
   );
 }

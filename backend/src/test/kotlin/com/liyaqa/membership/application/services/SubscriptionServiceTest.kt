@@ -12,9 +12,13 @@ import com.liyaqa.membership.domain.ports.MembershipPlanRepository
 import com.liyaqa.membership.domain.ports.MemberWalletRepository
 import com.liyaqa.membership.domain.ports.SubscriptionRepository
 import com.liyaqa.notification.application.services.NotificationService
+import com.liyaqa.referral.application.services.ReferralRewardService
+import com.liyaqa.referral.application.services.ReferralTrackingService
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.Money
 import com.liyaqa.shared.domain.TaxableFee
+import com.liyaqa.voucher.application.services.VoucherRedemptionService
+import com.liyaqa.webhook.application.services.WebhookEventPublisher
 import java.math.BigDecimal
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -58,6 +62,18 @@ class SubscriptionServiceTest {
     @Mock
     private lateinit var walletService: WalletService
 
+    @Mock
+    private lateinit var webhookPublisher: WebhookEventPublisher
+
+    @Mock
+    private lateinit var voucherRedemptionService: VoucherRedemptionService
+
+    @Mock
+    private lateinit var referralTrackingService: ReferralTrackingService
+
+    @Mock
+    private lateinit var referralRewardService: ReferralRewardService
+
     private lateinit var subscriptionService: SubscriptionService
 
     private lateinit var testPlan: MembershipPlan
@@ -74,7 +90,11 @@ class SubscriptionServiceTest {
             membershipPlanRepository,
             memberWalletRepository,
             notificationService,
-            walletService
+            walletService,
+            webhookPublisher,
+            voucherRedemptionService,
+            referralTrackingService,
+            referralRewardService
         )
 
         testPlan = MembershipPlan(

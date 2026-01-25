@@ -29,7 +29,9 @@ data class CreateMemberCommand(
     val agreementIds: List<UUID>? = null,
     val signatureData: String? = null,
     val ipAddress: String? = null,
-    val userAgent: String? = null
+    val userAgent: String? = null,
+    // Referral tracking
+    val referralCode: String? = null
 )
 
 data class UpdateMemberCommand(

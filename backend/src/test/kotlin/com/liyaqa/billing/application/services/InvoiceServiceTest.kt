@@ -20,6 +20,7 @@ import com.liyaqa.notification.application.services.NotificationService
 import com.liyaqa.organization.domain.ports.ClubRepository
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.Money
+import com.liyaqa.webhook.application.services.WebhookEventPublisher
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -73,6 +74,9 @@ class InvoiceServiceTest {
     @Mock
     private lateinit var clubRepository: ClubRepository
 
+    @Mock
+    private lateinit var webhookPublisher: WebhookEventPublisher
+
     private lateinit var invoiceService: InvoiceService
 
     private val testMemberId = UUID.randomUUID()
@@ -90,7 +94,8 @@ class InvoiceServiceTest {
             notificationService,
             zatcaService,
             billingConfig,
-            clubRepository
+            clubRepository,
+            webhookPublisher
         )
     }
 

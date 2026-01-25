@@ -95,24 +95,26 @@ interface SpringDataClientInvoiceRepository : JpaRepository<ClientInvoice, UUID>
         SELECT COALESCE(SUM(ci.paidAmount.amount), 0)
         FROM ClientInvoice ci
         WHERE ci.status = 'PAID'
-        AND FUNCTION('MONTH', ci.paidDate) = :month
-        AND FUNCTION('YEAR', ci.paidDate) = :year
+        AND ci.paidDate IS NOT NULL
+        AND ci.paidDate >= :startOfMonth
+        AND ci.paidDate < :startOfNextMonth
     """)
     fun getRevenueByMonth(
-        @Param("month") month: Int,
-        @Param("year") year: Int
+        @Param("startOfMonth") startOfMonth: LocalDate,
+        @Param("startOfNextMonth") startOfNextMonth: LocalDate
     ): java.math.BigDecimal
 
     @Query("""
         SELECT COUNT(ci)
         FROM ClientInvoice ci
         WHERE ci.status = 'PAID'
-        AND FUNCTION('MONTH', ci.paidDate) = :month
-        AND FUNCTION('YEAR', ci.paidDate) = :year
+        AND ci.paidDate IS NOT NULL
+        AND ci.paidDate >= :startOfMonth
+        AND ci.paidDate < :startOfNextMonth
     """)
     fun getInvoiceCountByMonth(
-        @Param("month") month: Int,
-        @Param("year") year: Int
+        @Param("startOfMonth") startOfMonth: LocalDate,
+        @Param("startOfNextMonth") startOfNextMonth: LocalDate
     ): Long
 
     @Query("""
@@ -217,11 +219,11 @@ class JpaClientInvoiceRepository(
     override fun getRevenueByDateRange(startDate: LocalDate, endDate: LocalDate): BigDecimal =
         springDataRepository.getRevenueByDateRange(startDate, endDate)
 
-    override fun getRevenueByMonth(month: Int, year: Int): BigDecimal =
-        springDataRepository.getRevenueByMonth(month, year)
+    override fun getRevenueByMonth(startOfMonth: LocalDate, startOfNextMonth: LocalDate): BigDecimal =
+        springDataRepository.getRevenueByMonth(startOfMonth, startOfNextMonth)
 
-    override fun getInvoiceCountByMonth(month: Int, year: Int): Long =
-        springDataRepository.getInvoiceCountByMonth(month, year)
+    override fun getInvoiceCountByMonth(startOfMonth: LocalDate, startOfNextMonth: LocalDate): Long =
+        springDataRepository.getInvoiceCountByMonth(startOfMonth, startOfNextMonth)
 
     override fun getTotalOutstandingAmount(): BigDecimal =
         springDataRepository.getTotalOutstandingAmount()

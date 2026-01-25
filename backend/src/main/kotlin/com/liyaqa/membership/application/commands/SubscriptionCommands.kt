@@ -13,7 +13,9 @@ data class CreateSubscriptionCommand(
     val startDate: LocalDate = LocalDate.now(),
     val autoRenew: Boolean = false,
     val paidAmount: Money? = null,
-    val notes: String? = null
+    val notes: String? = null,
+    // Voucher support
+    val voucherCode: String? = null
 )
 
 /**

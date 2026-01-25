@@ -47,6 +47,18 @@ interface SpringDataInvoiceRepository : JpaRepository<Invoice, UUID> {
 
     fun countByMemberId(memberId: UUID): Long
 
+    @Query("""
+        SELECT COALESCE(SUM(i.paidAmount.amount), 0)
+        FROM Invoice i
+        WHERE i.status = 'PAID'
+        AND i.paidDate >= :startDate
+        AND i.paidDate <= :endDate
+    """)
+    fun sumPaidAmountBetween(
+        @Param("startDate") startDate: LocalDate,
+        @Param("endDate") endDate: LocalDate
+    ): Long
+
     // ==================== Saudi Payment Methods ====================
 
     fun findByStcpayTransactionId(stcpayTransactionId: String): Optional<Invoice>
@@ -137,6 +149,10 @@ class JpaInvoiceRepository(
 
     override fun countByMemberId(memberId: UUID): Long =
         springDataRepository.countByMemberId(memberId)
+
+    override fun sumPaidAmountBetween(startDate: LocalDate, endDate: LocalDate): Long {
+        return springDataRepository.sumPaidAmountBetween(startDate, endDate)
+    }
 
     override fun existsById(id: UUID): Boolean =
         springDataRepository.existsById(id)

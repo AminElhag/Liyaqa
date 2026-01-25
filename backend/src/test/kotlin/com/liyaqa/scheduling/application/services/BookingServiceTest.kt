@@ -19,6 +19,7 @@ import com.liyaqa.scheduling.domain.ports.ClassBookingRepository
 import com.liyaqa.scheduling.domain.ports.ClassSessionRepository
 import com.liyaqa.scheduling.domain.ports.GymClassRepository
 import com.liyaqa.shared.domain.LocalizedText
+import com.liyaqa.webhook.application.services.WebhookEventPublisher
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -60,6 +61,9 @@ class BookingServiceTest {
     @Mock
     private lateinit var notificationService: NotificationService
 
+    @Mock
+    private lateinit var webhookPublisher: WebhookEventPublisher
+
     private lateinit var bookingService: BookingService
 
     private lateinit var testMember: Member
@@ -75,7 +79,8 @@ class BookingServiceTest {
             gymClassRepository,
             subscriptionRepository,
             memberRepository,
-            notificationService
+            notificationService,
+            webhookPublisher
         )
 
         // Create test member

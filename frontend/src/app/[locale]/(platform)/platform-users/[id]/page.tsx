@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import Link from "next/link";
@@ -27,12 +28,14 @@ import {
 import { Loading } from "@/components/ui/spinner";
 import { PlatformUserStatusBadge } from "@/components/platform/platform-user-status-badge";
 import { PlatformUserRoleBadge } from "@/components/platform/platform-user-role-badge";
+import { ResetPasswordDialog } from "@/components/platform/reset-password-dialog";
 import { useAuthStore } from "@/stores/auth-store";
 import { useToast } from "@/hooks/use-toast";
 import {
   usePlatformUser,
   usePlatformUserActivities,
   useChangePlatformUserStatus,
+  useResetPlatformUserPassword,
 } from "@/queries/platform/use-platform-users";
 
 /**
@@ -93,11 +96,15 @@ export default function PlatformUserDetailPage() {
   // Permissions
   const canEdit = currentUser?.role === "PLATFORM_ADMIN";
 
+  // Dialog state
+  const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
+
   // Data fetching
   const { data: user, isLoading, error } = usePlatformUser(userId);
   const { data: activitiesData, isLoading: activitiesLoading } =
     usePlatformUserActivities(userId, { size: 5 });
   const changeStatus = useChangePlatformUserStatus();
+  const resetPassword = useResetPlatformUserPassword();
 
   const activities = activitiesData?.content || [];
 
@@ -142,10 +149,10 @@ export default function PlatformUserDetailPage() {
       locale === "ar" ? "تم تفعيل المستخدم" : "User activated successfully",
     suspendedSuccess:
       locale === "ar" ? "تم إيقاف المستخدم" : "User suspended successfully",
-    resetPasswordNotImplemented:
+    resetPasswordSuccess:
       locale === "ar"
-        ? "سيتم تنفيذ إعادة تعيين كلمة المرور قريباً"
-        : "Password reset will be implemented soon",
+        ? "تم إعادة تعيين كلمة المرور بنجاح"
+        : "Password reset successfully",
   };
 
   // Handlers
@@ -192,7 +199,33 @@ export default function PlatformUserDetailPage() {
   };
 
   const handleResetPassword = () => {
-    toast({ title: texts.resetPasswordNotImplemented });
+    setResetPasswordDialogOpen(true);
+  };
+
+  const handleResetPasswordSubmit = async (newPassword: string) => {
+    return new Promise<void>((resolve, reject) => {
+      resetPassword.mutate(
+        { id: userId, data: { newPassword } },
+        {
+          onSuccess: () => {
+            toast({
+              title: texts.successTitle,
+              description: texts.resetPasswordSuccess,
+            });
+            setResetPasswordDialogOpen(false);
+            resolve();
+          },
+          onError: (error) => {
+            toast({
+              title: texts.errorTitle,
+              description: error.message,
+              variant: "destructive",
+            });
+            reject(error);
+          },
+        }
+      );
+    });
   };
 
   // Loading state
@@ -438,6 +471,19 @@ export default function PlatformUserDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialogs */}
+      {user && (
+        <ResetPasswordDialog
+          open={resetPasswordDialogOpen}
+          onOpenChange={setResetPasswordDialogOpen}
+          userEmail={user.email}
+          userName={locale === "ar" ? user.displayNameAr || user.displayNameEn : user.displayNameEn}
+          locale={locale}
+          onSubmit={handleResetPasswordSubmit}
+          isLoading={resetPassword.isPending}
+        />
+      )}
     </div>
   );
 }

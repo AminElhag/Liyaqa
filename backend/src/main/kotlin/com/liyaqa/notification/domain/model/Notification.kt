@@ -253,5 +253,25 @@ class Notification(
                 priority = priority
             )
         }
+
+        /**
+         * Creates a notification for push channel.
+         */
+        fun forPush(
+            memberId: UUID,
+            type: NotificationType,
+            title: LocalizedText,
+            body: LocalizedText,
+            priority: NotificationPriority = NotificationPriority.NORMAL
+        ): Notification {
+            return Notification(
+                memberId = memberId,
+                notificationType = type,
+                channel = NotificationChannel.PUSH,
+                subject = title,
+                body = body,
+                priority = priority
+            )
+        }
     }
 }

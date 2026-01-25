@@ -252,9 +252,13 @@ class PlatformDashboardService(
             val month = today.minusMonths(i.toLong())
             val yearMonth = YearMonth.of(month.year, month.month)
 
-            // Use aggregation queries - one query per month (no memory loading)
-            val revenue = clientInvoiceRepository.getRevenueByMonth(yearMonth.monthValue, yearMonth.year)
-            val invoiceCount = clientInvoiceRepository.getInvoiceCountByMonth(yearMonth.monthValue, yearMonth.year)
+            // Calculate date range for this month (database-agnostic)
+            val startOfMonth = yearMonth.atDay(1)
+            val startOfNextMonth = yearMonth.plusMonths(1).atDay(1)
+
+            // Use date range parameters instead of FUNCTION('MONTH'/YEAR') for PostgreSQL compatibility
+            val revenue = clientInvoiceRepository.getRevenueByMonth(startOfMonth, startOfNextMonth)
+            val invoiceCount = clientInvoiceRepository.getInvoiceCountByMonth(startOfMonth, startOfNextMonth)
 
             result.add(
                 MonthlyRevenueResponse(

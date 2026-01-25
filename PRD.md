@@ -98,14 +98,14 @@ Native mobile application for gym members to manage their fitness journey on-the
 Complete sales pipeline management for converting prospects into members.
 
 **Core Features:**
-- [ ] Lead capture forms (embeddable, standalone)
+- [x] Lead capture forms (embeddable, standalone)
 - [x] Lead pipeline with customizable stages (New > Contacted > Tour Scheduled > Trial > Negotiation > Won/Lost)
 - [x] Lead scoring based on engagement (backend + frontend rules management)
 - [x] Lead assignment rules (round-robin, location-based, source-based) (backend + frontend rules management)
-- [ ] Activity logging (calls, emails, meetings, notes)
-- [ ] Follow-up task scheduling with reminders
-- [ ] Lead source tracking (referral, walk-in, social, ads)
-- [ ] Campaign attribution for marketing ROI
+- [x] Activity logging (calls, emails, meetings, notes)
+- [x] Follow-up task scheduling with reminders
+- [x] Lead source tracking (referral, walk-in, social, ads)
+- [x] Campaign attribution for marketing ROI
 - [x] Convert lead to member workflow
 - [x] Sales dashboard with conversion metrics
 - [x] Lost lead reasons tracking
@@ -138,8 +138,8 @@ Automated communication workflows to improve member engagement and retention.
 - [x] Class reminder notifications (24h, 1h before)
 - [x] Payment failure follow-ups
 - [x] Member segmentation by activity, plan, status
-- [ ] A/B testing for message effectiveness
-- [ ] Campaign analytics (open rates, click rates)
+- [x] A/B testing for message effectiveness
+- [x] Campaign analytics (open rates, click rates)
 
 **Technical Requirements:**
 - Workflow engine for triggered campaigns
@@ -167,10 +167,10 @@ Web-based portal for members to manage their membership independently.
 - [x] Booking history and upcoming schedule
 - [x] PT session booking
 - [x] Invoice viewing and payment
-- [ ] Payment method management
+- [x] Payment method management
 - [x] Profile and password update
 - [x] Freeze request submission
-- [ ] Document signing (agreements, waivers)
+- [x] Document signing (agreements, waivers)
 - [x] Referral link generation
 
 **Technical Requirements:**
@@ -244,14 +244,14 @@ Automated referral tracking and reward system.
 Flexible promotional code system for marketing campaigns.
 
 **Core Features:**
-- [ ] Create single-use and multi-use codes
-- [ ] Discount types: percentage, fixed amount, free trial
-- [ ] Usage limits (total uses, per member)
-- [ ] Expiration dates
-- [ ] Applicable products/plans restrictions
-- [ ] First-time member only option
-- [ ] Gift card functionality (prepaid value)
-- [ ] Voucher usage tracking and analytics
+- [x] Create single-use and multi-use codes
+- [x] Discount types: percentage, fixed amount, free trial
+- [x] Usage limits (total uses, per member)
+- [x] Expiration dates
+- [x] Applicable products/plans restrictions
+- [x] First-time member only option
+- [x] Gift card functionality (prepaid value)
+- [x] Voucher usage tracking and analytics
 
 **Success Metrics:**
 - Marketing campaign flexibility
@@ -657,4 +657,4 @@ Q4 2026: Advanced Features
 ---
 
 *Last Updated: January 25, 2026*
-*Version: 2.1*
+*Version: 2.2*

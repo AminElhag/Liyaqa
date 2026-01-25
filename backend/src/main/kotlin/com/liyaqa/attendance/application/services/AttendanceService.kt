@@ -9,6 +9,8 @@ import com.liyaqa.membership.domain.ports.MemberRepository
 import com.liyaqa.membership.domain.ports.SubscriptionRepository
 import com.liyaqa.organization.domain.ports.LocationRepository
 import com.liyaqa.shared.domain.TenantContext
+import com.liyaqa.webhook.application.services.WebhookEventPublisher
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -25,8 +27,10 @@ class AttendanceService(
     private val attendanceRepository: AttendanceRepository,
     private val memberRepository: MemberRepository,
     private val subscriptionRepository: SubscriptionRepository,
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepository,
+    private val webhookPublisher: WebhookEventPublisher
 ) {
+    private val logger = LoggerFactory.getLogger(AttendanceService::class.java)
     /**
      * Checks in a member at a location.
      * @throws NoSuchElementException if member or location not found
@@ -87,7 +91,16 @@ class AttendanceService(
             createdBy = command.createdBy
         )
 
-        return attendanceRepository.save(attendanceRecord)
+        val savedRecord = attendanceRepository.save(attendanceRecord)
+
+        // Publish webhook event
+        try {
+            webhookPublisher.publishAttendanceCheckIn(savedRecord)
+        } catch (e: Exception) {
+            logger.error("Failed to publish attendance check-in webhook: ${e.message}", e)
+        }
+
+        return savedRecord
     }
 
     /**
@@ -101,7 +114,16 @@ class AttendanceService(
         attendanceRecord.checkOut()
         command.notes?.let { attendanceRecord.notes = it }
 
-        return attendanceRepository.save(attendanceRecord)
+        val savedRecord = attendanceRepository.save(attendanceRecord)
+
+        // Publish webhook event
+        try {
+            webhookPublisher.publishAttendanceCheckOut(savedRecord)
+        } catch (e: Exception) {
+            logger.error("Failed to publish attendance check-out webhook: ${e.message}", e)
+        }
+
+        return savedRecord
     }
 
     /**

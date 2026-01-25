@@ -21,6 +21,8 @@ interface MemberRepository {
     fun existsByEmail(email: String): Boolean
     fun deleteById(id: UUID)
     fun count(): Long
+    fun countByStatus(status: MemberStatus): Long
+    fun countByJoinedAfter(date: LocalDate): Long
     fun findByUserId(userId: UUID): Optional<Member>
 
     /**

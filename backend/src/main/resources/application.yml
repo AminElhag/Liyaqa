@@ -108,6 +108,10 @@ liyaqa:
     vat-registration-number: ${ZATCA_VAT_NUMBER:}  # VAT registration number
   billing:
     default-vat-rate: ${DEFAULT_VAT_RATE:15.00}  # Saudi Arabia VAT rate (15%)
+  firebase:
+    enabled: ${FIREBASE_ENABLED:false}  # Set to true to enable push notifications
+    service-account-path: ${FIREBASE_SERVICE_ACCOUNT_PATH:}  # Path to service account JSON file
+    service-account-json: ${FIREBASE_SERVICE_ACCOUNT_JSON:}  # JSON string for containerized deployments
 
 # OpenAPI/Swagger Configuration
 springdoc:
@@ -233,6 +237,10 @@ liyaqa:
     vat-registration-number: ${ZATCA_VAT_NUMBER}
   billing:
     default-vat-rate: ${DEFAULT_VAT_RATE:15.00}  # Saudi Arabia VAT rate (15%)
+  firebase:
+    enabled: ${FIREBASE_ENABLED:true}  # Push notifications enabled in production
+    service-account-path: ${FIREBASE_SERVICE_ACCOUNT_PATH:}
+    service-account-json: ${FIREBASE_SERVICE_ACCOUNT_JSON}  # Required in production
 
 logging:
   level:

@@ -145,6 +145,30 @@ export default function ClubDetailPage() {
   // Password reset dialog state
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ClubUser | null>(null);
+  const [copiedSubdomain, setCopiedSubdomain] = useState(false);
+
+  // Get dynamic base domain from current location
+  const getBaseDomain = () => {
+    if (typeof window === "undefined") return "liyaqa.com";
+    const { hostname, port } = window.location;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "liyaqa.local";
+    }
+    // Extract base domain (e.g., "liyaqa.com" from "platform.liyaqa.com")
+    const parts = hostname.split(".");
+    return parts.length > 2 ? parts.slice(-2).join(".") : hostname + (port && port !== "80" && port !== "443" ? `:${port}` : "");
+  };
+
+  const getSubdomainUrl = (slug: string) => {
+    if (typeof window === "undefined") return `https://${slug}.liyaqa.com`;
+    const { protocol, hostname, port } = window.location;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return `http://${slug}.liyaqa.local:3000`;
+    }
+    const baseDomain = getBaseDomain();
+    const portPart = port && port !== "80" && port !== "443" ? `:${port}` : "";
+    return `${protocol}//${slug}.${baseDomain}${portPart}`;
+  };
 
   // Queries
   const { data: clubDetail, isLoading: clubLoading } = useClubDetail(clubId);
@@ -513,14 +537,26 @@ export default function ClubDetailPage() {
             {clubDetail.slug && (
               <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
                 <span className="text-sm text-muted-foreground">{texts.subdomain}:</span>
-                <code className="text-xs font-mono">{clubDetail.slug}.liyaqa.local</code>
+                <code className="text-xs font-mono">{clubDetail.slug}.{getBaseDomain()}</code>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => {
+                    navigator.clipboard.writeText(getSubdomainUrl(clubDetail.slug!));
+                    setCopiedSubdomain(true);
+                    setTimeout(() => setCopiedSubdomain(false), 2000);
+                  }}
+                >
+                  {copiedSubdomain ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6"
                   asChild
                 >
-                  <a href={`http://${clubDetail.slug}.liyaqa.local:3000`} target="_blank" rel="noopener noreferrer">
+                  <a href={getSubdomainUrl(clubDetail.slug)} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-3 w-3" />
                   </a>
                 </Button>

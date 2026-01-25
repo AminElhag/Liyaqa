@@ -7,7 +7,10 @@ import com.liyaqa.membership.domain.model.MemberStatus
 import com.liyaqa.membership.domain.ports.MemberRepository
 import com.liyaqa.auth.domain.ports.UserRepository
 import com.liyaqa.notification.application.services.NotificationService
+import com.liyaqa.referral.application.services.ReferralCodeService
+import com.liyaqa.referral.application.services.ReferralTrackingService
 import com.liyaqa.shared.application.services.PermissionService
+import com.liyaqa.webhook.application.services.WebhookEventPublisher
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -56,6 +59,15 @@ class MemberServiceTest {
     @Mock
     private lateinit var permissionService: PermissionService
 
+    @Mock
+    private lateinit var webhookPublisher: WebhookEventPublisher
+
+    @Mock
+    private lateinit var referralCodeService: ReferralCodeService
+
+    @Mock
+    private lateinit var referralTrackingService: ReferralTrackingService
+
     private lateinit var memberService: MemberService
 
     private lateinit var testMember: Member
@@ -69,7 +81,10 @@ class MemberServiceTest {
             agreementService,
             userRepository,
             passwordEncoder,
-            permissionService
+            permissionService,
+            webhookPublisher,
+            referralCodeService,
+            referralTrackingService
         )
 
         testMember = Member(
@@ -340,6 +355,7 @@ class MemberServiceTest {
     fun `deleteMember should delete member`() {
         // Given
         val memberId = testMember.id
+        whenever(memberRepository.findById(memberId)) doReturn Optional.of(testMember)
 
         // When
         memberService.deleteMember(memberId)

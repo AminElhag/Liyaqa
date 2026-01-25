@@ -12,7 +12,12 @@ import com.liyaqa.membership.domain.ports.SubscriptionRepository
 import com.liyaqa.notification.application.services.NotificationService
 import com.liyaqa.notification.domain.model.NotificationPriority
 import com.liyaqa.notification.domain.model.NotificationType
+import com.liyaqa.referral.application.services.ReferralRewardService
+import com.liyaqa.referral.application.services.ReferralTrackingService
 import com.liyaqa.shared.domain.LocalizedText
+import com.liyaqa.voucher.application.commands.RedeemVoucherCommand
+import com.liyaqa.voucher.application.services.VoucherRedemptionService
+import com.liyaqa.webhook.application.services.WebhookEventPublisher
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -30,7 +35,11 @@ class SubscriptionService(
     private val membershipPlanRepository: MembershipPlanRepository,
     private val memberWalletRepository: MemberWalletRepository,
     private val notificationService: NotificationService,
-    private val walletService: WalletService
+    private val walletService: WalletService,
+    private val webhookPublisher: WebhookEventPublisher,
+    private val voucherRedemptionService: VoucherRedemptionService,
+    private val referralTrackingService: ReferralTrackingService,
+    private val referralRewardService: ReferralRewardService
 ) {
     private val logger = LoggerFactory.getLogger(SubscriptionService::class.java)
     private val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
@@ -129,6 +138,51 @@ class SubscriptionService(
             sendSubscriptionCreatedNotification(savedSubscription, plan.name)
         }
 
+        // Apply voucher if provided
+        command.voucherCode?.let { code ->
+            try {
+                val result = voucherRedemptionService.redeemVoucher(
+                    RedeemVoucherCommand(
+                        code = code,
+                        memberId = command.memberId,
+                        purchaseAmount = plan.getRecurringTotal().amount,
+                        usedForType = "SUBSCRIPTION",
+                        usedForId = savedSubscription.id
+                    )
+                )
+                if (result.success) {
+                    logger.info("Applied voucher $code to subscription ${savedSubscription.id}, discount: ${result.discountApplied}")
+                } else {
+                    logger.warn("Failed to apply voucher $code to subscription ${savedSubscription.id}: ${result.errorMessage}")
+                }
+            } catch (e: Exception) {
+                logger.error("Error applying voucher $code to subscription ${savedSubscription.id}: ${e.message}", e)
+            }
+        }
+
+        // Trigger referral conversion if member was referred
+        try {
+            val convertedReferral = referralTrackingService.convertReferral(command.memberId, savedSubscription.id)
+            if (convertedReferral != null) {
+                logger.info("Converted referral ${convertedReferral.id} for member ${command.memberId}")
+                // Create and distribute reward
+                val reward = referralRewardService.createReward(convertedReferral)
+                if (reward != null) {
+                    referralRewardService.distributeReward(reward.id)
+                    logger.info("Distributed referral reward ${reward.id}")
+                }
+            }
+        } catch (e: Exception) {
+            logger.error("Error processing referral conversion for member ${command.memberId}: ${e.message}", e)
+        }
+
+        // Publish webhook event
+        try {
+            webhookPublisher.publishSubscriptionCreated(savedSubscription)
+        } catch (e: Exception) {
+            logger.error("Failed to publish subscription created webhook: ${e.message}", e)
+        }
+
         return savedSubscription
     }
 
@@ -221,6 +275,13 @@ class SubscriptionService(
         // Send freeze notification
         sendSubscriptionFrozenNotification(savedSubscription)
 
+        // Publish webhook event
+        try {
+            webhookPublisher.publishSubscriptionFrozen(savedSubscription)
+        } catch (e: Exception) {
+            logger.error("Failed to publish subscription frozen webhook: ${e.message}", e)
+        }
+
         return savedSubscription
     }
 
@@ -237,6 +298,13 @@ class SubscriptionService(
         // Send unfreeze notification
         sendSubscriptionUnfrozenNotification(savedSubscription)
 
+        // Publish webhook event
+        try {
+            webhookPublisher.publishSubscriptionUnfrozen(savedSubscription)
+        } catch (e: Exception) {
+            logger.error("Failed to publish subscription unfrozen webhook: ${e.message}", e)
+        }
+
         return savedSubscription
     }
 
@@ -252,6 +320,13 @@ class SubscriptionService(
 
         // Send cancellation notification
         sendSubscriptionCancelledNotification(savedSubscription)
+
+        // Publish webhook event
+        try {
+            webhookPublisher.publishSubscriptionCancelled(savedSubscription)
+        } catch (e: Exception) {
+            logger.error("Failed to publish subscription cancelled webhook: ${e.message}", e)
+        }
 
         return savedSubscription
     }
@@ -283,6 +358,13 @@ class SubscriptionService(
 
         // Send renewal notification
         sendSubscriptionRenewedNotification(savedSubscription, plan.name)
+
+        // Publish webhook event
+        try {
+            webhookPublisher.publishSubscriptionRenewed(savedSubscription)
+        } catch (e: Exception) {
+            logger.error("Failed to publish subscription renewed webhook: ${e.message}", e)
+        }
 
         return savedSubscription
     }

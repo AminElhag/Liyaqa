@@ -27,7 +27,8 @@ class NotificationService(
     private val notificationRepository: NotificationRepository,
     private val preferenceRepository: NotificationPreferenceRepository,
     private val emailService: EmailService,
-    private val smsService: SmsService
+    private val smsService: SmsService,
+    private val pushNotificationService: PushNotificationService?
 ) {
     private val logger = LoggerFactory.getLogger(NotificationService::class.java)
 
@@ -41,8 +42,9 @@ class NotificationService(
             NotificationChannel.EMAIL -> sendEmailNotification(notification)
             NotificationChannel.SMS -> sendSmsNotification(notification)
             NotificationChannel.WHATSAPP -> sendWhatsAppNotification(notification)
-            NotificationChannel.PUSH, NotificationChannel.IN_APP -> {
-                // Future implementation
+            NotificationChannel.PUSH -> sendPushNotification(notification)
+            NotificationChannel.IN_APP -> {
+                // In-app notifications are stored and retrieved via API
                 notification.markSent()
                 notificationRepository.save(notification)
             }
@@ -111,6 +113,53 @@ class NotificationService(
             logger.info("SMS notification sent: ${notification.id} for member ${notification.memberId}")
         } catch (e: Exception) {
             logger.error("Failed to send SMS notification ${notification.id}: ${e.message}", e)
+            notification.markFailed(e.message ?: "Unknown error")
+        }
+
+        return notificationRepository.save(notification)
+    }
+
+    /**
+     * Sends a push notification via Firebase Cloud Messaging.
+     */
+    private fun sendPushNotification(notification: Notification): Notification {
+        if (pushNotificationService == null) {
+            logger.warn("Push notification service not available, marking as failed")
+            notification.markFailed("Push notification service not configured")
+            return notificationRepository.save(notification)
+        }
+
+        try {
+            val preference = getOrCreatePreference(notification.memberId)
+            val locale = preference.preferredLanguage
+
+            val payload = PushPayload(
+                title = notification.subject ?: LocalizedText("Liyaqa", "ليقى"),
+                body = notification.body,
+                type = notification.notificationType.name,
+                actionUrl = notification.metadata,
+                referenceId = notification.referenceId,
+                referenceType = notification.referenceType
+            )
+
+            val result = pushNotificationService.sendToMember(notification.memberId, payload, locale)
+
+            if (result.successCount > 0) {
+                notification.markSent("push:${result.successCount}/${result.successCount + result.failureCount}")
+                logger.info(
+                    "Push notification sent: ${notification.id} for member ${notification.memberId}. " +
+                        "Success: ${result.successCount}, Failed: ${result.failureCount}"
+                )
+            } else if (result.successCount == 0 && result.failureCount == 0) {
+                // No devices registered
+                notification.markFailed("No registered devices for member")
+                logger.info("No devices registered for member ${notification.memberId}")
+            } else {
+                notification.markFailed("All push deliveries failed")
+                logger.error("Failed to send push notification ${notification.id} to all devices")
+            }
+        } catch (e: Exception) {
+            logger.error("Failed to send push notification ${notification.id}: ${e.message}", e)
             notification.markFailed(e.message ?: "Unknown error")
         }
 
@@ -201,6 +250,68 @@ class NotificationService(
         if (phone != null) {
             notifications.add(sendSms(memberId, phone, type, body, priority, referenceId, referenceType))
         }
+
+        return notifications
+    }
+
+    /**
+     * Creates and sends a push notification.
+     */
+    fun sendPush(
+        memberId: UUID,
+        type: NotificationType,
+        title: LocalizedText,
+        body: LocalizedText,
+        priority: NotificationPriority = NotificationPriority.NORMAL,
+        actionUrl: String? = null,
+        referenceId: UUID? = null,
+        referenceType: String? = null
+    ): Notification {
+        val preference = getOrCreatePreference(memberId)
+
+        if (!preference.shouldReceive(type, NotificationChannel.PUSH)) {
+            logger.info("Member $memberId has disabled ${type.name} notifications via push")
+            val notification = Notification.forPush(memberId, type, title, body, priority)
+            notification.markFailed("Notification disabled by user preference")
+            return notificationRepository.save(notification)
+        }
+
+        val notification = Notification.forPush(memberId, type, title, body, priority)
+        if (referenceId != null && referenceType != null) {
+            notification.setReference(referenceId, referenceType)
+        }
+        actionUrl?.let { notification.metadata = it }
+
+        return sendNotification(notificationRepository.save(notification))
+    }
+
+    /**
+     * Sends notification via email, SMS, and/or push if enabled.
+     */
+    fun sendAllChannels(
+        memberId: UUID,
+        email: String?,
+        phone: String?,
+        type: NotificationType,
+        subject: LocalizedText?,
+        body: LocalizedText,
+        priority: NotificationPriority = NotificationPriority.NORMAL,
+        actionUrl: String? = null,
+        referenceId: UUID? = null,
+        referenceType: String? = null
+    ): List<Notification> {
+        val notifications = mutableListOf<Notification>()
+
+        if (email != null && subject != null) {
+            notifications.add(sendEmail(memberId, email, type, subject, body, priority, referenceId, referenceType))
+        }
+
+        if (phone != null) {
+            notifications.add(sendSms(memberId, phone, type, body, priority, referenceId, referenceType))
+        }
+
+        // Send push notification
+        notifications.add(sendPush(memberId, type, subject ?: LocalizedText("Liyaqa", "ليقى"), body, priority, actionUrl, referenceId, referenceType))
 
         return notifications
     }

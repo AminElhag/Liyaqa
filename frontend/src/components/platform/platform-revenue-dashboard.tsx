@@ -74,6 +74,9 @@ export function PlatformRevenueDashboard({
     invoices: item.invoiceCount,
   }));
 
+  // Check if we have valid chart data to prevent dimension errors
+  const hasChartData = chartData.length > 0;
+
   const mrrTrend = revenue
     ? ((revenue.revenueThisMonth - revenue.revenueLastMonth) / (revenue.revenueLastMonth || 1)) * 100
     : 0;
@@ -150,43 +153,49 @@ export function PlatformRevenueDashboard({
 
           {/* Chart */}
           <div className="h-[220px] mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={chartData}
-                margin={{ top: 10, right: isRtl ? 30 : 10, left: isRtl ? 10 : 0, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient id="platformRevenueGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize: 11 }}
-                  tickLine={false}
-                  axisLine={false}
-                  reversed={isRtl}
-                />
-                <YAxis
-                  tick={{ fontSize: 11 }}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) => formatCompactNumber(value, locale)}
-                  orientation={isRtl ? "right" : "left"}
-                />
-                <Tooltip content={<CustomTooltip locale={locale} />} />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#10b981"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#platformRevenueGradient)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {hasChartData ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={chartData}
+                  margin={{ top: 10, right: isRtl ? 30 : 10, left: isRtl ? 10 : 0, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="platformRevenueGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                    reversed={isRtl}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => formatCompactNumber(value, locale)}
+                    orientation={isRtl ? "right" : "left"}
+                  />
+                  <Tooltip content={<CustomTooltip locale={locale} />} />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#platformRevenueGradient)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-muted-foreground">
+                <p>{locale === "ar" ? "لا توجد بيانات للعرض" : "No data to display"}</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

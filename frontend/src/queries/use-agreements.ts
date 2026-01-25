@@ -19,6 +19,10 @@ import {
   getMemberAgreements,
   getMemberAgreementStatus,
   signAgreement,
+  getMyAgreements,
+  getMyAgreementStatus,
+  signMyAgreement,
+  signMyAgreementsBulk,
 } from "@/lib/api/agreements";
 import type { PaginatedResponse, UUID } from "@/types/api";
 import type {
@@ -261,6 +265,82 @@ export function useSignAgreement() {
       queryClient.invalidateQueries({
         queryKey: agreementKeys.memberStatus(memberId),
       });
+    },
+  });
+}
+
+// ==========================================
+// MEMBER SELF-SERVICE HOOKS (api/me/agreements)
+// ==========================================
+
+export const myAgreementKeys = {
+  all: ["my-agreements"] as const,
+  list: () => [...myAgreementKeys.all, "list"] as const,
+  status: () => [...myAgreementKeys.all, "status"] as const,
+};
+
+/**
+ * Hook to fetch my signed agreements (self-service)
+ */
+export function useMyAgreements(
+  options?: Omit<UseQueryOptions<MemberAgreement[]>, "queryKey" | "queryFn">
+) {
+  return useQuery({
+    queryKey: myAgreementKeys.list(),
+    queryFn: getMyAgreements,
+    ...options,
+  });
+}
+
+/**
+ * Hook to fetch my agreement status (self-service)
+ */
+export function useMyAgreementStatus(
+  options?: Omit<UseQueryOptions<MemberAgreementStatus>, "queryKey" | "queryFn">
+) {
+  return useQuery({
+    queryKey: myAgreementKeys.status(),
+    queryFn: getMyAgreementStatus,
+    ...options,
+  });
+}
+
+/**
+ * Hook to sign an agreement (self-service)
+ */
+export function useSignMyAgreement() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      agreementId,
+      data,
+    }: {
+      agreementId: UUID;
+      data?: SignAgreementRequest;
+    }) => signMyAgreement(agreementId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: myAgreementKeys.all });
+    },
+  });
+}
+
+/**
+ * Hook to sign multiple agreements (self-service)
+ */
+export function useSignMyAgreementsBulk() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      agreementIds,
+      data,
+    }: {
+      agreementIds: UUID[];
+      data?: SignAgreementRequest;
+    }) => signMyAgreementsBulk(agreementIds, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: myAgreementKeys.all });
     },
   });
 }

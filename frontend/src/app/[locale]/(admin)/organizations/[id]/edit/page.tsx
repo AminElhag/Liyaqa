@@ -40,7 +40,7 @@ export default function EditOrganizationPage({
         id,
         data: {
           name: {
-            en: data.name.en,
+            en: data.name.en || "",
             ar: data.name.ar || undefined,
           },
           email: data.email,

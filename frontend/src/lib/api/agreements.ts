@@ -130,3 +130,41 @@ export async function getMandatoryAgreements(): Promise<Agreement[]> {
   const response = await getAgreements({ active: true, mandatory: true, size: 100 });
   return response.content;
 }
+
+// ==========================================
+// MEMBER SELF-SERVICE (api/me/agreements)
+// ==========================================
+
+/**
+ * Get my signed agreements (self-service)
+ */
+export async function getMyAgreements(): Promise<MemberAgreement[]> {
+  return api.get("api/me/agreements").json();
+}
+
+/**
+ * Get my agreement status (self-service)
+ */
+export async function getMyAgreementStatus(): Promise<MemberAgreementStatus> {
+  return api.get("api/me/agreements/status").json();
+}
+
+/**
+ * Sign an agreement (self-service)
+ */
+export async function signMyAgreement(
+  agreementId: UUID,
+  data: SignAgreementRequest = {}
+): Promise<MemberAgreement> {
+  return api.post(`api/me/agreements/${agreementId}/sign`, { json: data }).json();
+}
+
+/**
+ * Sign multiple agreements (self-service)
+ */
+export async function signMyAgreementsBulk(
+  agreementIds: UUID[],
+  data: SignAgreementRequest = {}
+): Promise<MemberAgreement[]> {
+  return api.post("api/me/agreements/bulk", { json: { agreementIds, ...data } }).json();
+}

@@ -58,8 +58,8 @@ interface ClientInvoiceRepository {
     // Aggregation queries for dashboard performance
     fun getTotalPaidRevenue(): BigDecimal
     fun getRevenueByDateRange(startDate: LocalDate, endDate: LocalDate): BigDecimal
-    fun getRevenueByMonth(month: Int, year: Int): BigDecimal
-    fun getInvoiceCountByMonth(month: Int, year: Int): Long
+    fun getRevenueByMonth(startOfMonth: LocalDate, startOfNextMonth: LocalDate): BigDecimal
+    fun getInvoiceCountByMonth(startOfMonth: LocalDate, startOfNextMonth: LocalDate): Long
     fun getTotalOutstandingAmount(): BigDecimal
     fun getTotalOverdueAmount(): BigDecimal
     fun getRevenueByOrganization(): Map<UUID, BigDecimal>

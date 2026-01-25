@@ -16,6 +16,7 @@ import com.liyaqa.organization.domain.model.Location
 import com.liyaqa.organization.domain.model.LocationStatus
 import com.liyaqa.organization.domain.ports.LocationRepository
 import com.liyaqa.shared.domain.LocalizedText
+import com.liyaqa.webhook.application.services.WebhookEventPublisher
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -53,6 +54,9 @@ class AttendanceServiceTest {
     @Mock
     private lateinit var locationRepository: LocationRepository
 
+    @Mock
+    private lateinit var webhookPublisher: WebhookEventPublisher
+
     private lateinit var attendanceService: AttendanceService
 
     private lateinit var testMember: Member
@@ -66,7 +70,8 @@ class AttendanceServiceTest {
             attendanceRepository,
             memberRepository,
             subscriptionRepository,
-            locationRepository
+            locationRepository,
+            webhookPublisher
         )
 
         testMember = Member(
