@@ -99,16 +99,16 @@ Complete sales pipeline management for converting prospects into members.
 
 **Core Features:**
 - [ ] Lead capture forms (embeddable, standalone)
-- [ ] Lead pipeline with customizable stages (New > Contacted > Tour Scheduled > Trial > Negotiation > Won/Lost)
+- [x] Lead pipeline with customizable stages (New > Contacted > Tour Scheduled > Trial > Negotiation > Won/Lost)
 - [x] Lead scoring based on engagement (backend + frontend rules management)
 - [x] Lead assignment rules (round-robin, location-based, source-based) (backend + frontend rules management)
 - [ ] Activity logging (calls, emails, meetings, notes)
 - [ ] Follow-up task scheduling with reminders
 - [ ] Lead source tracking (referral, walk-in, social, ads)
 - [ ] Campaign attribution for marketing ROI
-- [ ] Convert lead to member workflow
-- [ ] Sales dashboard with conversion metrics
-- [ ] Lost lead reasons tracking
+- [x] Convert lead to member workflow
+- [x] Sales dashboard with conversion metrics
+- [x] Lost lead reasons tracking
 
 **Technical Requirements:**
 - New Lead entity with full lifecycle
@@ -130,14 +130,14 @@ Complete sales pipeline management for converting prospects into members.
 Automated communication workflows to improve member engagement and retention.
 
 **Core Features:**
-- [ ] Welcome email sequence (Day 1, Day 3, Day 7)
-- [ ] Membership expiry reminders (30 days, 7 days, 1 day)
-- [ ] Win-back campaigns for expired members (7 days, 30 days, 90 days after expiry)
-- [ ] Birthday automated messages
-- [ ] Inactivity alerts (no visit in 14 days, 30 days)
-- [ ] Class reminder notifications (24h, 2h before)
-- [ ] Payment failure follow-ups
-- [ ] Member segmentation by activity, plan, status
+- [x] Welcome email sequence (Day 1, Day 3, Day 7)
+- [x] Membership expiry reminders (30 days, 7 days, 1 day)
+- [x] Win-back campaigns for expired members (7 days, 30 days, 90 days after expiry)
+- [x] Birthday automated messages
+- [x] Inactivity alerts (no visit in 14 days, 30 days)
+- [x] Class reminder notifications (24h, 1h before)
+- [x] Payment failure follow-ups
+- [x] Member segmentation by activity, plan, status
 - [ ] A/B testing for message effectiveness
 - [ ] Campaign analytics (open rates, click rates)
 
@@ -161,17 +161,17 @@ Automated communication workflows to improve member engagement and retention.
 Web-based portal for members to manage their membership independently.
 
 **Core Features:**
-- [ ] Secure member login (magic link or password)
-- [ ] View active membership and benefits
-- [ ] Class booking and cancellation
-- [ ] Booking history and upcoming schedule
-- [ ] PT session booking
-- [ ] Invoice viewing and payment
+- [x] Secure member login (magic link or password)
+- [x] View active membership and benefits
+- [x] Class booking and cancellation
+- [x] Booking history and upcoming schedule
+- [x] PT session booking
+- [x] Invoice viewing and payment
 - [ ] Payment method management
-- [ ] Profile and password update
-- [ ] Freeze request submission
+- [x] Profile and password update
+- [x] Freeze request submission
 - [ ] Document signing (agreements, waivers)
-- [ ] Referral link generation
+- [x] Referral link generation
 
 **Technical Requirements:**
 - Separate Next.js app or route group
@@ -223,13 +223,13 @@ Event-driven webhook infrastructure for third-party integrations.
 Automated referral tracking and reward system.
 
 **Core Features:**
-- [ ] Unique referral links per member
-- [ ] Referral tracking (clicks, signups, conversions)
-- [ ] Configurable reward rules (free days, discount, wallet credit)
-- [ ] Automatic reward distribution
-- [ ] Referral leaderboard
-- [ ] Member referral dashboard
-- [ ] Referral program analytics
+- [x] Unique referral links per member
+- [x] Referral tracking (clicks, signups, conversions)
+- [x] Configurable reward rules (free days, discount, wallet credit)
+- [x] Automatic reward distribution
+- [x] Referral leaderboard
+- [x] Member referral dashboard
+- [x] Referral program analytics
 
 **Success Metrics:**
 - 20% reduction in member acquisition cost
@@ -656,5 +656,5 @@ Q4 2026: Advanced Features
 
 ---
 
-*Last Updated: January 2026*
-*Version: 2.0*
+*Last Updated: January 25, 2026*
+*Version: 2.1*
