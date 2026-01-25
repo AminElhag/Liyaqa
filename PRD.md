@@ -1,0 +1,660 @@
+# Liyaqa Product Requirements Document
+
+## Executive Summary
+
+Liyaqa is a comprehensive Gym & Fitness Club Management SaaS Platform designed specifically for the Saudi Arabian market. This PRD outlines the feature roadmap based on competitive analysis against Perfect Gym and other market leaders, prioritized by business impact and implementation complexity.
+
+---
+
+## Competitive Analysis Summary
+
+### Liyaqa vs Perfect Gym
+
+| Dimension | Liyaqa | Perfect Gym |
+|-----------|--------|-------------|
+| **Target Market** | Saudi Arabia / GCC | Global (52+ countries) |
+| **Pricing** | TBD | EUR 129/month + onboarding |
+| **Tech Stack** | Spring Boot 4/Kotlin + Next.js 15 | Legacy stack |
+| **Architecture** | Modern multi-tenant SaaS | Cloud-based |
+
+### Where Liyaqa Wins (Competitive Advantages)
+
+| Feature | Business Value |
+|---------|----------------|
+| **Saudi Payment Integrations** (STC Pay, SADAD, Tamara, Mada) | 70%+ smartphone wallet penetration |
+| **ZATCA E-Invoicing Compliance** | Legal requirement in Saudi Arabia |
+| **Prayer Time Integration** (Umm Al-Qura calendar) | Cultural compliance, required in many Saudi gyms |
+| **Gender-Based Access Control** | Saudi regulatory requirement |
+| **Hijri Calendar Support** | Saudi official calendar |
+| **Full Arabic/RTL Support** | Native Arabic experience |
+| **WhatsApp Business Integration** | 95%+ WhatsApp usage in Saudi |
+| **Multi-tenant B2B Platform** | Platform business model support |
+
+### Feature Gaps (What Perfect Gym Has That We Need)
+
+| Category | Gap | Impact |
+|----------|-----|--------|
+| **Mobile** | No native member/staff apps | High - Member engagement |
+| **Sales** | No CRM or lead management | High - Sales conversion |
+| **Marketing** | No automation or campaigns | High - Retention |
+| **Analytics** | No ML-powered insights | Medium-High |
+| **Self-Service** | Limited member portal | Medium-High |
+| **Integrations** | No webhooks for partners | Medium |
+| **Hardware** | No turnstile/biometric support | Medium |
+
+---
+
+## Feature Roadmap
+
+### Tier 1: Critical Features (Next 6 Months)
+
+#### 1. Member Mobile App (Kotlin Multiplatform)
+**Priority:** P0 | **Effort:** 3-4 months | **ROI:** 9.5/10
+
+**Description:**
+Native mobile application for gym members to manage their fitness journey on-the-go.
+
+**Core Features:**
+- [x] Class booking with real-time availability
+- [x] QR code for gym check-in
+- [ ] Class schedule view with calendar integration (7-day list view done, full calendar UI pending)
+- [x] Push notifications for bookings, reminders, promotions
+- [x] Payment for memberships and packages
+- [x] View membership status and expiry
+- [x] Profile management
+- [x] Trainer availability and PT booking
+- [x] Attendance history
+- [x] Prayer time display (Umm Al-Qura)
+
+**Bonus Features Implemented:**
+- [x] Invoice management (view, filter, pay)
+- [x] Wallet/balance management with transaction history
+- [x] Dashboard/home screen with member summary
+- [x] Deep link navigation from push notifications
+- [x] Bilingual support (English/Arabic)
+- [x] RTL layout support
+
+**Technical Requirements:**
+- Kotlin Multiplatform (KMP) with Compose Multiplatform for cross-platform (iOS/Android)
+- Shared business logic in Kotlin common module
+- Native UI with Compose Multiplatform (Material 3)
+- Integration with existing REST API via Ktor client
+- FCM/APNs for push notifications
+- Arabic/English with RTL support (Compose handles RTL natively)
+- Offline capability using SQLDelight for local storage
+- Kotlin Coroutines for async operations
+
+**Success Metrics:**
+- 50% member app adoption within 6 months
+- 30% reduction in reception workload
+- 20% increase in class booking rates
+
+---
+
+#### 2. CRM & Lead Management
+**Priority:** P0 | **Effort:** 2-3 months | **ROI:** 9/10
+
+**Description:**
+Complete sales pipeline management for converting prospects into members.
+
+**Core Features:**
+- [ ] Lead capture forms (embeddable, standalone)
+- [ ] Lead pipeline with customizable stages (New > Contacted > Tour Scheduled > Trial > Negotiation > Won/Lost)
+- [ ] Lead scoring based on engagement
+- [ ] Lead assignment rules (round-robin, location-based)
+- [ ] Activity logging (calls, emails, meetings, notes)
+- [ ] Follow-up task scheduling with reminders
+- [ ] Lead source tracking (referral, walk-in, social, ads)
+- [ ] Campaign attribution for marketing ROI
+- [ ] Convert lead to member workflow
+- [ ] Sales dashboard with conversion metrics
+- [ ] Lost lead reasons tracking
+
+**Technical Requirements:**
+- New Lead entity with full lifecycle
+- Integration with existing Member creation
+- Email integration for activity tracking
+- Notification service integration for reminders
+
+**Success Metrics:**
+- 25% improvement in lead-to-member conversion
+- 50% reduction in lead response time
+- Full visibility into sales pipeline
+
+---
+
+#### 3. Marketing Automation (Basic)
+**Priority:** P0 | **Effort:** 2 months | **ROI:** 8.5/10
+
+**Description:**
+Automated communication workflows to improve member engagement and retention.
+
+**Core Features:**
+- [ ] Welcome email sequence (Day 1, Day 3, Day 7)
+- [ ] Membership expiry reminders (30 days, 7 days, 1 day)
+- [ ] Win-back campaigns for expired members (7 days, 30 days, 90 days after expiry)
+- [ ] Birthday automated messages
+- [ ] Inactivity alerts (no visit in 14 days, 30 days)
+- [ ] Class reminder notifications (24h, 2h before)
+- [ ] Payment failure follow-ups
+- [ ] Member segmentation by activity, plan, status
+- [ ] A/B testing for message effectiveness
+- [ ] Campaign analytics (open rates, click rates)
+
+**Technical Requirements:**
+- Workflow engine for triggered campaigns
+- Scheduled job enhancement
+- Template system with variable substitution
+- Multi-channel delivery (Email, SMS, WhatsApp, Push)
+
+**Success Metrics:**
+- 15% improvement in member retention
+- 40% open rate on automated emails
+- Reduced manual outreach by 60%
+
+---
+
+#### 4. Member Self-Service Portal
+**Priority:** P0 | **Effort:** 2 months | **ROI:** 8.5/10
+
+**Description:**
+Web-based portal for members to manage their membership independently.
+
+**Core Features:**
+- [ ] Secure member login (magic link or password)
+- [ ] View active membership and benefits
+- [ ] Class booking and cancellation
+- [ ] Booking history and upcoming schedule
+- [ ] PT session booking
+- [ ] Invoice viewing and payment
+- [ ] Payment method management
+- [ ] Profile and password update
+- [ ] Freeze request submission
+- [ ] Document signing (agreements, waivers)
+- [ ] Referral link generation
+
+**Technical Requirements:**
+- Separate Next.js app or route group
+- Member authentication (not staff auth)
+- Integration with payment gateways
+- Mobile-responsive design
+
+**Success Metrics:**
+- 30% reduction in front desk workload
+- 60% of members using self-service
+- 20% increase in online renewals
+
+---
+
+#### 5. Webhook System
+**Priority:** P0 | **Effort:** 2-3 weeks | **ROI:** 8/10
+
+**Description:**
+Event-driven webhook infrastructure for third-party integrations.
+
+**Core Features:**
+- [ ] Webhook registration endpoint
+- [ ] Event types: member.created, member.updated, subscription.created, subscription.expired, subscription.renewed, payment.completed, payment.failed, attendance.checkin, attendance.checkout, booking.created, booking.cancelled, invoice.created, invoice.paid
+- [ ] Webhook delivery with retry logic (exponential backoff)
+- [ ] Webhook signature verification (HMAC)
+- [ ] Webhook logs and debugging UI
+- [ ] Webhook testing (send test event)
+- [ ] Rate limiting per webhook
+
+**Technical Requirements:**
+- Async event publishing (Spring Events or Kafka)
+- Webhook entity with endpoint, secret, events
+- Delivery queue with retry logic
+- Signature generation for verification
+
+**Success Metrics:**
+- Enable 5+ partner integrations
+- 99.9% webhook delivery rate
+- Partner ecosystem growth
+
+---
+
+### Tier 2: Important Features (6-12 Months)
+
+#### 6. Referral Program Automation
+**Priority:** P1 | **Effort:** 3-4 weeks | **ROI:** 7.5/10
+
+**Description:**
+Automated referral tracking and reward system.
+
+**Core Features:**
+- [ ] Unique referral links per member
+- [ ] Referral tracking (clicks, signups, conversions)
+- [ ] Configurable reward rules (free days, discount, wallet credit)
+- [ ] Automatic reward distribution
+- [ ] Referral leaderboard
+- [ ] Member referral dashboard
+- [ ] Referral program analytics
+
+**Success Metrics:**
+- 20% reduction in member acquisition cost
+- 10% of new members from referrals
+
+---
+
+#### 7. Voucher & Promo Code System
+**Priority:** P1 | **Effort:** 2-3 weeks | **ROI:** 7.5/10
+
+**Description:**
+Flexible promotional code system for marketing campaigns.
+
+**Core Features:**
+- [ ] Create single-use and multi-use codes
+- [ ] Discount types: percentage, fixed amount, free trial
+- [ ] Usage limits (total uses, per member)
+- [ ] Expiration dates
+- [ ] Applicable products/plans restrictions
+- [ ] First-time member only option
+- [ ] Gift card functionality (prepaid value)
+- [ ] Voucher usage tracking and analytics
+
+**Success Metrics:**
+- Marketing campaign flexibility
+- Track promotion ROI
+
+---
+
+#### 8. Enhanced Reporting Suite
+**Priority:** P1 | **Effort:** 1-2 months | **ROI:** 7/10
+
+**Description:**
+Comprehensive reporting and analytics dashboard.
+
+**Additional Reports:**
+- [ ] Churn report (cancelled members, reasons)
+- [ ] Revenue by plan, location, time period
+- [ ] Class utilization and attendance trends
+- [ ] Peak hours analysis
+- [ ] Trainer performance metrics
+- [ ] Payment collection efficiency
+- [ ] Member lifetime value (LTV)
+- [ ] Member acquisition funnel
+- [ ] Retention cohort analysis
+- [ ] Sales team performance
+- [ ] Comparison across locations/clubs
+
+**Dashboard Enhancements:**
+- [ ] Customizable dashboard widgets
+- [ ] Saved report filters
+- [ ] Scheduled report delivery (email)
+- [ ] Export to PDF with branding
+
+**Success Metrics:**
+- 30+ actionable reports
+- Daily usage by management
+
+---
+
+#### 9. Family & Corporate Accounts
+**Priority:** P1 | **Effort:** 1 month | **ROI:** 7/10
+
+**Description:**
+Support for family memberships and corporate B2B accounts.
+
+**Family Features:**
+- [ ] Family group entity linking members
+- [ ] Primary/secondary member designation
+- [ ] Family discount application
+- [ ] Shared benefits (guest passes)
+- [ ] Family billing (single invoice)
+
+**Corporate Features:**
+- [ ] Corporate account entity
+- [ ] Bulk member import for corporate
+- [ ] Corporate billing (invoice to company)
+- [ ] Corporate discounts
+- [ ] Employee verification workflow
+- [ ] Corporate usage reports
+
+**Success Metrics:**
+- Corporate sales channel enabled
+- Family membership uptake
+
+---
+
+#### 10. Zone & Facility Booking
+**Priority:** P1 | **Effort:** 1 month | **ROI:** 6.5/10
+
+**Description:**
+Booking system for specific areas, equipment, and facilities.
+
+**Core Features:**
+- [ ] Zone/facility definitions (tennis court, swimming pool, sauna, studio)
+- [ ] Time slot configuration
+- [ ] Capacity per zone
+- [ ] Zone booking by members
+- [ ] Zone booking calendar view
+- [ ] Membership-based access restrictions
+- [ ] Zone booking fees
+- [ ] Maintenance blocking
+
+**Success Metrics:**
+- Revenue from facility rentals
+- Better resource utilization
+
+---
+
+#### 11. Loyalty Points System
+**Priority:** P1 | **Effort:** 1 month | **ROI:** 6.5/10
+
+**Description:**
+Points-based rewards program for member engagement.
+
+**Core Features:**
+- [ ] Points earning rules (check-in, class attendance, purchase, referral)
+- [ ] Points balance per member
+- [ ] Points history and transactions
+- [ ] Rewards catalog (free class, discount, merchandise)
+- [ ] Points redemption workflow
+- [ ] Points expiration policy
+- [ ] Tier system (Bronze, Silver, Gold, Platinum)
+- [ ] Tier-based benefits
+
+**Success Metrics:**
+- 10% retention improvement
+- Higher engagement frequency
+
+---
+
+#### 12. Staff Mobile App
+**Priority:** P1 | **Effort:** 2 months | **ROI:** 6.5/10
+
+**Description:**
+Mobile app for staff and trainers to manage operations.
+
+**Core Features:**
+- [ ] Staff check-in for attendance
+- [ ] View assigned classes and PT sessions
+- [ ] Mark class attendance
+- [ ] View member profiles and notes
+- [ ] Add member notes
+- [ ] Quick member check-in
+- [ ] Trainer schedule management
+- [ ] Task notifications
+- [ ] Push notifications for assignments
+
+**Technical Requirements:**
+- Kotlin Multiplatform with Compose Multiplatform (same stack as member app)
+- Shared modules with member app where applicable
+- Staff-specific UI components
+
+**Success Metrics:**
+- Trainer adoption
+- Operational efficiency
+
+---
+
+### Tier 3: Nice to Have (12-24 Months)
+
+#### 13. Churn Prediction (Machine Learning)
+**Priority:** P2 | **Effort:** 2-3 months | **ROI:** 6/10
+
+**Description:**
+ML-powered identification of at-risk members.
+
+**Core Features:**
+- [ ] Churn risk scoring (0-100)
+- [ ] At-risk member list with reasons
+- [ ] Intervention recommendations
+- [ ] Automated campaigns for at-risk segments
+- [ ] Model training on historical data
+- [ ] Prediction accuracy monitoring
+
+**Technical Requirements:**
+- Data pipeline for ML features
+- Model training infrastructure (Python/scikit-learn)
+- Integration with automation engine
+
+---
+
+#### 14. Access Control Hardware Integration
+**Priority:** P2 | **Effort:** 2-3 months | **ROI:** 5.5/10
+
+**Description:**
+Integration with physical access control hardware.
+
+**Core Features:**
+- [ ] Turnstile/speed gate API integration
+- [ ] RFID card management
+- [ ] Biometric enrollment (fingerprint)
+- [ ] Access denied reason logging
+- [ ] Time-based access rules
+- [ ] Zone-based access rules
+- [ ] Real-time occupancy tracking
+- [ ] Partner hardware certification
+
+**Hardware Partners to Target:**
+- Gunnebo
+- Boon Edam
+- Suprema (biometrics)
+
+---
+
+#### 15. Self-Service Kiosk Mode
+**Priority:** P2 | **Effort:** 1 month | **ROI:** 5.5/10
+
+**Description:**
+Kiosk interface for in-gym self-service.
+
+**Core Features:**
+- [ ] Touch-friendly UI
+- [ ] Member check-in via card/QR/phone
+- [ ] Class booking
+- [ ] Membership purchase
+- [ ] Payment processing
+- [ ] E-signature for agreements
+- [ ] Receipt printing
+- [ ] Idle timeout and reset
+
+---
+
+#### 16. Sales Forecasting
+**Priority:** P2 | **Effort:** 1-2 months | **ROI:** 5/10
+
+**Description:**
+AI-powered revenue and membership predictions.
+
+**Core Features:**
+- [ ] Revenue forecast (30/60/90 days)
+- [ ] Membership count predictions
+- [ ] Seasonality analysis
+- [ ] What-if scenario modeling
+- [ ] Budget vs actual tracking
+
+---
+
+#### 17. Equipment Integration
+**Priority:** P2 | **Effort:** 2-3 months | **ROI:** 4/10
+
+**Description:**
+Integration with gym equipment for workout tracking.
+
+**Target Equipment:**
+- TechnoGym
+- Precor
+- Life Fitness
+- Milon
+
+**Core Features:**
+- [ ] Member workout sync
+- [ ] Cardio session tracking
+- [ ] Strength training logs
+- [ ] Equipment usage analytics
+
+---
+
+#### 18. Wearable Integration
+**Priority:** P2 | **Effort:** 1-2 months | **ROI:** 4/10
+
+**Description:**
+Sync with popular fitness wearables.
+
+**Target Devices:**
+- Fitbit
+- Garmin
+- Polar
+- Apple Watch (HealthKit)
+- Google Fit
+
+**Core Features:**
+- [ ] OAuth connection flow
+- [ ] Activity data sync
+- [ ] Step count and calories
+- [ ] Heart rate data
+- [ ] Sleep tracking
+- [ ] Progress dashboard in app
+
+---
+
+#### 19. White-Label Mobile Apps
+**Priority:** P2 | **Effort:** 3-4 months | **ROI:** 4/10
+
+**Description:**
+Customizable branded mobile apps for enterprise clients.
+
+**Core Features:**
+- [ ] White-label app builder
+- [ ] Custom logo and colors
+- [ ] Custom app name
+- [ ] App store publication support
+- [ ] Per-client customization
+- [ ] Feature toggles per client
+
+**Technical Requirements:**
+- Build on Kotlin Multiplatform member app codebase
+- Flavor/build variant system for white-labeling
+- Theming via Compose Material 3 dynamic colors
+
+---
+
+#### 20. Security Certifications
+**Priority:** P2 | **Effort:** 3-6 months | **ROI:** 3.5/10
+
+**Description:**
+Enterprise security compliance certifications.
+
+**Certifications:**
+- [ ] ISO 27001 (Information Security)
+- [ ] SOC 2 Type II
+- [ ] PCI DSS (Payment Card Industry)
+- [ ] PDPL Compliance (Saudi Privacy Law)
+
+---
+
+## Implementation Roadmap
+
+```
+Q1 2026: Foundation & Quick Wins
++--------------------------------------------------+
+| Week 1-2:  Webhook System                        |
+| Week 3-5:  Referral Program Automation           |
+| Week 6-7:  Voucher & Promo Code System           |
+| Week 8-12: Member Self-Service Portal MVP        |
++--------------------------------------------------+
+
+Q2 2026: Mobile & Engagement
++--------------------------------------------------+
+| Week 1-12: Member Mobile App (Kotlin Multiplatform)|
+|            - iOS + Android via Compose Multiplatform|
+|            - Shared Kotlin business logic          |
+|            - Class booking, QR check-in            |
+|            - Push notifications                    |
+| Week 8-12: Marketing Automation (Basic)            |
+|            - Welcome sequences                     |
+|            - Expiry reminders                      |
++--------------------------------------------------+
+
+Q3 2026: Sales & Analytics
++--------------------------------------------------+
+| Week 1-8:  CRM & Lead Management                 |
+|            - Lead pipeline                       |
+|            - Lead scoring                        |
+|            - Activity tracking                   |
+| Week 4-10: Enhanced Reporting Suite              |
+|            - 30+ reports                         |
+|            - Dashboard customization             |
+| Week 8-12: Family & Corporate Accounts           |
++--------------------------------------------------+
+
+Q4 2026: Advanced Features
++--------------------------------------------------+
+| Week 1-4:  Zone & Facility Booking               |
+| Week 4-8:  Loyalty Points System                 |
+| Week 8-16: Staff Mobile App                      |
++--------------------------------------------------+
+
+2027: Intelligence & Hardware
++--------------------------------------------------+
+| Q1: Churn Prediction (ML)                        |
+| Q2: Access Control Integration                   |
+| Q3: Kiosk Mode, Equipment Integration            |
+| Q4: Wearables, White-Label Apps                  |
++--------------------------------------------------+
+```
+
+---
+
+## Completed Items (Archive)
+
+### Test Suite Fixes (January 2026)
+
+- [x] Fix TestDataFactory.kt: Update Club and MembershipPlan creation to use LocalizedText
+- [x] Fix MembershipPlan constructor in TestDataFactory.kt
+- [x] Fix AuthServiceTest.kt: Add mock for permissionService
+- [x] Fix MemberServiceTest.kt: Add mocks for memberHealthService, agreementService, userRepository, passwordEncoder, permissionService
+- [x] Fix SubscriptionServiceTest.kt: Fix parameter order and add missing mocks
+- [x] Fix InvoiceServiceTest.kt: Add mock for clubRepository
+- [x] Fix PayTabsPaymentServiceTest.kt: Add mock for orderService
+- [x] Fix ClientSubscriptionServiceTest.kt: Add mock for organizationRepository
+- [x] Fix ScheduledJobsTest.kt: Add mock for membershipPlanService
+- [x] Fix AttendanceServiceTest.kt: Update MembershipPlan creation
+- [x] Fix CheckInWorkflowIntegrationTest.kt: Update Club and MembershipPlan creation
+- [x] Fix InvoicePdfIntegrationTest.kt: Update MembershipPlan creation
+- [x] Fix SubscriptionFreezeIntegrationTest.kt: Update Club and MembershipPlan creation
+- [x] Fix MemberControllerIntegrationTest.kt: Update all Club creations
+- [x] Fix MemberRepositoryIntegrationTest.kt: Update Club creation
+- [x] Fix SubscriptionRepositoryIntegrationTest.kt: Update Club and MembershipPlan creation
+- [x] Fix BookingWorkflowIntegrationTest.kt: Update Club and MembershipPlan creation
+- [x] Fix BookingServiceTest.kt: Update MembershipPlan creation
+- [x] Fix DashboardSummaryIntegrationTest.kt: Update MembershipPlan creation
+- [x] Fix ExportServiceTest.kt: Update MembershipPlan creation
+- [x] Create ESLint configuration for frontend
+- [x] Add frontend unit test script (Vitest)
+- [x] Run ./gradlew test - All backend tests pass
+- [x] Run ./gradlew build - Full backend build succeeds
+
+---
+
+## Appendix: Competitive Landscape
+
+### Primary Competitor: Perfect Gym
+- **Strength:** Enterprise features, ML analytics, mobile apps, global presence
+- **Weakness:** Expensive, no Saudi-specific features, legacy tech
+- **Pricing:** EUR 129/month + onboarding
+
+### Other Competitors
+| System | Strength | Weakness |
+|--------|----------|----------|
+| Mindbody | Wellness/spa focus, marketplace | Expensive, complex |
+| Glofox | Modern UI, boutique focus | Limited enterprise |
+| GymMaster | Affordable, access control | Dated UI, limited automation |
+| ClubReady | Enterprise, franchise | US-focused, expensive |
+
+### Liyaqa Positioning
+**"The Saudi Arabia gym management system built for Saudi gyms"**
+- Full ZATCA compliance (e-invoicing)
+- Native Saudi payment integrations (STC Pay, SADAD, Tamara)
+- Prayer time integration
+- Gender-based access control
+- Arabic-first with RTL support
+- Modern SaaS architecture
+
+---
+
+*Last Updated: January 2026*
+*Version: 2.0*
