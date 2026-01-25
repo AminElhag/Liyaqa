@@ -57,7 +57,7 @@ Native mobile application for gym members to manage their fitness journey on-the
 **Core Features:**
 - [x] Class booking with real-time availability
 - [x] QR code for gym check-in
-- [ ] Class schedule view with calendar integration (7-day list view done, full calendar UI pending)
+- [x] Class schedule view with calendar integration
 - [x] Push notifications for bookings, reminders, promotions
 - [x] Payment for memberships and packages
 - [x] View membership status and expiry
