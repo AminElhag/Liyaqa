@@ -32,6 +32,9 @@ import {
   Building,
   Briefcase,
   UsersRound,
+  UserPlus,
+  Target,
+  Shuffle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -71,6 +74,16 @@ const adminNavGroups: NavGroupConfig[] = [
       { href: "/members", labelKey: "members", icon: Users },
       { href: "/subscriptions", labelKey: "subscriptions", icon: CreditCard },
       { href: "/freeze-packages", labelKey: "freezePackages", icon: Snowflake },
+    ],
+  },
+  {
+    id: "crm",
+    labelKey: "navGroups.crm",
+    icon: UserPlus,
+    items: [
+      { href: "/leads", labelKey: "leads", icon: UserPlus },
+      { href: "/settings/scoring-rules", labelKey: "scoringRules", icon: Target },
+      { href: "/settings/assignment-rules", labelKey: "assignmentRules", icon: Shuffle },
     ],
   },
   {

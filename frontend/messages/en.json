@@ -73,11 +73,15 @@
     "shop": "Shop",
     "pos": "Point of Sale",
     "cart": "Cart",
-    "myOrders": "My Orders"
+    "myOrders": "My Orders",
+    "leads": "Leads",
+    "scoringRules": "Scoring Rules",
+    "assignmentRules": "Assignment Rules"
   },
   "navGroups": {
     "overview": "Overview",
     "members": "Members",
+    "crm": "CRM",
     "training": "Classes & Training",
     "shop": "Shop & Sales",
     "team": "Team",

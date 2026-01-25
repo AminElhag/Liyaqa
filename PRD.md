@@ -100,8 +100,8 @@ Complete sales pipeline management for converting prospects into members.
 **Core Features:**
 - [ ] Lead capture forms (embeddable, standalone)
 - [ ] Lead pipeline with customizable stages (New > Contacted > Tour Scheduled > Trial > Negotiation > Won/Lost)
-- [ ] Lead scoring based on engagement
-- [ ] Lead assignment rules (round-robin, location-based)
+- [x] Lead scoring based on engagement (backend + frontend rules management)
+- [x] Lead assignment rules (round-robin, location-based, source-based) (backend + frontend rules management)
 - [ ] Activity logging (calls, emails, meetings, notes)
 - [ ] Follow-up task scheduling with reminders
 - [ ] Lead source tracking (referral, walk-in, social, ads)
