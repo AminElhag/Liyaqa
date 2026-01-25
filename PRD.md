@@ -193,13 +193,13 @@ Web-based portal for members to manage their membership independently.
 Event-driven webhook infrastructure for third-party integrations.
 
 **Core Features:**
-- [ ] Webhook registration endpoint
-- [ ] Event types: member.created, member.updated, subscription.created, subscription.expired, subscription.renewed, payment.completed, payment.failed, attendance.checkin, attendance.checkout, booking.created, booking.cancelled, invoice.created, invoice.paid
-- [ ] Webhook delivery with retry logic (exponential backoff)
-- [ ] Webhook signature verification (HMAC)
-- [ ] Webhook logs and debugging UI
-- [ ] Webhook testing (send test event)
-- [ ] Rate limiting per webhook
+- [x] Webhook registration endpoint
+- [x] Event types: member.created, member.updated, subscription.created, subscription.expired, subscription.renewed, payment.completed, payment.failed, attendance.checkin, attendance.checkout, booking.created, booking.cancelled, invoice.created, invoice.paid
+- [x] Webhook delivery with retry logic (exponential backoff)
+- [x] Webhook signature verification (HMAC)
+- [x] Webhook logs and debugging UI
+- [x] Webhook testing (send test event)
+- [x] Rate limiting per webhook
 
 **Technical Requirements:**
 - Async event publishing (Spring Events or Kafka)

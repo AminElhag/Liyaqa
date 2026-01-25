@@ -51,6 +51,9 @@ class NotificationServiceTest {
     @Mock
     private lateinit var smsService: SmsService
 
+    @Mock
+    private lateinit var pushNotificationService: PushNotificationService
+
     private lateinit var notificationService: NotificationService
 
     private val testMemberId = UUID.randomUUID()
@@ -63,7 +66,8 @@ class NotificationServiceTest {
             notificationRepository,
             preferenceRepository,
             emailService,
-            smsService
+            smsService,
+            pushNotificationService
         )
 
         // Default: preferences enabled
