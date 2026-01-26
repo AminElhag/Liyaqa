@@ -46,4 +46,17 @@ interface SubscriptionRepository {
         expiringBefore: LocalDate?,
         pageable: Pageable
     ): Page<Subscription>
+
+    /**
+     * Count churned subscriptions (cancelled or expired) between two dates.
+     * Used for churn analysis reports.
+     */
+    fun countChurnedBetween(startDate: LocalDate, endDate: LocalDate): Long
+
+    /**
+     * Get churn statistics grouped by plan.
+     * Returns a list of maps with planId, planName, totalMembers, churnedMembers.
+     * Used for churn analysis reports.
+     */
+    fun getChurnByPlan(startDate: LocalDate, endDate: LocalDate): List<Map<String, Any>>
 }

@@ -10,6 +10,7 @@ import com.liyaqa.member.data.remote.api.PrayerTimeApi
 import com.liyaqa.member.data.remote.api.QrApi
 import com.liyaqa.member.data.remote.api.TokenProvider
 import com.liyaqa.member.data.remote.api.TrainerApi
+import com.liyaqa.member.data.remote.api.WearableApi
 import com.liyaqa.member.data.repository.AttendanceRepositoryImpl
 import com.liyaqa.member.data.repository.AuthRepositoryImpl
 import com.liyaqa.member.data.repository.BookingRepositoryImpl
@@ -20,6 +21,7 @@ import com.liyaqa.member.data.repository.NotificationRepositoryImpl
 import com.liyaqa.member.data.repository.PrayerTimeRepositoryImpl
 import com.liyaqa.member.data.repository.TrainerRepositoryImpl
 import com.liyaqa.member.data.repository.WalletRepositoryImpl
+import com.liyaqa.member.data.repository.WearableRepositoryImpl
 import com.liyaqa.member.domain.repository.AttendanceRepository
 import com.liyaqa.member.domain.repository.AuthRepository
 import com.liyaqa.member.domain.repository.BookingRepository
@@ -30,6 +32,7 @@ import com.liyaqa.member.domain.repository.NotificationRepository
 import com.liyaqa.member.domain.repository.PrayerTimeRepository
 import com.liyaqa.member.domain.repository.TrainerRepository
 import com.liyaqa.member.domain.repository.WalletRepository
+import com.liyaqa.member.domain.repository.WearableRepository
 import com.liyaqa.member.presentation.screens.home.HomeScreenModel
 import com.liyaqa.member.presentation.screens.login.LoginScreenModel
 import com.liyaqa.member.presentation.screens.profile.ProfileScreenModel
@@ -48,6 +51,8 @@ import com.liyaqa.member.presentation.screens.trainers.TrainerDetailScreenModel
 import com.liyaqa.member.presentation.screens.trainers.PTBookingScreenModel
 import com.liyaqa.member.presentation.screens.attendance.AttendanceScreenModel
 import com.liyaqa.member.presentation.screens.attendance.AttendanceStatsScreenModel
+import com.liyaqa.member.presentation.screens.wearables.WearablesScreenModel
+import com.liyaqa.member.presentation.screens.wearables.ActivityDashboardScreenModel
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
@@ -78,6 +83,7 @@ val commonModule = module {
     singleOf(::PaymentApi)
     singleOf(::TrainerApi)
     singleOf(::PrayerTimeApi)
+    singleOf(::WearableApi)
 }
 
 val repositoryModule = module {
@@ -91,6 +97,7 @@ val repositoryModule = module {
     singleOf(::AttendanceRepositoryImpl) bind AttendanceRepository::class
     singleOf(::PrayerTimeRepositoryImpl) bind PrayerTimeRepository::class
     singleOf(::NotificationRepositoryImpl) bind NotificationRepository::class
+    singleOf(::WearableRepositoryImpl) bind WearableRepository::class
 }
 
 val screenModelModule = module {
@@ -112,6 +119,8 @@ val screenModelModule = module {
     factoryOf(::PTBookingScreenModel)
     factoryOf(::AttendanceScreenModel)
     factoryOf(::AttendanceStatsScreenModel)
+    factoryOf(::WearablesScreenModel)
+    factoryOf(::ActivityDashboardScreenModel)
 }
 
 /**

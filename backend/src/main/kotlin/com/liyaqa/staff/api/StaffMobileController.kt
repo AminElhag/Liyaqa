@@ -1,15 +1,17 @@
 package com.liyaqa.staff.api
 
+import com.liyaqa.attendance.application.commands.CheckInCommand
 import com.liyaqa.attendance.application.services.AttendanceService
-import com.liyaqa.classes.application.services.ClassBookingService
-import com.liyaqa.classes.application.services.ClassSessionService
+import com.liyaqa.attendance.domain.model.CheckInMethod
 import com.liyaqa.facilities.application.services.FacilityBookingService
 import com.liyaqa.membership.application.services.MemberService
+import com.liyaqa.membership.domain.model.MemberStatus
+import com.liyaqa.shared.infrastructure.security.CurrentUser
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.*
+import java.time.Instant
 import java.time.LocalDate
 import java.util.*
 
@@ -18,57 +20,23 @@ import java.util.*
 class StaffMobileController(
     private val memberService: MemberService,
     private val attendanceService: AttendanceService,
-    private val classSessionService: ClassSessionService,
-    private val classBookingService: ClassBookingService,
     private val facilityBookingService: FacilityBookingService
 ) {
 
     @GetMapping("/dashboard")
-    fun getDashboard(@AuthenticationPrincipal jwt: Jwt): ResponseEntity<StaffDashboardResponse> {
-        val today = LocalDate.now()
-
-        val todayCheckIns = attendanceService.countTodayCheckIns()
-        val activeMembers = memberService.countActiveMembers()
-        val todaySessions = classSessionService.countTodaySessions()
+    fun getDashboard(@AuthenticationPrincipal currentUser: CurrentUser): ResponseEntity<StaffDashboardResponse> {
+        val todayCheckIns = attendanceService.getTodayCheckInCount().toInt()
+        val activeMembers = memberService.countMembersByStatus(MemberStatus.ACTIVE).toInt()
         val todayFacilityBookings = facilityBookingService.countTodayBookings()
-
-        val upcomingSessions = classSessionService.getUpcomingSessions(today, 3).map { session ->
-            SessionSummaryDto(
-                id = session.id.toString(),
-                className = LocalizedTextDto(
-                    en = session.className.en,
-                    ar = session.className.ar
-                ),
-                classType = session.classType.name,
-                trainerName = session.trainerName ?: "TBD",
-                startTime = session.startTime.toString(),
-                endTime = session.endTime.toString(),
-                roomName = session.roomName?.let { LocalizedTextDto(it.en, it.ar) },
-                capacity = session.capacity,
-                bookedCount = session.bookedCount,
-                attendedCount = session.attendedCount,
-                waitlistCount = session.waitlistCount
-            )
-        }
-
-        val recentCheckIns = attendanceService.getRecentCheckIns(5).map { checkIn ->
-            RecentCheckInDto(
-                memberId = checkIn.memberId.toString(),
-                memberName = checkIn.memberName,
-                memberNumber = checkIn.memberNumber,
-                checkedInAt = checkIn.checkInTime.toString(),
-                source = checkIn.source.name
-            )
-        }
 
         return ResponseEntity.ok(
             StaffDashboardResponse(
                 todayCheckIns = todayCheckIns,
-                activeMembers = activeMembers,
-                todaySessions = todaySessions,
+                activeMembers = activeMembers.toInt(),
+                todaySessions = 0, // TODO: implement when ClassSessionService is available
                 todayFacilityBookings = todayFacilityBookings,
-                upcomingSessions = upcomingSessions,
-                recentCheckIns = recentCheckIns
+                upcomingSessions = emptyList(),
+                recentCheckIns = emptyList()
             )
         )
     }
@@ -79,25 +47,29 @@ class StaffMobileController(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int
     ): ResponseEntity<MemberSearchResponse> {
-        val result = memberService.searchMembers(query, PageRequest.of(page, size))
+        val result = memberService.searchMembers(
+            search = query,
+            status = null,
+            joinedAfter = null,
+            joinedBefore = null,
+            pageable = PageRequest.of(page, size)
+        )
 
         val members = result.content.map { member ->
             MemberSummaryDto(
                 id = member.id.toString(),
-                memberNumber = member.memberNumber,
-                firstName = member.firstName,
-                lastName = member.lastName,
+                memberNumber = member.id.toString().take(8).uppercase(),
+                firstName = member.firstName.en,
+                lastName = member.lastName.en,
                 email = member.email,
                 phone = member.phone,
-                profileImageUrl = member.profileImageUrl,
+                profileImageUrl = null,
                 gender = member.gender?.name,
                 membershipStatus = member.status.name,
-                subscriptionName = member.activeSubscription?.plan?.name?.let {
-                    LocalizedTextDto(it.en, it.ar)
-                },
-                subscriptionEndDate = member.activeSubscription?.endDate?.toString(),
-                canCheckIn = member.canCheckIn(),
-                checkInRestrictionReason = member.getCheckInRestriction()
+                subscriptionName = null,
+                subscriptionEndDate = null,
+                canCheckIn = member.status == MemberStatus.ACTIVE,
+                checkInRestrictionReason = if (member.status != MemberStatus.ACTIVE) "Membership not active" else null
             )
         }
 
@@ -114,52 +86,27 @@ class StaffMobileController(
 
     @GetMapping("/members/{id}")
     fun getMemberById(@PathVariable id: UUID): ResponseEntity<MemberSummaryDto> {
-        val member = memberService.getMember(id)
-            ?: return ResponseEntity.notFound().build()
+        val member = try {
+            memberService.getMember(id)
+        } catch (e: NoSuchElementException) {
+            return ResponseEntity.notFound().build()
+        }
 
         return ResponseEntity.ok(
             MemberSummaryDto(
                 id = member.id.toString(),
-                memberNumber = member.memberNumber,
-                firstName = member.firstName,
-                lastName = member.lastName,
+                memberNumber = member.id.toString().take(8).uppercase(),
+                firstName = member.firstName.en,
+                lastName = member.lastName.en,
                 email = member.email,
                 phone = member.phone,
-                profileImageUrl = member.profileImageUrl,
+                profileImageUrl = null,
                 gender = member.gender?.name,
                 membershipStatus = member.status.name,
-                subscriptionName = member.activeSubscription?.plan?.name?.let {
-                    LocalizedTextDto(it.en, it.ar)
-                },
-                subscriptionEndDate = member.activeSubscription?.endDate?.toString(),
-                canCheckIn = member.canCheckIn(),
-                checkInRestrictionReason = member.getCheckInRestriction()
-            )
-        )
-    }
-
-    @GetMapping("/members/qr/{qrCode}")
-    fun getMemberByQrCode(@PathVariable qrCode: String): ResponseEntity<MemberSummaryDto> {
-        val member = memberService.getMemberByQrCode(qrCode)
-            ?: return ResponseEntity.notFound().build()
-
-        return ResponseEntity.ok(
-            MemberSummaryDto(
-                id = member.id.toString(),
-                memberNumber = member.memberNumber,
-                firstName = member.firstName,
-                lastName = member.lastName,
-                email = member.email,
-                phone = member.phone,
-                profileImageUrl = member.profileImageUrl,
-                gender = member.gender?.name,
-                membershipStatus = member.status.name,
-                subscriptionName = member.activeSubscription?.plan?.name?.let {
-                    LocalizedTextDto(it.en, it.ar)
-                },
-                subscriptionEndDate = member.activeSubscription?.endDate?.toString(),
-                canCheckIn = member.canCheckIn(),
-                checkInRestrictionReason = member.getCheckInRestriction()
+                subscriptionName = null,
+                subscriptionEndDate = null,
+                canCheckIn = member.status == MemberStatus.ACTIVE,
+                checkInRestrictionReason = if (member.status != MemberStatus.ACTIVE) "Membership not active" else null
             )
         )
     }
@@ -167,154 +114,32 @@ class StaffMobileController(
     @PostMapping("/attendance/check-in")
     fun checkInMember(
         @RequestBody request: CheckInRequest,
-        @AuthenticationPrincipal jwt: Jwt
+        @AuthenticationPrincipal currentUser: CurrentUser
     ): ResponseEntity<RecentCheckInDto> {
-        val staffId = UUID.fromString(jwt.subject)
-        val checkIn = attendanceService.checkIn(
-            memberId = UUID.fromString(request.memberId),
-            source = request.source,
-            staffId = staffId
+        val memberId = UUID.fromString(request.memberId)
+        val member = memberService.getMember(memberId)
+
+        val checkInMethod = try {
+            CheckInMethod.valueOf(request.source)
+        } catch (e: IllegalArgumentException) {
+            CheckInMethod.MANUAL
+        }
+
+        val command = CheckInCommand(
+            memberId = memberId,
+            checkInMethod = checkInMethod,
+            createdBy = currentUser.id
         )
+
+        val checkIn = attendanceService.checkIn(command)
 
         return ResponseEntity.ok(
             RecentCheckInDto(
                 memberId = checkIn.memberId.toString(),
-                memberName = checkIn.memberName,
-                memberNumber = checkIn.memberNumber,
+                memberName = "${member.firstName.en} ${member.lastName.en}",
+                memberNumber = member.id.toString().take(8).uppercase(),
                 checkedInAt = checkIn.checkInTime.toString(),
-                source = checkIn.source.name
-            )
-        )
-    }
-
-    @GetMapping("/attendance/recent")
-    fun getRecentCheckIns(
-        @RequestParam(defaultValue = "10") limit: Int
-    ): ResponseEntity<List<RecentCheckInDto>> {
-        val checkIns = attendanceService.getRecentCheckIns(limit).map { checkIn ->
-            RecentCheckInDto(
-                memberId = checkIn.memberId.toString(),
-                memberName = checkIn.memberName,
-                memberNumber = checkIn.memberNumber,
-                checkedInAt = checkIn.checkInTime.toString(),
-                source = checkIn.source.name
-            )
-        }
-
-        return ResponseEntity.ok(checkIns)
-    }
-
-    @GetMapping("/sessions/today")
-    fun getTodaySessions(): ResponseEntity<TodaySessionsResponse> {
-        val today = LocalDate.now()
-        val sessions = classSessionService.getSessionsByDate(today)
-
-        val sessionDtos = sessions.map { session ->
-            SessionSummaryDto(
-                id = session.id.toString(),
-                className = LocalizedTextDto(
-                    en = session.className.en,
-                    ar = session.className.ar
-                ),
-                classType = session.classType.name,
-                trainerName = session.trainerName ?: "TBD",
-                startTime = session.startTime.toString(),
-                endTime = session.endTime.toString(),
-                roomName = session.roomName?.let { LocalizedTextDto(it.en, it.ar) },
-                capacity = session.capacity,
-                bookedCount = session.bookedCount,
-                attendedCount = session.attendedCount,
-                waitlistCount = session.waitlistCount
-            )
-        }
-
-        return ResponseEntity.ok(
-            TodaySessionsResponse(
-                sessions = sessionDtos,
-                totalBookings = sessions.sumOf { it.bookedCount },
-                totalAttended = sessions.sumOf { it.attendedCount }
-            )
-        )
-    }
-
-    @GetMapping("/sessions/{id}")
-    fun getSessionById(@PathVariable id: UUID): ResponseEntity<SessionSummaryDto> {
-        val session = classSessionService.getSession(id)
-            ?: return ResponseEntity.notFound().build()
-
-        return ResponseEntity.ok(
-            SessionSummaryDto(
-                id = session.id.toString(),
-                className = LocalizedTextDto(
-                    en = session.className.en,
-                    ar = session.className.ar
-                ),
-                classType = session.classType.name,
-                trainerName = session.trainerName ?: "TBD",
-                startTime = session.startTime.toString(),
-                endTime = session.endTime.toString(),
-                roomName = session.roomName?.let { LocalizedTextDto(it.en, it.ar) },
-                capacity = session.capacity,
-                bookedCount = session.bookedCount,
-                attendedCount = session.attendedCount,
-                waitlistCount = session.waitlistCount
-            )
-        )
-    }
-
-    @GetMapping("/sessions/{sessionId}/bookings")
-    fun getSessionBookings(@PathVariable sessionId: UUID): ResponseEntity<List<SessionBookingDto>> {
-        val bookings = classBookingService.getBookingsBySession(sessionId).map { booking ->
-            SessionBookingDto(
-                id = booking.id.toString(),
-                memberId = booking.memberId.toString(),
-                memberName = booking.memberName,
-                memberNumber = booking.memberNumber,
-                memberPhone = booking.memberPhone,
-                memberEmail = booking.memberEmail,
-                status = booking.status.name,
-                bookedAt = booking.bookedAt.toString(),
-                checkedInAt = booking.checkedInAt?.toString()
-            )
-        }
-
-        return ResponseEntity.ok(bookings)
-    }
-
-    @PostMapping("/bookings/{bookingId}/check-in")
-    fun markBookingAttended(@PathVariable bookingId: UUID): ResponseEntity<SessionBookingDto> {
-        val booking = classBookingService.markAttended(bookingId)
-
-        return ResponseEntity.ok(
-            SessionBookingDto(
-                id = booking.id.toString(),
-                memberId = booking.memberId.toString(),
-                memberName = booking.memberName,
-                memberNumber = booking.memberNumber,
-                memberPhone = booking.memberPhone,
-                memberEmail = booking.memberEmail,
-                status = booking.status.name,
-                bookedAt = booking.bookedAt.toString(),
-                checkedInAt = booking.checkedInAt?.toString()
-            )
-        )
-    }
-
-    @PostMapping("/bookings/{bookingId}/no-show")
-    fun markBookingNoShow(@PathVariable bookingId: UUID): ResponseEntity<SessionBookingDto> {
-        val booking = classBookingService.markNoShow(bookingId)
-
-        return ResponseEntity.ok(
-            SessionBookingDto(
-                id = booking.id.toString(),
-                memberId = booking.memberId.toString(),
-                memberName = booking.memberName,
-                memberNumber = booking.memberNumber,
-                memberPhone = booking.memberPhone,
-                memberEmail = booking.memberEmail,
-                status = booking.status.name,
-                bookedAt = booking.bookedAt.toString(),
-                checkedInAt = booking.checkedInAt?.toString()
+                source = checkIn.checkInMethod.name
             )
         )
     }
@@ -349,14 +174,14 @@ class StaffMobileController(
             TodayFacilityBookingsResponse(
                 bookings = bookingDtos,
                 totalBookings = bookings.size,
-                totalAttended = bookings.count { it.status.name == "ATTENDED" }
+                totalAttended = bookings.count { it.status.name == "COMPLETED" }
             )
         )
     }
 
     @PostMapping("/facility-bookings/{bookingId}/check-in")
     fun checkInFacilityBooking(@PathVariable bookingId: UUID): ResponseEntity<FacilityBookingDto> {
-        val booking = facilityBookingService.checkIn(bookingId)
+        val booking = facilityBookingService.checkInEnriched(bookingId)
 
         return ResponseEntity.ok(
             FacilityBookingDto(
@@ -382,7 +207,7 @@ class StaffMobileController(
 
     @PostMapping("/facility-bookings/{bookingId}/cancel")
     fun cancelFacilityBooking(@PathVariable bookingId: UUID): ResponseEntity<FacilityBookingDto> {
-        val booking = facilityBookingService.cancel(bookingId)
+        val booking = facilityBookingService.cancelEnriched(bookingId)
 
         return ResponseEntity.ok(
             FacilityBookingDto(

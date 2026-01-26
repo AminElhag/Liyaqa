@@ -4,7 +4,7 @@ import com.liyaqa.loyalty.application.commands.*
 import com.liyaqa.loyalty.domain.model.*
 import com.liyaqa.loyalty.domain.ports.*
 import com.liyaqa.membership.domain.ports.MemberRepository
-import com.liyaqa.shared.infrastructure.multitenancy.TenantContext
+import com.liyaqa.shared.domain.TenantContext
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest

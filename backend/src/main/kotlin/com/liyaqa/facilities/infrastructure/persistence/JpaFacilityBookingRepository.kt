@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.time.Instant
+import java.time.LocalDate
 import java.util.*
 
 interface SpringDataFacilityBookingRepository : JpaRepository<FacilityBooking, UUID> {
@@ -24,6 +25,9 @@ interface SpringDataFacilityBookingRepository : JpaRepository<FacilityBooking, U
 
     fun countByMemberIdAndStatusAndBookedAtAfter(memberId: UUID, status: BookingStatus, after: Instant): Long
     fun existsBySlotIdAndStatusIn(slotId: UUID, statuses: List<BookingStatus>): Boolean
+
+    @Query("SELECT b FROM FacilityBooking b JOIN FacilitySlot s ON b.slotId = s.id WHERE s.date = :date ORDER BY s.startTime")
+    fun findBySlotDate(@Param("date") date: LocalDate): List<FacilityBooking>
 }
 
 @Repository
@@ -60,6 +64,9 @@ class JpaFacilityBookingRepository(
 
     override fun existsBySlotIdAndStatusIn(slotId: UUID, statuses: List<BookingStatus>): Boolean =
         springDataRepository.existsBySlotIdAndStatusIn(slotId, statuses)
+
+    override fun findBySlotDate(date: LocalDate): List<FacilityBooking> =
+        springDataRepository.findBySlotDate(date)
 
     override fun deleteById(id: UUID) =
         springDataRepository.deleteById(id)

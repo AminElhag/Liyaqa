@@ -6,7 +6,7 @@ import com.liyaqa.reporting.application.commands.UpdateScheduledReportCommand
 import com.liyaqa.reporting.domain.model.*
 import com.liyaqa.reporting.domain.ports.ReportHistoryRepository
 import com.liyaqa.reporting.domain.ports.ScheduledReportRepository
-import com.liyaqa.shared.infrastructure.multitenancy.TenantContext
+import com.liyaqa.shared.domain.TenantContext
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable

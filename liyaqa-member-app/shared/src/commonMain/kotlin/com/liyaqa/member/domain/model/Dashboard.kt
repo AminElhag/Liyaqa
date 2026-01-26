@@ -58,7 +58,8 @@ data class FeatureFlags(
     val selfCheckInEnabled: Boolean = true,
     val prayerTimesEnabled: Boolean = true,
     val onlinePaymentEnabled: Boolean = true,
-    val referralsEnabled: Boolean = false
+    val referralsEnabled: Boolean = false,
+    val wearablesEnabled: Boolean = true
 )
 
 /**

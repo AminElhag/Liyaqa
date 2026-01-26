@@ -29,6 +29,21 @@ object TenantContext {
         return currentTenant.get()
     }
 
+    /**
+     * Convenience method to get current tenant ID as UUID.
+     * @throws IllegalStateException if no tenant context is set
+     */
+    fun getCurrentTenantId(): java.util.UUID {
+        return getCurrentTenant().value
+    }
+
+    /**
+     * Convenience method to get current tenant ID as UUID or null.
+     */
+    fun getCurrentTenantIdOrNull(): java.util.UUID? {
+        return getCurrentTenantOrNull()?.value
+    }
+
     // Organization methods
     fun setCurrentOrganization(orgId: OrganizationId) {
         currentOrganization.set(orgId)

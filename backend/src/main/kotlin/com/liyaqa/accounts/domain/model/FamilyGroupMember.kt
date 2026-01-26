@@ -22,8 +22,23 @@ class FamilyGroupMember(
     var relationship: FamilyRelationship,
 
     @Column(name = "joined_at", nullable = false)
-    val joinedAt: Instant = Instant.now()
+    val joinedAt: Instant = Instant.now(),
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    var status: FamilyMemberStatus = FamilyMemberStatus.ACTIVE
 ) {
+    fun activate() {
+        status = FamilyMemberStatus.ACTIVE
+    }
+
+    fun suspend() {
+        status = FamilyMemberStatus.SUSPENDED
+    }
+
+    fun terminate() {
+        status = FamilyMemberStatus.TERMINATED
+    }
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is FamilyGroupMember) return false

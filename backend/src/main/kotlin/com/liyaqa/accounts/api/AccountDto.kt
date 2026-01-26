@@ -2,8 +2,8 @@ package com.liyaqa.accounts.api
 
 import com.liyaqa.accounts.domain.model.*
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.util.*
 
 // Family Group DTOs
@@ -17,15 +17,15 @@ data class FamilyGroupDto(
     val status: AccountStatus,
     val notes: String?,
     val members: List<FamilyGroupMemberDto>,
-    val createdAt: LocalDateTime?,
-    val updatedAt: LocalDateTime?
+    val createdAt: Instant?,
+    val updatedAt: Instant?
 )
 
 data class FamilyGroupMemberDto(
     val id: UUID,
     val memberId: UUID,
     val relationship: FamilyRelationship,
-    val joinedAt: LocalDateTime,
+    val joinedAt: Instant,
     val status: FamilyMemberStatus
 )
 
@@ -37,7 +37,7 @@ data class FamilyGroupSummaryDto(
     val maxMembers: Int,
     val discountPercentage: BigDecimal,
     val status: AccountStatus,
-    val createdAt: LocalDateTime?
+    val createdAt: Instant?
 )
 
 data class CreateFamilyGroupRequest(
@@ -82,8 +82,8 @@ data class CorporateAccountDto(
     val status: AccountStatus,
     val notes: String?,
     val members: List<CorporateMemberDto>,
-    val createdAt: LocalDateTime?,
-    val updatedAt: LocalDateTime?
+    val createdAt: Instant?,
+    val updatedAt: Instant?
 )
 
 data class CorporateMemberDto(
@@ -92,7 +92,7 @@ data class CorporateMemberDto(
     val employeeId: String?,
     val department: String?,
     val position: String?,
-    val joinedAt: LocalDateTime,
+    val joinedAt: Instant,
     val status: CorporateMemberStatus
 )
 
@@ -105,7 +105,7 @@ data class CorporateAccountSummaryDto(
     val discountPercentage: BigDecimal,
     val contractEndDate: LocalDate?,
     val status: AccountStatus,
-    val createdAt: LocalDateTime?
+    val createdAt: Instant?
 )
 
 data class CreateCorporateAccountRequest(

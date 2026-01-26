@@ -80,4 +80,17 @@ interface InvoiceRepository {
      * Find invoice by Tamara order ID.
      */
     fun findByTamaraOrderId(orderId: String): Invoice?
+
+    // ==================== LTV Analysis ====================
+
+    /**
+     * Get member LTV data for reporting.
+     * Returns a list of maps containing:
+     * - memberId: UUID
+     * - memberName: String
+     * - totalRevenue: BigDecimal
+     * - lifespanMonths: Int
+     * - transactionCount: Int
+     */
+    fun getMemberLtvData(asOfDate: LocalDate): List<Map<String, Any>>
 }

@@ -4,7 +4,7 @@ import com.liyaqa.billing.application.services.PaymentMethodService
 import com.liyaqa.billing.domain.model.PaymentMethodType
 import com.liyaqa.billing.domain.model.PaymentProviderType
 import com.liyaqa.billing.domain.model.SavedPaymentMethod
-import com.liyaqa.shared.auth.CurrentUserService
+import com.liyaqa.shared.infrastructure.security.CurrentUserService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -56,10 +56,14 @@ class PaymentMethodController(
     @GetMapping("/default")
     @PreAuthorize("hasRole('MEMBER')")
     @Operation(summary = "Get my default payment method")
-    fun getDefaultPaymentMethod(): ResponseEntity<PaymentMethodResponse?> {
+    fun getDefaultPaymentMethod(): ResponseEntity<Any> {
         val memberId = currentUserService.requireCurrentMemberId()
         val method = paymentMethodService.getDefaultPaymentMethod(memberId)
-        return ResponseEntity.ok(method?.let { PaymentMethodResponse.from(it) })
+        return if (method != null) {
+            ResponseEntity.ok(PaymentMethodResponse.from(method))
+        } else {
+            ResponseEntity.noContent().build()
+        }
     }
 
     @PostMapping

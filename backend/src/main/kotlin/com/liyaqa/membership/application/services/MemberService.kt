@@ -282,6 +282,11 @@ class MemberService(
         return memberRepository.count()
     }
 
+    @Transactional(readOnly = true)
+    fun countMembersByStatus(status: MemberStatus): Long {
+        return memberRepository.countByStatus(status)
+    }
+
     // ==================== USER ACCOUNT MANAGEMENT ====================
 
     /**

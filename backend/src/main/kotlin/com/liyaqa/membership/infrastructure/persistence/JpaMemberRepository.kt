@@ -27,6 +27,12 @@ interface SpringDataMemberRepository : JpaRepository<Member, UUID> {
     @Query("SELECT COUNT(m) FROM Member m WHERE m.createdAt >= :date")
     fun countByCreatedAtAfter(@Param("date") date: Instant): Long
 
+    @Query("SELECT COUNT(m) FROM Member m WHERE m.status = 'ACTIVE' AND m.createdAt <= :date")
+    fun countActiveAtDate(@Param("date") date: Instant): Long
+
+    @Query("SELECT COUNT(m) FROM Member m WHERE m.createdAt >= :startDate AND m.createdAt < :endDate")
+    fun countJoinedBetween(@Param("startDate") startDate: Instant, @Param("endDate") endDate: Instant): Long
+
     @Query("SELECT m FROM Member m WHERE m.email = :email AND m.tenantId = :tenantId")
     fun findByEmailAndTenantId(email: String, tenantId: UUID): Optional<Member>
 
@@ -125,5 +131,16 @@ class JpaMemberRepository(
 
     override fun findAllByIds(ids: List<UUID>): List<Member> {
         return springDataRepository.findAllById(ids).toList()
+    }
+
+    override fun countActiveAtDate(date: LocalDate): Long {
+        val instant = date.atStartOfDay().toInstant(ZoneOffset.UTC)
+        return springDataRepository.countActiveAtDate(instant)
+    }
+
+    override fun countJoinedBetween(startDate: LocalDate, endDate: LocalDate): Long {
+        val startInstant = startDate.atStartOfDay().toInstant(ZoneOffset.UTC)
+        val endInstant = endDate.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)
+        return springDataRepository.countJoinedBetween(startInstant, endInstant)
     }
 }

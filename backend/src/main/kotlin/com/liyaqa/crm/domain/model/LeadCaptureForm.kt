@@ -1,14 +1,14 @@
 package com.liyaqa.crm.domain.model
 
 import com.liyaqa.shared.domain.BaseEntity
-import io.hypersistence.utils.hibernate.type.json.JsonType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import org.hibernate.annotations.Filter
 import org.hibernate.annotations.FilterDef
+import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.ParamDef
-import org.hibernate.annotations.Type
+import org.hibernate.type.SqlTypes
 import java.util.UUID
 
 /**
@@ -37,11 +37,11 @@ class LeadCaptureForm(
     @Column(name = "is_active", nullable = false)
     var isActive: Boolean = true,
 
-    @Type(JsonType::class)
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "config", nullable = false, columnDefinition = "jsonb")
     var config: LeadCaptureFormConfig = LeadCaptureFormConfig(),
 
-    @Type(JsonType::class)
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "styling", columnDefinition = "jsonb")
     var styling: LeadCaptureFormStyling = LeadCaptureFormStyling(),
 

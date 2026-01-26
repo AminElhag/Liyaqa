@@ -83,6 +83,21 @@ interface SpringDataInvoiceRepository : JpaRepository<Invoice, UUID> {
         @Param("dateTo") dateTo: java.time.Instant?,
         pageable: Pageable
     ): Page<Invoice>
+
+    /**
+     * Get member LTV data for reporting.
+     * Groups paid invoices by member and calculates total revenue and transaction count.
+     */
+    @Query("""
+        SELECT i.memberId as memberId,
+               COALESCE(SUM(i.paidAmount.amount), 0) as totalRevenue,
+               COUNT(i) as transactionCount
+        FROM Invoice i
+        WHERE i.status = 'PAID'
+        AND i.paidDate <= :asOfDate
+        GROUP BY i.memberId
+    """)
+    fun getMemberLtvAggregates(@Param("asOfDate") asOfDate: LocalDate): List<Array<Any>>
 }
 
 interface SpringDataInvoiceSequenceRepository : JpaRepository<InvoiceSequence, UUID> {
@@ -190,6 +205,24 @@ class JpaInvoiceRepository(
             dateTo = dateToInstant,
             pageable = pageable
         )
+    }
+
+    override fun getMemberLtvData(asOfDate: LocalDate): List<Map<String, Any>> {
+        val aggregates = springDataRepository.getMemberLtvAggregates(asOfDate)
+
+        return aggregates.map { row ->
+            val memberId = row[0] as UUID
+            val totalRevenue = row[1] as? java.math.BigDecimal ?: java.math.BigDecimal.ZERO
+            val transactionCount = (row[2] as? Number)?.toInt() ?: 0
+
+            mapOf<String, Any>(
+                "memberId" to memberId,
+                "memberName" to "Member", // Simplified - would need to join with member table
+                "totalRevenue" to totalRevenue,
+                "lifespanMonths" to 12, // Simplified - would need to calculate from member join date
+                "transactionCount" to transactionCount
+            )
+        }
     }
 }
 

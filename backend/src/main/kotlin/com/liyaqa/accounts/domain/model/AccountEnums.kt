@@ -31,3 +31,9 @@ enum class CorporateMemberStatus {
     SUSPENDED,
     TERMINATED
 }
+
+enum class FamilyMemberStatus {
+    ACTIVE,
+    SUSPENDED,
+    TERMINATED
+}

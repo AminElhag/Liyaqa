@@ -53,6 +53,18 @@ interface SpringDataSubscriptionRepository : JpaRepository<Subscription, UUID> {
         @Param("expiringBefore") expiringBefore: LocalDate?,
         pageable: Pageable
     ): Page<Subscription>
+
+    @Query("SELECT COUNT(s) FROM Subscription s WHERE s.status IN ('CANCELLED', 'EXPIRED') AND s.endDate BETWEEN :startDate AND :endDate")
+    fun countChurnedBetween(@Param("startDate") startDate: LocalDate, @Param("endDate") endDate: LocalDate): Long
+
+    @Query("""
+        SELECT s.planId as planId, COUNT(s) as total,
+        SUM(CASE WHEN s.status IN ('CANCELLED', 'EXPIRED') THEN 1 ELSE 0 END) as churned
+        FROM Subscription s
+        WHERE s.endDate BETWEEN :startDate AND :endDate
+        GROUP BY s.planId
+    """)
+    fun getChurnStatsByPlan(@Param("startDate") startDate: LocalDate, @Param("endDate") endDate: LocalDate): List<Array<Any>>
 }
 
 @Repository
@@ -117,4 +129,19 @@ class JpaSubscriptionRepository(
         pageable: Pageable
     ): Page<Subscription> =
         springDataRepository.search(planId, status, expiringBefore, pageable)
+
+    override fun countChurnedBetween(startDate: LocalDate, endDate: LocalDate): Long =
+        springDataRepository.countChurnedBetween(startDate, endDate)
+
+    override fun getChurnByPlan(startDate: LocalDate, endDate: LocalDate): List<Map<String, Any>> {
+        val results = springDataRepository.getChurnStatsByPlan(startDate, endDate)
+        return results.map { row ->
+            mapOf(
+                "planId" to row[0] as UUID,
+                "planName" to "Plan", // Would need to join with plans table for actual name
+                "totalMembers" to (row[1] as Number).toLong(),
+                "churnedMembers" to (row[2] as Number).toLong()
+            )
+        }
+    }
 }

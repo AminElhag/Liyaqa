@@ -6,13 +6,37 @@ import com.liyaqa.facilities.domain.ports.FacilityBookingRepository
 import com.liyaqa.facilities.domain.ports.FacilityRepository
 import com.liyaqa.facilities.domain.ports.FacilitySlotRepository
 import com.liyaqa.membership.domain.ports.MemberRepository
+import com.liyaqa.shared.domain.LocalizedText
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
 import java.util.*
+
+/**
+ * Enriched facility booking with related entity details
+ */
+data class EnrichedFacilityBooking(
+    val id: UUID,
+    val facilityId: UUID,
+    val facilityName: LocalizedText,
+    val facilityType: FacilityType,
+    val memberId: UUID,
+    val memberName: String,
+    val memberNumber: String,
+    val memberPhone: String?,
+    val slotDate: LocalDate,
+    val startTime: LocalTime,
+    val endTime: LocalTime,
+    val status: BookingStatus,
+    val notes: String?,
+    val bookedAt: Instant,
+    val checkedInAt: Instant?
+)
 
 @Service
 @Transactional
@@ -140,4 +164,63 @@ class FacilityBookingService(
     @Transactional(readOnly = true)
     fun countMemberNoShows(memberId: UUID, since: Instant): Long =
         bookingRepository.countByMemberIdAndStatusAndBookedAtAfter(memberId, BookingStatus.NO_SHOW, since)
+
+    /**
+     * Count today's bookings
+     */
+    @Transactional(readOnly = true)
+    fun countTodayBookings(): Int =
+        bookingRepository.findBySlotDate(LocalDate.now()).size
+
+    /**
+     * Get bookings by date with enriched details
+     */
+    @Transactional(readOnly = true)
+    fun getBookingsByDate(date: LocalDate): List<EnrichedFacilityBooking> {
+        val bookings = bookingRepository.findBySlotDate(date)
+        return bookings.mapNotNull { enrichBooking(it) }
+    }
+
+    /**
+     * Check in a booking and return enriched details
+     */
+    fun checkInEnriched(bookingId: UUID): EnrichedFacilityBooking {
+        val booking = checkIn(bookingId)
+        return enrichBooking(booking) ?: throw NoSuchElementException("Could not enrich booking: $bookingId")
+    }
+
+    /**
+     * Cancel a booking and return enriched details
+     */
+    fun cancelEnriched(bookingId: UUID, reason: String? = null): EnrichedFacilityBooking {
+        val booking = cancel(bookingId, reason)
+        return enrichBooking(booking) ?: throw NoSuchElementException("Could not enrich booking: $bookingId")
+    }
+
+    /**
+     * Enrich a booking with related entity details
+     */
+    private fun enrichBooking(booking: FacilityBooking): EnrichedFacilityBooking? {
+        val facility = facilityRepository.findById(booking.facilityId).orElse(null) ?: return null
+        val slot = slotRepository.findById(booking.slotId).orElse(null) ?: return null
+        val member = memberRepository.findById(booking.memberId).orElse(null) ?: return null
+
+        return EnrichedFacilityBooking(
+            id = booking.id,
+            facilityId = booking.facilityId,
+            facilityName = facility.name,
+            facilityType = facility.type,
+            memberId = booking.memberId,
+            memberName = "${member.firstName.en} ${member.lastName.en}",
+            memberNumber = member.id.toString().take(8).uppercase(),
+            memberPhone = member.phone,
+            slotDate = slot.slotDate,
+            startTime = slot.startTime,
+            endTime = slot.endTime,
+            status = booking.status,
+            notes = booking.notes,
+            bookedAt = booking.bookedAt,
+            checkedInAt = booking.checkedInAt
+        )
+    }
 }

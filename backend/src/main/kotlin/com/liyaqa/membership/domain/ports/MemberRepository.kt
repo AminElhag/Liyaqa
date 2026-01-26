@@ -45,4 +45,16 @@ interface MemberRepository {
      * Used for bulk operations to avoid N+1 queries.
      */
     fun findAllByIds(ids: List<UUID>): List<Member>
+
+    /**
+     * Count members that were active at a specific date.
+     * Used for churn analysis reports.
+     */
+    fun countActiveAtDate(date: LocalDate): Long
+
+    /**
+     * Count members that joined between two dates.
+     * Used for churn analysis reports.
+     */
+    fun countJoinedBetween(startDate: LocalDate, endDate: LocalDate): Long
 }

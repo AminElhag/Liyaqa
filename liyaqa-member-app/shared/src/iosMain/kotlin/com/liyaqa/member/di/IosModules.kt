@@ -1,5 +1,6 @@
 package com.liyaqa.member.di
 
+import com.liyaqa.member.data.health.HealthDataManager
 import com.liyaqa.member.data.local.DatabaseDriverFactory
 import com.liyaqa.member.data.local.LiyaqaMemberDatabase
 import com.liyaqa.member.data.local.TokenStorage
@@ -16,6 +17,9 @@ val iosPlatformModule: Module = module {
 
     // Token Storage
     single { TokenStorage() }
+
+    // Health Data Manager (HealthKit)
+    single { HealthDataManager() }
 }
 
 /**
