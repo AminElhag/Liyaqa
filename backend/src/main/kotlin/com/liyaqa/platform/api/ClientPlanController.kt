@@ -45,10 +45,10 @@ class ClientPlanController(
 ) {
     /**
      * Creates a new client plan.
-     * Only PLATFORM_ADMIN can create plans.
+     * PLATFORM_ADMIN and SALES_REP can create plans (needed for quick plan creation during onboarding).
      */
     @PostMapping
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
     fun createPlan(@Valid @RequestBody request: CreateClientPlanRequest): ResponseEntity<ClientPlanResponse> {
         val plan = clientPlanService.createPlan(request.toCommand())
         return ResponseEntity.status(HttpStatus.CREATED).body(ClientPlanResponse.from(plan))
@@ -143,10 +143,10 @@ class ClientPlanController(
 
     /**
      * Activates a client plan.
-     * Only PLATFORM_ADMIN can activate plans.
+     * PLATFORM_ADMIN and SALES_REP can activate plans (needed for quick plan creation during onboarding).
      */
     @PostMapping("/{id}/activate")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
     fun activatePlan(@PathVariable id: UUID): ResponseEntity<ClientPlanResponse> {
         val plan = clientPlanService.activatePlan(id)
         return ResponseEntity.ok(ClientPlanResponse.from(plan))

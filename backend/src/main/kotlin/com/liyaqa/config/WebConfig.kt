@@ -27,7 +27,8 @@ class WebConfig(
                 "/api/public/**",
                 "/api/health/**",
                 "/api/organizations/**",  // Orgs don't require tenant context
-                "/api/clubs/**"           // Clubs are accessed via organization context
+                "/api/clubs/**",          // Clubs are accessed via organization context
+                "/api/platform/**"        // Platform endpoints don't require tenant context
             )
 
         // Mobile cache control interceptor for all API endpoints

@@ -58,6 +58,8 @@ export function useActiveClientPlans(
   return useQuery({
     queryKey: clientPlanKeys.active(),
     queryFn: () => getActiveClientPlans(),
+    staleTime: 30 * 1000, // Cache for 30s to prevent re-fetches on step navigation
+    retry: false, // Don't retry on auth errors (403)
     ...options,
   });
 }
