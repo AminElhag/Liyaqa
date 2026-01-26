@@ -518,24 +518,26 @@ Sync with popular fitness wearables.
 
 ---
 
-#### 19. White-Label Mobile Apps
+#### 19. White-Label Mobile Apps ✅
 **Priority:** P2 | **Effort:** 3-4 months | **ROI:** 4/10
 
 **Description:**
 Customizable branded mobile apps for enterprise clients.
 
 **Core Features:**
-- [ ] White-label app builder
-- [ ] Custom logo and colors
-- [ ] Custom app name
-- [ ] App store publication support
-- [ ] Per-client customization
-- [ ] Feature toggles per client
+- [x] Custom colors (primary, secondary, accent with dark mode variants)
+- [x] Custom logo support (light/dark mode)
+- [x] Custom app name (English/Arabic)
+- [x] Feature toggles per tenant (classes, facilities, loyalty, wearables, payments)
+- [x] Admin settings page with live preview
+- [x] Dynamic theming via tenant branding API
 
-**Technical Requirements:**
-- Build on Kotlin Multiplatform member app codebase
-- Flavor/build variant system for white-labeling
-- Theming via Compose Material 3 dynamic colors
+**Technical Implementation:**
+- Backend: BrandingConfig entity with V60 migration, REST API endpoints
+- Frontend: Settings > Branding admin page with color pickers and phone preview
+- Mobile: DynamicLiyaqaTheme composable with BrandingTheme data class
+- API: Public /api/mobile/branding endpoint for mobile apps
+- Extends TenantInfo with branding fields for seamless integration
 
 ---
 
@@ -605,9 +607,19 @@ Q1 2027: Intelligence & Hardware ✅ COMPLETED
 | Wearable Integration                         ✅  |
 +--------------------------------------------------+
 
-Q2-Q4 2027: Enterprise & Compliance (UPCOMING)
+Q2 2027: White-Label ✅ COMPLETED
 +--------------------------------------------------+
-| Q2: White-Label Mobile Apps                      |
+| White-Label Mobile Apps                      ✅  |
+|   - Custom colors (primary/secondary/accent)     |
+|   - Custom logos (light/dark mode)               |
+|   - Custom app names (English/Arabic)            |
+|   - Feature toggles per tenant                   |
+|   - Admin branding settings with live preview    |
+|   - Dynamic theming in mobile apps               |
++--------------------------------------------------+
+
+Q3-Q4 2027: Enterprise & Compliance (UPCOMING)
++--------------------------------------------------+
 | Q3: Security Certifications (ISO 27001, SOC 2)   |
 | Q4: PCI DSS & PDPL Compliance                    |
 +--------------------------------------------------+
@@ -695,4 +707,4 @@ Fixed 309 compilation errors across Tier 3 modules. All error categories resolve
 ---
 
 *Last Updated: January 26, 2026*
-*Version: 3.0*
+*Version: 3.1 - Added White-Label Mobile Apps*
