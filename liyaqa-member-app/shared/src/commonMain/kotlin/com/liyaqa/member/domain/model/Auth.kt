@@ -71,7 +71,11 @@ data class TenantInfo(
     val tenantId: String? = null,
     val clubName: LocalizedText? = null,
     val slug: String? = null,
-    val logoUrl: String? = null
+    val logoUrl: String? = null,
+    // Branding fields for white-label support
+    val primaryColor: String? = null,
+    val secondaryColor: String? = null,
+    val accentColor: String? = null
 )
 
 /**

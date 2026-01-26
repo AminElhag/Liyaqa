@@ -24,7 +24,8 @@ import androidx.core.content.ContextCompat
 import com.liyaqa.member.domain.model.AuthState
 import com.liyaqa.member.domain.repository.AuthRepository
 import com.liyaqa.member.presentation.navigation.AppNavigation
-import com.liyaqa.member.presentation.theme.LiyaqaTheme
+import com.liyaqa.member.presentation.theme.BrandingTheme
+import com.liyaqa.member.presentation.theme.DynamicLiyaqaTheme
 import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
@@ -119,10 +120,22 @@ private fun LiyaqaMemberAppContent(
     val authState by authRepository.authState.collectAsState(initial = AuthState.Loading)
     var isArabic by remember { mutableStateOf(false) } // TODO: Load from preferences
     var deepLinkRoute by remember { mutableStateOf<String?>(null) }
+    var brandingTheme by remember { mutableStateOf(BrandingTheme.DEFAULT) }
 
     // Initialize auth state
     LaunchedEffect(Unit) {
         (authRepository as? com.liyaqa.member.data.repository.AuthRepositoryImpl)?.initializeAuthState()
+    }
+
+    // Fetch branding when authenticated
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Authenticated) {
+            val user = (authState as AuthState.Authenticated).user
+            val tenantResult = authRepository.getTenantInfo(tenantId = user.tenantId)
+            tenantResult.onSuccess { tenantInfo ->
+                brandingTheme = BrandingTheme.fromTenantInfo(tenantInfo)
+            }
+        }
     }
 
     // Handle deep link from notification
@@ -133,7 +146,8 @@ private fun LiyaqaMemberAppContent(
         }
     }
 
-    LiyaqaTheme(
+    DynamicLiyaqaTheme(
+        brandingTheme = brandingTheme,
         darkTheme = isSystemInDarkTheme(),
         isArabic = isArabic
     ) {

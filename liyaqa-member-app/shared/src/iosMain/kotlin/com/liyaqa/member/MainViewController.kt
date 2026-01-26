@@ -14,10 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.ComposeUIViewController
 import com.liyaqa.member.data.repository.AuthRepositoryImpl
 import com.liyaqa.member.domain.model.AuthState
+import com.liyaqa.member.domain.model.TenantInfo
 import com.liyaqa.member.domain.repository.AuthRepository
 import com.liyaqa.member.presentation.components.LoadingView
 import com.liyaqa.member.presentation.navigation.AppNavigation
-import com.liyaqa.member.presentation.theme.LiyaqaTheme
+import com.liyaqa.member.presentation.theme.BrandingTheme
+import com.liyaqa.member.presentation.theme.DynamicLiyaqaTheme
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import platform.UIKit.UIViewController
@@ -33,13 +35,26 @@ private fun IosApp(initialRoute: String? = null) {
 
     val authState by authRepository.authState.collectAsState(initial = AuthState.Loading)
     var isArabic by remember { mutableStateOf(false) } // TODO: Load from preferences
+    var brandingTheme by remember { mutableStateOf(BrandingTheme.DEFAULT) }
 
     // Initialize auth state
     LaunchedEffect(Unit) {
         (authRepository as? AuthRepositoryImpl)?.initializeAuthState()
     }
 
-    LiyaqaTheme(
+    // Fetch branding when authenticated
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Authenticated) {
+            val user = (authState as AuthState.Authenticated).user
+            val tenantResult = authRepository.getTenantInfo(tenantId = user.tenantId)
+            tenantResult.onSuccess { tenantInfo ->
+                brandingTheme = BrandingTheme.fromTenantInfo(tenantInfo)
+            }
+        }
+    }
+
+    DynamicLiyaqaTheme(
+        brandingTheme = brandingTheme,
         darkTheme = isSystemInDarkTheme(),
         isArabic = isArabic
     ) {

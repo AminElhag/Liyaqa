@@ -92,6 +92,9 @@ val LocalLayoutDirection = staticCompositionLocalOf { LayoutDirection.Ltr }
 // Language state
 val LocalIsArabic = staticCompositionLocalOf { false }
 
+// Branding theme for white-label support
+val LocalBrandingTheme = staticCompositionLocalOf { BrandingTheme.DEFAULT }
+
 @Composable
 fun LiyaqaTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -103,7 +106,104 @@ fun LiyaqaTheme(
 
     CompositionLocalProvider(
         LocalLayoutDirection provides layoutDirection,
-        LocalIsArabic provides isArabic
+        LocalIsArabic provides isArabic,
+        LocalBrandingTheme provides BrandingTheme.DEFAULT
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = LiyaqaTypography,
+            shapes = LiyaqaShapes,
+            content = content
+        )
+    }
+}
+
+/**
+ * Dynamic theme that applies custom branding colors.
+ * Use this for white-label apps with custom tenant branding.
+ */
+@Composable
+fun DynamicLiyaqaTheme(
+    brandingTheme: BrandingTheme = BrandingTheme.DEFAULT,
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    isArabic: Boolean = false,
+    content: @Composable () -> Unit
+) {
+    // Create color scheme with branding colors
+    val colorScheme = if (darkTheme) {
+        darkColorScheme(
+            primary = brandingTheme.primaryDarkColor,
+            onPrimary = Color.White,
+            primaryContainer = brandingTheme.primaryColor,
+            onPrimaryContainer = Color(0xFFD6E3F5),
+
+            secondary = brandingTheme.secondaryDarkColor,
+            onSecondary = Color.White,
+            secondaryContainer = brandingTheme.secondaryColor,
+            onSecondaryContainer = Color(0xFFD7EFD9),
+
+            tertiary = brandingTheme.accentColor,
+            onTertiary = Color.Black,
+            tertiaryContainer = Color(0xFF5C4B00),
+            onTertiaryContainer = Color(0xFFFFF3CD),
+
+            background = Color(0xFF1C1B1F),
+            onBackground = Color(0xFFE6E1E5),
+
+            surface = Color(0xFF1C1B1F),
+            onSurface = Color(0xFFE6E1E5),
+            surfaceVariant = Color(0xFF2B2B2B),
+            onSurfaceVariant = Color(0xFFCAC4D0),
+
+            outline = Color(0xFF938F99),
+            outlineVariant = Color(0xFF49454F),
+
+            error = Color(0xFFFFB4AB),
+            onError = Color(0xFF690005),
+            errorContainer = Color(0xFF93000A),
+            onErrorContainer = Color(0xFFFFDAD6)
+        )
+    } else {
+        lightColorScheme(
+            primary = brandingTheme.primaryColor,
+            onPrimary = Color.White,
+            primaryContainer = brandingTheme.primaryColor.copy(alpha = 0.1f),
+            onPrimaryContainer = brandingTheme.primaryColor,
+
+            secondary = brandingTheme.secondaryColor,
+            onSecondary = Color.White,
+            secondaryContainer = brandingTheme.secondaryColor.copy(alpha = 0.1f),
+            onSecondaryContainer = brandingTheme.secondaryColor,
+
+            tertiary = brandingTheme.accentColor,
+            onTertiary = Color.Black,
+            tertiaryContainer = Color(0xFFFFF3CD),
+            onTertiaryContainer = Color(0xFF8B6914),
+
+            background = Color(0xFFFAFAFA),
+            onBackground = Color(0xFF1C1B1F),
+
+            surface = Color.White,
+            onSurface = Color(0xFF1C1B1F),
+            surfaceVariant = Color(0xFFF3F3F3),
+            onSurfaceVariant = Color(0xFF49454F),
+
+            outline = Color(0xFF79747E),
+            outlineVariant = Color(0xFFCAC4D0),
+
+            error = Color(0xFFBA1A1A),
+            onError = Color.White,
+            errorContainer = Color(0xFFFFDAD6),
+            onErrorContainer = Color(0xFF410002)
+        )
+    }
+
+    val layoutDirection = if (isArabic) LayoutDirection.Rtl else LayoutDirection.Ltr
+
+    CompositionLocalProvider(
+        LocalLayoutDirection provides layoutDirection,
+        LocalIsArabic provides isArabic,
+        LocalBrandingTheme provides brandingTheme
     ) {
         MaterialTheme(
             colorScheme = colorScheme,

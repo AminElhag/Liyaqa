@@ -2,6 +2,7 @@ package com.liyaqa.auth.api
 
 import com.liyaqa.auth.application.services.AuthService
 import com.liyaqa.auth.infrastructure.security.JwtUserPrincipal
+import com.liyaqa.branding.application.services.BrandingService
 import com.liyaqa.organization.api.LocalizedTextResponse
 import com.liyaqa.organization.domain.model.Club
 import com.liyaqa.organization.domain.ports.ClubRepository
@@ -31,7 +32,8 @@ import org.springframework.web.bind.annotation.RestController
 class AuthController(
     private val authService: AuthService,
     private val clubRepository: ClubRepository,
-    private val permissionService: PermissionService
+    private val permissionService: PermissionService,
+    private val brandingService: BrandingService
 ) {
     @Operation(
         summary = "Login",
@@ -84,12 +86,19 @@ class AuthController(
         val club = httpRequest.getAttribute(TenantInterceptor.SUBDOMAIN_CLUB_ATTRIBUTE) as? Club
 
         return if (tenantId != null && club != null) {
+            // Fetch branding for the tenant
+            val branding = brandingService.getBrandingForMobile(tenantId.value)
+
             ResponseEntity.ok(
                 TenantInfoResponse(
                     resolved = true,
                     tenantId = tenantId.value,
                     clubName = LocalizedTextResponse.from(club.name),
-                    slug = club.slug
+                    slug = club.slug,
+                    primaryColor = branding.primaryColor,
+                    secondaryColor = branding.secondaryColor,
+                    accentColor = branding.accentColor,
+                    logoUrl = branding.logoLightUrl
                 )
             )
         } else {

@@ -219,5 +219,26 @@ data class TenantInfoResponse(
     /**
      * The subdomain slug used to resolve the tenant.
      */
-    val slug: String? = null
+    val slug: String? = null,
+
+    // Branding fields for white-label support
+    /**
+     * Primary brand color (hex format, e.g., #1E3A5F).
+     */
+    val primaryColor: String? = null,
+
+    /**
+     * Secondary brand color (hex format).
+     */
+    val secondaryColor: String? = null,
+
+    /**
+     * Accent brand color (hex format).
+     */
+    val accentColor: String? = null,
+
+    /**
+     * Logo URL for the tenant.
+     */
+    val logoUrl: String? = null
 )
