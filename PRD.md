@@ -617,6 +617,28 @@ Q2-Q4 2027: Enterprise & Compliance (UPCOMING)
 
 ## Completed Items (Archive)
 
+### Backend Build Error Fixes (January 2026)
+
+Fixed 309 compilation errors across Tier 3 modules. All error categories resolved:
+
+| Category | Files Affected | Fix Applied |
+|----------|----------------|-------------|
+| BaseEntity Import Path | 9 files | Changed `com.liyaqa.shared.domain.model.BaseEntity` → `com.liyaqa.shared.domain.BaseEntity` |
+| TenantContext Import | 6 files | Added correct import `com.liyaqa.shared.domain.TenantContext` |
+| TenantContextHolder Usage | 2 files | Replaced with `TenantContext.getCurrentTenant().value` |
+| Missing CurrentUser Class | 3 files | Created `CurrentUser.kt` with argument resolver |
+| Missing CurrentUserService | 1 file | Created `CurrentUserService.kt` with security methods |
+| JSON Type Mapping | 1 file | Using native Hibernate `@JdbcTypeCode(SqlTypes.JSON)` |
+| Instant vs LocalDateTime | 1 file | Updated DTOs to use `Instant` types |
+| Missing FamilyMemberStatus | 1 file | Added enum to `AccountEnums.kt` |
+| FacilityBookingService Fields | 1 file | Fixed `memberNumber` and `slotDate` references |
+| DTO Entity ID Access | 3 files | Resolved via BaseEntity inheritance |
+| Missing Repository Methods | 2 files | Added `countActiveAtDate`, `countJoinedBetween`, `countChurnedBetween`, `getChurnByPlan` |
+
+**Build Status:** ✅ `BUILD SUCCESSFUL`
+
+---
+
 ### Test Suite Fixes (January 2026)
 
 - [x] Fix TestDataFactory.kt: Update Club and MembershipPlan creation to use LocalizedText
