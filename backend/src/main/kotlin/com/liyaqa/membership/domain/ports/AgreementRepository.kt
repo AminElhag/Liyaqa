@@ -20,4 +20,6 @@ interface AgreementRepository {
     fun existsById(id: UUID): Boolean
     fun deleteById(id: UUID)
     fun count(): Long
+    fun existsByTitleAndType(titleEn: String, titleAr: String?, type: AgreementType): Boolean
+    fun existsByTitleAndTypeExcluding(titleEn: String, titleAr: String?, type: AgreementType, excludeId: UUID): Boolean
 }

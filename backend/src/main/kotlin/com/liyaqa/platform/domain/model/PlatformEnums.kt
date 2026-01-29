@@ -247,3 +247,228 @@ enum class NoteCategory {
     /** Troubleshooting notes */
     TROUBLESHOOTING
 }
+
+// ============================================
+// Onboarding Enums
+// ============================================
+
+/**
+ * Steps in the client onboarding checklist.
+ * Each step has associated points for gamification.
+ */
+enum class OnboardingStep(val points: Int, val category: OnboardingCategory) {
+    // Account setup (25 points total)
+    ACCOUNT_CREATED(10, OnboardingCategory.ACCOUNT),
+    EMAIL_VERIFIED(5, OnboardingCategory.ACCOUNT),
+    PROFILE_COMPLETED(10, OnboardingCategory.ACCOUNT),
+
+    // Core setup (35 points total)
+    FIRST_LOCATION_ADDED(15, OnboardingCategory.SETUP),
+    MEMBERSHIP_PLANS_CREATED(20, OnboardingCategory.SETUP),
+
+    // Members (25 points total)
+    FIRST_MEMBER_ADDED(10, OnboardingCategory.MEMBERS),
+    MEMBERS_IMPORTED(15, OnboardingCategory.MEMBERS),
+
+    // Payments (30 points total)
+    PAYMENT_GATEWAY_CONNECTED(20, OnboardingCategory.PAYMENTS),
+    FIRST_PAYMENT_RECEIVED(10, OnboardingCategory.PAYMENTS),
+
+    // Operations (35 points total)
+    ACCESS_CONTROL_CONFIGURED(15, OnboardingCategory.OPERATIONS),
+    FIRST_CLASS_SCHEDULED(10, OnboardingCategory.OPERATIONS),
+    STAFF_INVITED(10, OnboardingCategory.TEAM),
+
+    // Engagement (15 points total)
+    MOBILE_APP_CONFIGURED(15, OnboardingCategory.ENGAGEMENT)
+}
+
+/**
+ * Categories of onboarding steps.
+ */
+enum class OnboardingCategory {
+    ACCOUNT,
+    SETUP,
+    MEMBERS,
+    PAYMENTS,
+    OPERATIONS,
+    TEAM,
+    ENGAGEMENT
+}
+
+/**
+ * Phases of onboarding progress.
+ */
+enum class OnboardingPhase {
+    /** 0-30% complete */
+    GETTING_STARTED,
+
+    /** 31-60% complete */
+    CORE_SETUP,
+
+    /** 61-90% complete */
+    OPERATIONS,
+
+    /** 100% complete */
+    COMPLETE
+}
+
+// ============================================
+// Health Score Enums
+// ============================================
+
+/**
+ * Risk level based on health score.
+ */
+enum class RiskLevel(val minScore: Int, val maxScore: Int) {
+    CRITICAL(0, 39),
+    HIGH(40, 59),
+    MEDIUM(60, 79),
+    LOW(80, 100);
+
+    companion object {
+        fun fromScore(score: Int): RiskLevel {
+            return entries.first { score in it.minScore..it.maxScore }
+        }
+    }
+}
+
+/**
+ * Trend direction for health scores.
+ */
+enum class HealthTrend {
+    IMPROVING,
+    STABLE,
+    DECLINING
+}
+
+/**
+ * Types of health signals that contribute to the score.
+ */
+enum class SignalType {
+    // Positive signals
+    DAILY_ACTIVE_USAGE,
+    MEMBER_GROWTH,
+    ON_TIME_PAYMENT,
+    HIGH_FEATURE_ADOPTION,
+    LOW_SUPPORT_TICKETS,
+    ONBOARDING_COMPLETE,
+
+    // Negative signals
+    DECLINING_LOGINS,
+    MEMBER_CHURN,
+    FAILED_PAYMENTS,
+    SUPPORT_TICKET_SPIKE,
+    APPROACHING_LIMITS,
+    INACTIVITY,
+    INCOMPLETE_ONBOARDING
+}
+
+// ============================================
+// Platform Alert Enums
+// ============================================
+
+/**
+ * Types of platform alerts.
+ */
+enum class AlertType {
+    // Usage alerts
+    USAGE_LIMIT_WARNING,
+    USAGE_LIMIT_CRITICAL,
+    USAGE_LIMIT_EXCEEDED,
+
+    // Payment alerts
+    PAYMENT_FAILED,
+    PAYMENT_RECOVERED,
+    SUBSCRIPTION_SUSPENDED,
+
+    // Lifecycle alerts
+    TRIAL_ENDING,
+    TRIAL_EXPIRED,
+    SUBSCRIPTION_EXPIRING,
+    SUBSCRIPTION_RENEWED,
+
+    // Engagement alerts
+    CHURN_RISK,
+    INACTIVITY_WARNING,
+    FEATURE_UNUSED,
+    ONBOARDING_STALLED,
+
+    // Positive alerts
+    MILESTONE_REACHED,
+    GROWTH_DETECTED,
+    HEALTH_IMPROVED
+}
+
+/**
+ * Severity levels for alerts.
+ */
+enum class AlertSeverity {
+    /** Blue - informational */
+    INFO,
+
+    /** Yellow - attention needed */
+    WARNING,
+
+    /** Red - urgent action required */
+    CRITICAL,
+
+    /** Green - positive news */
+    SUCCESS
+}
+
+// ============================================
+// Dunning Enums
+// ============================================
+
+/**
+ * Status of a dunning attempt.
+ */
+enum class DunningStatus {
+    /** Dunning process active */
+    ACTIVE,
+
+    /** Payment recovered */
+    RECOVERED,
+
+    /** Subscription suspended */
+    SUSPENDED,
+
+    /** Account deactivated */
+    DEACTIVATED,
+
+    /** Manually resolved */
+    RESOLVED
+}
+
+/**
+ * Notification channels for dunning.
+ */
+enum class NotificationChannel {
+    EMAIL,
+    SMS,
+    PUSH,
+    IN_APP,
+    PHONE_CALL
+}
+
+// ============================================
+// Usage Enums
+// ============================================
+
+/**
+ * Usage level status for limit tracking.
+ */
+enum class UsageLevel {
+    /** < 80% of limit */
+    NORMAL,
+
+    /** 80-95% of limit */
+    WARNING,
+
+    /** 95-100% of limit */
+    CRITICAL,
+
+    /** > 100% of limit */
+    EXCEEDED
+}

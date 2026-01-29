@@ -7,6 +7,7 @@ import com.liyaqa.membership.domain.ports.AgreementRepository
 import com.liyaqa.membership.domain.ports.MemberAgreementRepository
 import com.liyaqa.membership.domain.ports.MemberRepository
 import com.liyaqa.shared.domain.LocalizedText
+import com.liyaqa.shared.exception.DuplicateAgreementException
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -36,6 +37,11 @@ class AgreementService(
         hasHealthQuestions: Boolean = false,
         effectiveDate: LocalDate? = null
     ): Agreement {
+        // Check for duplicate title + type combination
+        if (agreementRepository.existsByTitleAndType(title.en, title.ar, type)) {
+            throw DuplicateAgreementException("An agreement with the same title and type already exists")
+        }
+
         val agreement = Agreement(
             title = title,
             content = content,
@@ -85,7 +91,13 @@ class AgreementService(
     ): Agreement {
         val agreement = getAgreement(id)
 
-        title?.let { agreement.title = it }
+        // Check for duplicate if title is being changed
+        title?.let { newTitle ->
+            if (agreementRepository.existsByTitleAndTypeExcluding(newTitle.en, newTitle.ar, agreement.type, id)) {
+                throw DuplicateAgreementException("An agreement with the same title and type already exists")
+            }
+            agreement.title = newTitle
+        }
         content?.let {
             agreement.content = it
             agreement.incrementVersion()

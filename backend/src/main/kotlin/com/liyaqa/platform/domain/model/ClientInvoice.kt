@@ -164,8 +164,10 @@ class ClientInvoice(
 
     /**
      * Invoice line items.
+     * Using LAZY fetch to avoid loading line items for list views.
+     * Only loaded when explicitly accessed (detail views).
      */
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(
         name = "client_invoice_line_items",
         joinColumns = [JoinColumn(name = "invoice_id")]

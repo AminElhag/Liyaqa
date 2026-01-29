@@ -53,7 +53,8 @@ export async function getAgreement(id: UUID): Promise<Agreement> {
  * Get only active agreements
  */
 export async function getActiveAgreements(): Promise<Agreement[]> {
-  return api.get(`${AGREEMENTS_ENDPOINT}/active`).json();
+  const response = await api.get<PaginatedResponse<Agreement>>(`${AGREEMENTS_ENDPOINT}?activeOnly=true&size=100`).json();
+  return response.content;
 }
 
 /**

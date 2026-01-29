@@ -61,7 +61,7 @@ class AccessDevice(
     @Column(name = "status", length = 20)
     var status: DeviceStatus = DeviceStatus.ACTIVE,
 
-    @Column(name = "config", columnDefinition = "jsonb")
+    @Column(name = "config")
     var config: String? = null
 ) : BaseEntity() {
 

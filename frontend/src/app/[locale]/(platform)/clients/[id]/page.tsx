@@ -407,7 +407,7 @@ export default function ClientDetailPage() {
                 <Card
                   key={club.id}
                   className="transition-all hover:shadow-md hover:border-primary/50 cursor-pointer"
-                  onClick={() => router.push(`/${locale}/clubs/${club.id}?clientId=${clientId}`)}
+                  onClick={() => router.push(`/${locale}/view-clubs/${club.id}?clientId=${clientId}`)}
                 >
                   <CardHeader className="pb-2">
                     <div className="flex items-center gap-3">

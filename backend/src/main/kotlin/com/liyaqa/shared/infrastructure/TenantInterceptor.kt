@@ -280,11 +280,19 @@ class TenantInterceptor(
     private fun extractSubdomain(host: String): String? {
         val hostLower = host.lowercase()
 
-        // Handle development environment (localhost, 127.0.0.1)
+        // Handle *.localhost subdomains in development
+        // e.g., "nameofclub.localhost" -> "nameofclub"
+        if (hostLower.endsWith(".localhost")) {
+            val subdomain = hostLower.removeSuffix(".localhost")
+            if (subdomain.isNotBlank() && subdomain != "www") {
+                return subdomain
+            }
+            return null
+        }
+
+        // Skip subdomain detection for pure localhost/127.0.0.1
         val devHostList = devHosts.split(",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }
-        if (devHostList.any { hostLower.startsWith(it) || hostLower == it }) {
-            // In dev, subdomain detection is skipped
-            // Use X-Tenant-ID header or ?subdomain= query param for testing
+        if (devHostList.any { hostLower == it }) {
             return null
         }
 

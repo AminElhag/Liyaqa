@@ -11,3 +11,6 @@ export * from "./dashboard";
 export * from "./support";
 export * from "./support-ticket";
 export * from "./platform-user";
+export * from "./onboarding";
+export * from "./alerts";
+export * from "./dunning";

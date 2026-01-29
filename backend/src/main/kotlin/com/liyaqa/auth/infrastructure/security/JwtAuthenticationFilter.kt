@@ -65,7 +65,7 @@ class JwtAuthenticationFilter(
                 )
 
                 SecurityContextHolder.getContext().authentication = authentication
-                log.debug("Authenticated user: $email with role: $role and ${permissions.size} permissions for tenant: $tenantId")
+                log.info("Authenticated user: $email with authorities: ${authorities.map { it.authority }} for tenant: $tenantId")
             }
         } catch (e: Exception) {
             log.debug("Could not authenticate user: ${e.message}")

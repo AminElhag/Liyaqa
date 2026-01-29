@@ -1,36 +1,15 @@
 package com.liyaqa.marketing.domain.model
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.liyaqa.shared.domain.BaseEntity
-import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Column
-import jakarta.persistence.Convert
-import jakarta.persistence.Converter
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Table
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.time.LocalDate
 import java.util.UUID
-
-/**
- * Converter for storing trigger config as JSON.
- */
-@Converter
-class TriggerConfigConverter : AttributeConverter<TriggerConfig?, String?> {
-    private val objectMapper = ObjectMapper()
-
-    override fun convertToDatabaseColumn(attribute: TriggerConfig?): String? {
-        return attribute?.let { objectMapper.writeValueAsString(it) }
-    }
-
-    override fun convertToEntityAttribute(dbData: String?): TriggerConfig? {
-        return dbData?.let {
-            objectMapper.readValue(it, object : TypeReference<TriggerConfig>() {})
-        }
-    }
-}
 
 /**
  * Configuration for campaign triggers.
@@ -66,8 +45,8 @@ class Campaign(
     @Column(name = "trigger_type", nullable = false)
     var triggerType: TriggerType,
 
-    @Convert(converter = TriggerConfigConverter::class)
-    @Column(name = "trigger_config", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "trigger_config")
     var triggerConfig: TriggerConfig? = null,
 
     @Column(name = "segment_id")

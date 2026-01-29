@@ -99,3 +99,37 @@ export async function bulkSuspendMembers(ids: UUID[]): Promise<void> {
 export async function bulkActivateMembers(ids: UUID[]): Promise<void> {
   await api.post(`${MEMBERS_ENDPOINT}/bulk/activate`, { json: { ids } });
 }
+
+/**
+ * Reset member password (admin action)
+ */
+export async function resetMemberPassword(
+  memberId: UUID,
+  newPassword: string
+): Promise<void> {
+  await api.post(`${MEMBERS_ENDPOINT}/${memberId}/reset-password`, {
+    json: { newPassword },
+  });
+}
+
+/**
+ * Response type for user account creation
+ */
+export interface UserAccountResponse {
+  userId: UUID;
+  email: string;
+  role: string;
+  status: string;
+}
+
+/**
+ * Create a user account for a member (admin action)
+ */
+export async function createUserForMember(
+  memberId: UUID,
+  password: string
+): Promise<UserAccountResponse> {
+  return api.post(`${MEMBERS_ENDPOINT}/${memberId}/user`, {
+    json: { password },
+  }).json();
+}

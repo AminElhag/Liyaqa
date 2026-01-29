@@ -1,20 +1,32 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, QueryCache, MutationCache } from "@tanstack/react-query";
 import { SessionExpiredError } from "./api/client";
 
 export function makeQueryClient() {
   return new QueryClient({
+    queryCache: new QueryCache({
+      onError: (error) => {
+        console.error("[React Query Error]", error);
+        if (error instanceof Error) {
+          console.error("Error name:", error.name);
+          console.error("Error message:", error.message);
+        }
+      },
+    }),
+    mutationCache: new MutationCache({
+      onError: (error) => {
+        console.error("[React Query Mutation Error]", error);
+        if (error instanceof Error) {
+          console.error("Mutation error:", error.message);
+        }
+      },
+    }),
     defaultOptions: {
       queries: {
-        // Data is immediately stale - always refetch on mount for fresh data
-        staleTime: 0,
-        // Keep unused data in cache for 5 mins (shows old data while refetching)
-        gcTime: 5 * 60 * 1000,
-        // Refetch when user returns to tab
-        refetchOnWindowFocus: true,
-        // Always refetch when component mounts
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+        refetchOnWindowFocus: "always",
         refetchOnMount: true,
         retry: (failureCount, error) => {
-          // Don't retry on session expiry - user is being redirected to login
           if (error instanceof SessionExpiredError) return false;
           return failureCount < 1;
         },

@@ -60,6 +60,7 @@ import {
   DAY_OF_WEEK_LABELS_AR,
   type AccessRuleType,
   type CreateTimeRuleRequest,
+  type AccessTimeRule,
 } from "@/types/access-control";
 
 export default function TimeRulesPage() {
@@ -118,12 +119,12 @@ export default function TimeRulesPage() {
     }
   };
 
-  const openEditDialog = (rule: any) => {
+  const openEditDialog = (rule: AccessTimeRule) => {
     setFormData({
       name: rule.name,
-      nameAr: rule.nameAr,
-      zoneId: rule.zoneId,
-      dayOfWeek: rule.dayOfWeek,
+      nameAr: rule.nameAr ?? undefined,
+      zoneId: rule.zoneId ?? undefined,
+      dayOfWeek: rule.dayOfWeek ?? undefined,
       startTime: rule.startTime,
       endTime: rule.endTime,
       accessType: rule.accessType,

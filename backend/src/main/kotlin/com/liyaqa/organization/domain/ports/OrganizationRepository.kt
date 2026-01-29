@@ -15,12 +15,14 @@ import java.util.UUID
 interface OrganizationRepository {
     fun save(organization: Organization): Organization
     fun findById(id: UUID): Optional<Organization>
+    fun findAllById(ids: List<UUID>): List<Organization>
     fun findByStatus(status: OrganizationStatus, pageable: Pageable): Page<Organization>
     fun findAll(pageable: Pageable): Page<Organization>
     fun existsById(id: UUID): Boolean
     fun deleteById(id: UUID)
     fun count(): Long
     fun countByStatus(status: OrganizationStatus): Long
+    fun countAllByStatus(): Map<OrganizationStatus, Long>
     fun countCreatedAfter(after: Instant): Long
     fun countCreatedBetween(start: Instant, end: Instant): Long
 }

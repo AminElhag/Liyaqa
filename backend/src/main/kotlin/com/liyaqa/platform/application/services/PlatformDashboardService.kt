@@ -352,7 +352,14 @@ class PlatformDashboardService(
 
     /**
      * Gets expiring subscriptions.
+     * Cached for 5 minutes to reduce database load.
+     * Uses batch fetching to avoid N+1 queries.
      */
+    @Cacheable(
+        value = ["platformDashboard"],
+        key = "'expiring-' + #daysAhead",
+        cacheManager = "platformDashboardCacheManager"
+    )
     fun getExpiringSubscriptions(daysAhead: Int): List<ExpiringClientSubscriptionResponse> {
         val expiryDate = LocalDate.now().plusDays(daysAhead.toLong())
         val expiring = clientSubscriptionRepository.findExpiring(
@@ -360,10 +367,22 @@ class PlatformDashboardService(
             listOf(ClientSubscriptionStatus.ACTIVE, ClientSubscriptionStatus.TRIAL)
         )
 
+        if (expiring.isEmpty()) {
+            return emptyList()
+        }
+
+        // Batch fetch all organizations and plans to avoid N+1 queries
+        val orgIds = expiring.map { it.organizationId }.distinct()
+        val planIds = expiring.map { it.clientPlanId }.distinct()
+
+        val organizationsMap = organizationRepository.findAllById(orgIds).associateBy { it.id }
+        val plansMap = clientPlanRepository.findAllById(planIds).associateBy { it.id }
+
+        val today = LocalDate.now()
+
         return expiring.map { subscription ->
-            val organization = organizationRepository.findById(subscription.organizationId).orElse(null)
-            val plan = clientPlanRepository.findById(subscription.clientPlanId).orElse(null)
-            val today = LocalDate.now()
+            val organization = organizationsMap[subscription.organizationId]
+            val plan = plansMap[subscription.clientPlanId]
             val daysUntil = ChronoUnit.DAYS.between(today, subscription.endDate)
 
             ExpiringClientSubscriptionResponse(
@@ -385,34 +404,59 @@ class PlatformDashboardService(
 
     /**
      * Gets top clients by revenue using optimized aggregation queries.
+     * Cached for 5 minutes to reduce database load.
+     * Uses batch fetching to avoid N+1 queries.
      */
+    @Cacheable(
+        value = ["platformDashboard"],
+        key = "'topClients-' + #limit",
+        cacheManager = "platformDashboardCacheManager"
+    )
     fun getTopClients(limit: Int): List<TopClientResponse> {
         // Use aggregation queries - get revenue grouped by organization (no memory loading)
         val revenueByOrg = clientInvoiceRepository.getRevenueByOrganization()
         val invoiceCountByOrg = clientInvoiceRepository.getInvoiceCountByOrganization()
 
-        return revenueByOrg.entries
+        // Get top organization IDs first
+        val topOrgIds = revenueByOrg.entries
             .sortedByDescending { it.value }
             .take(limit)
-            .mapNotNull { (orgId, revenue) ->
-                val organization = organizationRepository.findById(orgId).orElse(null) ?: return@mapNotNull null
-                val subscription = clientSubscriptionRepository.findActiveByOrganizationId(orgId).orElse(null)
+            .map { it.key }
 
-                TopClientResponse(
-                    organizationId = orgId,
-                    organizationNameEn = organization.name.en,
-                    organizationNameAr = organization.name.ar,
-                    totalRevenue = revenue,
-                    invoiceCount = invoiceCountByOrg[orgId] ?: 0L,
-                    subscriptionStatus = subscription?.status?.name ?: "NONE",
-                    currency = DEFAULT_CURRENCY
-                )
-            }
+        if (topOrgIds.isEmpty()) {
+            return emptyList()
+        }
+
+        // Batch fetch all organizations and subscriptions to avoid N+1 queries
+        val organizationsMap = organizationRepository.findAllById(topOrgIds).associateBy { it.id }
+        val subscriptionsMap = clientSubscriptionRepository.findActiveByOrganizationIds(topOrgIds)
+            .associateBy { it.organizationId }
+
+        return topOrgIds.mapNotNull { orgId ->
+            val organization = organizationsMap[orgId] ?: return@mapNotNull null
+            val subscription = subscriptionsMap[orgId]
+
+            TopClientResponse(
+                organizationId = orgId,
+                organizationNameEn = organization.name.en,
+                organizationNameAr = organization.name.ar,
+                totalRevenue = revenueByOrg[orgId] ?: BigDecimal.ZERO,
+                invoiceCount = invoiceCountByOrg[orgId] ?: 0L,
+                subscriptionStatus = subscription?.status?.name ?: "NONE",
+                currency = DEFAULT_CURRENCY
+            )
+        }
     }
 
     /**
      * Gets recent platform activity.
+     * Cached for 5 minutes to reduce database load.
      */
+    @Cacheable(
+        value = ["platformDashboard"],
+        key = "'activity-' + #limit",
+        cacheManager = "platformDashboardCacheManager"
+    )
     fun getRecentActivity(limit: Int): List<RecentActivityResponse> {
         val pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"))
         val auditLogs = auditLogRepository.findAll(pageable)

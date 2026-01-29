@@ -16,6 +16,7 @@ import com.liyaqa.membership.domain.model.SubscriptionStatus
 import com.liyaqa.membership.domain.ports.MemberRepository
 import com.liyaqa.membership.domain.ports.SubscriptionRepository
 import com.liyaqa.attendance.domain.ports.AttendanceRepository
+import com.liyaqa.billing.domain.ports.InvoiceRepository
 import com.liyaqa.shared.domain.LocalizedText
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -56,6 +57,9 @@ class MarketingJobsTest {
     @Mock
     private lateinit var attendanceRepository: AttendanceRepository
 
+    @Mock
+    private lateinit var invoiceRepository: InvoiceRepository
+
     private lateinit var marketingJobs: MarketingJobs
 
     private lateinit var testMember: Member
@@ -68,7 +72,8 @@ class MarketingJobsTest {
             segmentService,
             memberRepository,
             subscriptionRepository,
-            attendanceRepository
+            attendanceRepository,
+            invoiceRepository
         )
 
         testMember = Member(

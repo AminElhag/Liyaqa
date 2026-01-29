@@ -153,7 +153,7 @@ export default function ComplianceDashboardPage() {
               <div className="flex items-center gap-3 p-3 border rounded-lg">
                 <Activity className="h-8 w-8 text-purple-500" />
                 <div>
-                  <p className="font-medium text-2xl">{uninvestigated?.length ?? 0}</p>
+                  <p className="font-medium text-2xl">{uninvestigated?.content?.length ?? 0}</p>
                   <p className="text-xs text-muted-foreground">
                     {isArabic ? "أحداث غير محققة" : "Uninvestigated Events"}
                   </p>

@@ -3,9 +3,12 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
+import { useTheme } from "next-themes";
 import { AdminShell } from "@/components/layouts/admin-shell";
 import { useAuthStore, useHasHydrated } from "@/stores/auth-store";
 import { Loading } from "@/components/ui/spinner";
+import { CommandPaletteProvider, CommandPalette } from "@/components/command-palette";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 export default function AdminLayout({
   children,
@@ -14,8 +17,14 @@ export default function AdminLayout({
 }) {
   const locale = useLocale();
   const router = useRouter();
+  const { setTheme } = useTheme();
   const { isAuthenticated, isLoading, user, initialize } = useAuthStore();
   const hasHydrated = useHasHydrated();
+
+  useEffect(() => {
+    // Force light theme for admin routes regardless of OS preference or localStorage
+    setTheme("light");
+  }, [setTheme]);
 
   useEffect(() => {
     // Always call initialize on mount to restore tenant context
@@ -49,9 +58,24 @@ export default function AdminLayout({
   // Check if user has admin role
   const isAdmin = user?.role && ["SUPER_ADMIN", "CLUB_ADMIN", "STAFF"].includes(user.role);
   if (!isAdmin) {
-    router.push(`/${locale}/login`);
+    // Redirect members to their portal, others to staff login
+    const isMember = user?.role === "MEMBER";
+    if (isMember) {
+      router.push(`/${locale}/member/dashboard`);
+    } else {
+      router.push(`/${locale}/login`);
+    }
     return null;
   }
 
-  return <AdminShell>{children}</AdminShell>;
+  return (
+    <ErrorBoundary>
+      <CommandPaletteProvider>
+        <AdminShell>
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </AdminShell>
+        <CommandPalette />
+      </CommandPaletteProvider>
+    </ErrorBoundary>
+  );
 }

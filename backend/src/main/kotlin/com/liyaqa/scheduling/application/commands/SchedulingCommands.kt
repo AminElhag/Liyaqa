@@ -1,9 +1,12 @@
 package com.liyaqa.scheduling.application.commands
 
+import com.liyaqa.scheduling.domain.model.ClassPricingModel
 import com.liyaqa.scheduling.domain.model.ClassType
 import com.liyaqa.scheduling.domain.model.DayOfWeek
 import com.liyaqa.scheduling.domain.model.DifficultyLevel
 import com.liyaqa.shared.domain.LocalizedText
+import com.liyaqa.shared.domain.Money
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
@@ -27,7 +30,16 @@ data class CreateGymClassCommand(
     val deductsClassFromPlan: Boolean = true,
     val colorCode: String? = null,
     val imageUrl: String? = null,
-    val sortOrder: Int = 0
+    val sortOrder: Int = 0,
+    // Pricing fields
+    val pricingModel: ClassPricingModel = ClassPricingModel.INCLUDED_IN_MEMBERSHIP,
+    val dropInPrice: Money? = null,
+    val taxRate: BigDecimal? = BigDecimal("15.00"),
+    val allowNonSubscribers: Boolean = false,
+    // Booking settings
+    val advanceBookingDays: Int = 7,
+    val cancellationDeadlineHours: Int = 2,
+    val lateCancellationFee: Money? = null
 )
 
 /**
@@ -48,7 +60,16 @@ data class UpdateGymClassCommand(
     val deductsClassFromPlan: Boolean? = null,
     val colorCode: String? = null,
     val imageUrl: String? = null,
-    val sortOrder: Int? = null
+    val sortOrder: Int? = null,
+    // Pricing fields
+    val pricingModel: ClassPricingModel? = null,
+    val dropInPrice: Money? = null,
+    val taxRate: BigDecimal? = null,
+    val allowNonSubscribers: Boolean? = null,
+    // Booking settings
+    val advanceBookingDays: Int? = null,
+    val cancellationDeadlineHours: Int? = null,
+    val lateCancellationFee: Money? = null
 )
 
 /**

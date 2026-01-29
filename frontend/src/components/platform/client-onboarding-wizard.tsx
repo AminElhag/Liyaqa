@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocale } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { WizardStepper } from "./wizard-stepper";
 import {
   OrganizationStep,
@@ -52,6 +53,7 @@ export function ClientOnboardingWizard({
 }: ClientOnboardingWizardProps) {
   const locale = useLocale();
   const isRtl = locale === "ar";
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState(0);
 
@@ -101,6 +103,41 @@ export function ClientOnboardingWizard({
     cancel: locale === "ar" ? "إلغاء" : "Cancel",
     create: locale === "ar" ? "إنشاء العميل" : "Create Client",
     creating: locale === "ar" ? "جاري الإنشاء..." : "Creating...",
+    validationError: locale === "ar" ? "خطأ في التحقق" : "Validation Error",
+    pleaseFixErrors:
+      locale === "ar"
+        ? "يرجى مراجعة وتصحيح الحقول التالية"
+        : "Please review and fix the following fields",
+  };
+
+  // Handle validation errors when form submission fails
+  const handleInvalid = (errors: FieldErrors<OnboardingFormValues>) => {
+    const errorFields = Object.keys(errors);
+    const firstErrorField = errorFields[0];
+    const firstError = errors[firstErrorField as keyof OnboardingFormValues];
+
+    toast({
+      title: texts.validationError,
+      description: firstError?.message || texts.pleaseFixErrors,
+      variant: "destructive",
+    });
+
+    // Navigate to the step containing the first error
+    if (firstErrorField) {
+      const stepIndex = getStepForField(firstErrorField);
+      if (stepIndex !== currentStep) {
+        setDirection(stepIndex > currentStep ? 1 : -1);
+        setCurrentStep(stepIndex);
+      }
+    }
+  };
+
+  // Get which step a field belongs to
+  const getStepForField = (fieldName: string): number => {
+    if (fieldName.startsWith("organization")) return 0;
+    if (fieldName.startsWith("club")) return 1;
+    if (fieldName.startsWith("admin")) return 2;
+    return 3; // subscription fields
   };
 
   // Validate current step before proceeding
@@ -192,6 +229,13 @@ export function ClientOnboardingWizard({
   const isLastStep = currentStep === WIZARD_STEPS.length - 1;
   const isFirstStep = currentStep === 0;
 
+  // Prevent Enter key from submitting the form on non-final steps
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === "Enter" && !isLastStep) {
+      e.preventDefault();
+    }
+  };
+
   // Map steps to the WizardStepper format
   const wizardSteps = WIZARD_STEPS.map((step) => ({
     id: step.id,
@@ -231,7 +275,7 @@ export function ClientOnboardingWizard({
       />
 
       {/* Form */}
-      <form onSubmit={handleSubmit(handleFormSubmit)}>
+      <form onSubmit={handleSubmit(handleFormSubmit, handleInvalid)} onKeyDown={handleKeyDown}>
         {/* Step Content with Animation */}
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div

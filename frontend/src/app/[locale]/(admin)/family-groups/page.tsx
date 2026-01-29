@@ -91,7 +91,7 @@ export default function FamilyGroupsPage() {
     );
   }
 
-  const groups = data?.content || [];
+  const groups: FamilyGroupSummary[] = data?.content || [];
 
   return (
     <div className="space-y-6">

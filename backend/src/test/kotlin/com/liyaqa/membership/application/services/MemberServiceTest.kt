@@ -11,6 +11,7 @@ import com.liyaqa.referral.application.services.ReferralCodeService
 import com.liyaqa.referral.application.services.ReferralTrackingService
 import com.liyaqa.shared.application.services.PermissionService
 import com.liyaqa.webhook.application.services.WebhookEventPublisher
+import com.liyaqa.auth.domain.ports.RefreshTokenRepository
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -68,6 +69,9 @@ class MemberServiceTest {
     @Mock
     private lateinit var referralTrackingService: ReferralTrackingService
 
+    @Mock
+    private lateinit var refreshTokenRepository: RefreshTokenRepository
+
     private lateinit var memberService: MemberService
 
     private lateinit var testMember: Member
@@ -84,7 +88,8 @@ class MemberServiceTest {
             permissionService,
             webhookPublisher,
             referralCodeService,
-            referralTrackingService
+            referralTrackingService,
+            refreshTokenRepository
         )
 
         testMember = Member(
@@ -137,7 +142,7 @@ class MemberServiceTest {
         whenever(memberRepository.existsByEmail(command.email)) doReturn true
 
         // When/Then
-        assertThrows(IllegalArgumentException::class.java) {
+        assertThrows(com.liyaqa.shared.exception.DuplicateFieldException::class.java) {
             memberService.createMember(command)
         }
 

@@ -324,7 +324,7 @@ export default function ProcessingActivitiesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {activities?.map((activity) => (
+                {activities?.content?.map((activity) => (
                   <TableRow key={activity.id}>
                     <TableCell className="font-medium">
                       {isArabic && activity.activityNameAr

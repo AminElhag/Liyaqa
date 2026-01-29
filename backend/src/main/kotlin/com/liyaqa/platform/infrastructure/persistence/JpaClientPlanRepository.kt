@@ -31,6 +31,10 @@ class JpaClientPlanRepository(
     override fun findById(id: UUID): Optional<ClientPlan> =
         springDataRepository.findById(id)
 
+    override fun findAllById(ids: List<UUID>): List<ClientPlan> =
+        if (ids.isEmpty()) emptyList()
+        else springDataRepository.findAllById(ids)
+
     override fun findAll(pageable: Pageable): Page<ClientPlan> =
         springDataRepository.findAll(pageable)
 

@@ -134,14 +134,14 @@ export default function LeadsPipelinePage() {
         <CardContent className="py-3">
           <div className="grid md:grid-cols-4 gap-4">
             <Select
-              value={assigneeFilter}
-              onValueChange={(value) => setAssigneeFilter(value)}
+              value={assigneeFilter || "ALL"}
+              onValueChange={(value) => setAssigneeFilter(value === "ALL" ? "" : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder={isArabic ? "المسؤول" : "Assignee"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{isArabic ? "الكل" : "All"}</SelectItem>
+                <SelectItem value="ALL">{isArabic ? "الكل" : "All"}</SelectItem>
                 {usersData?.content?.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.displayName?.en || user.email}
@@ -151,14 +151,14 @@ export default function LeadsPipelinePage() {
             </Select>
 
             <Select
-              value={sourceFilter}
-              onValueChange={(value) => setSourceFilter(value as LeadSource | "")}
+              value={sourceFilter || "ALL"}
+              onValueChange={(value) => setSourceFilter(value === "ALL" ? "" : value as LeadSource)}
             >
               <SelectTrigger>
                 <SelectValue placeholder={isArabic ? "المصدر" : "Source"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{isArabic ? "جميع المصادر" : "All Sources"}</SelectItem>
+                <SelectItem value="ALL">{isArabic ? "جميع المصادر" : "All Sources"}</SelectItem>
                 {Object.entries(LEAD_SOURCE_LABELS).map(([key, label]) => (
                   <SelectItem key={key} value={key}>
                     {isArabic ? label.ar : label.en}

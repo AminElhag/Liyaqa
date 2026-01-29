@@ -25,6 +25,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { usePlatformClients } from "@/queries/platform/use-platform-clients";
+import { usePlatformUsers } from "@/queries/platform/use-platform-users";
+import { useOrganizationClubs } from "@/queries/use-clubs";
 import type {
   SupportTicket,
   TicketCategory,
@@ -98,6 +100,10 @@ export function TicketForm({
   const { data: clientsData } = usePlatformClients({ size: 100 });
   const clients = clientsData?.content || [];
 
+  // Fetch platform users for assignee dropdown
+  const { data: usersData } = usePlatformUsers({ size: 100 });
+  const platformUsers = usersData?.content || [];
+
   // Form setup
   const {
     register,
@@ -126,6 +132,10 @@ export function TicketForm({
   const watchCategory = watch("category");
   const watchPriority = watch("priority");
   const watchIsInternal = watch("isInternal");
+
+  // Fetch clubs for selected organization
+  const { data: clubsData } = useOrganizationClubs(watchOrgId, { size: 100 });
+  const clubs = clubsData?.content || [];
 
   const texts = {
     // Section headers
@@ -212,6 +222,7 @@ export function TicketForm({
       locale === "ar"
         ? "لا توجد مؤسسات"
         : "No organizations available",
+    noClub: locale === "ar" ? "بدون نادي" : "No club",
     unassigned: locale === "ar" ? "غير مسند" : "Unassigned",
   };
 
@@ -281,11 +292,23 @@ export function TicketForm({
             {/* Club Selector (optional) */}
             <div className="space-y-2">
               <Label htmlFor="clubId">{texts.club}</Label>
-              <Input
-                id="clubId"
-                placeholder={texts.selectClub}
-                {...register("clubId")}
-              />
+              <Select
+                value={watch("clubId") || ""}
+                onValueChange={(value) => setValue("clubId", value === "none" ? "" : value)}
+                disabled={!watchOrgId}
+              >
+                <SelectTrigger id="clubId">
+                  <SelectValue placeholder={texts.selectClub} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{texts.noClub}</SelectItem>
+                  {clubs.map((club) => (
+                    <SelectItem key={club.id} value={club.id}>
+                      {getLocalizedText(club.name, locale)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
@@ -428,11 +451,22 @@ export function TicketForm({
           {/* Assign To */}
           <div className="space-y-2">
             <Label htmlFor="assignedToId">{texts.assignTo}</Label>
-            <Input
-              id="assignedToId"
-              placeholder={texts.selectAssignee}
-              {...register("assignedToId")}
-            />
+            <Select
+              value={watch("assignedToId") || ""}
+              onValueChange={(value) => setValue("assignedToId", value === "none" ? "" : value)}
+            >
+              <SelectTrigger id="assignedToId">
+                <SelectValue placeholder={texts.selectAssignee} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">{texts.unassigned}</SelectItem>
+                {platformUsers.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {locale === "ar" ? user.displayNameAr || user.displayNameEn : user.displayNameEn}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Internal Ticket Toggle */}

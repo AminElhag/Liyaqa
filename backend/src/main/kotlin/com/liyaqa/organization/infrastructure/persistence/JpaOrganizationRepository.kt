@@ -22,6 +22,9 @@ interface SpringDataOrganizationRepository : JpaRepository<Organization, UUID> {
 
     @Query("SELECT COUNT(o) FROM Organization o WHERE o.createdAt >= :start AND o.createdAt < :end")
     fun countByCreatedAtBetween(@Param("start") start: Instant, @Param("end") end: Instant): Long
+
+    @Query("SELECT o.status, COUNT(o) FROM Organization o GROUP BY o.status")
+    fun countGroupByStatus(): List<Array<Any>>
 }
 
 @Repository
@@ -34,6 +37,10 @@ class JpaOrganizationRepository(
 
     override fun findById(id: UUID): Optional<Organization> =
         springDataRepository.findById(id)
+
+    override fun findAllById(ids: List<UUID>): List<Organization> =
+        if (ids.isEmpty()) emptyList()
+        else springDataRepository.findAllById(ids)
 
     override fun findByStatus(status: OrganizationStatus, pageable: Pageable): Page<Organization> =
         springDataRepository.findByStatus(status, pageable)
@@ -58,4 +65,10 @@ class JpaOrganizationRepository(
 
     override fun countCreatedBetween(start: Instant, end: Instant): Long =
         springDataRepository.countByCreatedAtBetween(start, end)
+
+    override fun countAllByStatus(): Map<OrganizationStatus, Long> =
+        springDataRepository.countGroupByStatus()
+            .associate { row ->
+                (row[0] as OrganizationStatus) to (row[1] as Long)
+            }
 }

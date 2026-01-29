@@ -3,6 +3,8 @@ package com.liyaqa.platform.api
 import com.liyaqa.platform.api.dto.ClubAuditLogResponse
 import com.liyaqa.platform.api.dto.ClubEmployeeResponse
 import com.liyaqa.platform.api.dto.ClubEmployeeStats
+import com.liyaqa.platform.api.dto.ClubLocationResponse
+import com.liyaqa.platform.api.dto.ClubMembershipPlanResponse
 import com.liyaqa.platform.api.dto.ClubSubscriptionResponse
 import com.liyaqa.platform.api.dto.ClubSubscriptionStats
 import com.liyaqa.platform.api.dto.ClubUserResponse
@@ -11,6 +13,7 @@ import com.liyaqa.platform.api.dto.ClientClubResponse
 import com.liyaqa.platform.api.dto.PageResponse
 import com.liyaqa.platform.api.dto.PlatformClubDetailResponse
 import com.liyaqa.platform.api.dto.PlatformResetPasswordRequest
+import com.liyaqa.platform.api.dto.UpdateClubRequest
 import com.liyaqa.platform.application.services.PlatformClubService
 import com.liyaqa.shared.domain.AuditAction
 import io.swagger.v3.oas.annotations.Operation
@@ -23,6 +26,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -35,12 +39,17 @@ import java.util.UUID
  *
  * Endpoints:
  * - GET    /api/platform/clubs/{clubId}                    - Get club details with stats
+ * - PUT    /api/platform/clubs/{clubId}                    - Update club details
+ * - POST   /api/platform/clubs/{clubId}/activate           - Activate suspended club
+ * - POST   /api/platform/clubs/{clubId}/suspend            - Suspend active club
  * - GET    /api/platform/clubs/{clubId}/users              - List users in club
  * - GET    /api/platform/clubs/{clubId}/users/stats        - Get user statistics
  * - GET    /api/platform/clubs/{clubId}/employees          - List employees in club
  * - GET    /api/platform/clubs/{clubId}/employees/stats    - Get employee statistics
  * - GET    /api/platform/clubs/{clubId}/subscriptions      - List subscriptions in club
  * - GET    /api/platform/clubs/{clubId}/subscriptions/stats- Get subscription statistics
+ * - GET    /api/platform/clubs/{clubId}/locations          - List locations in club
+ * - GET    /api/platform/clubs/{clubId}/membership-plans   - List membership plans in club
  * - GET    /api/platform/clubs/{clubId}/audit-logs         - List audit logs for club
  * - POST   /api/platform/clubs/{clubId}/users/{userId}/reset-password - Reset user password
  */
@@ -63,6 +72,48 @@ class PlatformClubController(
     @Operation(summary = "Get club details", description = "Get detailed club information with statistics for troubleshooting")
     fun getClubDetails(@PathVariable clubId: UUID): ResponseEntity<PlatformClubDetailResponse> {
         val club = platformClubService.getClub(clubId)
+        val stats = platformClubService.getClubStats(clubId)
+        return ResponseEntity.ok(PlatformClubDetailResponse.from(club, stats))
+    }
+
+    /**
+     * Updates a club's basic information.
+     * Only PLATFORM_ADMIN can update clubs.
+     */
+    @PutMapping("/{clubId}")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @Operation(summary = "Update club", description = "Update club name and description (admin only)")
+    fun updateClub(
+        @PathVariable clubId: UUID,
+        @Valid @RequestBody request: UpdateClubRequest
+    ): ResponseEntity<PlatformClubDetailResponse> {
+        val club = platformClubService.updateClub(clubId, request)
+        val stats = platformClubService.getClubStats(clubId)
+        return ResponseEntity.ok(PlatformClubDetailResponse.from(club, stats))
+    }
+
+    /**
+     * Activates a suspended club.
+     * Only PLATFORM_ADMIN can activate clubs.
+     */
+    @PostMapping("/{clubId}/activate")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @Operation(summary = "Activate club", description = "Activate a suspended club (admin only)")
+    fun activateClub(@PathVariable clubId: UUID): ResponseEntity<PlatformClubDetailResponse> {
+        val club = platformClubService.activateClub(clubId)
+        val stats = platformClubService.getClubStats(clubId)
+        return ResponseEntity.ok(PlatformClubDetailResponse.from(club, stats))
+    }
+
+    /**
+     * Suspends an active club.
+     * Only PLATFORM_ADMIN can suspend clubs.
+     */
+    @PostMapping("/{clubId}/suspend")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @Operation(summary = "Suspend club", description = "Suspend an active club (admin only)")
+    fun suspendClub(@PathVariable clubId: UUID): ResponseEntity<PlatformClubDetailResponse> {
+        val club = platformClubService.suspendClub(clubId)
         val stats = platformClubService.getClubStats(clubId)
         return ResponseEntity.ok(PlatformClubDetailResponse.from(club, stats))
     }
@@ -269,5 +320,79 @@ class PlatformClubController(
     @Operation(summary = "Get audit actions", description = "Get list of available audit action types for filtering")
     fun getAuditActions(): ResponseEntity<List<String>> {
         return ResponseEntity.ok(AuditAction.entries.map { it.name })
+    }
+
+    // ========================================
+    // Locations
+    // ========================================
+
+    /**
+     * Gets all locations for a club with pagination.
+     */
+    @GetMapping("/{clubId}/locations")
+    @Operation(summary = "Get club locations", description = "Get paginated list of locations in the club")
+    fun getClubLocations(
+        @PathVariable clubId: UUID,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(defaultValue = "createdAt") sortBy: String,
+        @RequestParam(defaultValue = "desc") sortDirection: String
+    ): ResponseEntity<PageResponse<ClubLocationResponse>> {
+        val sort = if (sortDirection.equals("asc", ignoreCase = true)) {
+            Sort.by(sortBy).ascending()
+        } else {
+            Sort.by(sortBy).descending()
+        }
+        val pageable = PageRequest.of(page, size.coerceAtMost(100), sort)
+        val locationsPage = platformClubService.getLocationsByClub(clubId, pageable)
+
+        return ResponseEntity.ok(
+            PageResponse(
+                content = locationsPage.content.map { ClubLocationResponse.from(it) },
+                page = locationsPage.number,
+                size = locationsPage.size,
+                totalElements = locationsPage.totalElements,
+                totalPages = locationsPage.totalPages,
+                first = locationsPage.isFirst,
+                last = locationsPage.isLast
+            )
+        )
+    }
+
+    // ========================================
+    // Membership Plans
+    // ========================================
+
+    /**
+     * Gets all membership plans for a club with pagination.
+     */
+    @GetMapping("/{clubId}/membership-plans")
+    @Operation(summary = "Get club membership plans", description = "Get paginated list of membership plans in the club with subscriber counts")
+    fun getClubMembershipPlans(
+        @PathVariable clubId: UUID,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(defaultValue = "sortOrder") sortBy: String,
+        @RequestParam(defaultValue = "asc") sortDirection: String
+    ): ResponseEntity<PageResponse<ClubMembershipPlanResponse>> {
+        val sort = if (sortDirection.equals("asc", ignoreCase = true)) {
+            Sort.by(sortBy).ascending()
+        } else {
+            Sort.by(sortBy).descending()
+        }
+        val pageable = PageRequest.of(page, size.coerceAtMost(100), sort)
+        val plansPage = platformClubService.getMembershipPlansByClub(clubId, pageable)
+
+        return ResponseEntity.ok(
+            PageResponse(
+                content = plansPage.content.map { ClubMembershipPlanResponse.from(it.plan, it.subscriberCount) },
+                page = plansPage.number,
+                size = plansPage.size,
+                totalElements = plansPage.totalElements,
+                totalPages = plansPage.totalPages,
+                first = plansPage.isFirst,
+                last = plansPage.isLast
+            )
+        )
     }
 }

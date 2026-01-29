@@ -29,6 +29,13 @@ interface SpringDataClientSubscriptionRepository : JpaRepository<ClientSubscript
     """)
     fun findActiveByOrganizationId(@Param("organizationId") organizationId: UUID): Optional<ClientSubscription>
 
+    @Query("""
+        SELECT cs FROM ClientSubscription cs
+        WHERE cs.organizationId IN :organizationIds
+        AND cs.status IN ('ACTIVE', 'TRIAL')
+    """)
+    fun findActiveByOrganizationIds(@Param("organizationIds") organizationIds: List<UUID>): List<ClientSubscription>
+
     fun findByClientPlanId(clientPlanId: UUID, pageable: Pageable): Page<ClientSubscription>
 
     fun findBySalesRepId(salesRepId: UUID, pageable: Pageable): Page<ClientSubscription>
@@ -99,6 +106,10 @@ class JpaClientSubscriptionRepository(
 
     override fun findActiveByOrganizationId(organizationId: UUID): Optional<ClientSubscription> =
         springDataRepository.findActiveByOrganizationId(organizationId)
+
+    override fun findActiveByOrganizationIds(organizationIds: List<UUID>): List<ClientSubscription> =
+        if (organizationIds.isEmpty()) emptyList()
+        else springDataRepository.findActiveByOrganizationIds(organizationIds)
 
     override fun findByClientPlanId(clientPlanId: UUID, pageable: Pageable): Page<ClientSubscription> =
         springDataRepository.findByClientPlanId(clientPlanId, pageable)

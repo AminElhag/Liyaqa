@@ -1,6 +1,7 @@
 import { api } from "./client";
 import type { PaginatedResponse, UUID, LocalizedText, Money } from "@/types/api";
 import type { MembershipPlan, TaxableFeeRequest, BillingPeriod, SubscriptionType } from "@/types/member";
+import type { ContractType, ContractTerm, TerminationFeeType } from "@/types/contract";
 
 const PLANS_ENDPOINT = "api/membership-plans";
 
@@ -46,6 +47,17 @@ export interface CreatePlanRequest {
   isActive?: boolean;
   sortOrder?: number;
 
+  // Contract configuration
+  categoryId?: UUID;
+  contractType?: ContractType;
+  supportedTerms?: ContractTerm[];
+  defaultCommitmentMonths?: number;
+  minimumCommitmentMonths?: number;
+  defaultNoticePeriodDays?: number;
+  earlyTerminationFeeType?: TerminationFeeType;
+  earlyTerminationFeeValue?: number;
+  coolingOffDays?: number;
+
   // Legacy (backward compatibility)
   price?: Money;
   classLimit?: number;
@@ -60,6 +72,7 @@ export interface UpdatePlanRequest extends Partial<CreatePlanRequest> {
   clearAvailableUntil?: boolean;
   clearMinimumAge?: boolean;
   clearMaximumAge?: boolean;
+  clearCategoryId?: boolean;
 }
 
 /**
@@ -166,6 +179,17 @@ export async function createPlan(
     // Status
     isActive: data.isActive ?? true,
     sortOrder: data.sortOrder ?? 0,
+
+    // Contract configuration
+    categoryId: data.categoryId ?? null,
+    contractType: data.contractType ?? "MONTH_TO_MONTH",
+    supportedTerms: data.supportedTerms ?? ["MONTHLY"],
+    defaultCommitmentMonths: data.defaultCommitmentMonths ?? 1,
+    minimumCommitmentMonths: data.minimumCommitmentMonths ?? null,
+    defaultNoticePeriodDays: data.defaultNoticePeriodDays ?? 30,
+    earlyTerminationFeeType: data.earlyTerminationFeeType ?? "NONE",
+    earlyTerminationFeeValue: data.earlyTerminationFeeValue ?? null,
+    coolingOffDays: data.coolingOffDays ?? 14,
   };
   return api.post(PLANS_ENDPOINT, { json: backendData }).json();
 }
@@ -254,6 +278,21 @@ export async function updatePlan(
   // Status
   if (data.isActive !== undefined) backendData.isActive = data.isActive;
   if (data.sortOrder !== undefined) backendData.sortOrder = data.sortOrder;
+
+  // Contract configuration
+  if (data.clearCategoryId) {
+    backendData.clearCategoryId = true;
+  } else if (data.categoryId !== undefined) {
+    backendData.categoryId = data.categoryId;
+  }
+  if (data.contractType !== undefined) backendData.contractType = data.contractType;
+  if (data.supportedTerms !== undefined) backendData.supportedTerms = data.supportedTerms;
+  if (data.defaultCommitmentMonths !== undefined) backendData.defaultCommitmentMonths = data.defaultCommitmentMonths;
+  if (data.minimumCommitmentMonths !== undefined) backendData.minimumCommitmentMonths = data.minimumCommitmentMonths;
+  if (data.defaultNoticePeriodDays !== undefined) backendData.defaultNoticePeriodDays = data.defaultNoticePeriodDays;
+  if (data.earlyTerminationFeeType !== undefined) backendData.earlyTerminationFeeType = data.earlyTerminationFeeType;
+  if (data.earlyTerminationFeeValue !== undefined) backendData.earlyTerminationFeeValue = data.earlyTerminationFeeValue;
+  if (data.coolingOffDays !== undefined) backendData.coolingOffDays = data.coolingOffDays;
 
   return api.put(`${PLANS_ENDPOINT}/${id}`, { json: backendData }).json();
 }

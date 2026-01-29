@@ -3,8 +3,6 @@
 import { useMemo } from "react";
 import { useLocale } from "next-intl";
 import { motion } from "framer-motion";
-import { CalendarDays } from "lucide-react";
-import { useAuthStore } from "@/stores/auth-store";
 import {
   useDashboardSummary,
   useExpiringSubscriptions,
@@ -16,11 +14,13 @@ import {
   HeroStats,
   RevenueOverview,
   AttendanceHeatmap,
-  SubscriptionHealth,
   QuickActions,
-  ActivityTimeline,
-  UpcomingSessions,
+  MyTasksWidget,
+  AtRiskWidget,
+  WelcomeBanner,
+  AIInsightsBanner,
 } from "@/components/dashboard";
+import { WidgetErrorBoundary } from "@/components/error-boundary";
 import { cn } from "@/lib/utils";
 
 // Date helper for report queries
@@ -40,25 +40,24 @@ const pageVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.05,
+      staggerChildren: 0.08,
+      delayChildren: 0.02,
     },
   },
 };
 
 const sectionVariants = {
-  hidden: { opacity: 0, y: 10 },
+  hidden: { opacity: 0, y: 12 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.3 },
+    transition: { duration: 0.3, ease: [0.2, 0, 0, 1] as const },
   },
 };
 
 export default function DashboardPage() {
   const locale = useLocale();
   const isRtl = locale === "ar";
-  const { user } = useAuthStore();
 
   // Date ranges for reports
   const last30Days = useMemo(() => getDateRange(30), []);
@@ -84,29 +83,17 @@ export default function DashboardPage() {
   // Combine loading states for different sections
   const isLoadingStats = isLoadingSummary;
   const isLoadingCharts = isLoadingRevenue || isLoadingAttendanceReport;
-  const isLoadingLists = isLoadingExpiring || isLoadingAttendance || isLoadingSessions;
 
-  // Bilingual texts
-  const texts = {
-    welcome: locale === "ar" ? "مرحباً" : "Welcome",
-    subtitle: locale === "ar"
-      ? "إليك نظرة عامة على نشاط ناديك"
-      : "Here's an overview of your club's activity",
-    today: locale === "ar" ? "اليوم" : "Today",
-  };
-
-  // Get display name
-  const displayName = user?.displayName
-    ? locale === "ar" && user.displayName.ar
-      ? user.displayName.ar
-      : user.displayName.en
-    : "Admin";
-
-  // Format today's date
-  const todayFormatted = new Date().toLocaleDateString(
-    locale === "ar" ? "ar-SA" : "en-SA",
-    { weekday: "long", year: "numeric", month: "long", day: "numeric" }
-  );
+  // Calculate club health score from summary data
+  const healthScore = useMemo(() => {
+    if (!summary) return undefined;
+    // Simple health score calculation based on multiple factors
+    const memberScore = summary.activeMembers > 0 ? 25 : 0;
+    const subscriptionScore = summary.activeSubscriptions > 0 ? 25 : 0;
+    const attendanceScore = summary.todayCheckIns > 0 ? Math.min(25, (summary.todayCheckIns / 50) * 25) : 0;
+    const revenueScore = summary.monthlyRevenue > 0 ? 25 : 0;
+    return Math.round(memberScore + subscriptionScore + attendanceScore + revenueScore);
+  }, [summary]);
 
   return (
     <motion.div
@@ -115,72 +102,99 @@ export default function DashboardPage() {
       animate="visible"
       className="space-y-6"
     >
-      {/* Welcome Header */}
+      {/* Welcome Banner with Club Health Score */}
       <motion.div variants={sectionVariants}>
-        <div className={cn(
-          "flex flex-col md:flex-row md:items-center md:justify-between gap-4",
-          isRtl && "md:flex-row-reverse"
-        )}>
-          <div className={cn(isRtl && "text-right")}>
-            <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight">
-              {texts.welcome}, {displayName}! 👋
-            </h1>
-            <p className="text-muted-foreground mt-1">{texts.subtitle}</p>
-          </div>
-
-          {/* Date display */}
-          <div className={cn(
-            "flex items-center gap-2 text-sm text-muted-foreground",
-            isRtl && "flex-row-reverse"
-          )}>
-            <CalendarDays className="h-4 w-4" />
-            <span>{todayFormatted}</span>
-          </div>
-        </div>
+        <WelcomeBanner
+          healthScore={healthScore}
+          healthTrend="stable"
+          isLoading={isLoadingStats}
+        />
       </motion.div>
 
-      {/* Hero Stats Row */}
+      {/* Hero Stats Row - 4 MD3 cards with gradients */}
       <motion.div variants={sectionVariants}>
         <HeroStats summary={summary} isLoading={isLoadingStats} />
       </motion.div>
 
-      {/* Main Content Grid (3-column layout) */}
+      {/* AI Insights Banner - collapsible */}
+      <motion.div variants={sectionVariants}>
+        <AIInsightsBanner
+          insights={[
+            {
+              id: "churn-risk",
+              type: "warning",
+              titleEn: "Members at churn risk",
+              titleAr: "أعضاء معرضون لخطر الانسحاب",
+              descriptionEn: `${expiringSubscriptions?.length || 0} members need attention this week`,
+              descriptionAr: `${expiringSubscriptions?.length || 0} أعضاء يحتاجون اهتمام هذا الأسبوع`,
+              actionLabelEn: "View at-risk members",
+              actionLabelAr: "عرض الأعضاء المعرضين للخطر",
+              actionHref: "/members?risk=high",
+              metric: {
+                value: expiringSubscriptions?.length || 0,
+                labelEn: "members",
+                labelAr: "أعضاء",
+              },
+            },
+            {
+              id: "renewal-opportunity",
+              type: "opportunity",
+              titleEn: "Renewal opportunity",
+              titleAr: "فرصة تجديد",
+              descriptionEn: `${summary?.expiringThisWeek || 0} subscriptions expire this week`,
+              descriptionAr: `${summary?.expiringThisWeek || 0} اشتراك ينتهي هذا الأسبوع`,
+              actionLabelEn: "View expiring",
+              actionLabelAr: "عرض المنتهية",
+              actionHref: "/subscriptions?filter=expiring",
+              metric: {
+                value: summary?.expiringThisWeek || 0,
+                labelEn: "expiring",
+                labelAr: "ينتهي",
+              },
+            },
+          ]}
+          isLoading={isLoadingExpiring}
+        />
+      </motion.div>
+
+      {/* Main Content Grid - Revenue Chart (2/3) + My Tasks (1/3) */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column (2/3 width) - Charts */}
+        {/* Revenue Chart - 2/3 width */}
         <motion.div
           variants={sectionVariants}
-          className="lg:col-span-2 space-y-6"
+          className="lg:col-span-2"
         >
-          <RevenueOverview data={revenueReport} isLoading={isLoadingRevenue} />
-          <AttendanceHeatmap data={attendanceReport} isLoading={isLoadingAttendanceReport} />
+          <WidgetErrorBoundary widgetName="Revenue Overview">
+            <RevenueOverview data={revenueReport} isLoading={isLoadingRevenue} />
+          </WidgetErrorBoundary>
         </motion.div>
 
-        {/* Right Column (1/3 width) - Widgets */}
-        <motion.div variants={sectionVariants} className="space-y-6">
-          <SubscriptionHealth
-            summary={summary}
-            expiringSubscriptions={expiringSubscriptions}
-            isLoading={isLoadingExpiring}
-          />
-          <QuickActions />
+        {/* My Tasks Today - 1/3 width */}
+        <motion.div variants={sectionVariants}>
+          <WidgetErrorBoundary widgetName="My Tasks">
+            <MyTasksWidget />
+          </WidgetErrorBoundary>
         </motion.div>
       </div>
 
-      {/* Bottom Row (2-column layout) */}
+      {/* Secondary Row - Attendance Heatmap (1/2) + At-Risk Members (1/2) */}
       <div className="grid gap-6 md:grid-cols-2">
         <motion.div variants={sectionVariants}>
-          <ActivityTimeline
-            attendance={todayAttendance}
-            isLoading={isLoadingAttendance}
-          />
+          <WidgetErrorBoundary widgetName="Attendance Heatmap">
+            <AttendanceHeatmap data={attendanceReport} isLoading={isLoadingAttendanceReport} />
+          </WidgetErrorBoundary>
         </motion.div>
         <motion.div variants={sectionVariants}>
-          <UpcomingSessions
-            sessions={todaySessions}
-            isLoading={isLoadingSessions}
-          />
+          <WidgetErrorBoundary widgetName="At-Risk Members">
+            <AtRiskWidget />
+          </WidgetErrorBoundary>
         </motion.div>
       </div>
+
+      {/* Quick Actions Grid - Full width */}
+      <motion.div variants={sectionVariants}>
+        <QuickActions />
+      </motion.div>
     </motion.div>
   );
 }

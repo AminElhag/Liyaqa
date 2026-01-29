@@ -54,6 +54,10 @@ export interface FacilitySlot {
   startTime: string;
   endTime: string;
   status: SlotStatus;
+  booking?: {
+    id: UUID;
+    memberId: UUID;
+  };
 }
 
 export interface FacilityBooking {

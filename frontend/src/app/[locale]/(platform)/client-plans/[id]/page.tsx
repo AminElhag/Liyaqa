@@ -14,7 +14,16 @@ import {
   Building2,
   Users,
   Calendar,
-  Zap,
+  Smartphone,
+  Watch,
+  Megaphone,
+  Award,
+  DoorOpen,
+  CalendarCheck,
+  Dumbbell,
+  Briefcase,
+  Heart,
+  CreditCard,
   BarChart3,
   Code,
   HeadphonesIcon,
@@ -23,7 +32,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Loading } from "@/components/ui/spinner";
 import { getLocalizedText } from "@/lib/utils";
 import { PlanStatusBadge } from "@/components/platform/plan-status-badge";
@@ -35,12 +43,35 @@ import {
   useDeactivateClientPlan,
   useDeleteClientPlan,
 } from "@/queries/platform/use-client-plans";
-import type { BillingCycle } from "@/types/platform/client-plan";
+import type { BillingCycle, ClientPlan, FeatureKey } from "@/types/platform/client-plan";
+import { FEATURE_CATEGORIES } from "@/types/platform/client-plan";
 
 const BILLING_CYCLE_LABELS: Record<BillingCycle, { en: string; ar: string }> = {
   MONTHLY: { en: "Monthly", ar: "شهري" },
   QUARTERLY: { en: "Quarterly", ar: "ربع سنوي" },
   ANNUAL: { en: "Annual", ar: "سنوي" },
+};
+
+/**
+ * Icon mapping for feature keys
+ */
+const FEATURE_ICONS: Record<FeatureKey, React.ElementType> = {
+  hasMemberPortal: Users,
+  hasMobileApp: Smartphone,
+  hasWearablesIntegration: Watch,
+  hasMarketingAutomation: Megaphone,
+  hasLoyaltyProgram: Award,
+  hasAccessControl: DoorOpen,
+  hasFacilityBooking: CalendarCheck,
+  hasPersonalTraining: Dumbbell,
+  hasCorporateAccounts: Briefcase,
+  hasFamilyGroups: Heart,
+  hasOnlinePayments: CreditCard,
+  hasAdvancedReporting: BarChart3,
+  hasApiAccess: Code,
+  hasPrioritySupport: HeadphonesIcon,
+  hasWhiteLabeling: Palette,
+  hasCustomIntegrations: Plug,
 };
 
 export default function ClientPlanDetailPage() {
@@ -94,13 +125,6 @@ export default function ClientPlanDetailPage() {
     maxMembers: locale === "ar" ? "الحد الأقصى للأعضاء" : "Max Members",
     maxStaffUsers: locale === "ar" ? "الحد الأقصى للموظفين" : "Max Staff Users",
 
-    // Features
-    advancedReporting: locale === "ar" ? "تقارير متقدمة" : "Advanced Reporting",
-    apiAccess: locale === "ar" ? "وصول API" : "API Access",
-    prioritySupport: locale === "ar" ? "دعم أولوي" : "Priority Support",
-    whiteLabeling: locale === "ar" ? "علامة بيضاء" : "White Labeling",
-    customIntegrations: locale === "ar" ? "تكاملات مخصصة" : "Custom Integrations",
-
     // Timestamps
     createdAt: locale === "ar" ? "تاريخ الإنشاء" : "Created At",
     updatedAt: locale === "ar" ? "آخر تحديث" : "Last Updated",
@@ -137,7 +161,6 @@ export default function ClientPlanDetailPage() {
         minute: "2-digit",
       }
     );
-
 
   // Handlers
   const handleActivate = () => {
@@ -386,44 +409,40 @@ export default function ClientPlanDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Features Card (Full Width) */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-primary" />
-              <CardTitle>{texts.features}</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              <FeatureBadge
-                icon={BarChart3}
-                label={texts.advancedReporting}
-                enabled={plan.hasAdvancedReporting}
-              />
-              <FeatureBadge
-                icon={Code}
-                label={texts.apiAccess}
-                enabled={plan.hasApiAccess}
-              />
-              <FeatureBadge
-                icon={HeadphonesIcon}
-                label={texts.prioritySupport}
-                enabled={plan.hasPrioritySupport}
-              />
-              <FeatureBadge
-                icon={Palette}
-                label={texts.whiteLabeling}
-                enabled={plan.hasWhiteLabeling}
-              />
-              <FeatureBadge
-                icon={Plug}
-                label={texts.customIntegrations}
-                enabled={plan.hasCustomIntegrations}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        {/* Features Cards - One per category (Full Width) */}
+        {FEATURE_CATEGORIES.map((category) => {
+          // Check if any feature in this category is enabled
+          const hasEnabledFeatures = category.features.some(
+            (feature) => plan[feature.key as keyof ClientPlan]
+          );
+
+          return (
+            <Card key={category.id} className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="text-lg">
+                  {locale === "ar" ? category.labelAr : category.labelEn}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  {category.features.map((feature) => {
+                    const Icon = FEATURE_ICONS[feature.key];
+                    const enabled = plan[feature.key as keyof ClientPlan] as boolean;
+
+                    return (
+                      <FeatureBadge
+                        key={feature.key}
+                        icon={Icon}
+                        label={locale === "ar" ? feature.labelAr : feature.labelEn}
+                        enabled={enabled}
+                      />
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
 
         {/* Timestamps Card (Full Width) */}
         <Card className="lg:col-span-2">

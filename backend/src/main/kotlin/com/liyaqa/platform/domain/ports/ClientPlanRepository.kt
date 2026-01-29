@@ -13,6 +13,7 @@ import java.util.UUID
 interface ClientPlanRepository {
     fun save(plan: ClientPlan): ClientPlan
     fun findById(id: UUID): Optional<ClientPlan>
+    fun findAllById(ids: List<UUID>): List<ClientPlan>
     fun findAll(pageable: Pageable): Page<ClientPlan>
     fun findByIsActive(isActive: Boolean, pageable: Pageable): Page<ClientPlan>
     fun findAllActive(): List<ClientPlan>

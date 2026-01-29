@@ -476,19 +476,19 @@ class ClientOnboardingService(
     }
 
     /**
-     * Gets client statistics.
+     * Gets client statistics using optimized database query.
      */
     @Transactional(readOnly = true)
     fun getClientStats(): ClientStats {
-        val allOrgs = organizationRepository.findAll(Pageable.unpaged())
-        val stats = allOrgs.groupBy { it.status }.mapValues { it.value.size.toLong() }
+        val statusCounts = organizationRepository.countAllByStatus()
+        val total = statusCounts.values.sum()
 
         return ClientStats(
-            total = allOrgs.totalElements,
-            pending = stats[OrganizationStatus.PENDING] ?: 0,
-            active = stats[OrganizationStatus.ACTIVE] ?: 0,
-            suspended = stats[OrganizationStatus.SUSPENDED] ?: 0,
-            closed = stats[OrganizationStatus.CLOSED] ?: 0
+            total = total,
+            pending = statusCounts[OrganizationStatus.PENDING] ?: 0,
+            active = statusCounts[OrganizationStatus.ACTIVE] ?: 0,
+            suspended = statusCounts[OrganizationStatus.SUSPENDED] ?: 0,
+            closed = statusCounts[OrganizationStatus.CLOSED] ?: 0
         )
     }
 }

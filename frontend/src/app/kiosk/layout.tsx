@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, createContext, useContext } from "react";
+import { Suspense, useState, useEffect, createContext, useContext } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IdleOverlay } from "@/components/kiosk";
 import { useKioskDeviceByCode, useStartSession, useSendKioskHeartbeat } from "@/queries/use-kiosk";
@@ -26,6 +26,18 @@ export function useKiosk() {
 }
 
 export default function KioskLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-b from-primary/5 to-primary/10 flex items-center justify-center"><div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent" /></div>}>
+      <KioskLayoutInner>{children}</KioskLayoutInner>
+    </Suspense>
+  );
+}
+
+function KioskLayoutInner({
   children,
 }: {
   children: React.ReactNode;
@@ -96,7 +108,7 @@ export default function KioskLayout({
       <div className="min-h-screen bg-gradient-to-b from-red-50 to-red-100 flex items-center justify-center p-8">
         <div className="text-center space-y-6">
           <div className="w-24 h-24 mx-auto bg-red-100 rounded-full flex items-center justify-center">
-            <span className="text-5xl">❌</span>
+            <span className="text-5xl">&#10060;</span>
           </div>
           <h1 className="text-3xl font-bold text-red-800">Device Not Found</h1>
           <p className="text-xl text-red-600">

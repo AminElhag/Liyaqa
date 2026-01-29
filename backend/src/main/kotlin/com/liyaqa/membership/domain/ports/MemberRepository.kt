@@ -57,4 +57,34 @@ interface MemberRepository {
      * Used for churn analysis reports.
      */
     fun countJoinedBetween(startDate: LocalDate, endDate: LocalDate): Long
+
+    // ==================== UNIQUENESS CHECKS ====================
+
+    /**
+     * Check if a member with the given phone number exists.
+     */
+    fun existsByPhone(phone: String): Boolean
+
+    /**
+     * Check if a member with the given national ID exists.
+     */
+    fun existsByNationalId(nationalId: String): Boolean
+
+    /**
+     * Check if a member with the given email exists, excluding a specific member.
+     * Used for update validation.
+     */
+    fun existsByEmailAndIdNot(email: String, excludeId: UUID): Boolean
+
+    /**
+     * Check if a member with the given phone exists, excluding a specific member.
+     * Used for update validation.
+     */
+    fun existsByPhoneAndIdNot(phone: String, excludeId: UUID): Boolean
+
+    /**
+     * Check if a member with the given national ID exists, excluding a specific member.
+     * Used for update validation.
+     */
+    fun existsByNationalIdAndIdNot(nationalId: String, excludeId: UUID): Boolean
 }

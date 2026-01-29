@@ -113,7 +113,35 @@ class MembershipPlan(
     var isActive: Boolean = true,
 
     @Column(name = "sort_order", nullable = false)
-    var sortOrder: Int = 0
+    var sortOrder: Int = 0,
+
+    // === CONTRACT CONFIGURATION ===
+    @Column(name = "category_id")
+    var categoryId: UUID? = null,
+
+    @Column(name = "contract_type", length = 20)
+    var contractType: String = "MONTH_TO_MONTH",
+
+    @Column(name = "supported_terms")
+    var supportedTerms: String = "MONTHLY",  // Comma-separated values
+
+    @Column(name = "default_commitment_months")
+    var defaultCommitmentMonths: Int = 1,
+
+    @Column(name = "minimum_commitment_months")
+    var minimumCommitmentMonths: Int? = null,
+
+    @Column(name = "default_notice_period_days")
+    var defaultNoticePeriodDays: Int = 30,
+
+    @Column(name = "early_termination_fee_type", length = 30)
+    var earlyTerminationFeeType: String = "NONE",
+
+    @Column(name = "early_termination_fee_value")
+    var earlyTerminationFeeValue: java.math.BigDecimal? = null,
+
+    @Column(name = "cooling_off_days")
+    var coolingOffDays: Int = 14
 
 ) : BaseEntity(id) {
 
@@ -203,6 +231,20 @@ class MembershipPlan(
      * Checks if this plan has unlimited classes.
      */
     fun hasUnlimitedClasses(): Boolean = maxClassesPerPeriod == null
+
+    /**
+     * Get supported contract terms as a list.
+     */
+    fun getSupportedTermsList(): List<String> {
+        return supportedTerms.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+    }
+
+    /**
+     * Set supported contract terms from a list.
+     */
+    fun setSupportedTermsList(terms: List<String>) {
+        supportedTerms = terms.joinToString(",")
+    }
 }
 
 enum class BillingPeriod {

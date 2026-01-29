@@ -1,4 +1,4 @@
-import type { UUID, LocalizedText } from "../api";
+import type { UUID, LocalizedText, LocalizedAddress, TaxableFee } from "../api";
 import type { ClubStatus } from "../organization";
 
 // ============================================
@@ -207,4 +207,70 @@ export interface ClubDetailQueryParams {
 
 export interface ClubAuditLogQueryParams extends ClubDetailQueryParams {
   action?: AuditAction;
+}
+
+// ============================================
+// Club Location Types
+// ============================================
+
+export type LocationStatus = "ACTIVE" | "TEMPORARILY_CLOSED" | "PERMANENTLY_CLOSED";
+
+export type GenderPolicy = "MIXED" | "MALE_ONLY" | "FEMALE_ONLY" | "TIME_BASED";
+
+/**
+ * Location in a club.
+ */
+export interface ClubLocation {
+  id: UUID;
+  clubId: UUID;
+  name: LocalizedText;
+  address?: LocalizedAddress;
+  phone?: string;
+  email?: string;
+  status: LocationStatus;
+  genderPolicy: GenderPolicy;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================
+// Club Membership Plan Types
+// ============================================
+
+export type BillingPeriod =
+  | "DAILY"
+  | "WEEKLY"
+  | "BIWEEKLY"
+  | "MONTHLY"
+  | "QUARTERLY"
+  | "YEARLY"
+  | "ONE_TIME";
+
+/**
+ * Membership plan in a club.
+ */
+export interface ClubMembershipPlan {
+  id: UUID;
+  name: LocalizedText;
+  description?: LocalizedText;
+  membershipFee: TaxableFee;
+  billingPeriod: BillingPeriod;
+  durationDays?: number;
+  isActive: boolean;
+  subscriberCount: number;
+  createdAt: string;
+}
+
+// ============================================
+// Update Club Types
+// ============================================
+
+/**
+ * Request to update club basic info.
+ */
+export interface UpdateClubRequest {
+  nameEn?: string;
+  nameAr?: string;
+  descriptionEn?: string;
+  descriptionAr?: string;
 }

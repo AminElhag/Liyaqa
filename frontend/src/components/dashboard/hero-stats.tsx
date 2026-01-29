@@ -185,8 +185,9 @@ function HeroStatCard({ stat, locale, isRtl }: HeroStatCardProps) {
       <Link href={`/${locale}${stat.href}`}>
         <div
           className={cn(
-            "relative overflow-hidden rounded-xl border bg-gradient-to-br p-4 transition-all duration-300",
-            "hover:shadow-lg hover:scale-[1.02] cursor-pointer",
+            "relative overflow-hidden rounded-md3-lg border bg-gradient-to-br p-4 transition-all duration-300",
+            "hover:shadow-md3-2 hover:scale-[1.02] cursor-pointer",
+            "md3-state-layer",
             gradientClasses[stat.accentColor]
           )}
         >
@@ -273,14 +274,14 @@ function HeroStatsSkeleton() {
       {Array.from({ length: 4 }).map((_, i) => (
         <div
           key={i}
-          className="rounded-xl border bg-card p-4 animate-pulse"
+          className="rounded-md3-lg border bg-card p-4 animate-pulse shadow-md3-1"
         >
           <div className="flex items-center gap-2 mb-3">
-            <div className="h-8 w-8 rounded-lg bg-muted" />
-            <div className="h-4 w-24 rounded bg-muted" />
+            <div className="h-8 w-8 rounded-md3-md bg-muted" />
+            <div className="h-4 w-24 rounded-md3-sm bg-muted" />
           </div>
-          <div className="h-8 w-20 rounded bg-muted mb-2" />
-          <div className="h-4 w-32 rounded bg-muted" />
+          <div className="h-8 w-20 rounded-md3-sm bg-muted mb-2" />
+          <div className="h-4 w-32 rounded-md3-sm bg-muted" />
         </div>
       ))}
     </div>

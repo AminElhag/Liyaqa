@@ -64,6 +64,7 @@ import {
   type DeviceDirection,
   type DeviceStatus,
   type CreateDeviceRequest,
+  type AccessDevice,
 } from "@/types/access-control";
 
 export default function DevicesPage() {
@@ -131,15 +132,14 @@ export default function DevicesPage() {
     }
   };
 
-  const openEditDialog = (device: any) => {
+  const openEditDialog = (device: AccessDevice) => {
     setFormData({
       deviceName: device.deviceName,
-      deviceNameAr: device.deviceNameAr,
+      deviceNameAr: device.deviceNameAr ?? undefined,
       deviceType: device.deviceType,
       direction: device.direction,
-      ipAddress: device.ipAddress,
-      zoneId: device.zoneId,
-      status: device.status,
+      ipAddress: device.ipAddress ?? undefined,
+      zoneId: device.zoneId ?? undefined,
     });
     setEditingDevice(device.id);
   };

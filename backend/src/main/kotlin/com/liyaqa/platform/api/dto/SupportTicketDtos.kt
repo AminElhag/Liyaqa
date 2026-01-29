@@ -29,7 +29,7 @@ data class CreateSupportTicketRequest(
     @field:NotNull(message = "Organization ID is required")
     val organizationId: UUID,
 
-    val clubId: UUID? = null,
+    val clubId: String? = null,  // Can be UUID string or club slug
 
     @field:NotBlank(message = "Subject is required")
     @field:Size(max = 200, message = "Subject must not exceed 200 characters")

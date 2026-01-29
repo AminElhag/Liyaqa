@@ -56,6 +56,19 @@ export default function LoginPage() {
   const [subdomainTenant, setSubdomainTenant] =
     React.useState<SubdomainTenant | null>(null);
   const [isLoadingTenant, setIsLoadingTenant] = React.useState(true);
+  const [roleError, setRoleError] = React.useState<string | null>(null);
+
+  // Localized texts for staff-only validation
+  const texts = {
+    wrongRole:
+      locale === "ar"
+        ? "هذا الحساب غير مصرح له بالوصول إلى لوحة تحكم الموظفين. يرجى استخدام تسجيل دخول الأعضاء."
+        : "This account cannot access the staff portal. Please use the member login.",
+    memberLoginLink:
+      locale === "ar"
+        ? "هل أنت عضو؟ تسجيل دخول الأعضاء"
+        : "Are you a member? Member Login",
+  };
 
   // Check for subdomain-based tenant on mount
   React.useEffect(() => {
@@ -94,6 +107,8 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     clearError();
+    setRoleError(null);
+
     try {
       // Use subdomain tenant if available, otherwise use form input
       const tenantId = subdomainTenant?.tenantId || data.tenantId;
@@ -108,14 +123,19 @@ export default function LoginPage() {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Get the user from the store to determine redirect
-      const { user } = useAuthStore.getState();
+      const { user, logout } = useAuthStore.getState();
 
-      // Redirect based on user role
-      if (user?.role === "MEMBER") {
-        router.replace(`/${locale}/member/dashboard`);
-      } else {
-        router.replace(`/${locale}/dashboard`);
+      // Validate role - only staff roles can use this login
+      const allowedRoles = ["SUPER_ADMIN", "CLUB_ADMIN", "STAFF"];
+      if (!user?.role || !allowedRoles.includes(user.role)) {
+        setRoleError(texts.wrongRole);
+        // Logout to clear invalid session
+        logout();
+        return;
       }
+
+      // Redirect to staff dashboard
+      router.replace(`/${locale}/dashboard`);
     } catch {
       // Error is handled in store
     }
@@ -149,9 +169,9 @@ export default function LoginPage() {
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
-          {error && (
+          {(error || roleError) && (
             <div className="p-3 text-sm text-danger bg-danger-50 rounded-lg border border-danger-500/20">
-              {t("invalidCredentials")}
+              {roleError || t("invalidCredentials")}
             </div>
           )}
 
@@ -241,6 +261,14 @@ export default function LoginPage() {
               className="text-primary font-medium hover:underline"
             >
               {t("signUp")}
+            </Link>
+          </p>
+          <p className="text-sm text-center text-neutral-600">
+            <Link
+              href={`/${locale}/member/login`}
+              className="text-primary font-medium hover:underline"
+            >
+              {texts.memberLoginLink}
             </Link>
           </p>
         </CardFooter>

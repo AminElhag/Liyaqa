@@ -9,6 +9,7 @@ import {
   useComplianceFrameworks,
   useOrganizationComplianceStatus,
 } from "@/queries/use-compliance";
+import type { ComplianceFramework } from "@/types/compliance";
 
 export default function FrameworksListPage() {
   const locale = useLocale();
@@ -25,7 +26,7 @@ export default function FrameworksListPage() {
     statuses: statuses ?? [],
   });
 
-  const handleRowClick = (framework: (typeof frameworks)[0]) => {
+  const handleRowClick = (framework: ComplianceFramework) => {
     router.push(`/settings/compliance/frameworks/${framework.code}`);
   };
 

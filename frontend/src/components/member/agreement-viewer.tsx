@@ -132,7 +132,7 @@ export function AgreementViewer({
                 )}
                 <span className="text-xs flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  v{agreement.version} - {formatDate(agreement.effectiveDate)}
+                  v{agreement.agreementVersion} - {formatDate(agreement.effectiveDate)}
                 </span>
               </CardDescription>
             </div>

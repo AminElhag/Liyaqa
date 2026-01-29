@@ -4,11 +4,28 @@ import { useLocale } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useEffect, useCallback } from "react";
 import {
   Package,
   DollarSign,
   Building2,
-  Zap,
+  Users,
+  Smartphone,
+  Watch,
+  Megaphone,
+  Award,
+  DoorOpen,
+  CalendarCheck,
+  Dumbbell,
+  Briefcase,
+  Heart,
+  CreditCard,
+  BarChart3,
+  Code,
+  HeadphonesIcon,
+  Palette,
+  Plug,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +46,40 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  FEATURE_CATEGORIES,
+  FEATURE_DEPENDENCIES,
+  getDependentFeatures,
+  type FeatureKey,
+} from "@/types/platform/client-plan";
+
+/**
+ * Icon mapping for feature keys
+ */
+const FEATURE_ICONS: Record<FeatureKey, React.ElementType> = {
+  hasMemberPortal: Users,
+  hasMobileApp: Smartphone,
+  hasWearablesIntegration: Watch,
+  hasMarketingAutomation: Megaphone,
+  hasLoyaltyProgram: Award,
+  hasAccessControl: DoorOpen,
+  hasFacilityBooking: CalendarCheck,
+  hasPersonalTraining: Dumbbell,
+  hasCorporateAccounts: Briefcase,
+  hasFamilyGroups: Heart,
+  hasOnlinePayments: CreditCard,
+  hasAdvancedReporting: BarChart3,
+  hasApiAccess: Code,
+  hasPrioritySupport: HeadphonesIcon,
+  hasWhiteLabeling: Palette,
+  hasCustomIntegrations: Plug,
+};
 
 /**
  * Zod validation schema for client plan form.
@@ -53,7 +104,26 @@ const planFormSchema = z.object({
   maxMembers: z.coerce.number().min(1, "Must allow at least 1 member").default(100),
   maxStaffUsers: z.coerce.number().min(1, "Must allow at least 1 staff").default(5),
 
-  // Features
+  // Member Engagement Features
+  hasMemberPortal: z.boolean().default(false),
+  hasMobileApp: z.boolean().default(false),
+  hasWearablesIntegration: z.boolean().default(false),
+
+  // Marketing & Loyalty Features
+  hasMarketingAutomation: z.boolean().default(false),
+  hasLoyaltyProgram: z.boolean().default(false),
+
+  // Operations Features
+  hasAccessControl: z.boolean().default(false),
+  hasFacilityBooking: z.boolean().default(false),
+  hasPersonalTraining: z.boolean().default(false),
+
+  // Accounts & Payments Features
+  hasCorporateAccounts: z.boolean().default(false),
+  hasFamilyGroups: z.boolean().default(false),
+  hasOnlinePayments: z.boolean().default(false),
+
+  // Legacy Features
   hasAdvancedReporting: z.boolean().default(false),
   hasApiAccess: z.boolean().default(false),
   hasPrioritySupport: z.boolean().default(false),
@@ -75,7 +145,7 @@ interface PlanFormProps {
 
 /**
  * Form component for creating and editing client plans.
- * Contains 4 card sections: Basic Info, Pricing, Usage Limits, and Features.
+ * Contains sections for: Basic Info, Pricing, Usage Limits, and Features by category.
  */
 export function PlanForm({
   defaultValues,
@@ -107,6 +177,17 @@ export function PlanForm({
       maxLocationsPerClub: 3,
       maxMembers: 100,
       maxStaffUsers: 5,
+      hasMemberPortal: false,
+      hasMobileApp: false,
+      hasWearablesIntegration: false,
+      hasMarketingAutomation: false,
+      hasLoyaltyProgram: false,
+      hasAccessControl: false,
+      hasFacilityBooking: false,
+      hasPersonalTraining: false,
+      hasCorporateAccounts: false,
+      hasFamilyGroups: false,
+      hasOnlinePayments: false,
       hasAdvancedReporting: false,
       hasApiAccess: false,
       hasPrioritySupport: false,
@@ -117,10 +198,71 @@ export function PlanForm({
     },
   });
 
-  // Watch values for calculations
+  // Watch values for calculations and dependencies
   const monthlyPrice = watch("monthlyPriceAmount");
   const annualPrice = watch("annualPriceAmount");
   const billingCycle = watch("billingCycle");
+
+  // Watch all feature values for dependency handling
+  const featureValues = {
+    hasMemberPortal: watch("hasMemberPortal"),
+    hasMobileApp: watch("hasMobileApp"),
+    hasWearablesIntegration: watch("hasWearablesIntegration"),
+    hasMarketingAutomation: watch("hasMarketingAutomation"),
+    hasLoyaltyProgram: watch("hasLoyaltyProgram"),
+    hasAccessControl: watch("hasAccessControl"),
+    hasFacilityBooking: watch("hasFacilityBooking"),
+    hasPersonalTraining: watch("hasPersonalTraining"),
+    hasCorporateAccounts: watch("hasCorporateAccounts"),
+    hasFamilyGroups: watch("hasFamilyGroups"),
+    hasOnlinePayments: watch("hasOnlinePayments"),
+    hasAdvancedReporting: watch("hasAdvancedReporting"),
+    hasApiAccess: watch("hasApiAccess"),
+    hasPrioritySupport: watch("hasPrioritySupport"),
+    hasWhiteLabeling: watch("hasWhiteLabeling"),
+    hasCustomIntegrations: watch("hasCustomIntegrations"),
+  };
+
+  /**
+   * Handle feature toggle with dependency management.
+   * When enabling a feature: auto-enable its dependencies
+   * When disabling a feature: auto-disable dependent features
+   */
+  const handleFeatureToggle = useCallback((featureKey: FeatureKey, enabled: boolean) => {
+    if (enabled) {
+      // Enable the feature
+      setValue(featureKey, true);
+
+      // Auto-enable dependency if exists
+      const dependency = FEATURE_DEPENDENCIES[featureKey];
+      if (dependency) {
+        setValue(dependency as FeatureKey, true);
+        // Also enable transitive dependencies
+        const transitiveDep = FEATURE_DEPENDENCIES[dependency];
+        if (transitiveDep) {
+          setValue(transitiveDep as FeatureKey, true);
+        }
+      }
+    } else {
+      // Disable the feature
+      setValue(featureKey, false);
+
+      // Auto-disable dependent features
+      const dependents = getDependentFeatures(featureKey);
+      dependents.forEach((dependent) => {
+        setValue(dependent as FeatureKey, false);
+      });
+    }
+  }, [setValue]);
+
+  /**
+   * Check if a feature is disabled due to missing dependency.
+   */
+  const isFeatureDisabled = (featureKey: FeatureKey): boolean => {
+    const dependency = FEATURE_DEPENDENCIES[featureKey];
+    if (!dependency) return false;
+    return !featureValues[dependency as FeatureKey];
+  };
 
   // Calculate annual savings
   const annualSavings = monthlyPrice * 12 - annualPrice;
@@ -152,16 +294,6 @@ export function PlanForm({
     maxLocationsPerClub: locale === "ar" ? "الفروع لكل نادي" : "Locations per Club",
     maxMembers: locale === "ar" ? "الحد الأقصى للأعضاء" : "Max Members",
     maxStaffUsers: locale === "ar" ? "الحد الأقصى للموظفين" : "Max Staff Users",
-    advancedReporting: locale === "ar" ? "تقارير متقدمة" : "Advanced Reporting",
-    advancedReportingDesc: locale === "ar" ? "تحليلات ورؤى تفصيلية" : "Detailed analytics and insights",
-    apiAccess: locale === "ar" ? "وصول API" : "API Access",
-    apiAccessDesc: locale === "ar" ? "الوصول إلى واجهة برمجة التطبيقات" : "Access to the REST API",
-    prioritySupport: locale === "ar" ? "دعم أولوي" : "Priority Support",
-    prioritySupportDesc: locale === "ar" ? "دعم فني سريع ومخصص" : "Fast and dedicated technical support",
-    whiteLabeling: locale === "ar" ? "علامة بيضاء" : "White Labeling",
-    whiteLabelingDesc: locale === "ar" ? "تخصيص العلامة التجارية" : "Custom branding options",
-    customIntegrations: locale === "ar" ? "تكاملات مخصصة" : "Custom Integrations",
-    customIntegrationsDesc: locale === "ar" ? "تكامل مع أنظمة خارجية" : "Integration with external systems",
     sortOrder: locale === "ar" ? "ترتيب العرض" : "Display Order",
     sortOrderDesc: locale === "ar" ? "ترتيب عرض الخطة في القوائم (0 = أولاً)" : "Order in which the plan appears (0 = first)",
 
@@ -183,6 +315,9 @@ export function PlanForm({
 
     // Validation
     required: locale === "ar" ? "مطلوب" : "Required",
+
+    // Dependency warning
+    requiresFeature: locale === "ar" ? "يتطلب تفعيل" : "Requires",
   };
 
   const formatCurrency = (amount: number) =>
@@ -433,114 +568,113 @@ export function PlanForm({
         </CardContent>
       </Card>
 
-      {/* Features Card */}
+      {/* Features Cards - One per category */}
+      <TooltipProvider>
+        {FEATURE_CATEGORIES.map((category) => (
+          <Card key={category.id}>
+            <CardHeader>
+              <CardTitle className="text-lg">
+                {locale === "ar" ? category.labelAr : category.labelEn}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {category.features.map((feature) => {
+                  const Icon = FEATURE_ICONS[feature.key];
+                  const isDisabled = isFeatureDisabled(feature.key);
+                  const dependencyLabel = feature.dependsOn
+                    ? FEATURE_CATEGORIES.flatMap((c) => c.features).find(
+                        (f) => f.key === feature.dependsOn
+                      )
+                    : null;
+
+                  return (
+                    <div
+                      key={feature.key}
+                      className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${
+                        isDisabled
+                          ? "opacity-60 bg-slate-50"
+                          : featureValues[feature.key]
+                            ? "bg-primary/5 border-primary/20"
+                            : ""
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Icon className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div className="space-y-0.5">
+                          <Label
+                            htmlFor={feature.key}
+                            className={`cursor-pointer ${isDisabled ? "cursor-not-allowed" : ""}`}
+                          >
+                            {locale === "ar" ? feature.labelAr : feature.labelEn}
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            {locale === "ar" ? feature.descriptionAr : feature.descriptionEn}
+                          </p>
+                          {isDisabled && dependencyLabel && (
+                            <div className="flex items-center gap-1 text-xs text-amber-600">
+                              <AlertCircle className="h-3 w-3" />
+                              <span>
+                                {texts.requiresFeature}{" "}
+                                {locale === "ar"
+                                  ? dependencyLabel.labelAr
+                                  : dependencyLabel.labelEn}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <Switch
+                              id={feature.key}
+                              checked={featureValues[feature.key]}
+                              disabled={isDisabled}
+                              onCheckedChange={(checked) =>
+                                handleFeatureToggle(feature.key, checked)
+                              }
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        {isDisabled && dependencyLabel && (
+                          <TooltipContent>
+                            <p>
+                              {texts.requiresFeature}{" "}
+                              {locale === "ar"
+                                ? dependencyLabel.labelAr
+                                : dependencyLabel.labelEn}
+                            </p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </TooltipProvider>
+
+      {/* Sort Order */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-primary" />
-            <CardTitle>{texts.features}</CardTitle>
-          </div>
-          <CardDescription>{texts.featuresDesc}</CardDescription>
+          <CardTitle className="text-lg">
+            {locale === "ar" ? "الإعدادات الإضافية" : "Additional Settings"}
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Advanced Reporting */}
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="space-y-0.5">
-                <Label htmlFor="hasAdvancedReporting" className="cursor-pointer">
-                  {texts.advancedReporting}
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {texts.advancedReportingDesc}
-                </p>
-              </div>
-              <Switch
-                id="hasAdvancedReporting"
-                checked={watch("hasAdvancedReporting")}
-                onCheckedChange={(checked) => setValue("hasAdvancedReporting", checked)}
-              />
-            </div>
-
-            {/* API Access */}
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="space-y-0.5">
-                <Label htmlFor="hasApiAccess" className="cursor-pointer">
-                  {texts.apiAccess}
-                </Label>
-                <p className="text-sm text-muted-foreground">{texts.apiAccessDesc}</p>
-              </div>
-              <Switch
-                id="hasApiAccess"
-                checked={watch("hasApiAccess")}
-                onCheckedChange={(checked) => setValue("hasApiAccess", checked)}
-              />
-            </div>
-
-            {/* Priority Support */}
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="space-y-0.5">
-                <Label htmlFor="hasPrioritySupport" className="cursor-pointer">
-                  {texts.prioritySupport}
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {texts.prioritySupportDesc}
-                </p>
-              </div>
-              <Switch
-                id="hasPrioritySupport"
-                checked={watch("hasPrioritySupport")}
-                onCheckedChange={(checked) => setValue("hasPrioritySupport", checked)}
-              />
-            </div>
-
-            {/* White Labeling */}
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="space-y-0.5">
-                <Label htmlFor="hasWhiteLabeling" className="cursor-pointer">
-                  {texts.whiteLabeling}
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {texts.whiteLabelingDesc}
-                </p>
-              </div>
-              <Switch
-                id="hasWhiteLabeling"
-                checked={watch("hasWhiteLabeling")}
-                onCheckedChange={(checked) => setValue("hasWhiteLabeling", checked)}
-              />
-            </div>
-
-            {/* Custom Integrations */}
-            <div className="flex items-center justify-between p-3 border rounded-lg md:col-span-2">
-              <div className="space-y-0.5">
-                <Label htmlFor="hasCustomIntegrations" className="cursor-pointer">
-                  {texts.customIntegrations}
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {texts.customIntegrationsDesc}
-                </p>
-              </div>
-              <Switch
-                id="hasCustomIntegrations"
-                checked={watch("hasCustomIntegrations")}
-                onCheckedChange={(checked) => setValue("hasCustomIntegrations", checked)}
-              />
-            </div>
-          </div>
-
-          {/* Sort Order */}
-          <div className="pt-4 border-t">
-            <div className="space-y-2">
-              <Label htmlFor="sortOrder">{texts.sortOrder}</Label>
-              <Input
-                id="sortOrder"
-                type="number"
-                min="0"
-                {...register("sortOrder")}
-                className="w-32"
-              />
-              <p className="text-sm text-muted-foreground">{texts.sortOrderDesc}</p>
-            </div>
+        <CardContent>
+          <div className="space-y-2">
+            <Label htmlFor="sortOrder">{texts.sortOrder}</Label>
+            <Input
+              id="sortOrder"
+              type="number"
+              min="0"
+              {...register("sortOrder")}
+              className="w-32"
+            />
+            <p className="text-sm text-muted-foreground">{texts.sortOrderDesc}</p>
           </div>
         </CardContent>
       </Card>

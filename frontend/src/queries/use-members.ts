@@ -17,6 +17,8 @@ import {
   bulkDeleteMembers,
   bulkSuspendMembers,
   bulkActivateMembers,
+  resetMemberPassword,
+  createUserForMember,
 } from "@/lib/api/members";
 import type { PaginatedResponse, UUID } from "@/types/api";
 import type {
@@ -195,6 +197,37 @@ export function useBulkActivateMembers() {
     mutationFn: (ids: UUID[]) => bulkActivateMembers(ids),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: memberKeys.all });
+    },
+  });
+}
+
+/**
+ * Hook to reset member password (admin action)
+ */
+export function useResetMemberPassword() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ memberId, newPassword }: { memberId: UUID; newPassword: string }) =>
+      resetMemberPassword(memberId, newPassword),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: memberKeys.all });
+    },
+  });
+}
+
+/**
+ * Hook to create a user account for a member (admin action)
+ */
+export function useCreateUserForMember() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ memberId, password }: { memberId: UUID; password: string }) =>
+      createUserForMember(memberId, password),
+    onSuccess: (_, { memberId }) => {
+      queryClient.invalidateQueries({ queryKey: memberKeys.detail(memberId) });
+      queryClient.invalidateQueries({ queryKey: memberKeys.lists() });
     },
   });
 }

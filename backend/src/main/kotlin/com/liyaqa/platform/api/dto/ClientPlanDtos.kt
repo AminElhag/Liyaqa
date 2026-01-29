@@ -83,15 +83,31 @@ data class CreateClientPlanRequest(
     @field:Positive(message = "Max staff users must be positive")
     val maxStaffUsers: Int? = null,
 
+    // Legacy features
     val hasAdvancedReporting: Boolean? = null,
-
     val hasApiAccess: Boolean? = null,
-
     val hasPrioritySupport: Boolean? = null,
-
     val hasWhiteLabeling: Boolean? = null,
-
     val hasCustomIntegrations: Boolean? = null,
+
+    // Member Engagement features
+    val hasMemberPortal: Boolean? = null,
+    val hasMobileApp: Boolean? = null,
+    val hasWearablesIntegration: Boolean? = null,
+
+    // Marketing & Loyalty features
+    val hasMarketingAutomation: Boolean? = null,
+    val hasLoyaltyProgram: Boolean? = null,
+
+    // Operations features
+    val hasAccessControl: Boolean? = null,
+    val hasFacilityBooking: Boolean? = null,
+    val hasPersonalTraining: Boolean? = null,
+
+    // Accounts & Payments features
+    val hasCorporateAccounts: Boolean? = null,
+    val hasFamilyGroups: Boolean? = null,
+    val hasOnlinePayments: Boolean? = null,
 
     @field:PositiveOrZero(message = "Sort order must be zero or positive")
     val sortOrder: Int? = null
@@ -111,6 +127,17 @@ data class CreateClientPlanRequest(
         hasPrioritySupport = hasPrioritySupport ?: false,
         hasWhiteLabeling = hasWhiteLabeling ?: false,
         hasCustomIntegrations = hasCustomIntegrations ?: false,
+        hasMemberPortal = hasMemberPortal ?: false,
+        hasMobileApp = hasMobileApp ?: false,
+        hasWearablesIntegration = hasWearablesIntegration ?: false,
+        hasMarketingAutomation = hasMarketingAutomation ?: false,
+        hasLoyaltyProgram = hasLoyaltyProgram ?: false,
+        hasAccessControl = hasAccessControl ?: false,
+        hasFacilityBooking = hasFacilityBooking ?: false,
+        hasPersonalTraining = hasPersonalTraining ?: false,
+        hasCorporateAccounts = hasCorporateAccounts ?: false,
+        hasFamilyGroups = hasFamilyGroups ?: false,
+        hasOnlinePayments = hasOnlinePayments ?: false,
         sortOrder = sortOrder ?: 0
     )
 }
@@ -145,11 +172,31 @@ data class UpdateClientPlanRequest(
     @field:Positive(message = "Max staff users must be positive")
     val maxStaffUsers: Int? = null,
 
+    // Legacy features
     val hasAdvancedReporting: Boolean? = null,
     val hasApiAccess: Boolean? = null,
     val hasPrioritySupport: Boolean? = null,
     val hasWhiteLabeling: Boolean? = null,
     val hasCustomIntegrations: Boolean? = null,
+
+    // Member Engagement features
+    val hasMemberPortal: Boolean? = null,
+    val hasMobileApp: Boolean? = null,
+    val hasWearablesIntegration: Boolean? = null,
+
+    // Marketing & Loyalty features
+    val hasMarketingAutomation: Boolean? = null,
+    val hasLoyaltyProgram: Boolean? = null,
+
+    // Operations features
+    val hasAccessControl: Boolean? = null,
+    val hasFacilityBooking: Boolean? = null,
+    val hasPersonalTraining: Boolean? = null,
+
+    // Accounts & Payments features
+    val hasCorporateAccounts: Boolean? = null,
+    val hasFamilyGroups: Boolean? = null,
+    val hasOnlinePayments: Boolean? = null,
 
     @field:PositiveOrZero(message = "Sort order must be zero or positive")
     val sortOrder: Int? = null
@@ -175,6 +222,17 @@ data class UpdateClientPlanRequest(
             hasPrioritySupport = hasPrioritySupport,
             hasWhiteLabeling = hasWhiteLabeling,
             hasCustomIntegrations = hasCustomIntegrations,
+            hasMemberPortal = hasMemberPortal,
+            hasMobileApp = hasMobileApp,
+            hasWearablesIntegration = hasWearablesIntegration,
+            hasMarketingAutomation = hasMarketingAutomation,
+            hasLoyaltyProgram = hasLoyaltyProgram,
+            hasAccessControl = hasAccessControl,
+            hasFacilityBooking = hasFacilityBooking,
+            hasPersonalTraining = hasPersonalTraining,
+            hasCorporateAccounts = hasCorporateAccounts,
+            hasFamilyGroups = hasFamilyGroups,
+            hasOnlinePayments = hasOnlinePayments,
             sortOrder = sortOrder
         )
     }
@@ -198,12 +256,31 @@ data class ClientPlanResponse(
     val maxMembers: Int,
     val maxStaffUsers: Int,
 
-    // Feature flags
+    // Legacy feature flags
     val hasAdvancedReporting: Boolean,
     val hasApiAccess: Boolean,
     val hasPrioritySupport: Boolean,
     val hasWhiteLabeling: Boolean,
     val hasCustomIntegrations: Boolean,
+
+    // Member Engagement features
+    val hasMemberPortal: Boolean,
+    val hasMobileApp: Boolean,
+    val hasWearablesIntegration: Boolean,
+
+    // Marketing & Loyalty features
+    val hasMarketingAutomation: Boolean,
+    val hasLoyaltyProgram: Boolean,
+
+    // Operations features
+    val hasAccessControl: Boolean,
+    val hasFacilityBooking: Boolean,
+    val hasPersonalTraining: Boolean,
+
+    // Accounts & Payments features
+    val hasCorporateAccounts: Boolean,
+    val hasFamilyGroups: Boolean,
+    val hasOnlinePayments: Boolean,
 
     // Status
     @get:JsonProperty("isActive")
@@ -235,6 +312,17 @@ data class ClientPlanResponse(
             hasPrioritySupport = plan.hasPrioritySupport,
             hasWhiteLabeling = plan.hasWhiteLabeling,
             hasCustomIntegrations = plan.hasCustomIntegrations,
+            hasMemberPortal = plan.hasMemberPortal,
+            hasMobileApp = plan.hasMobileApp,
+            hasWearablesIntegration = plan.hasWearablesIntegration,
+            hasMarketingAutomation = plan.hasMarketingAutomation,
+            hasLoyaltyProgram = plan.hasLoyaltyProgram,
+            hasAccessControl = plan.hasAccessControl,
+            hasFacilityBooking = plan.hasFacilityBooking,
+            hasPersonalTraining = plan.hasPersonalTraining,
+            hasCorporateAccounts = plan.hasCorporateAccounts,
+            hasFamilyGroups = plan.hasFamilyGroups,
+            hasOnlinePayments = plan.hasOnlinePayments,
             isActive = plan.isActive,
             sortOrder = plan.sortOrder,
             annualSavingsAmount = plan.getAnnualSavings().amount,

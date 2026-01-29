@@ -83,21 +83,16 @@ export default function PlatformDashboardPage() {
     enabled: isSupport,
   });
 
-  const isLoading =
-    isLoadingDashboard ||
-    (isAdmin && isLoadingMonthlyRevenue) ||
-    ((isAdmin || isSupport) && isLoadingHealth) ||
-    (isSupport && isLoadingSupportStats);
+  // Progressive loading - don't block everything, let components show skeletons
+  // Only block if primary dashboard data is loading (shows main content skeleton)
+  const isPrimaryLoading = isLoadingDashboard;
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loading
-          text={locale === "ar" ? "جاري تحميل لوحة التحكم..." : "Loading dashboard..."}
-        />
-      </div>
-    );
-  }
+  // Secondary loading states passed to child components for their own skeleton handling
+  const isSecondaryLoading = {
+    monthlyRevenue: isLoadingMonthlyRevenue,
+    health: isLoadingHealth,
+    supportStats: isLoadingSupportStats,
+  };
 
   // Check for any errors
   const hasError = isDashboardError || (isAdmin && isMonthlyRevenueError) || ((isAdmin || isSupport) && isHealthError);
@@ -124,7 +119,8 @@ export default function PlatformDashboardPage() {
     );
   }
 
-  if (!dashboard) {
+  // Only show "no data" if loading is complete but data is still missing
+  if (!isPrimaryLoading && !dashboard) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <p className="text-muted-foreground">
@@ -179,20 +175,20 @@ export default function PlatformDashboardPage() {
     </div>
   );
 
-  // Render role-based dashboard
+  // Render role-based dashboard with progressive loading
   if (isAdmin) {
     return (
       <>
         {dateRangeSection}
         <AdminDashboard
-          summary={dashboard.summary}
-          revenue={dashboard.revenue}
+          summary={dashboard?.summary}
+          revenue={dashboard?.revenue}
           health={health}
           monthlyRevenue={monthlyRevenue}
-          dealPipeline={dashboard.dealPipeline}
-          topClients={dashboard.topClients}
-          recentActivity={dashboard.recentActivity}
-          isLoading={isLoading}
+          dealPipeline={dashboard?.dealPipeline}
+          topClients={dashboard?.topClients}
+          recentActivity={dashboard?.recentActivity}
+          isLoading={isPrimaryLoading || isSecondaryLoading.monthlyRevenue || isSecondaryLoading.health}
         />
       </>
     );
@@ -203,11 +199,11 @@ export default function PlatformDashboardPage() {
       <>
         {dateRangeSection}
         <SalesDashboard
-          summary={dashboard.summary}
-          dealPipeline={dashboard.dealPipeline}
-          topClients={dashboard.topClients}
-          recentActivity={dashboard.recentActivity}
-          isLoading={isLoading}
+          summary={dashboard?.summary}
+          dealPipeline={dashboard?.dealPipeline}
+          topClients={dashboard?.topClients}
+          recentActivity={dashboard?.recentActivity}
+          isLoading={isPrimaryLoading}
         />
       </>
     );
@@ -224,14 +220,7 @@ export default function PlatformDashboardPage() {
           pendingResponse: supportStatsData.waitingOnClientTickets,
           escalated: 0, // Not available in current API, using 0 as placeholder
         }
-      : {
-          openTickets: 0,
-          inProgressTickets: 0,
-          resolvedToday: 0,
-          avgResponseTime: 0,
-          pendingResponse: 0,
-          escalated: 0,
-        };
+      : undefined;
 
     return (
       <>
@@ -239,8 +228,8 @@ export default function PlatformDashboardPage() {
         <SupportDashboard
           supportStats={supportStats}
           health={health}
-          recentActivity={dashboard.recentActivity}
-          isLoading={isLoading}
+          recentActivity={dashboard?.recentActivity}
+          isLoading={isPrimaryLoading || isSecondaryLoading.health || isSecondaryLoading.supportStats}
         />
       </>
     );
@@ -251,14 +240,14 @@ export default function PlatformDashboardPage() {
     <>
       {dateRangeSection}
       <AdminDashboard
-        summary={dashboard.summary}
-        revenue={dashboard.revenue}
+        summary={dashboard?.summary}
+        revenue={dashboard?.revenue}
         health={health}
         monthlyRevenue={monthlyRevenue}
-        dealPipeline={dashboard.dealPipeline}
-        topClients={dashboard.topClients}
-        recentActivity={dashboard.recentActivity}
-        isLoading={isLoading}
+        dealPipeline={dashboard?.dealPipeline}
+        topClients={dashboard?.topClients}
+        recentActivity={dashboard?.recentActivity}
+        isLoading={isPrimaryLoading || isSecondaryLoading.monthlyRevenue || isSecondaryLoading.health}
       />
     </>
   );

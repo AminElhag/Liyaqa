@@ -19,13 +19,19 @@ export interface Agreement {
   type: AgreementType;
   isMandatory: boolean;
   isActive: boolean;
-  version: number;
+  // Backend may serialize as "active"/"mandatory" due to Kotlin boolean naming (JavaBeans convention)
+  active?: boolean;
+  mandatory?: boolean;
+  agreementVersion: number;
   effectiveDate: string;
   sortOrder: number;
   hasHealthQuestions: boolean;
   createdAt: string;
   updatedAt: string;
 }
+
+// Alias for backwards compatibility
+export type { Agreement as AgreementResponse };
 
 // Signed agreement record
 export interface MemberAgreement {

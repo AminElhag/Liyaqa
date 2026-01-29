@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -20,7 +21,12 @@ import { cn } from "@/lib/utils";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { ClientHealthMatrix } from "../client-health-matrix";
 import { PlatformActivityFeed } from "../platform-activity-feed";
+import { AlertCenter } from "../alert-center";
+import { HealthOverview } from "../health-overview";
+import { DunningStatusWidget } from "../dunning-status-widget";
 import type { PlatformHealth, RecentActivity } from "@/types/platform/dashboard";
+import type { PlatformAlert, AlertStatistics } from "@/types/platform/alerts";
+import type { DunningSequence, DunningStatistics } from "@/types/platform/dunning";
 
 interface SupportStats {
   openTickets: number;
@@ -36,6 +42,39 @@ interface SupportDashboardProps {
   health: PlatformHealth | undefined;
   recentActivity: RecentActivity[] | undefined;
   isLoading?: boolean;
+  // Alert Center props
+  alerts?: PlatformAlert[];
+  alertStatistics?: AlertStatistics;
+  // At-Risk clients props
+  healthStatistics?: {
+    totalClients: number;
+    averageScore: number;
+    healthyCount: number;
+    monitorCount: number;
+    atRiskCount: number;
+    criticalCount: number;
+  };
+  atRiskClients?: Array<{
+    organizationId: string;
+    organizationName: string;
+    overallScore: number;
+    riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+    trend: "IMPROVING" | "STABLE" | "DECLINING";
+    usageScore: number;
+    engagementScore: number;
+    paymentScore: number;
+    supportScore: number;
+    scoreChange?: number;
+  }>;
+  // Dunning props
+  dunningSequences?: DunningSequence[];
+  dunningStatistics?: DunningStatistics;
+  // Callbacks
+  onAcknowledgeAlert?: (alertId: string) => void;
+  onResolveAlert?: (alertId: string) => void;
+  onRetryPayment?: (dunningId: string) => void;
+  onSendPaymentLink?: (dunningId: string) => void;
+  onEscalateDunning?: (dunningId: string) => void;
 }
 
 interface SupportKPI {
@@ -81,8 +120,20 @@ export function SupportDashboard({
   health,
   recentActivity,
   isLoading,
+  alerts,
+  alertStatistics,
+  healthStatistics,
+  atRiskClients,
+  dunningSequences,
+  dunningStatistics,
+  onAcknowledgeAlert,
+  onResolveAlert,
+  onRetryPayment,
+  onSendPaymentLink,
+  onEscalateDunning,
 }: SupportDashboardProps) {
   const locale = useLocale();
+  const router = useRouter();
   const isRtl = locale === "ar";
 
   const texts = {
@@ -104,6 +155,30 @@ export function SupportDashboard({
     pendingResponse: 3,
     escalated: 2,
   };
+
+  // Compute alert statistics if not provided
+  const computedAlertStats: AlertStatistics = alertStatistics ?? {
+    totalActive: alerts?.length || 0,
+    unacknowledged: alerts?.filter((a) => !a.acknowledgedAt)?.length || 0,
+    critical: alerts?.filter((a) => a.severity === "CRITICAL")?.length || 0,
+    warning: alerts?.filter((a) => a.severity === "WARNING")?.length || 0,
+    info: alerts?.filter((a) => a.severity === "INFO")?.length || 0,
+    success: alerts?.filter((a) => a.severity === "SUCCESS")?.length || 0,
+    resolvedToday: 0,
+    averageResolutionTime: 0,
+  };
+
+  // Compute health statistics if not provided
+  const computedHealthStats = healthStatistics ?? {
+    totalClients: health?.totalClients || 0,
+    averageScore: health?.overallHealthScore || 0,
+    healthyCount: Math.round((health?.totalClients || 0) * 0.7),
+    monitorCount: Math.round((health?.totalClients || 0) * 0.2),
+    atRiskCount: Math.round((health?.totalClients || 0) * 0.08),
+    criticalCount: Math.round((health?.totalClients || 0) * 0.02),
+  };
+
+  const hasActiveDunning = dunningSequences && dunningSequences.length > 0;
 
   const kpis: SupportKPI[] = [
     {
@@ -252,6 +327,46 @@ export function SupportDashboard({
         ))}
       </div>
 
+      {/* Alert Center + At-Risk Clients Row - NEW */}
+      <motion.div variants={cardVariants} className="grid gap-6 lg:grid-cols-2">
+        <AlertCenter
+          alerts={alerts || []}
+          statistics={computedAlertStats}
+          onAcknowledge={onAcknowledgeAlert}
+          onResolve={onResolveAlert}
+          onViewAll={() => router.push(`/${locale}/platform/alerts`)}
+          onAlertClick={(alert) =>
+            router.push(`/${locale}/platform/alerts?id=${alert.id}`)
+          }
+        />
+        <HealthOverview
+          statistics={computedHealthStats}
+          atRiskClients={atRiskClients}
+          onViewAllClick={() => router.push(`/${locale}/platform/health`)}
+          onClientClick={(orgId) =>
+            router.push(`/${locale}/platform/clients/${orgId}/health`)
+          }
+        />
+      </motion.div>
+
+      {/* Dunning Status Widget - NEW (only shown if there are active sequences) */}
+      {hasActiveDunning && (
+        <motion.div variants={cardVariants}>
+          <DunningStatusWidget
+            statistics={dunningStatistics}
+            sequences={dunningSequences}
+            onRetryPayment={onRetryPayment}
+            onSendPaymentLink={onSendPaymentLink}
+            onEscalate={onEscalateDunning}
+            onViewAll={() => router.push(`/${locale}/platform/dunning`)}
+            onSequenceClick={(id) =>
+              router.push(`/${locale}/platform/dunning?id=${id}`)
+            }
+            isLoading={isLoading}
+          />
+        </motion.div>
+      )}
+
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Activity Feed - 2/3 width */}
@@ -263,7 +378,7 @@ export function SupportDashboard({
           />
         </div>
 
-        {/* Client Health - 1/3 width */}
+        {/* Client Health Matrix - 1/3 width */}
         <div className="lg:col-span-1">
           <ClientHealthMatrix health={health} isLoading={isLoading} />
         </div>
@@ -275,6 +390,7 @@ export function SupportDashboard({
 function SupportDashboardSkeleton() {
   return (
     <div className="space-y-6">
+      {/* Header Skeleton */}
       <div className="flex items-start justify-between">
         <div>
           <Skeleton className="h-8 w-48 mb-2" />
@@ -285,6 +401,8 @@ function SupportDashboardSkeleton() {
           <Skeleton className="h-10 w-28" />
         </div>
       </div>
+
+      {/* KPI Cards Skeleton */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {Array.from({ length: 6 }).map((_, i) => (
           <Card key={i} className="dark:border-neutral-800">
@@ -298,6 +416,17 @@ function SupportDashboardSkeleton() {
           </Card>
         ))}
       </div>
+
+      {/* Alert Center + Health Overview Skeleton */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Skeleton className="h-[400px]" />
+        <Skeleton className="h-[400px]" />
+      </div>
+
+      {/* Dunning Skeleton */}
+      <Skeleton className="h-[300px]" />
+
+      {/* Activity Feed + Client Health Matrix Skeleton */}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Skeleton className="h-[450px]" />

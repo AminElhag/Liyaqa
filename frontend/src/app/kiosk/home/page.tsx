@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useKiosk } from "../layout";
 import { TouchButton } from "@/components/kiosk";
@@ -15,6 +16,14 @@ import {
 import { useKioskSession } from "@/queries/use-kiosk";
 
 export default function KioskHomePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent" /></div>}>
+      <KioskHomeContent />
+    </Suspense>
+  );
+}
+
+function KioskHomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const deviceCode = searchParams.get("device") || "";

@@ -17,6 +17,8 @@ import {
   Plus,
   Trash2,
   Loader2,
+  DollarSign,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -31,9 +33,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useLocations, useUsers } from "@/queries";
 import type { DayOfWeek } from "@/types/scheduling";
+
+// Pricing model options
+const PRICING_MODELS = [
+  "INCLUDED_IN_MEMBERSHIP",
+  "PAY_PER_ENTRY",
+  "CLASS_PACK_ONLY",
+  "HYBRID",
+] as const;
+
+type PricingModel = (typeof PRICING_MODELS)[number];
 
 const DAYS_OF_WEEK: DayOfWeek[] = [
   "SUNDAY",
@@ -61,6 +74,18 @@ const classFormSchema = z.object({
   durationMinutes: z.coerce.number().min(15, "Duration must be at least 15 minutes"),
   trainerId: z.string().optional(),
   locationId: z.string().optional(),
+  // Pricing settings
+  pricingModel: z.enum(PRICING_MODELS).default("INCLUDED_IN_MEMBERSHIP"),
+  dropInPriceAmount: z.coerce.number().min(0).optional(),
+  dropInPriceCurrency: z.string().default("SAR"),
+  taxRate: z.coerce.number().min(0).max(100).default(15),
+  allowNonSubscribers: z.boolean().default(false),
+  // Booking settings
+  advanceBookingDays: z.coerce.number().min(1).max(365).default(7),
+  cancellationDeadlineHours: z.coerce.number().min(0).max(72).default(2),
+  lateCancellationFeeAmount: z.coerce.number().min(0).optional(),
+  lateCancellationFeeCurrency: z.string().default("SAR"),
+  // Schedules
   schedules: z
     .array(
       z.object({
@@ -110,7 +135,7 @@ const texts = {
     duration: "Duration",
     durationHint: "Class duration in minutes",
     minutes: "min",
-    // Step 2
+    // Step 2 - Assignment
     trainer: "Trainer",
     trainerHint: "Assign a trainer to this class",
     selectTrainer: "Select trainer",
@@ -119,6 +144,31 @@ const texts = {
     locationHint: "Where will this class be held",
     selectLocation: "Select location",
     noLocation: "No location assigned",
+    // Step 2 - Pricing
+    pricingSettingsTitle: "Pricing Settings",
+    pricingModel: "Pricing Model",
+    pricingModelHint: "How members pay for this class",
+    selectPricingModel: "Select pricing model",
+    pricingIncluded: "Included in Membership",
+    pricingPayPerEntry: "Pay per Entry",
+    pricingClassPackOnly: "Class Pack Only",
+    pricingHybrid: "Hybrid (Any Method)",
+    dropInPrice: "Drop-in Price",
+    dropInPriceHint: "Price for single class purchase",
+    taxRate: "Tax Rate (%)",
+    taxRateHint: "VAT percentage to apply",
+    allowNonSubscribers: "Allow Non-Subscribers",
+    allowNonSubscribersHint: "Let non-members book this class",
+    // Step 2 - Booking
+    bookingSettingsTitle: "Booking Settings",
+    advanceBookingDays: "Advance Booking",
+    advanceBookingDaysHint: "How far in advance members can book",
+    days: "days",
+    cancellationDeadline: "Cancellation Deadline",
+    cancellationDeadlineHint: "Hours before class to cancel without penalty",
+    hours: "hours",
+    lateCancellationFee: "Late Cancellation Fee",
+    lateCancellationFeeHint: "Fee charged for late cancellations (optional)",
     // Step 3
     scheduleTitle: "Weekly Schedule",
     scheduleHint: "Add recurring time slots for this class",
@@ -133,6 +183,8 @@ const texts = {
     reviewHint: "Review the class details before creating",
     basicInfo: "Basic Information",
     settings: "Settings",
+    pricingSettings: "Pricing",
+    bookingSettings: "Booking Rules",
     schedules: "Schedules",
     notSet: "Not set",
     // Days
@@ -172,7 +224,7 @@ const texts = {
     duration: "المدة",
     durationHint: "مدة الفصل بالدقائق",
     minutes: "دقيقة",
-    // Step 2
+    // Step 2 - Assignment
     trainer: "المدرب",
     trainerHint: "تعيين مدرب لهذا الفصل",
     selectTrainer: "اختر المدرب",
@@ -181,6 +233,31 @@ const texts = {
     locationHint: "أين سيعقد هذا الفصل",
     selectLocation: "اختر الموقع",
     noLocation: "لم يتم تحديد الموقع",
+    // Step 2 - Pricing
+    pricingSettingsTitle: "إعدادات التسعير",
+    pricingModel: "نموذج التسعير",
+    pricingModelHint: "كيف يدفع الأعضاء لهذا الفصل",
+    selectPricingModel: "اختر نموذج التسعير",
+    pricingIncluded: "مضمّن في العضوية",
+    pricingPayPerEntry: "الدفع لكل حصة",
+    pricingClassPackOnly: "باقة الحصص فقط",
+    pricingHybrid: "مختلط (أي طريقة)",
+    dropInPrice: "سعر الحصة الواحدة",
+    dropInPriceHint: "السعر لشراء حصة واحدة",
+    taxRate: "نسبة الضريبة (%)",
+    taxRateHint: "نسبة ضريبة القيمة المضافة",
+    allowNonSubscribers: "السماح لغير المشتركين",
+    allowNonSubscribersHint: "السماح لغير الأعضاء بحجز هذا الفصل",
+    // Step 2 - Booking
+    bookingSettingsTitle: "إعدادات الحجز",
+    advanceBookingDays: "الحجز المسبق",
+    advanceBookingDaysHint: "كم يوم مسبقاً يمكن للأعضاء الحجز",
+    days: "أيام",
+    cancellationDeadline: "موعد الإلغاء",
+    cancellationDeadlineHint: "ساعات قبل الحصة للإلغاء بدون غرامة",
+    hours: "ساعات",
+    lateCancellationFee: "غرامة الإلغاء المتأخر",
+    lateCancellationFeeHint: "الرسوم المفروضة على الإلغاء المتأخر (اختياري)",
     // Step 3
     scheduleTitle: "الجدول الأسبوعي",
     scheduleHint: "أضف أوقات متكررة لهذا الفصل",
@@ -195,6 +272,8 @@ const texts = {
     reviewHint: "راجع تفاصيل الفصل قبل الإنشاء",
     basicInfo: "المعلومات الأساسية",
     settings: "الإعدادات",
+    pricingSettings: "التسعير",
+    bookingSettings: "قواعد الحجز",
     schedules: "الجداول",
     notSet: "غير محدد",
     // Days
@@ -261,6 +340,17 @@ export function ClassWizard({
       durationMinutes: 60,
       trainerId: undefined,
       locationId: undefined,
+      // Pricing defaults
+      pricingModel: "INCLUDED_IN_MEMBERSHIP",
+      dropInPriceAmount: undefined,
+      dropInPriceCurrency: "SAR",
+      taxRate: 15,
+      allowNonSubscribers: false,
+      // Booking defaults
+      advanceBookingDays: 7,
+      cancellationDeadlineHours: 2,
+      lateCancellationFeeAmount: undefined,
+      lateCancellationFeeCurrency: "SAR",
       schedules: [],
     },
   });
@@ -491,67 +581,267 @@ export function ClassWizard({
 
         {/* Step 2: Settings */}
         {currentStep === 2 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserCheck className="h-5 w-5 text-primary" />
-                {t.step2}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Trainer */}
-              <div className="space-y-2">
-                <Label>{t.trainer}</Label>
-                <Select
-                  value={formValues.trainerId || ""}
-                  onValueChange={(value) =>
-                    setValue("trainerId", value || undefined)
-                  }
-                >
-                  <SelectTrigger>
-                    <div className="flex items-center gap-2">
-                      <UserCheck className="h-4 w-4 text-muted-foreground" />
-                      <SelectValue placeholder={t.selectTrainer} />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {trainers.map((trainer) => (
-                      <SelectItem key={trainer.id} value={trainer.id}>
-                        {trainer.displayName?.en || trainer.displayName?.ar || trainer.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">{t.trainerHint}</p>
-              </div>
+          <div className="space-y-6">
+            {/* Assignment Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserCheck className="h-5 w-5 text-primary" />
+                  {t.step2}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Trainer */}
+                <div className="space-y-2">
+                  <Label>{t.trainer}</Label>
+                  <Select
+                    value={formValues.trainerId || ""}
+                    onValueChange={(value) =>
+                      setValue("trainerId", value || undefined)
+                    }
+                  >
+                    <SelectTrigger>
+                      <div className="flex items-center gap-2">
+                        <UserCheck className="h-4 w-4 text-muted-foreground" />
+                        <SelectValue placeholder={t.selectTrainer} />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {trainers.map((trainer) => (
+                        <SelectItem key={trainer.id} value={trainer.id}>
+                          {trainer.displayName?.en || trainer.displayName?.ar || trainer.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">{t.trainerHint}</p>
+                </div>
 
-              {/* Location */}
-              <div className="space-y-2">
-                <Label>{t.location}</Label>
-                <Select
-                  value={formValues.locationId || ""}
-                  onValueChange={(value) =>
-                    setValue("locationId", value || undefined)
-                  }
-                >
-                  <SelectTrigger>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <SelectValue placeholder={t.selectLocation} />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locations.map((location) => (
-                      <SelectItem key={location.id} value={location.id}>
-                        {location.name?.en || location.name?.ar || "Unnamed"}
+                {/* Location */}
+                <div className="space-y-2">
+                  <Label>{t.location}</Label>
+                  <Select
+                    value={formValues.locationId || ""}
+                    onValueChange={(value) =>
+                      setValue("locationId", value || undefined)
+                    }
+                  >
+                    <SelectTrigger>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <SelectValue placeholder={t.selectLocation} />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.map((location) => (
+                        <SelectItem key={location.id} value={location.id}>
+                          {location.name?.en || location.name?.ar || "Unnamed"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">{t.locationHint}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pricing Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-primary" />
+                  {t.pricingSettingsTitle}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Pricing Model */}
+                <div className="space-y-2">
+                  <Label>{t.pricingModel}</Label>
+                  <Select
+                    value={formValues.pricingModel || "INCLUDED_IN_MEMBERSHIP"}
+                    onValueChange={(value) =>
+                      setValue("pricingModel", value as PricingModel)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t.selectPricingModel} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="INCLUDED_IN_MEMBERSHIP">
+                        {t.pricingIncluded}
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">{t.locationHint}</p>
-              </div>
-            </CardContent>
-          </Card>
+                      <SelectItem value="PAY_PER_ENTRY">
+                        {t.pricingPayPerEntry}
+                      </SelectItem>
+                      <SelectItem value="CLASS_PACK_ONLY">
+                        {t.pricingClassPackOnly}
+                      </SelectItem>
+                      <SelectItem value="HYBRID">
+                        {t.pricingHybrid}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">{t.pricingModelHint}</p>
+                </div>
+
+                {/* Drop-in Price - shown for PAY_PER_ENTRY and HYBRID */}
+                {(formValues.pricingModel === "PAY_PER_ENTRY" ||
+                  formValues.pricingModel === "HYBRID") && (
+                  <div className="space-y-2">
+                    <Label>{t.dropInPrice}</Label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="number"
+                          min={0}
+                          step={0.01}
+                          {...register("dropInPriceAmount")}
+                          className="ps-10"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <Select
+                        value={formValues.dropInPriceCurrency || "SAR"}
+                        onValueChange={(value) =>
+                          setValue("dropInPriceCurrency", value)
+                        }
+                      >
+                        <SelectTrigger className="w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="SAR">SAR</SelectItem>
+                          <SelectItem value="USD">USD</SelectItem>
+                          <SelectItem value="EUR">EUR</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{t.dropInPriceHint}</p>
+                  </div>
+                )}
+
+                {/* Tax Rate */}
+                <div className="space-y-2">
+                  <Label>{t.taxRate}</Label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={0.01}
+                      {...register("taxRate")}
+                      className="pe-12"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                      %
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t.taxRateHint}</p>
+                </div>
+
+                {/* Allow Non-Subscribers - shown for PAY_PER_ENTRY and HYBRID */}
+                {(formValues.pricingModel === "PAY_PER_ENTRY" ||
+                  formValues.pricingModel === "HYBRID") && (
+                  <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <Label>{t.allowNonSubscribers}</Label>
+                      <p className="text-xs text-muted-foreground">
+                        {t.allowNonSubscribersHint}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formValues.allowNonSubscribers || false}
+                      onCheckedChange={(checked) =>
+                        setValue("allowNonSubscribers", checked)
+                      }
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Booking Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5 text-primary" />
+                  {t.bookingSettingsTitle}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Advance Booking Days */}
+                <div className="space-y-2">
+                  <Label>{t.advanceBookingDays}</Label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={365}
+                      {...register("advanceBookingDays")}
+                      className="pe-16"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                      {t.days}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t.advanceBookingDaysHint}</p>
+                </div>
+
+                {/* Cancellation Deadline */}
+                <div className="space-y-2">
+                  <Label>{t.cancellationDeadline}</Label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={72}
+                      {...register("cancellationDeadlineHours")}
+                      className="pe-16"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                      {t.hours}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t.cancellationDeadlineHint}</p>
+                </div>
+
+                {/* Late Cancellation Fee */}
+                <div className="space-y-2">
+                  <Label>{t.lateCancellationFee}</Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        {...register("lateCancellationFeeAmount")}
+                        className="ps-10"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <Select
+                      value={formValues.lateCancellationFeeCurrency || "SAR"}
+                      onValueChange={(value) =>
+                        setValue("lateCancellationFeeCurrency", value)
+                      }
+                    >
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="SAR">SAR</SelectItem>
+                        <SelectItem value="USD">USD</SelectItem>
+                        <SelectItem value="EUR">EUR</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t.lateCancellationFeeHint}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
 
         {/* Step 3: Schedule */}
@@ -737,6 +1027,91 @@ export function ClassWizard({
                           : t.noLocation}
                       </p>
                     </div>
+                  </div>
+                </div>
+
+                <div className="border-t my-4" />
+
+                {/* Pricing Settings */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <DollarSign className="h-4 w-4" />
+                    {t.pricingSettings}
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 ps-6">
+                    <div>
+                      <p className="text-sm text-muted-foreground">{t.pricingModel}</p>
+                      <p className="font-medium">
+                        {formValues.pricingModel === "INCLUDED_IN_MEMBERSHIP"
+                          ? t.pricingIncluded
+                          : formValues.pricingModel === "PAY_PER_ENTRY"
+                          ? t.pricingPayPerEntry
+                          : formValues.pricingModel === "CLASS_PACK_ONLY"
+                          ? t.pricingClassPackOnly
+                          : t.pricingHybrid}
+                      </p>
+                    </div>
+                    {(formValues.pricingModel === "PAY_PER_ENTRY" ||
+                      formValues.pricingModel === "HYBRID") &&
+                      formValues.dropInPriceAmount && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">{t.dropInPrice}</p>
+                          <p className="font-medium">
+                            {formValues.dropInPriceAmount} {formValues.dropInPriceCurrency || "SAR"}
+                          </p>
+                        </div>
+                      )}
+                    <div>
+                      <p className="text-sm text-muted-foreground">{t.taxRate}</p>
+                      <p className="font-medium">{formValues.taxRate || 15}%</p>
+                    </div>
+                    {(formValues.pricingModel === "PAY_PER_ENTRY" ||
+                      formValues.pricingModel === "HYBRID") && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">{t.allowNonSubscribers}</p>
+                        <p className="font-medium">
+                          {formValues.allowNonSubscribers
+                            ? locale === "ar"
+                              ? "نعم"
+                              : "Yes"
+                            : locale === "ar"
+                            ? "لا"
+                            : "No"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border-t my-4" />
+
+                {/* Booking Settings */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    {t.bookingSettings}
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 ps-6">
+                    <div>
+                      <p className="text-sm text-muted-foreground">{t.advanceBookingDays}</p>
+                      <p className="font-medium">
+                        {formValues.advanceBookingDays || 7} {t.days}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">{t.cancellationDeadline}</p>
+                      <p className="font-medium">
+                        {formValues.cancellationDeadlineHours || 2} {t.hours}
+                      </p>
+                    </div>
+                    {formValues.lateCancellationFeeAmount && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">{t.lateCancellationFee}</p>
+                        <p className="font-medium">
+                          {formValues.lateCancellationFeeAmount} {formValues.lateCancellationFeeCurrency || "SAR"}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 

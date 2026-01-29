@@ -121,7 +121,7 @@ export default function CorporateAccountsPage() {
     );
   }
 
-  const accounts = data?.content || [];
+  const accounts: CorporateAccountSummary[] = data?.content || [];
 
   return (
     <div className="space-y-6">

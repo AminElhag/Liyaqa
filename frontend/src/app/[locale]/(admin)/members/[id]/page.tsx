@@ -13,12 +13,13 @@ import {
   MapPin,
   AlertCircle,
   CreditCard,
-  MoreHorizontal,
   User,
   UserCircle,
+  UserPlus,
   Plus,
   Wallet,
   History,
+  Key,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -29,20 +30,32 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { LocalizedText } from "@/components/ui/localized-text";
 import { Loading } from "@/components/ui/spinner";
 import { PhotoUploadDialog } from "@/components/admin/photo-upload-dialog";
+import { ResetPasswordDialog } from "@/components/admin/reset-password-dialog";
+import { CreateUserAccountDialog } from "@/components/admin/create-user-account-dialog";
 import { MemberProfileHero } from "@/components/admin/member-profile-hero";
 import { MemberStatsGrid } from "@/components/admin/member-stats-grid";
 import { SubscriptionCard } from "@/components/admin/subscription-card";
 import { WalletBalanceCard } from "@/components/admin/wallet-balance-card";
 import { WalletTransactionsTable } from "@/components/admin/wallet-transactions-table";
+import { MemberClassPacksCard } from "@/components/admin/member-class-packs-card";
 import {
   useMember,
   useDeleteMember,
@@ -95,6 +108,15 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
   const [addCreditDialogOpen, setAddCreditDialogOpen] = useState(false);
   const [adjustBalanceDialogOpen, setAdjustBalanceDialogOpen] = useState(false);
 
+  // Reset password dialog state
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+
+  // Create user account dialog state
+  const [createUserOpen, setCreateUserOpen] = useState(false);
+
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
   // Toast and invoice mutation
   const { toast } = useToast();
   const createInvoice = useCreateInvoiceFromSubscription();
@@ -129,10 +151,19 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
   const texts = {
     back: locale === "ar" ? "العودة للأعضاء" : "Back to Members",
     edit: locale === "ar" ? "تعديل" : "Edit",
+    resetPassword:
+      locale === "ar" ? "إعادة تعيين كلمة المرور" : "Reset Password",
+    createUserAccount:
+      locale === "ar" ? "إنشاء حساب مستخدم" : "Create User Account",
     delete: locale === "ar" ? "حذف" : "Delete",
+    deleteTitle: locale === "ar" ? "حذف العضو؟" : "Delete Member?",
+    deleteDescription:
+      locale === "ar"
+        ? "هل أنت متأكد من حذف هذا العضو؟ سيتم حذف جميع بياناته بشكل دائم."
+        : "Are you sure you want to delete this member? All their data will be permanently removed.",
+    cancel: locale === "ar" ? "إلغاء" : "Cancel",
     suspend: locale === "ar" ? "إيقاف" : "Suspend",
     activate: locale === "ar" ? "تفعيل" : "Activate",
-    actions: locale === "ar" ? "الإجراءات" : "Actions",
     contactInfo: locale === "ar" ? "معلومات التواصل" : "Contact Information",
     emergencyContact:
       locale === "ar" ? "جهة اتصال الطوارئ" : "Emergency Contact",
@@ -183,17 +214,10 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
   }
 
   const handleDelete = () => {
-    if (
-      confirm(
-        locale === "ar"
-          ? "هل أنت متأكد من حذف هذا العضو؟"
-          : "Are you sure you want to delete this member?"
-      )
-    ) {
-      deleteMember.mutate(member.id, {
-        onSuccess: () => router.push(`/${locale}/members`),
-      });
-    }
+    deleteMember.mutate(member.id, {
+      onSuccess: () => router.push(`/${locale}/members`),
+    });
+    setDeleteDialogOpen(false);
   };
 
   return (
@@ -207,42 +231,91 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
           </Link>
         </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              {texts.actions}
-              <MoreHorizontal className="ms-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align={locale === "ar" ? "start" : "end"}>
-            <DropdownMenuItem asChild>
-              <Link href={`/${locale}/members/${member.id}/edit`}>
-                <Edit className="me-2 h-4 w-4" />
-                {texts.edit}
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {member.status === "ACTIVE" ? (
-              <DropdownMenuItem onClick={() => suspendMember.mutate(member.id)}>
-                <UserCircle className="me-2 h-4 w-4" />
-                {texts.suspend}
-              </DropdownMenuItem>
+        <TooltipProvider>
+          <div className="flex items-center gap-2">
+            {/* Edit - Primary Action */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button asChild>
+                  <Link href={`/${locale}/members/${member.id}/edit`}>
+                    <Edit className="h-4 w-4 sm:me-2" />
+                    <span className="hidden sm:inline">{texts.edit}</span>
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="sm:hidden">{texts.edit}</TooltipContent>
+            </Tooltip>
+
+            {/* Account Action - Conditional */}
+            {!member.userId ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" onClick={() => setCreateUserOpen(true)}>
+                    <UserPlus className="h-4 w-4 sm:me-2" />
+                    <span className="hidden sm:inline">{texts.createUserAccount}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="sm:hidden">{texts.createUserAccount}</TooltipContent>
+              </Tooltip>
             ) : (
-              <DropdownMenuItem onClick={() => activateMember.mutate(member.id)}>
-                <UserCircle className="me-2 h-4 w-4" />
-                {texts.activate}
-              </DropdownMenuItem>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" onClick={() => setResetPasswordOpen(true)}>
+                    <Key className="h-4 w-4 sm:me-2" />
+                    <span className="hidden sm:inline">{texts.resetPassword}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="sm:hidden">{texts.resetPassword}</TooltipContent>
+              </Tooltip>
             )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={handleDelete}
-            >
-              <Trash2 className="me-2 h-4 w-4" />
-              {texts.delete}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+
+            {/* Status Action - Conditional */}
+            {member.status === "ACTIVE" ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={() => suspendMember.mutate(member.id)}
+                    disabled={suspendMember.isPending}
+                  >
+                    <UserCircle className="h-4 w-4 sm:me-2" />
+                    <span className="hidden sm:inline">{texts.suspend}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="sm:hidden">{texts.suspend}</TooltipContent>
+              </Tooltip>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={() => activateMember.mutate(member.id)}
+                    disabled={activateMember.isPending}
+                  >
+                    <UserCircle className="h-4 w-4 sm:me-2" />
+                    <span className="hidden sm:inline">{texts.activate}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="sm:hidden">{texts.activate}</TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* Delete Action - Destructive */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  className="text-destructive border-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-4 w-4 sm:me-2" />
+                  <span className="hidden sm:inline">{texts.delete}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="sm:hidden">{texts.delete}</TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
       </div>
 
       {/* Profile Hero */}
@@ -274,36 +347,39 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
           onAdjustBalance={() => setAdjustBalanceDialogOpen(true)}
         />
 
-        {/* Recent Transactions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <History className="h-5 w-5" />
-              {texts.walletTransactions}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {transactionsData && transactionsData.content.length > 0 ? (
-              <WalletTransactionsTable
-                transactions={transactionsData.content}
-                isLoading={transactionsLoading}
-                locale={locale}
-                pageIndex={transactionsPage}
-                pageSize={transactionsSize}
-                totalPages={transactionsData.totalPages}
-                totalElements={transactionsData.totalElements}
-                onPageChange={setTransactionsPage}
-                onPageSizeChange={setTransactionsSize}
-              />
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Wallet className="h-10 w-10 mx-auto mb-3 opacity-20" />
-                <p>{texts.noTransactions}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Class Packs Card */}
+        <MemberClassPacksCard memberId={member.id} locale={locale} />
       </div>
+
+      {/* Wallet Transactions */}
+      <Card className="animate-fade-in-up animation-delay-175">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <History className="h-5 w-5" />
+            {texts.walletTransactions}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {transactionsData && transactionsData.content.length > 0 ? (
+            <WalletTransactionsTable
+              transactions={transactionsData.content}
+              isLoading={transactionsLoading}
+              locale={locale}
+              pageIndex={transactionsPage}
+              pageSize={transactionsSize}
+              totalPages={transactionsData.totalPages}
+              totalElements={transactionsData.totalElements}
+              onPageChange={setTransactionsPage}
+              onPageSizeChange={setTransactionsSize}
+            />
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Wallet className="h-10 w-10 mx-auto mb-3 opacity-20" />
+              <p>{texts.noTransactions}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Contact & Emergency Cards */}
       <div className="grid gap-6 md:grid-cols-2 animate-fade-in-up animation-delay-200">
@@ -518,6 +594,51 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
         memberId={member.id}
         currentBalance={wallet?.balance.amount ?? 0}
       />
+
+      {/* Reset Password Dialog */}
+      {member.userId && (
+        <ResetPasswordDialog
+          open={resetPasswordOpen}
+          onOpenChange={setResetPasswordOpen}
+          memberId={member.id}
+          memberName={member.fullName.en ?? member.fullName.ar ?? undefined}
+        />
+      )}
+
+      {/* Create User Account Dialog */}
+      {!member.userId && (
+        <CreateUserAccountDialog
+          open={createUserOpen}
+          onOpenChange={setCreateUserOpen}
+          memberId={member.id}
+          memberName={member.fullName.en ?? member.fullName.ar ?? undefined}
+          memberEmail={member.email}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{texts.deleteTitle}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {texts.deleteDescription}
+              <span className="block mt-2 font-medium text-foreground">
+                {member.fullName.en ?? member.fullName.ar}
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{texts.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {texts.delete}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

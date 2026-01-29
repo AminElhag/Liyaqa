@@ -37,7 +37,7 @@ class KioskSession(
     @Column(name = "session_status", length = 20)
     var sessionStatus: SessionStatus = SessionStatus.ACTIVE,
 
-    @Column(name = "actions_taken", columnDefinition = "jsonb")
+    @Column(name = "actions_taken")
     var actionsTaken: String = "[]",
 
     @Column(name = "feedback_rating")

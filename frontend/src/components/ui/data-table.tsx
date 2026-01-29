@@ -55,6 +55,7 @@ interface DataTableProps<TData, TValue> {
   isLoading?: boolean;
   enableSelection?: boolean;
   onSelectionChange?: (selectedRows: TData[]) => void;
+  onRowClick?: (row: TData) => void;
   manualPagination?: boolean;
   totalRows?: number;
 }

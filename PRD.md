@@ -581,6 +581,217 @@ Comprehensive compliance management dashboard and tools for enterprise security 
 
 ---
 
+#### 21. Agreement Management UI ✅
+**Priority:** P2 | **Effort:** 1-2 weeks | **ROI:** 5/10
+
+**Description:**
+Administrative UI for creating and managing membership agreements, liability waivers, and consent forms across both Club Admin and Platform Admin dashboards.
+
+**Core Features:**
+- [x] Agreement template CRUD (create, read, update, delete)
+- [x] Bilingual content support (English/Arabic titles and content)
+- [x] Agreement types: LIABILITY_WAIVER, TERMS_CONDITIONS, HEALTH_DISCLOSURE, PRIVACY_POLICY, PHOTO_CONSENT, MARKETING_CONSENT, RULES_REGULATIONS, CUSTOM
+- [x] Mandatory flag for required agreements during registration
+- [x] Health questions flag for agreements requiring health disclosure
+- [x] Version control with automatic increment on content changes
+- [x] Activate/deactivate workflow
+- [x] Effective date scheduling
+- [x] Sort order for display sequence
+
+**Club Admin Dashboard:**
+- [x] Settings > Agreements list page with DataTable
+- [x] Create new agreement page with form
+- [x] View/Edit agreement detail page
+- [x] Type-based color badges for quick identification
+- [x] Activate/deactivate actions with toast feedback
+
+**Platform Admin Dashboard:**
+- [x] Agreements tab in Club Details page (view-clubs/[id])
+- [x] Modal dialog for create/edit within tab
+- [x] Cross-tenant agreement management for platform admins
+- [x] Platform-specific API endpoints for club-scoped operations
+
+**Technical Implementation:**
+- Backend: PlatformAgreementController and PlatformAgreementService for cross-tenant access
+- Frontend: agreement-columns.tsx, agreement-form.tsx, ClubAgreementsTab, AgreementFormDialog
+- Extends existing AgreementController API for club admin usage
+- Full bilingual support with RTL-aware layouts
+
+**Success Metrics:**
+- Streamlined agreement creation workflow
+- Consistent agreement management across platform and club admin views
+- Reduced time to publish new agreements
+
+---
+
+#### 22. Platform Operations & Client Success ✅
+**Priority:** P1 | **Effort:** 2-3 months | **ROI:** 8/10
+
+**Description:**
+Complete B2B platform operations suite for managing client lifecycle from trial to expansion. Follows Ahmed's journey narrative - from discovering Liyaqa to becoming a successful multi-location gym owner.
+
+**Onboarding & Trial Management:**
+- [x] Self-service signup flow with plan recommendation
+- [x] Public pricing page with Starter/Professional/Enterprise tiers
+- [x] Gamified onboarding checklist with points system (13 steps, 165 max points)
+- [x] Progress tracking with phase indicators (Getting Started → Core Setup → Operations → Complete)
+- [x] Feature unlocking based on progress (Marketing at 60pts, Reports at 90pts, API at 100%)
+- [x] Trial timeline automation (welcome → check-ins → reminders → conversion)
+- [x] Trial-to-paid conversion with special offers
+
+**Client Health Scoring:**
+- [x] Automated health score calculation (0-100)
+- [x] Weighted components: Usage (40%), Engagement (25%), Payment (20%), Support (15%)
+- [x] Risk levels: LOW (80-100), MEDIUM (60-79), HIGH (40-59), CRITICAL (0-39)
+- [x] Health trend tracking (IMPROVING, STABLE, DECLINING)
+- [x] Detailed metrics: admin logins, member growth, check-ins, payment success rate
+
+**Proactive Alerts:**
+- [x] Usage limit warnings (80%, 90%, 95% thresholds)
+- [x] Churn risk alerts (health score < 50)
+- [x] Trial ending notifications
+- [x] Payment failure alerts
+- [x] Inactivity warnings
+- [x] Milestone achievements (onboarding, member count)
+- [x] Alert severity levels (INFO, WARNING, CRITICAL, SUCCESS)
+- [x] Acknowledge and resolve workflow
+
+**Usage Limit Enforcement:**
+- [x] Real-time usage tracking (members, staff, clubs, API calls)
+- [x] Soft limits with warnings at 80%, 90%, 95%
+- [x] Hard limit enforcement at 100% (block new creations)
+- [x] Grace period management (7 days to upgrade)
+- [x] Usage status dashboard component
+
+**Smart Dunning (Payment Recovery):**
+- [x] Configurable dunning sequences with notification steps
+- [x] Multi-channel outreach (Email, SMS, WhatsApp, Push, Phone)
+- [x] Automatic retry scheduling with exponential backoff
+- [x] Escalation to CSM for high-value clients
+- [x] Suspension and deactivation timeline
+- [x] Payment recovery tracking and analytics
+
+**Self-Service Support Portal:**
+- [x] Client-facing support center (tickets, help, contact)
+- [x] Ticket creation with category selection
+- [x] Ticket status tracking (OPEN, IN_PROGRESS, WAITING_ON_CLIENT, RESOLVED, CLOSED)
+- [x] Knowledge base with popular articles
+- [x] Multiple contact methods (email, phone, live chat)
+- [x] Full bilingual support (English/Arabic)
+
+**Technical Implementation:**
+- Backend: 5 domain models (OnboardingProgress, ClientHealthScore, ClientUsage, PlatformAlert, DunningSequence)
+- Backend: 5 application services, 5 repositories with JPA implementations
+- Database: V64-V68 migrations for all new tables
+- Frontend: Public layout, pricing page, signup wizard
+- Frontend: 4 dashboard components (health-overview, alert-center, usage-warnings, onboarding-checklist)
+- Frontend: Client support portal with tabs (tickets, help center, contact)
+
+**Success Metrics:**
+- Trial-to-paid conversion rate > 40%
+- Failed payment recovery > 80%
+- Average onboarding time < 7 days
+- Client health score average > 75
+
+---
+
+#### 23. Platform Dashboard Redesign ✅
+**Priority:** P1 | **Effort:** 4-5 weeks | **ROI:** 8.5/10
+
+**Description:**
+Complete redesign of the Platform Dashboard to create a comprehensive client lifecycle management experience. When Liyaqa's internal team opens the dashboard, they immediately understand where each client is in their journey, who needs attention, and what action to take next. Follows Ahmed's journey narrative from gym discovery to successful multi-location expansion.
+
+**Client Lifecycle Funnel:**
+- [x] Visual funnel showing client distribution across stages
+- [x] Five lifecycle stages: Trial → Onboarding → Active → At-Risk → Churned
+- [x] Color-coded stage indicators (blue, amber, green, red, gray)
+- [x] Click-through navigation to filtered client list
+- [x] Real-time stage counts with trend indicators
+
+**Onboarding Monitor:**
+- [x] Dashboard panel showing clients currently in onboarding
+- [x] Progress bars with percentage completion per client
+- [x] Days since start with stalled indicators (>7 days no activity)
+- [x] Quick actions: Send Reminder, Schedule Call
+- [x] Phase indicators (Getting Started, Core Setup, Operations)
+
+**Health Overview Component:**
+- [x] Health score distribution visualization (bar chart)
+- [x] Risk level breakdown: Healthy, Monitor, At-Risk, Critical
+- [x] At-risk client quick list with scores and trends
+- [x] Click-through to detailed health dashboard
+- [x] Average health score display
+
+**Alert Center:**
+- [x] Unified alert hub on dashboard
+- [x] Severity-based filtering (Critical, Warning, Info, Success)
+- [x] Unacknowledged alert badge counter
+- [x] Quick acknowledge and resolve actions
+- [x] Alert type icons and color coding
+- [x] Relative time display for alert age
+
+**Alert Playbook Dialog:**
+- [x] Recommended actions per alert type
+- [x] 9 alert types with tailored playbooks
+- [x] Severity indicator and impact description
+- [x] Primary and secondary action buttons
+- [x] Step-by-step resolution guidance
+
+**Dunning Status Widget:**
+- [x] Active payment recovery sequences display
+- [x] Timeline progress visualization per sequence
+- [x] Days since failure with severity coloring
+- [x] Quick actions: Retry Payment, Send Link, Escalate
+- [x] Recovery rate and revenue at risk statistics
+- [x] Escalated sequence highlighting
+
+**Health Trend Chart:**
+- [x] Line chart showing health score history
+- [x] 30/60/90 day view toggles
+- [x] Component breakdown (Usage, Engagement, Payment, Support)
+- [x] Trend indicators and annotations
+- [x] Recharts implementation with responsive design
+
+**Quick Action Menu:**
+- [x] Reusable dropdown for context-aware actions
+- [x] 6 context types: client, onboarding, at_risk, dunning, trial, support
+- [x] Grouped action categories with icons
+- [x] Confirmation dialogs for destructive actions
+
+**New Pages:**
+- [x] `/platform/health` - Full-page health management
+- [x] `/platform/alerts` - Alert management with bulk operations
+- [x] `/platform/dunning` - Dunning dashboard with recovery metrics
+- [x] `/clients/[id]/health` - Client health detail with history
+
+**Role-Based Dashboard Enhancements:**
+- [x] Admin Dashboard: Lifecycle funnel, onboarding monitor, health overview, alert center, dunning widget
+- [x] Sales Dashboard: Trial follow-up cards, conversion funnel, upsell opportunities
+- [x] Support Dashboard: Alert center integration, at-risk client list, dunning sequences
+
+**Backend API Endpoints:**
+- [x] `/api/platform/onboarding` - Onboarding management (statistics, active, stalled)
+- [x] `/api/platform/health` - Health scores (overview, at-risk, declining, history)
+- [x] `/api/platform/alerts` - Alert management (CRUD, acknowledge, resolve, bulk)
+- [x] `/api/platform/dunning` - Dunning operations (active, retry, escalate, recover)
+
+**Technical Implementation:**
+- Frontend: 6 new dashboard components with Framer Motion animations
+- Frontend: 4 new pages with comprehensive filtering and actions
+- Frontend: 4 API function files, 4 query hook files
+- Frontend: 3 type definition files for TypeScript safety
+- Backend: 4 new API controllers with full REST endpoints
+- Full RTL support with Arabic translations
+
+**Success Metrics:**
+- Trial-to-paid conversion rate > 40%
+- Average onboarding completion time < 7 days
+- Failed payment recovery rate > 80%
+- At-risk client identification time < 48 hours
+- CSM response to critical alerts < 4 hours
+
+---
+
 ## Implementation Roadmap
 
 ```
@@ -657,6 +868,47 @@ Q3 2027: Enterprise & Compliance ✅ COMPLETED
 |   - DSR workflow with 30-day tracking            |
 |   - Breach register with 72h SDAIA notification  |
 |   - Full bilingual support (English/Arabic)      |
++--------------------------------------------------+
+| Agreement Management UI                      ✅  |
+|   - Club Admin: Settings > Agreements pages      |
+|   - Platform Admin: Agreements tab in Club View  |
+|   - Agreement CRUD with bilingual content        |
+|   - 8 agreement types with color badges          |
+|   - Version control and activate/deactivate      |
+|   - Health questions and mandatory flags         |
++--------------------------------------------------+
+
+Q4 2027: Platform Operations ✅ COMPLETED
++--------------------------------------------------+
+| Platform Operations & Client Success         ✅  |
+|   - Self-service signup with plan recommendation |
+|   - Public pricing page (Starter/Pro/Enterprise) |
+|   - Gamified onboarding checklist (13 steps)     |
+|   - Feature unlocking based on progress          |
+|   - Client health scoring (4 weighted factors)   |
+|   - Risk levels: LOW/MEDIUM/HIGH/CRITICAL        |
+|   - Proactive alerts with severity levels        |
+|   - Usage limit tracking and enforcement         |
+|   - Smart dunning for payment recovery           |
+|   - Multi-channel notification support           |
+|   - Self-service support portal                  |
+|   - Full bilingual support (English/Arabic)      |
++--------------------------------------------------+
+
+Q1 2028: Dashboard Enhancement ✅ COMPLETED
++--------------------------------------------------+
+| Platform Dashboard Redesign                  ✅  |
+|   - Client lifecycle funnel (5 stages)           |
+|   - Onboarding monitor with stalled detection    |
+|   - Health overview with at-risk highlighting    |
+|   - Alert center with playbook integration       |
+|   - Dunning status widget with quick actions     |
+|   - Health trend chart (30/60/90 day views)      |
+|   - Quick action menu (6 context types)          |
+|   - 4 new pages (health, alerts, dunning, detail)|
+|   - Role-based enhancements (Admin/Sales/Support)|
+|   - 4 backend API controllers                    |
+|   - Full RTL and Arabic support                  |
 +--------------------------------------------------+
 ```
 
@@ -741,5 +993,5 @@ Fixed 309 compilation errors across Tier 3 modules. All error categories resolve
 
 ---
 
-*Last Updated: January 26, 2026*
-*Version: 3.2 - Added Security & Compliance Management Dashboard*
+*Last Updated: January 28, 2026*
+*Version: 3.5 - Added Platform Dashboard Redesign (Lifecycle Funnel, Onboarding Monitor, Health Overview, Alert Center, Dunning Widget, Role-Based Enhancements)*

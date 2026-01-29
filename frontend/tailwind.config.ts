@@ -102,6 +102,25 @@ const config: Config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        // MD3 corner shapes
+        "md3-xs": "4px",
+        "md3-sm": "8px",
+        "md3-md": "12px",
+        "md3-lg": "16px",
+        "md3-xl": "28px",
+        "md3-full": "9999px",
+      },
+      boxShadow: {
+        // MD3 elevation levels
+        "md3-1": "0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)",
+        "md3-2": "0px 1px 2px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15)",
+        "md3-3": "0px 1px 3px rgba(0, 0, 0, 0.3), 0px 4px 8px 3px rgba(0, 0, 0, 0.15)",
+        "md3-4": "0px 2px 3px rgba(0, 0, 0, 0.3), 0px 6px 10px 4px rgba(0, 0, 0, 0.15)",
+        "md3-5": "0px 4px 4px rgba(0, 0, 0, 0.3), 0px 8px 12px 6px rgba(0, 0, 0, 0.15)",
+      },
+      spacing: {
+        // MD3 touch targets
+        "touch-target": "48px",
       },
       keyframes: {
         "accordion-down": {
@@ -112,10 +131,36 @@ const config: Config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        // MD3 expressive animations
+        "md3-fade-in": {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        "md3-scale-in": {
+          from: { opacity: "0", transform: "scale(0.9)" },
+          to: { opacity: "1", transform: "scale(1)" },
+        },
+        "md3-slide-up": {
+          from: { opacity: "0", transform: "translateY(16px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "md3-slide-down": {
+          from: { opacity: "0", transform: "translateY(-16px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "md3-expand": {
+          from: { opacity: "0", transform: "scale(0.95)", maxHeight: "0" },
+          to: { opacity: "1", transform: "scale(1)", maxHeight: "1000px" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "md3-fade-in": "md3-fade-in 0.2s cubic-bezier(0.2, 0, 0, 1)",
+        "md3-scale-in": "md3-scale-in 0.3s cubic-bezier(0.2, 0, 0, 1)",
+        "md3-slide-up": "md3-slide-up 0.3s cubic-bezier(0.2, 0, 0, 1)",
+        "md3-slide-down": "md3-slide-down 0.3s cubic-bezier(0.2, 0, 0, 1)",
+        "md3-expand": "md3-expand 0.3s cubic-bezier(0.2, 0, 0, 1)",
       },
     },
   },

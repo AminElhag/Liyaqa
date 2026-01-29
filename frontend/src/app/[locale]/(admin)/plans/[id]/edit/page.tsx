@@ -83,6 +83,17 @@ export default function EditPlanPage({ params }: EditPlanPageProps) {
           // Status
           isActive: data.isActive,
           sortOrder: data.sortOrder,
+
+          // Contract configuration
+          categoryId: data.categoryId || undefined,
+          contractType: data.contractType,
+          supportedTerms: data.supportedTerms,
+          defaultCommitmentMonths: data.defaultCommitmentMonths,
+          minimumCommitmentMonths: data.minimumCommitmentMonths ?? undefined,
+          defaultNoticePeriodDays: data.defaultNoticePeriodDays,
+          earlyTerminationFeeType: data.earlyTerminationFeeType,
+          earlyTerminationFeeValue: data.earlyTerminationFeeValue ?? undefined,
+          coolingOffDays: data.coolingOffDays,
         },
       });
       toast({

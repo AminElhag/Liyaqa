@@ -56,10 +56,18 @@ class SupportTicketService(
         val organization = organizationRepository.findById(command.organizationId)
             .orElseThrow { NoSuchElementException("Organization not found: ${command.organizationId}") }
 
-        // Get club if specified
-        val club = command.clubId?.let {
-            clubRepository.findById(it)
-                .orElseThrow { NoSuchElementException("Club not found: $it") }
+        // Get club if specified - supports both UUID and slug
+        val club = command.clubId?.let { clubIdOrSlug ->
+            // Try parsing as UUID first
+            try {
+                val uuid = UUID.fromString(clubIdOrSlug)
+                clubRepository.findById(uuid)
+                    .orElseThrow { NoSuchElementException("Club not found: $clubIdOrSlug") }
+            } catch (e: IllegalArgumentException) {
+                // Not a valid UUID, try as slug
+                clubRepository.findBySlug(clubIdOrSlug)
+                    .orElseThrow { NoSuchElementException("Club not found: $clubIdOrSlug") }
+            }
         }
 
         // Get creator

@@ -12,6 +12,9 @@ import type {
   ClubDetailQueryParams,
   ClubAuditLogQueryParams,
   ResetPasswordRequest,
+  ClubLocation,
+  ClubMembershipPlan,
+  UpdateClubRequest,
 } from "@/types/platform";
 
 const BASE_URL = "api/platform/clubs";
@@ -155,4 +158,82 @@ export async function getClubAuditLogs(
  */
 export async function getAuditActions(): Promise<string[]> {
   return api.get(`${BASE_URL}/audit-actions`).json<string[]>();
+}
+
+// ============================================
+// Club Locations
+// ============================================
+
+/**
+ * Get locations for a club with pagination
+ */
+export async function getClubLocations(
+  clubId: string,
+  params: ClubDetailQueryParams = {}
+): Promise<PageResponse<ClubLocation>> {
+  const searchParams = new URLSearchParams();
+  if (params.page !== undefined) searchParams.set("page", String(params.page));
+  if (params.size !== undefined) searchParams.set("size", String(params.size));
+  if (params.sortBy) searchParams.set("sortBy", params.sortBy);
+  if (params.sortDirection) searchParams.set("sortDirection", params.sortDirection);
+
+  return api
+    .get(`${BASE_URL}/${clubId}/locations`, { searchParams })
+    .json<PageResponse<ClubLocation>>();
+}
+
+// ============================================
+// Club Membership Plans
+// ============================================
+
+/**
+ * Get membership plans for a club with pagination
+ */
+export async function getClubMembershipPlans(
+  clubId: string,
+  params: ClubDetailQueryParams = {}
+): Promise<PageResponse<ClubMembershipPlan>> {
+  const searchParams = new URLSearchParams();
+  if (params.page !== undefined) searchParams.set("page", String(params.page));
+  if (params.size !== undefined) searchParams.set("size", String(params.size));
+  if (params.sortBy) searchParams.set("sortBy", params.sortBy);
+  if (params.sortDirection) searchParams.set("sortDirection", params.sortDirection);
+
+  return api
+    .get(`${BASE_URL}/${clubId}/membership-plans`, { searchParams })
+    .json<PageResponse<ClubMembershipPlan>>();
+}
+
+// ============================================
+// Club Update Operations
+// ============================================
+
+/**
+ * Update club basic info (name, description)
+ */
+export async function updateClub(
+  clubId: string,
+  data: UpdateClubRequest
+): Promise<PlatformClubDetail> {
+  return api
+    .put(`${BASE_URL}/${clubId}`, { json: data })
+    .json<PlatformClubDetail>();
+}
+
+/**
+ * Activate a suspended club
+ */
+export async function activateClub(clubId: string): Promise<PlatformClubDetail> {
+  return api
+    .post(`${BASE_URL}/${clubId}/activate`)
+    .json<PlatformClubDetail>();
+}
+
+/**
+ * Suspend an active club
+ */
+export async function suspendClub(clubId: string): Promise<PlatformClubDetail> {
+  return api
+    .post(`${BASE_URL}/${clubId}/suspend`)
+    .json<PlatformClubDetail>();
 }

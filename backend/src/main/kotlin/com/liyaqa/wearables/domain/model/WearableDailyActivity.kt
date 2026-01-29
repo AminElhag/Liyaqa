@@ -80,7 +80,7 @@ class WearableDailyActivity(
     val recoveryScore: Int? = null,
 
     // Source data
-    @Column(name = "raw_data", columnDefinition = "jsonb")
+    @Column(name = "raw_data")
     @JdbcTypeCode(SqlTypes.JSON)
     val rawData: String? = null,
 

@@ -60,6 +60,7 @@ import {
   type ZoneType,
   type GenderRestriction,
   type CreateZoneRequest,
+  type AccessZone,
 } from "@/types/access-control";
 
 export default function ZonesPage() {
@@ -127,13 +128,13 @@ export default function ZonesPage() {
     }
   };
 
-  const openEditDialog = (zone: any) => {
+  const openEditDialog = (zone: AccessZone) => {
     setFormData({
       name: zone.name,
-      nameAr: zone.nameAr,
+      nameAr: zone.nameAr ?? undefined,
       zoneType: zone.zoneType,
-      maxOccupancy: zone.maxOccupancy,
-      genderRestriction: zone.genderRestriction,
+      maxOccupancy: zone.maxOccupancy ?? undefined,
+      genderRestriction: zone.genderRestriction ?? undefined,
       isActive: zone.isActive,
     });
     setEditingZone(zone.id);

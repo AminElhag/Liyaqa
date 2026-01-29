@@ -27,6 +27,7 @@ export interface CreateZoneRequest {
   maxOccupancy?: number;
   genderRestriction?: GenderRestriction;
   requireSpecificPlans?: UUID[];
+  isActive?: boolean;
 }
 
 export interface UpdateZoneRequest {
@@ -77,6 +78,7 @@ export interface CreateTimeRuleRequest {
   endTime: string;
   accessType: AccessRuleType;
   priority?: number;
+  isActive?: boolean;
   validFrom?: string;
   validUntil?: string;
 }

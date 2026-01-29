@@ -10,7 +10,7 @@ import java.util.UUID
  */
 data class CreateSupportTicketCommand(
     val organizationId: UUID,
-    val clubId: UUID? = null,
+    val clubId: String? = null,  // Can be UUID string or club slug
     val subject: String,
     val description: String,
     val category: TicketCategory,

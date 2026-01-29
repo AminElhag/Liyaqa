@@ -1,5 +1,7 @@
 package com.liyaqa.config
 
+import com.liyaqa.shared.exception.DuplicateAgreementException
+import com.liyaqa.shared.exception.DuplicateFieldException
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -86,6 +88,45 @@ class GlobalExceptionHandler {
                     errorAr = "محظور",
                     message = "Access denied. You don't have permission to access this resource.",
                     messageAr = "تم رفض الوصول. ليس لديك صلاحية للوصول إلى هذا المورد.",
+                    timestamp = Instant.now(),
+                    path = request.requestURI
+                )
+            )
+    }
+
+    @ExceptionHandler(DuplicateFieldException::class)
+    fun handleDuplicateField(ex: DuplicateFieldException, request: HttpServletRequest): ResponseEntity<DuplicateFieldErrorResponse> {
+        logger.debug("Duplicate field: ${ex.field.fieldName} - ${ex.message}")
+        return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(
+                DuplicateFieldErrorResponse(
+                    status = HttpStatus.CONFLICT.value(),
+                    error = "Conflict",
+                    errorAr = "تعارض",
+                    field = ex.field.fieldName,
+                    fieldDisplayName = ex.field.displayName,
+                    fieldDisplayNameAr = ex.field.displayNameAr,
+                    message = ex.message ?: "A record with this value already exists",
+                    messageAr = translateDuplicateFieldMessage(ex.field),
+                    timestamp = Instant.now(),
+                    path = request.requestURI
+                )
+            )
+    }
+
+    @ExceptionHandler(DuplicateAgreementException::class)
+    fun handleDuplicateAgreement(ex: DuplicateAgreementException, request: HttpServletRequest): ResponseEntity<LocalizedErrorResponse> {
+        logger.debug("Duplicate agreement: ${ex.message}")
+        return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(
+                LocalizedErrorResponse(
+                    status = HttpStatus.CONFLICT.value(),
+                    error = "Conflict",
+                    errorAr = "تعارض",
+                    message = ex.message ?: "An agreement with the same title and type already exists",
+                    messageAr = "يوجد اتفاقية بنفس العنوان والنوع بالفعل",
                     timestamp = Instant.now(),
                     path = request.requestURI
                 )
@@ -255,6 +296,14 @@ class GlobalExceptionHandler {
         val uuidPattern = Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", RegexOption.IGNORE_CASE)
         return uuidPattern.find(message)?.value ?: ""
     }
+
+    private fun translateDuplicateFieldMessage(field: com.liyaqa.shared.exception.DuplicateField): String {
+        return when (field) {
+            com.liyaqa.shared.exception.DuplicateField.EMAIL -> "يوجد عضو بهذا البريد الإلكتروني بالفعل"
+            com.liyaqa.shared.exception.DuplicateField.PHONE -> "يوجد عضو برقم الهاتف هذا بالفعل"
+            com.liyaqa.shared.exception.DuplicateField.NATIONAL_ID -> "يوجد عضو برقم الهوية الوطنية هذا بالفعل"
+        }
+    }
 }
 
 /**
@@ -306,4 +355,21 @@ data class ValidationErrorResponse(
     val message: String,
     val errors: Map<String, String>,
     val timestamp: Instant
+)
+
+/**
+ * Error response for duplicate field conflicts.
+ * Includes field information for targeted error display.
+ */
+data class DuplicateFieldErrorResponse(
+    val status: Int,
+    val error: String,
+    val errorAr: String,
+    val field: String,
+    val fieldDisplayName: String,
+    val fieldDisplayNameAr: String,
+    val message: String,
+    val messageAr: String,
+    val timestamp: Instant,
+    val path: String? = null
 )

@@ -1,35 +1,14 @@
 package com.liyaqa.marketing.domain.model
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.liyaqa.shared.domain.BaseEntity
-import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Column
-import jakarta.persistence.Convert
-import jakarta.persistence.Converter
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Table
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.util.UUID
-
-/**
- * Converter for storing segment criteria as JSON.
- */
-@Converter
-class SegmentCriteriaConverter : AttributeConverter<SegmentCriteria?, String?> {
-    private val objectMapper = ObjectMapper()
-
-    override fun convertToDatabaseColumn(attribute: SegmentCriteria?): String? {
-        return attribute?.let { objectMapper.writeValueAsString(it) }
-    }
-
-    override fun convertToEntityAttribute(dbData: String?): SegmentCriteria? {
-        return dbData?.let {
-            objectMapper.readValue(it, object : TypeReference<SegmentCriteria>() {})
-        }
-    }
-}
 
 /**
  * Criteria for dynamic segment membership.
@@ -67,8 +46,8 @@ class Segment(
     @Column(name = "segment_type", nullable = false)
     var segmentType: SegmentType = SegmentType.DYNAMIC,
 
-    @Convert(converter = SegmentCriteriaConverter::class)
-    @Column(name = "criteria", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "criteria")
     var criteria: SegmentCriteria? = null,
 
     @Column(name = "member_count", nullable = false)

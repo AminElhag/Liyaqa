@@ -99,10 +99,11 @@ export default function RiskAssessmentsPage() {
   });
 
   // Stats
-  const totalAssessments = assessments?.length ?? 0;
-  const inProgressCount = assessments?.filter((a) => a.status === "IN_PROGRESS").length ?? 0;
-  const totalHighRisks = assessments?.reduce((sum, a) => sum + a.highRisks, 0) ?? 0;
-  const totalMediumRisks = assessments?.reduce((sum, a) => sum + a.mediumRisks, 0) ?? 0;
+  const assessmentsList = assessments?.content ?? [];
+  const totalAssessments = assessmentsList.length;
+  const inProgressCount = assessmentsList.filter((a) => a.status === "IN_PROGRESS").length;
+  const totalHighRisks = assessmentsList.reduce((sum, a) => sum + a.highRisks, 0);
+  const totalMediumRisks = assessmentsList.reduce((sum, a) => sum + a.mediumRisks, 0);
 
   return (
     <div className="space-y-6">
@@ -250,7 +251,7 @@ export default function RiskAssessmentsPage() {
           ) : (
             <DataTable
               columns={columns}
-              data={assessments ?? []}
+              data={assessmentsList}
               searchKey="title"
               searchPlaceholder={isArabic ? "البحث عن التقييمات..." : "Search assessments..."}
             />

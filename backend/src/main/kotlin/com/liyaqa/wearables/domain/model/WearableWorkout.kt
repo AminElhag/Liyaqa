@@ -68,7 +68,7 @@ class WearableWorkout(
     @Column
     val steps: Int? = null,
 
-    @Column(name = "raw_data", columnDefinition = "jsonb")
+    @Column(name = "raw_data")
     @JdbcTypeCode(SqlTypes.JSON)
     val rawData: String? = null,
 

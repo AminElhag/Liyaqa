@@ -136,6 +136,7 @@ export interface PlatformHealth {
   paymentHealthScore: number;
   subscriptionHealthScore: number;
   overallHealthScore: number;
+  totalClients?: number;
   alerts: HealthAlert[];
 }
 

@@ -26,7 +26,7 @@ interface SpringDataFacilityBookingRepository : JpaRepository<FacilityBooking, U
     fun countByMemberIdAndStatusAndBookedAtAfter(memberId: UUID, status: BookingStatus, after: Instant): Long
     fun existsBySlotIdAndStatusIn(slotId: UUID, statuses: List<BookingStatus>): Boolean
 
-    @Query("SELECT b FROM FacilityBooking b JOIN FacilitySlot s ON b.slotId = s.id WHERE s.date = :date ORDER BY s.startTime")
+    @Query("SELECT b FROM FacilityBooking b JOIN FacilitySlot s ON b.slotId = s.id WHERE s.slotDate = :date ORDER BY s.startTime")
     fun findBySlotDate(@Param("date") date: LocalDate): List<FacilityBooking>
 }
 

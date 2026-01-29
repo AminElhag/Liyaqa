@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -10,15 +10,20 @@ import {
   Briefcase,
   CreditCard,
   FileText,
+  FileSignature,
   KeyRound,
   Copy,
   ExternalLink,
   Loader2,
-  RefreshCw,
   Clock,
   Mail,
   User,
   Check,
+  Edit,
+  CheckCircle,
+  XCircle,
+  MapPin,
+  Tag,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -35,7 +40,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuthStore } from "@/stores/auth-store";
 import { ResetPasswordDialog } from "@/components/platform/reset-password-dialog";
+import {
+  ClubLocationsTab,
+  ClubMembershipPlansTab,
+  ClubEditDialog,
+  ClubAgreementsTab,
+} from "@/components/platform/club-detail";
 
 import {
   useClubDetail,
@@ -45,6 +57,9 @@ import {
   useClubAuditLogs,
   useResetUserPassword,
   useAuditActions,
+  useUpdateClub,
+  useActivateClub,
+  useSuspendClub,
 } from "@/queries/platform";
 import type {
   ClubUser,
@@ -52,6 +67,7 @@ import type {
   ClubSubscription,
   ClubAuditLog,
   AuditAction,
+  UpdateClubRequest,
 } from "@/types/platform";
 import type { ColumnDef } from "@tanstack/react-table";
 
@@ -127,7 +143,6 @@ function ClubStatusBadge({ status, locale }: { status: string; locale: string })
 export default function ClubDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { toast } = useToast();
 
   const clubId = params.id as string;
@@ -146,6 +161,13 @@ export default function ClubDetailPage() {
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ClubUser | null>(null);
   const [copiedSubdomain, setCopiedSubdomain] = useState(false);
+
+  // Edit dialog state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  // Auth state
+  const { user } = useAuthStore();
+  const isPlatformAdmin = user?.role === "PLATFORM_ADMIN";
 
   // Get dynamic base domain from current location
   const getBaseDomain = () => {
@@ -183,6 +205,9 @@ export default function ClubDetailPage() {
 
   // Mutations
   const resetPasswordMutation = useResetUserPassword(clubId);
+  const updateClubMutation = useUpdateClub(clubId);
+  const activateClubMutation = useActivateClub(clubId);
+  const suspendClubMutation = useSuspendClub(clubId);
 
   // Texts
   const texts = {
@@ -226,6 +251,16 @@ export default function ClubDetailPage() {
     copied: locale === "ar" ? "تم النسخ" : "Copied",
     passwordResetSuccess: locale === "ar" ? "تم إعادة تعيين كلمة المرور بنجاح" : "Password reset successfully",
     passwordResetError: locale === "ar" ? "فشل إعادة تعيين كلمة المرور" : "Failed to reset password",
+    locations: locale === "ar" ? "المواقع" : "Locations",
+    membershipPlans: locale === "ar" ? "خطط العضوية" : "Membership Plans",
+    agreements: locale === "ar" ? "الاتفاقيات" : "Agreements",
+    editClub: locale === "ar" ? "تعديل النادي" : "Edit Club",
+    activateClub: locale === "ar" ? "تفعيل النادي" : "Activate",
+    suspendClub: locale === "ar" ? "تعليق النادي" : "Suspend",
+    clubUpdated: locale === "ar" ? "تم تحديث النادي بنجاح" : "Club updated successfully",
+    clubActivated: locale === "ar" ? "تم تفعيل النادي بنجاح" : "Club activated successfully",
+    clubSuspended: locale === "ar" ? "تم تعليق النادي بنجاح" : "Club suspended successfully",
+    actionFailed: locale === "ar" ? "فشل في تنفيذ الإجراء" : "Action failed",
   };
 
   // Copy to clipboard
@@ -254,6 +289,37 @@ export default function ClubDetailPage() {
         title: texts.passwordResetError,
         variant: "destructive",
       });
+    }
+  };
+
+  // Handle club update
+  const handleUpdateClub = async (data: UpdateClubRequest) => {
+    try {
+      await updateClubMutation.mutateAsync(data);
+      toast({ title: texts.clubUpdated });
+      setEditDialogOpen(false);
+    } catch {
+      toast({ title: texts.actionFailed, variant: "destructive" });
+    }
+  };
+
+  // Handle club activate
+  const handleActivateClub = async () => {
+    try {
+      await activateClubMutation.mutateAsync();
+      toast({ title: texts.clubActivated });
+    } catch {
+      toast({ title: texts.actionFailed, variant: "destructive" });
+    }
+  };
+
+  // Handle club suspend
+  const handleSuspendClub = async () => {
+    try {
+      await suspendClubMutation.mutateAsync();
+      toast({ title: texts.clubSuspended });
+    } catch {
+      toast({ title: texts.actionFailed, variant: "destructive" });
     }
   };
 
@@ -514,7 +580,47 @@ export default function ClubDetailPage() {
                 </CardDescription>
               </div>
             </div>
-            <ClubStatusBadge status={clubDetail.status} locale={locale} />
+            <div className="flex items-center gap-2">
+              <ClubStatusBadge status={clubDetail.status} locale={locale} />
+              {isPlatformAdmin && (
+                <>
+                  <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
+                    <Edit className="h-4 w-4 me-1" />
+                    {texts.editClub}
+                  </Button>
+                  {clubDetail.status === "SUSPENDED" && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleActivateClub}
+                      disabled={activateClubMutation.isPending}
+                    >
+                      {activateClubMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 me-1 animate-spin" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4 me-1" />
+                      )}
+                      {texts.activateClub}
+                    </Button>
+                  )}
+                  {clubDetail.status === "ACTIVE" && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleSuspendClub}
+                      disabled={suspendClubMutation.isPending}
+                    >
+                      {suspendClubMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 me-1 animate-spin" />
+                      ) : (
+                        <XCircle className="h-4 w-4 me-1" />
+                      )}
+                      {texts.suspendClub}
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -574,7 +680,7 @@ export default function ClubDetailPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="w-full flex flex-wrap gap-1">
           <TabsTrigger value="overview" className="gap-2">
             <Building2 className="h-4 w-4" />
             <span className="hidden sm:inline">{texts.overview}</span>
@@ -590,6 +696,18 @@ export default function ClubDetailPage() {
           <TabsTrigger value="subscriptions" className="gap-2">
             <CreditCard className="h-4 w-4" />
             <span className="hidden sm:inline">{texts.subscriptions}</span>
+          </TabsTrigger>
+          <TabsTrigger value="locations" className="gap-2">
+            <MapPin className="h-4 w-4" />
+            <span className="hidden sm:inline">{texts.locations}</span>
+          </TabsTrigger>
+          <TabsTrigger value="plans" className="gap-2">
+            <Tag className="h-4 w-4" />
+            <span className="hidden sm:inline">{texts.membershipPlans}</span>
+          </TabsTrigger>
+          <TabsTrigger value="agreements" className="gap-2">
+            <FileSignature className="h-4 w-4" />
+            <span className="hidden sm:inline">{texts.agreements}</span>
           </TabsTrigger>
           <TabsTrigger value="audit" className="gap-2">
             <FileText className="h-4 w-4" />
@@ -719,6 +837,21 @@ export default function ClubDetailPage() {
           </Card>
         </TabsContent>
 
+        {/* Locations Tab */}
+        <TabsContent value="locations">
+          <ClubLocationsTab clubId={clubId} locale={locale} />
+        </TabsContent>
+
+        {/* Membership Plans Tab */}
+        <TabsContent value="plans">
+          <ClubMembershipPlansTab clubId={clubId} locale={locale} />
+        </TabsContent>
+
+        {/* Agreements Tab */}
+        <TabsContent value="agreements">
+          <ClubAgreementsTab clubId={clubId} locale={locale} />
+        </TabsContent>
+
         {/* Audit Logs Tab */}
         <TabsContent value="audit">
           <Card>
@@ -780,6 +913,16 @@ export default function ClubDetailPage() {
           isLoading={resetPasswordMutation.isPending}
         />
       )}
+
+      {/* Edit Club Dialog */}
+      <ClubEditDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        club={clubDetail}
+        locale={locale}
+        onSubmit={handleUpdateClub}
+        isLoading={updateClubMutation.isPending}
+      />
     </div>
   );
 }

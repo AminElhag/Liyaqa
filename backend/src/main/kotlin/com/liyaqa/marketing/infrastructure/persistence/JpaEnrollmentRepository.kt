@@ -77,11 +77,11 @@ interface SpringDataEnrollmentRepository : JpaRepository<CampaignEnrollment, UUI
     @Modifying
     @Query("""
         UPDATE CampaignEnrollment e
-        SET e.status = 'CANCELLED', e.cancelledAt = CURRENT_TIMESTAMP, e.nextStepDueAt = NULL
+        SET e.status = 'CANCELLED', e.cancelledAt = :now, e.nextStepDueAt = NULL
         WHERE e.campaignId = :campaignId
         AND e.status = 'ACTIVE'
     """)
-    fun cancelAllByCampaignId(@Param("campaignId") campaignId: UUID): Int
+    fun cancelAllByCampaignId(@Param("campaignId") campaignId: UUID, @Param("now") now: Instant): Int
 }
 
 @Repository
@@ -140,5 +140,5 @@ class JpaEnrollmentRepository(
         springDataRepository.findByStatus(status, pageable)
 
     override fun cancelAllByCampaignId(campaignId: UUID): Int =
-        springDataRepository.cancelAllByCampaignId(campaignId)
+        springDataRepository.cancelAllByCampaignId(campaignId, Instant.now())
 }

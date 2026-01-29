@@ -71,6 +71,17 @@ interface SpringDataClientInvoiceRepository : JpaRepository<ClientInvoice, UUID>
 
     fun countByOrganizationId(organizationId: UUID): Long
 
+    /**
+     * Gets all status counts in a single query for performance.
+     * This replaces multiple countByStatus calls with one efficient query.
+     */
+    @Query("""
+        SELECT ci.status, COUNT(ci)
+        FROM ClientInvoice ci
+        GROUP BY ci.status
+    """)
+    fun countGroupByStatus(): List<Array<Any>>
+
     // Aggregation queries for dashboard performance
     @Query("""
         SELECT COALESCE(SUM(ci.paidAmount.amount), 0)
@@ -205,6 +216,13 @@ class JpaClientInvoiceRepository(
 
     override fun countByOrganizationId(organizationId: UUID): Long =
         springDataRepository.countByOrganizationId(organizationId)
+
+    override fun countAllByStatus(): Map<ClientInvoiceStatus, Long> {
+        return springDataRepository.countGroupByStatus()
+            .associate { row ->
+                (row[0] as ClientInvoiceStatus) to (row[1] as Long)
+            }
+    }
 
     override fun existsById(id: UUID): Boolean =
         springDataRepository.existsById(id)

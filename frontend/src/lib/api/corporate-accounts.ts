@@ -6,7 +6,10 @@ import type {
   UpdateCorporateAccountRequest,
   AddCorporateMemberRequest,
 } from '@/types/accounts';
-import type { Page, PageParams } from '@/types/common';
+import type { PaginatedResponse } from '@/types/api';
+
+type Page<T> = PaginatedResponse<T>;
+type PageParams = { page?: number; size?: number; sort?: string };
 
 const BASE_URL = 'corporate-accounts';
 

@@ -38,11 +38,11 @@ class LeadCaptureForm(
     var isActive: Boolean = true,
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "config", nullable = false, columnDefinition = "jsonb")
+    @Column(name = "config", nullable = false)
     var config: LeadCaptureFormConfig = LeadCaptureFormConfig(),
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "styling", columnDefinition = "jsonb")
+    @Column(name = "styling")
     var styling: LeadCaptureFormStyling = LeadCaptureFormStyling(),
 
     @Column(name = "redirect_url")

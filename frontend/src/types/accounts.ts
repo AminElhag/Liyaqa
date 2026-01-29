@@ -33,6 +33,7 @@ export interface FamilyGroupSummary {
   memberCount: number;
   maxMembers: number;
   discountPercentage: number;
+  billingType?: FamilyBillingType;
   status: AccountStatus;
   createdAt?: string;
 }

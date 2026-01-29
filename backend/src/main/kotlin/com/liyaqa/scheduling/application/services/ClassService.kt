@@ -83,8 +83,21 @@ class ClassService(
             deductsClassFromPlan = command.deductsClassFromPlan,
             colorCode = command.colorCode,
             imageUrl = command.imageUrl,
-            sortOrder = command.sortOrder
+            sortOrder = command.sortOrder,
+            // Pricing fields
+            pricingModel = command.pricingModel,
+            dropInPrice = command.dropInPrice,
+            taxRate = command.taxRate,
+            allowNonSubscribers = command.allowNonSubscribers,
+            // Booking settings
+            advanceBookingDays = command.advanceBookingDays,
+            cancellationDeadlineHours = command.cancellationDeadlineHours,
+            lateCancellationFee = command.lateCancellationFee
         )
+
+        // Validate pricing configuration
+        gymClass.validatePricingConfiguration()
+
         return gymClassRepository.save(gymClass)
     }
 
@@ -151,6 +164,18 @@ class ClassService(
         command.colorCode?.let { gymClass.colorCode = it }
         command.imageUrl?.let { gymClass.imageUrl = it }
         command.sortOrder?.let { gymClass.sortOrder = it }
+        // Pricing fields
+        command.pricingModel?.let { gymClass.pricingModel = it }
+        command.dropInPrice?.let { gymClass.dropInPrice = it }
+        command.taxRate?.let { gymClass.taxRate = it }
+        command.allowNonSubscribers?.let { gymClass.allowNonSubscribers = it }
+        // Booking settings
+        command.advanceBookingDays?.let { gymClass.advanceBookingDays = it }
+        command.cancellationDeadlineHours?.let { gymClass.cancellationDeadlineHours = it }
+        command.lateCancellationFee?.let { gymClass.lateCancellationFee = it }
+
+        // Validate pricing configuration
+        gymClass.validatePricingConfiguration()
 
         return gymClassRepository.save(gymClass)
     }

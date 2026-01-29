@@ -35,6 +35,16 @@ import {
   UserPlus,
   Target,
   Shuffle,
+  FileText,
+  Lock,
+  Shield,
+  Search,
+  CheckSquare,
+  XCircle,
+  Megaphone,
+  Gift,
+  Building2,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -53,61 +63,81 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useUIStore } from "@/stores/ui-store";
 import { getInitials } from "@/lib/utils";
 import { NavGroup, type NavGroupConfig, type NavItem } from "./nav-group";
+import { useCommandPaletteSafe } from "@/components/command-palette";
+import { BottomNav } from "@/components/mobile";
 
-// Admin navigation organized into groups
+// Admin navigation organized into groups (MD3 Redesign)
 const adminNavGroups: NavGroupConfig[] = [
+  // Dashboard (top-level)
   {
-    id: "overview",
-    labelKey: "navGroups.overview",
+    id: "dashboard",
+    labelKey: "navGroups.dashboard",
     icon: LayoutDashboard,
     defaultExpanded: true,
     items: [
       { href: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
     ],
   },
+
+  // Members & CRM
   {
-    id: "members",
-    labelKey: "navGroups.members",
+    id: "membersCrm",
+    labelKey: "navGroups.membersCrm",
     icon: Users,
     defaultExpanded: true,
     items: [
       { href: "/members", labelKey: "members", icon: Users },
+      { href: "/leads", labelKey: "leads", icon: UserPlus },
+      { href: "/tasks", labelKey: "tasks", icon: CheckSquare },
       { href: "/subscriptions", labelKey: "subscriptions", icon: CreditCard },
+      { href: "/cancellations", labelKey: "cancellations", icon: XCircle },
+      { href: "/contracts", labelKey: "contracts", icon: FileText },
       { href: "/freeze-packages", labelKey: "freezePackages", icon: Snowflake },
     ],
   },
+
+  // Operations
   {
-    id: "crm",
-    labelKey: "navGroups.crm",
-    icon: UserPlus,
+    id: "operations",
+    labelKey: "navGroups.operations",
+    icon: ClipboardCheck,
     items: [
-      { href: "/leads", labelKey: "leads", icon: UserPlus },
-      { href: "/settings/scoring-rules", labelKey: "scoringRules", icon: Target },
-      { href: "/settings/assignment-rules", labelKey: "assignmentRules", icon: Shuffle },
-    ],
-  },
-  {
-    id: "training",
-    labelKey: "navGroups.training",
-    icon: Dumbbell,
-    items: [
+      { href: "/attendance", labelKey: "attendance", icon: ClipboardCheck },
       { href: "/classes", labelKey: "classes", icon: Calendar },
       { href: "/trainers", labelKey: "trainers", icon: Dumbbell },
       { href: "/pt-sessions", labelKey: "ptSessions", icon: UserCheck },
-      { href: "/attendance", labelKey: "attendance", icon: ClipboardCheck },
+      { href: "/facilities", labelKey: "facilities", icon: Building2 },
     ],
   },
+
+  // Sales & Commerce
   {
-    id: "shop",
-    labelKey: "navGroups.shop",
+    id: "salesCommerce",
+    labelKey: "navGroups.salesCommerce",
     icon: ShoppingBag,
     items: [
-      { href: "/products", labelKey: "products", icon: Package },
-      { href: "/product-categories", labelKey: "productCategories", icon: Tags },
       { href: "/pos", labelKey: "pos", icon: ShoppingCart },
       { href: "/invoices", labelKey: "invoices", icon: Receipt },
+      { href: "/products", labelKey: "products", icon: Package },
+      { href: "/product-categories", labelKey: "productCategories", icon: Tags },
+      { href: "/marketing/campaigns", labelKey: "campaigns", icon: Megaphone },
+      { href: "/loyalty", labelKey: "loyalty", icon: Gift },
     ],
   },
+
+  // Analytics
+  {
+    id: "analytics",
+    labelKey: "navGroups.analytics",
+    icon: TrendingUp,
+    items: [
+      { href: "/analytics", labelKey: "analyticsOverview", icon: TrendingUp },
+      { href: "/reports", labelKey: "reports", icon: BarChart3 },
+      { href: "/analytics/churn", labelKey: "churnAnalysis", icon: Activity },
+    ],
+  },
+
+  // Team
   {
     id: "team",
     labelKey: "navGroups.team",
@@ -118,15 +148,20 @@ const adminNavGroups: NavGroupConfig[] = [
       { href: "/job-titles", labelKey: "jobTitles", icon: Briefcase },
     ],
   },
+
+  // Settings
   {
-    id: "system",
-    labelKey: "navGroups.system",
+    id: "settings",
+    labelKey: "navGroups.settings",
     icon: Settings,
     items: [
-      { href: "/plans", labelKey: "membership", icon: Tag },
-      { href: "/reports", labelKey: "reports", icon: BarChart3 },
+      { href: "/plans", labelKey: "plans", icon: Tag },
+      { href: "/settings/agreements", labelKey: "agreements", icon: FileText },
+      { href: "/settings/access-control", labelKey: "accessControl", icon: Lock },
+      { href: "/settings/compliance", labelKey: "compliance", icon: Shield },
+      { href: "/settings/membership-categories", labelKey: "membershipCategories", icon: Users },
+      { href: "/settings/pricing-tiers", labelKey: "pricingTiers", icon: Tag },
       { href: "/manage-notifications", labelKey: "notifications", icon: Bell },
-      { href: "/activity", labelKey: "activity", icon: Activity },
     ],
   },
 ];
@@ -156,6 +191,9 @@ export function AdminShell({ children }: AdminShellProps) {
     expandedNavGroups,
     toggleNavGroup,
   } = useUIStore();
+
+  // Command palette hook - returns null when outside provider
+  const commandPalette = useCommandPaletteSafe();
 
   const handleLogout = async () => {
     await logout();
@@ -291,6 +329,40 @@ export function AdminShell({ children }: AdminShellProps) {
             <Menu className="h-5 w-5" />
           </Button>
 
+          {/* Command Palette Search Button */}
+          {commandPalette && (
+            <button
+              type="button"
+              onClick={commandPalette.open}
+              className={cn(
+                "hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-md3-md",
+                "text-sm text-muted-foreground",
+                "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                "transition-colors duration-150"
+              )}
+            >
+              <Search className="h-4 w-4" />
+              <span className="hidden md:inline">
+                {locale === "ar" ? "بحث..." : "Search..."}
+              </span>
+              <kbd className="hidden lg:inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </button>
+          )}
+
+          {/* Mobile search button */}
+          {commandPalette && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={commandPalette.open}
+              className="sm:hidden"
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+          )}
+
           <div className="flex-1" />
 
           <div className="flex items-center gap-2">
@@ -332,8 +404,11 @@ export function AdminShell({ children }: AdminShellProps) {
         </header>
 
         {/* Page content */}
-        <main className="p-4 lg:p-6">{children}</main>
+        <main className="p-4 lg:p-6 pb-20 lg:pb-6">{children}</main>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      {!isMember && <BottomNav />}
     </div>
   );
 }

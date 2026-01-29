@@ -115,9 +115,10 @@ export default function ConsentsManagementPage() {
   };
 
   // Stats
-  const totalConsents = consents?.length ?? 0;
-  const activeConsents = consents?.filter((c) => c.isValid).length ?? 0;
-  const withdrawnConsents = consents?.filter((c) => c.withdrawnAt).length ?? 0;
+  const consentsList = consents?.content ?? [];
+  const totalConsents = consentsList.length;
+  const activeConsents = consentsList.filter((c) => c.isValid).length;
+  const withdrawnConsents = consentsList.filter((c) => c.withdrawnAt).length;
 
   return (
     <div className="space-y-6">
@@ -327,7 +328,7 @@ export default function ConsentsManagementPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {consents?.map((consent) => (
+                {consentsList.map((consent) => (
                   <TableRow key={consent.id}>
                     <TableCell>
                       <Badge variant="outline">

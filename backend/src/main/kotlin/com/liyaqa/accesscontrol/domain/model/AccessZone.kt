@@ -35,7 +35,7 @@ class AccessZone(
     @Column(name = "gender_restriction", length = 10)
     var genderRestriction: GenderRestriction? = null,
 
-    @Column(name = "require_specific_plans", columnDefinition = "jsonb")
+    @Column(name = "require_specific_plans")
     var requireSpecificPlans: String? = null, // JSON array of plan IDs
 
     @Column(name = "is_active")

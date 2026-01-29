@@ -1,4 +1,4 @@
-import type { UUID, LocalizedText, ListQueryParams } from "./api";
+import type { UUID, LocalizedText, ListQueryParams, Money } from "./api";
 
 /**
  * Day of week
@@ -33,6 +33,34 @@ export type BookingStatus =
   | "NO_SHOW";
 
 /**
+ * Pricing model for classes
+ */
+export type ClassPricingModel =
+  | "INCLUDED_IN_MEMBERSHIP"
+  | "PAY_PER_ENTRY"
+  | "CLASS_PACK_ONLY"
+  | "HYBRID";
+
+/**
+ * Payment source for bookings
+ */
+export type BookingPaymentSource =
+  | "MEMBERSHIP_INCLUDED"
+  | "CLASS_PACK"
+  | "PAY_PER_ENTRY"
+  | "COMPLIMENTARY";
+
+/**
+ * Class pack status
+ */
+export type ClassPackStatus = "ACTIVE" | "INACTIVE";
+
+/**
+ * Class pack balance status
+ */
+export type ClassPackBalanceStatus = "ACTIVE" | "DEPLETED" | "EXPIRED" | "CANCELLED";
+
+/**
  * Class schedule for recurring classes
  */
 export interface ClassSchedule {
@@ -41,6 +69,16 @@ export interface ClassSchedule {
   startTime: string;
   endTime: string;
 }
+
+/**
+ * Class type
+ */
+export type ClassType = "GROUP_FITNESS" | "PERSONAL_TRAINING" | "SPECIALTY" | "WORKSHOP";
+
+/**
+ * Difficulty level
+ */
+export type DifficultyLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "ALL_LEVELS";
 
 /**
  * Gym class
@@ -57,6 +95,20 @@ export interface GymClass {
   locationName?: LocalizedText;
   status: ClassStatus;
   schedules: ClassSchedule[];
+  // Class attributes
+  classType?: ClassType;
+  difficultyLevel: DifficultyLevel;
+  colorCode?: string;
+  imageUrl?: string;
+  // Pricing fields
+  pricingModel: ClassPricingModel;
+  dropInPrice?: Money;
+  taxRate?: number;
+  allowNonSubscribers: boolean;
+  // Booking settings
+  advanceBookingDays: number;
+  cancellationDeadlineHours: number;
+  lateCancellationFee?: Money;
   tenantId: UUID;
   createdAt: string;
   updatedAt: string;
@@ -81,6 +133,10 @@ export interface ClassSession {
   status: SessionStatus;
   locationId?: UUID;
   locationName?: LocalizedText;
+  // Member-specific fields (from member portal API)
+  bookedByCurrentMember?: boolean;
+  waitlistEnabled?: boolean;
+  colorCode?: string;
   tenantId: UUID;
   createdAt: string;
   updatedAt: string;
@@ -102,6 +158,11 @@ export interface Booking {
   waitlistPosition?: number;
   checkedInAt?: string;
   cancelledAt?: string;
+  // Payment tracking
+  paymentSource?: BookingPaymentSource;
+  classPackBalanceId?: UUID;
+  orderId?: UUID;
+  paidAmount?: Money;
   tenantId: UUID;
   createdAt: string;
   updatedAt: string;
@@ -117,6 +178,17 @@ export interface CreateClassRequest {
   capacity: number;
   durationMinutes: number;
   locationId?: UUID;
+  // Pricing settings
+  pricingModel?: ClassPricingModel;
+  dropInPriceAmount?: number;
+  dropInPriceCurrency?: string;
+  taxRate?: number;
+  allowNonSubscribers?: boolean;
+  // Booking settings
+  advanceBookingDays?: number;
+  cancellationDeadlineHours?: number;
+  lateCancellationFeeAmount?: number;
+  lateCancellationFeeCurrency?: string;
   schedules?: Array<{
     dayOfWeek: DayOfWeek;
     startTime: string;
@@ -135,6 +207,17 @@ export interface UpdateClassRequest {
   durationMinutes?: number;
   locationId?: UUID;
   status?: ClassStatus;
+  // Pricing settings
+  pricingModel?: ClassPricingModel;
+  dropInPriceAmount?: number;
+  dropInPriceCurrency?: string;
+  taxRate?: number;
+  allowNonSubscribers?: boolean;
+  // Booking settings
+  advanceBookingDays?: number;
+  cancellationDeadlineHours?: number;
+  lateCancellationFeeAmount?: number;
+  lateCancellationFeeCurrency?: string;
 }
 
 /**
@@ -183,5 +266,121 @@ export interface BookingQueryParams extends ListQueryParams {
   date?: string;
   dateFrom?: string;
   dateTo?: string;
+}
+
+// ==================== CLASS PACKS ====================
+
+/**
+ * Class pack
+ */
+export interface ClassPack {
+  id: UUID;
+  name: LocalizedText;
+  description?: LocalizedText;
+  classCount: number;
+  price: Money;
+  priceWithTax: Money;
+  taxRate: number;
+  validityDays?: number;
+  validClassTypes: string[];
+  validClassIds: UUID[];
+  status: ClassPackStatus;
+  sortOrder: number;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Member class pack balance
+ */
+export interface MemberClassPackBalance {
+  id: UUID;
+  memberId: UUID;
+  classPackId: UUID;
+  packName: LocalizedText;
+  classesPurchased: number;
+  classesRemaining: number;
+  classesUsed: number;
+  purchasedAt: string;
+  expiresAt?: string;
+  status: ClassPackBalanceStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Create class pack request
+ */
+export interface CreateClassPackRequest {
+  nameEn: string;
+  nameAr?: string;
+  descriptionEn?: string;
+  descriptionAr?: string;
+  classCount: number;
+  priceAmount: number;
+  priceCurrency?: string;
+  taxRate?: number;
+  validityDays?: number;
+  validClassTypes?: string[];
+  validClassIds?: UUID[];
+  sortOrder?: number;
+  imageUrl?: string;
+}
+
+/**
+ * Update class pack request
+ */
+export interface UpdateClassPackRequest {
+  nameEn?: string;
+  nameAr?: string;
+  descriptionEn?: string;
+  descriptionAr?: string;
+  classCount?: number;
+  priceAmount?: number;
+  priceCurrency?: string;
+  taxRate?: number;
+  validityDays?: number;
+  validClassTypes?: string[];
+  validClassIds?: UUID[];
+  sortOrder?: number;
+  imageUrl?: string;
+}
+
+/**
+ * Booking options response (for member booking)
+ */
+export interface BookingOptionsResponse {
+  sessionId: UUID;
+  memberId: UUID;
+  canBook: boolean;
+  reason?: string;
+  options: {
+    membership?: {
+      available: boolean;
+      classesRemaining: number;
+    };
+    classPacks: Array<{
+      balanceId: UUID;
+      packName: LocalizedText;
+      classesRemaining: number;
+      expiresAt?: string;
+    }>;
+    payPerEntry?: {
+      available: boolean;
+      price: Money;
+      taxRate: number;
+      totalWithTax: Money;
+    };
+  };
+}
+
+/**
+ * Create booking with payment request
+ */
+export interface CreateBookingWithPaymentRequest {
+  sessionId: UUID;
+  paymentSource: BookingPaymentSource;
+  classPackBalanceId?: UUID;
 }
 

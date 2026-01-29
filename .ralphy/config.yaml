@@ -1,0 +1,75 @@
+# Ralphy Configuration
+# https://github.com/michaelshimeles/ralphy
+
+# Project info
+project:
+  name: "Liyaqa"
+  language: "Kotlin/TypeScript"
+  framework: "Spring Boot 3 / Next.js 14"
+  description: "SaaS platform for fitness club management with multi-tenant architecture"
+
+# Commands
+commands:
+  test: "cd backend && ./gradlew test"
+  lint: "cd backend && ./gradlew ktlintCheck && cd ../frontend && npm run lint"
+  build: "cd backend && ./gradlew build -x test && cd ../frontend && npm run build"
+  test_frontend: "cd frontend && npm test"
+  type_check: "cd frontend && npx tsc --noEmit"
+
+# Rules - instructions the AI MUST follow
+rules:
+  # Architecture
+  - "Follow hexagonal architecture pattern (domain/application/infrastructure layers)"
+  - "Keep domain logic in domain layer, never in controllers or infrastructure"
+  - "Use ports and adapters pattern for external dependencies"
+
+  # Backend (Spring Boot/Kotlin)
+  - "Use Kotlin data classes for DTOs and domain models"
+  - "All endpoints must return proper HTTP status codes"
+  - "Use Spring Security with JWT for authentication"
+  - "Follow existing tenant-scoped patterns for multi-tenancy"
+  - "Repository interfaces go in domain/ports, implementations in infrastructure/persistence"
+
+  # Frontend (Next.js/TypeScript)
+  - "Use TypeScript strict mode"
+  - "Use TanStack Query for data fetching with existing query patterns"
+  - "All UI must be bilingual (English and Arabic)"
+  - "Use shadcn/ui components from @/components/ui"
+  - "Follow existing form patterns with react-hook-form and zod validation"
+
+  # API Design
+  - "All APIs must support LocalizedText for bilingual content"
+  - "Use Money type for all currency values"
+  - "Pagination endpoints must return PageResponse<T>"
+
+  # Testing
+  - "Write unit tests for services using JUnit 5 and MockK"
+  - "Use TestContainers for integration tests"
+
+  # Code Quality
+  - "Never add console.log or println for debugging in production code"
+  - "Handle errors appropriately, never swallow exceptions"
+  - "Use meaningful variable and function names"
+
+# Boundaries - files/folders the AI should not modify
+boundaries:
+  never_touch:
+    - ".env*"
+    - "deploy/**"
+    - "*.lock"
+    - "package-lock.json"
+    - "gradle.lockfile"
+    - "backend/src/main/resources/db/migration/V[0-9]*"  # Don't modify existing migrations
+    - ".github/workflows/**"
+    - "docker-compose*.yml"
+
+# AI Engine preferences
+engine:
+  default: "claude"  # Use Claude Code as default
+  fallback: "opencode"
+
+# Git settings
+git:
+  auto_commit: true
+  branch_prefix: "ralphy/"
+  pr_enabled: true

@@ -321,8 +321,14 @@ class QrCheckInController(
         return when (status) {
             SubscriptionStatus.ACTIVE -> "نشط"
             SubscriptionStatus.PENDING_PAYMENT -> "في انتظار الدفع"
+            SubscriptionStatus.PENDING_SIGNATURE -> "في انتظار التوقيع"
             SubscriptionStatus.FROZEN -> "مجمد"
+            SubscriptionStatus.PAUSED -> "موقف مؤقتاً"
+            SubscriptionStatus.PAST_DUE -> "متأخر السداد"
+            SubscriptionStatus.SUSPENDED -> "معلق"
             SubscriptionStatus.CANCELLED -> "ملغي"
+            SubscriptionStatus.PENDING_CANCELLATION -> "في انتظار الإلغاء"
+            SubscriptionStatus.REACTIVATION_PENDING -> "في انتظار إعادة التفعيل"
             SubscriptionStatus.EXPIRED -> "منتهي"
         }
     }

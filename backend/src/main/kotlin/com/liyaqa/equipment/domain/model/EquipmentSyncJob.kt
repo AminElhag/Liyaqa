@@ -50,7 +50,7 @@ class EquipmentSyncJob(
     @Column(name = "error_message")
     var errorMessage: String? = null,
 
-    @Column(name = "error_details", columnDefinition = "jsonb")
+    @Column(name = "error_details")
     var errorDetails: String? = null,
 
     @Column(name = "created_at", nullable = false)

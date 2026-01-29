@@ -1,4 +1,4 @@
-import type { UUID, LocalizedText, Money } from "./api";
+import type { UUID, LocalizedText, Money, TaxableFee } from "./api";
 
 /**
  * Strict LocalizedText input (English required)
@@ -41,6 +41,7 @@ export type Language = "EN" | "AR";
  */
 export interface Member {
   id: UUID;
+  userId?: UUID;
   firstName: LocalizedText;
   lastName: LocalizedText;
   fullName: LocalizedText;
@@ -142,16 +143,7 @@ export type SubscriptionType = "UNLIMITED" | "LIMITED";
  */
 export type BillingPeriod = "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" | "ONE_TIME";
 
-/**
- * Taxable fee with tax rate and computed amounts
- */
-export interface TaxableFee {
-  amount: number;
-  currency: string;
-  taxRate: number;
-  taxAmount: number;    // computed by backend
-  grossAmount: number;  // computed by backend
-}
+// TaxableFee imported from ./api (not re-exported to avoid barrel conflict)
 
 /**
  * Taxable fee request (for create/update)
@@ -210,6 +202,17 @@ export interface MembershipPlan {
   isActive: boolean;
   active?: boolean;               // legacy alias
   sortOrder: number;
+
+  // === CONTRACT CONFIGURATION ===
+  categoryId?: UUID;
+  contractType?: string;          // MONTH_TO_MONTH, FIXED_TERM, etc.
+  supportedTerms?: string[];      // MONTHLY, QUARTERLY, YEARLY, etc.
+  defaultCommitmentMonths?: number;
+  minimumCommitmentMonths?: number;
+  defaultNoticePeriodDays?: number;
+  earlyTerminationFeeType?: string; // NONE, FLAT, PRORATED, etc.
+  earlyTerminationFeeValue?: number;
+  coolingOffDays?: number;
 
   // === AUDIT ===
   tenantId: UUID;

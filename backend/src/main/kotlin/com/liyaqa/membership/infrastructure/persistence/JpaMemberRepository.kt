@@ -36,6 +36,22 @@ interface SpringDataMemberRepository : JpaRepository<Member, UUID> {
     @Query("SELECT m FROM Member m WHERE m.email = :email AND m.tenantId = :tenantId")
     fun findByEmailAndTenantId(email: String, tenantId: UUID): Optional<Member>
 
+    // Uniqueness check methods
+    @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM Member m WHERE m.phone = :phone")
+    fun existsByPhone(@Param("phone") phone: String): Boolean
+
+    @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM Member m WHERE m.nationalId = :nationalId")
+    fun existsByNationalId(@Param("nationalId") nationalId: String): Boolean
+
+    @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM Member m WHERE LOWER(m.email) = LOWER(:email) AND m.id != :excludeId")
+    fun existsByEmailAndIdNot(@Param("email") email: String, @Param("excludeId") excludeId: UUID): Boolean
+
+    @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM Member m WHERE m.phone = :phone AND m.id != :excludeId")
+    fun existsByPhoneAndIdNot(@Param("phone") phone: String, @Param("excludeId") excludeId: UUID): Boolean
+
+    @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM Member m WHERE m.nationalId = :nationalId AND m.id != :excludeId")
+    fun existsByNationalIdAndIdNot(@Param("nationalId") nationalId: String, @Param("excludeId") excludeId: UUID): Boolean
+
     @Query("""
         SELECT m FROM Member m
         WHERE (:search IS NULL OR (
@@ -142,5 +158,27 @@ class JpaMemberRepository(
         val startInstant = startDate.atStartOfDay().toInstant(ZoneOffset.UTC)
         val endInstant = endDate.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)
         return springDataRepository.countJoinedBetween(startInstant, endInstant)
+    }
+
+    // ==================== UNIQUENESS CHECKS ====================
+
+    override fun existsByPhone(phone: String): Boolean {
+        return springDataRepository.existsByPhone(phone)
+    }
+
+    override fun existsByNationalId(nationalId: String): Boolean {
+        return springDataRepository.existsByNationalId(nationalId)
+    }
+
+    override fun existsByEmailAndIdNot(email: String, excludeId: UUID): Boolean {
+        return springDataRepository.existsByEmailAndIdNot(email, excludeId)
+    }
+
+    override fun existsByPhoneAndIdNot(phone: String, excludeId: UUID): Boolean {
+        return springDataRepository.existsByPhoneAndIdNot(phone, excludeId)
+    }
+
+    override fun existsByNationalIdAndIdNot(nationalId: String, excludeId: UUID): Boolean {
+        return springDataRepository.existsByNationalIdAndIdNot(nationalId, excludeId)
     }
 }

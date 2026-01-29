@@ -118,7 +118,7 @@ class KioskSignature(
     @Column(name = "ip_address", length = 45)
     val ipAddress: String? = null,
 
-    @Column(name = "device_info", columnDefinition = "jsonb")
+    @Column(name = "device_info")
     val deviceInfo: String? = null,
 
     @Column(name = "created_at")

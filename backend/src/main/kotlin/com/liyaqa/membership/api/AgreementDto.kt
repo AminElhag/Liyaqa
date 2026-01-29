@@ -1,5 +1,6 @@
 package com.liyaqa.membership.api
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.liyaqa.membership.domain.model.Agreement
 import com.liyaqa.membership.domain.model.AgreementType
 import com.liyaqa.membership.domain.model.MemberAgreement
@@ -52,7 +53,9 @@ data class AgreementResponse(
     val title: LocalizedText,
     val content: LocalizedText,
     val type: AgreementType,
+    @get:JsonProperty("isMandatory")
     val isMandatory: Boolean,
+    @get:JsonProperty("isActive")
     val isActive: Boolean,
     val agreementVersion: Int,
     val effectiveDate: LocalDate,
@@ -83,6 +86,7 @@ data class AgreementSummaryResponse(
     val id: UUID,
     val title: LocalizedText,
     val type: AgreementType,
+    @get:JsonProperty("isMandatory")
     val isMandatory: Boolean,
     val agreementVersion: Int
 ) {
@@ -115,6 +119,14 @@ data class SignAgreementsRequest(
     @field:NotNull(message = "Agreement IDs are required")
     val agreementIds: List<UUID>,
 
+    val ipAddress: String? = null,
+    val userAgent: String? = null,
+    val signatureData: String? = null,
+    val healthData: String? = null
+)
+
+// DTO for signing agreement when agreementId is in the path
+data class SignAgreementDetailsRequest(
     val ipAddress: String? = null,
     val userAgent: String? = null,
     val signatureData: String? = null,

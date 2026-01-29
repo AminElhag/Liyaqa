@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useKiosk } from "../layout";
 import { TouchButton } from "@/components/kiosk";
@@ -40,6 +40,14 @@ const mockInvoices = [
 type PaymentMethodType = "CARD" | "APPLE_PAY" | "MADA" | "WALLET";
 
 export default function KioskPaymentPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent" /></div>}>
+      <KioskPaymentContent />
+    </Suspense>
+  );
+}
+
+function KioskPaymentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const deviceCode = searchParams.get("device") || "";
@@ -103,8 +111,9 @@ export default function KioskPaymentPage() {
       });
 
       setStatus("success");
-    } catch (err: any) {
-      setError(err?.message || (isArabic ? "فشل في الدفع" : "Payment failed"));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : null;
+      setError(message || (isArabic ? "فشل في الدفع" : "Payment failed"));
       setStatus("error");
     }
   };

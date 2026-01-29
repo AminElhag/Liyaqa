@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useKiosk } from "../layout";
 import { TouchButton } from "@/components/kiosk";
@@ -81,6 +81,14 @@ const mockClasses = [
 ];
 
 export default function KioskClassesPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent" /></div>}>
+      <KioskClassesContent />
+    </Suspense>
+  );
+}
+
+function KioskClassesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const deviceCode = searchParams.get("device") || "";

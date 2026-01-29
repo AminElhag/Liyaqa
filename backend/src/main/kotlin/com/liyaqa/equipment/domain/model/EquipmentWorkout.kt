@@ -72,7 +72,7 @@ class EquipmentWorkout(
     @Column(name = "max_heart_rate")
     val maxHeartRate: Int? = null,
 
-    @Column(name = "heart_rate_zones", columnDefinition = "jsonb")
+    @Column(name = "heart_rate_zones")
     val heartRateZones: String? = null,
 
     // Intensity metrics
@@ -108,7 +108,7 @@ class EquipmentWorkout(
     val exercises: String? = null,
 
     // Source data
-    @Column(name = "raw_data", columnDefinition = "jsonb")
+    @Column(name = "raw_data")
     val rawData: String? = null,
 
     @Enumerated(EnumType.STRING)

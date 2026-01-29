@@ -10,6 +10,9 @@ import {
   FileDown,
   Bell,
   ScanLine,
+  Gift,
+  Megaphone,
+  CheckSquare,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -86,6 +89,34 @@ const ACTIONS: QuickAction[] = [
     bgColor: "bg-teal-500/10 hover:bg-teal-500/20",
     shortcut: "M",
   },
+  {
+    id: "campaign",
+    labelEn: "New Campaign",
+    labelAr: "حملة جديدة",
+    icon: Megaphone,
+    href: "/marketing/campaigns/new",
+    color: "text-indigo-600",
+    bgColor: "bg-indigo-500/10 hover:bg-indigo-500/20",
+  },
+  {
+    id: "loyalty",
+    labelEn: "Award Points",
+    labelAr: "منح نقاط",
+    icon: Gift,
+    href: "/loyalty",
+    color: "text-pink-600",
+    bgColor: "bg-pink-500/10 hover:bg-pink-500/20",
+  },
+  {
+    id: "tasks",
+    labelEn: "My Tasks",
+    labelAr: "مهامي",
+    icon: CheckSquare,
+    href: "/tasks",
+    color: "text-orange-600",
+    bgColor: "bg-orange-500/10 hover:bg-orange-500/20",
+    shortcut: "T",
+  },
 ];
 
 const cardVariants = {
@@ -152,7 +183,8 @@ function QuickActionButton({ action, locale, isRtl }: QuickActionButtonProps) {
         whileHover="hover"
         whileTap="tap"
         className={cn(
-          "relative flex flex-col items-center justify-center gap-2 p-4 rounded-xl transition-colors cursor-pointer",
+          "relative flex flex-col items-center justify-center gap-2 p-4 rounded-md3-md transition-colors cursor-pointer",
+          "md3-state-layer min-h-touch-target",
           action.bgColor
         )}
       >

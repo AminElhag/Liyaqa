@@ -189,14 +189,14 @@ export default function LeadsPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
             <Select
-              value={statusFilter}
-              onValueChange={(value) => setStatusFilter(value as LeadStatus | "")}
+              value={statusFilter || "ALL"}
+              onValueChange={(value) => setStatusFilter(value === "ALL" ? "" : value as LeadStatus)}
             >
               <SelectTrigger>
                 <SelectValue placeholder={isArabic ? "جميع الحالات" : "All Statuses"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{isArabic ? "جميع الحالات" : "All Statuses"}</SelectItem>
+                <SelectItem value="ALL">{isArabic ? "جميع الحالات" : "All Statuses"}</SelectItem>
                 {Object.entries(LEAD_STATUS_LABELS).map(([key, label]) => (
                   <SelectItem key={key} value={key}>
                     {isArabic ? label.ar : label.en}
@@ -205,14 +205,14 @@ export default function LeadsPage() {
               </SelectContent>
             </Select>
             <Select
-              value={sourceFilter}
-              onValueChange={(value) => setSourceFilter(value as LeadSource | "")}
+              value={sourceFilter || "ALL"}
+              onValueChange={(value) => setSourceFilter(value === "ALL" ? "" : value as LeadSource)}
             >
               <SelectTrigger>
                 <SelectValue placeholder={isArabic ? "جميع المصادر" : "All Sources"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{isArabic ? "جميع المصادر" : "All Sources"}</SelectItem>
+                <SelectItem value="ALL">{isArabic ? "جميع المصادر" : "All Sources"}</SelectItem>
                 {Object.entries(LEAD_SOURCE_LABELS).map(([key, label]) => (
                   <SelectItem key={key} value={key}>
                     {isArabic ? label.ar : label.en}

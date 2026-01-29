@@ -188,7 +188,24 @@ class DevDataInitializer {
             (RANDOM_UUID(), 'orders_view', 'orders', 'view', 'View Orders', 'عرض الطلبات', 'View order list and details', 'عرض قائمة الطلبات وتفاصيلها', NOW()),
             (RANDOM_UUID(), 'orders_create', 'orders', 'create', 'Create Orders', 'إنشاء الطلبات', 'Create new orders', 'إنشاء طلبات جديدة', NOW()),
             (RANDOM_UUID(), 'orders_update', 'orders', 'update', 'Update Orders', 'تحديث الطلبات', 'Edit order details', 'تحرير تفاصيل الطلبات', NOW()),
-            (RANDOM_UUID(), 'orders_cancel', 'orders', 'cancel', 'Cancel Orders', 'إلغاء الطلبات', 'Cancel orders', 'إلغاء الطلبات', NOW())
+            (RANDOM_UUID(), 'orders_cancel', 'orders', 'cancel', 'Cancel Orders', 'إلغاء الطلبات', 'Cancel orders', 'إلغاء الطلبات', NOW()),
+            -- Wallets module
+            (RANDOM_UUID(), 'wallets_view', 'wallets', 'view', 'View Wallets', 'عرض المحافظ', 'View member wallet balances', 'عرض أرصدة محافظ الأعضاء', NOW()),
+            (RANDOM_UUID(), 'wallets_update', 'wallets', 'update', 'Update Wallets', 'تحديث المحافظ', 'Credit, debit, and adjust wallet balances', 'إيداع وسحب وتعديل أرصدة المحافظ', NOW()),
+            -- Leads module
+            (RANDOM_UUID(), 'leads_create', 'leads', 'create', 'Create Leads', 'إنشاء العملاء المحتملين', 'Create new leads', 'إنشاء عملاء محتملين جدد', NOW()),
+            (RANDOM_UUID(), 'leads_read', 'leads', 'read', 'View Leads', 'عرض العملاء المحتملين', 'View lead list and details', 'عرض قائمة العملاء المحتملين وتفاصيلهم', NOW()),
+            (RANDOM_UUID(), 'leads_update', 'leads', 'update', 'Update Leads', 'تحديث العملاء المحتملين', 'Edit lead information', 'تحرير معلومات العملاء المحتملين', NOW()),
+            (RANDOM_UUID(), 'leads_delete', 'leads', 'delete', 'Delete Leads', 'حذف العملاء المحتملين', 'Delete leads', 'حذف العملاء المحتملين', NOW()),
+            (RANDOM_UUID(), 'leads_assign', 'leads', 'assign', 'Assign Leads', 'تعيين العملاء المحتملين', 'Assign leads to users', 'تعيين العملاء المحتملين للمستخدمين', NOW()),
+            (RANDOM_UUID(), 'leads_convert', 'leads', 'convert', 'Convert Leads', 'تحويل العملاء المحتملين', 'Convert leads to members', 'تحويل العملاء المحتملين إلى أعضاء', NOW()),
+            (RANDOM_UUID(), 'lead_activities_create', 'leads', 'activity_create', 'Log Lead Activities', 'تسجيل أنشطة العملاء', 'Log activities for leads', 'تسجيل الأنشطة للعملاء المحتملين', NOW()),
+            (RANDOM_UUID(), 'lead_activities_read', 'leads', 'activity_read', 'View Lead Activities', 'عرض أنشطة العملاء', 'View lead activity history', 'عرض سجل أنشطة العملاء المحتملين', NOW()),
+            -- Agreements module
+            (RANDOM_UUID(), 'agreements_view', 'agreements', 'view', 'View Agreements', 'عرض الاتفاقيات', 'View agreement list and details', 'عرض قائمة الاتفاقيات وتفاصيلها', NOW()),
+            (RANDOM_UUID(), 'agreements_create', 'agreements', 'create', 'Create Agreements', 'إنشاء الاتفاقيات', 'Create new agreements', 'إنشاء اتفاقيات جديدة', NOW()),
+            (RANDOM_UUID(), 'agreements_update', 'agreements', 'update', 'Update Agreements', 'تحديث الاتفاقيات', 'Edit agreement details', 'تحرير تفاصيل الاتفاقيات', NOW()),
+            (RANDOM_UUID(), 'agreements_delete', 'agreements', 'delete', 'Delete Agreements', 'حذف الاتفاقيات', 'Delete agreements', 'حذف الاتفاقيات', NOW())
         """)
 
         // Set up default permissions for each role
@@ -218,7 +235,9 @@ class DevDataInitializer {
                 'dashboard_view',
                 'trainers_view',
                 'shop_view',
-                'orders_view', 'orders_create'
+                'orders_view', 'orders_create',
+                'leads_read', 'leads_create', 'leads_update', 'lead_activities_create', 'lead_activities_read',
+                'agreements_view'
             )
         """)
 

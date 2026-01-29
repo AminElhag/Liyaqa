@@ -7,16 +7,20 @@ import com.liyaqa.auth.domain.ports.RefreshTokenRepository
 import com.liyaqa.employee.domain.model.Employee
 import com.liyaqa.employee.domain.model.EmployeeStatus
 import com.liyaqa.employee.domain.model.EmploymentType
+import com.liyaqa.membership.domain.model.MembershipPlan
 import com.liyaqa.membership.domain.model.Subscription
 import com.liyaqa.membership.domain.model.SubscriptionStatus
 import com.liyaqa.organization.domain.model.Club
+import com.liyaqa.organization.domain.model.Location
 import com.liyaqa.organization.domain.ports.ClubRepository
 import com.liyaqa.platform.api.dto.ClubEmployeeStats
 import com.liyaqa.platform.api.dto.ClubStats
 import com.liyaqa.platform.api.dto.ClubSubscriptionStats
 import com.liyaqa.platform.api.dto.ClubUserStats
+import com.liyaqa.platform.api.dto.UpdateClubRequest
 import com.liyaqa.shared.domain.AuditAction
 import com.liyaqa.shared.domain.AuditLog
+import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.infrastructure.audit.AuditService
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
@@ -114,17 +118,48 @@ class PlatformClubService(
 
     /**
      * Gets user statistics for a club.
+     * Uses single aggregation query to avoid N+1 problem.
      */
     @Transactional(readOnly = true)
     fun getUserStatsByClub(clubId: UUID): ClubUserStats {
-        val total = countUsersByTenantId(clubId)
-        val active = countUsersByTenantIdAndStatus(clubId, UserStatus.ACTIVE)
-        val inactive = countUsersByTenantIdAndStatus(clubId, UserStatus.INACTIVE)
-        val locked = countUsersByTenantIdAndStatus(clubId, UserStatus.LOCKED)
+        // Single query to get all status counts at once
+        val statusCountQuery = entityManager.createQuery(
+            """
+            SELECT u.status, COUNT(u) FROM User u
+            WHERE u.tenantId = :tenantId
+            GROUP BY u.status
+            """.trimIndent()
+        )
+        statusCountQuery.setParameter("tenantId", clubId)
+        @Suppress("UNCHECKED_CAST")
+        val statusResults = statusCountQuery.resultList as List<Array<Any>>
+        val statusCounts = statusResults.associate {
+            (it[0] as UserStatus) to (it[1] as Long)
+        }
 
-        // Count by role
+        val total = statusCounts.values.sum()
+        val active = statusCounts[UserStatus.ACTIVE] ?: 0L
+        val inactive = statusCounts[UserStatus.INACTIVE] ?: 0L
+        val locked = statusCounts[UserStatus.LOCKED] ?: 0L
+
+        // Single query to get all role counts at once
+        val roleCountQuery = entityManager.createQuery(
+            """
+            SELECT u.role, COUNT(u) FROM User u
+            WHERE u.tenantId = :tenantId
+            GROUP BY u.role
+            """.trimIndent()
+        )
+        roleCountQuery.setParameter("tenantId", clubId)
+        @Suppress("UNCHECKED_CAST")
+        val roleResults = roleCountQuery.resultList as List<Array<Any>>
+        val roleCounts = roleResults.associate {
+            (it[0] as Role) to (it[1] as Long)
+        }
+
+        // Build map with all roles (defaulting to 0 for roles with no users)
         val byRole = Role.entries.associateWith { role ->
-            countUsersByTenantIdAndRole(clubId, role)
+            roleCounts[role] ?: 0L
         }
 
         return ClubUserStats(
@@ -216,17 +251,48 @@ class PlatformClubService(
 
     /**
      * Gets employee statistics for a club.
+     * Uses single aggregation query to avoid N+1 problem.
      */
     @Transactional(readOnly = true)
     fun getEmployeeStatsByClub(clubId: UUID): ClubEmployeeStats {
-        val total = countEmployeesByTenantId(clubId)
-        val active = countEmployeesByTenantIdAndStatus(clubId, EmployeeStatus.ACTIVE)
-        val inactive = countEmployeesByTenantIdAndStatus(clubId, EmployeeStatus.INACTIVE)
-        val onLeave = countEmployeesByTenantIdAndStatus(clubId, EmployeeStatus.ON_LEAVE)
+        // Single query to get all status counts at once
+        val statusCountQuery = entityManager.createQuery(
+            """
+            SELECT e.status, COUNT(e) FROM Employee e
+            WHERE e.tenantId = :tenantId
+            GROUP BY e.status
+            """.trimIndent()
+        )
+        statusCountQuery.setParameter("tenantId", clubId)
+        @Suppress("UNCHECKED_CAST")
+        val statusResults = statusCountQuery.resultList as List<Array<Any>>
+        val statusCounts = statusResults.associate {
+            (it[0] as EmployeeStatus) to (it[1] as Long)
+        }
 
-        // Count by employment type
+        val total = statusCounts.values.sum()
+        val active = statusCounts[EmployeeStatus.ACTIVE] ?: 0L
+        val inactive = statusCounts[EmployeeStatus.INACTIVE] ?: 0L
+        val onLeave = statusCounts[EmployeeStatus.ON_LEAVE] ?: 0L
+
+        // Single query to get all employment type counts at once
+        val typeCountQuery = entityManager.createQuery(
+            """
+            SELECT e.employmentType, COUNT(e) FROM Employee e
+            WHERE e.tenantId = :tenantId
+            GROUP BY e.employmentType
+            """.trimIndent()
+        )
+        typeCountQuery.setParameter("tenantId", clubId)
+        @Suppress("UNCHECKED_CAST")
+        val typeResults = typeCountQuery.resultList as List<Array<Any>>
+        val typeCounts = typeResults.associate {
+            (it[0] as EmploymentType) to (it[1] as Long)
+        }
+
+        // Build map with all types (defaulting to 0 for types with no employees)
         val byEmploymentType = EmploymentType.entries.associateWith { type ->
-            countEmployeesByTenantIdAndEmploymentType(clubId, type)
+            typeCounts[type] ?: 0L
         }
 
         return ClubEmployeeStats(
@@ -339,6 +405,186 @@ class PlatformClubService(
         val total = countQuery.singleResult
 
         return PageImpl(logs, pageable, total)
+    }
+
+    // ========================================
+    // Location Operations (by Club/Tenant)
+    // ========================================
+
+    /**
+     * Gets all locations for a club.
+     */
+    @Transactional(readOnly = true)
+    fun getLocationsByClub(clubId: UUID, pageable: Pageable): Page<Location> {
+        val query = entityManager.createQuery(
+            """
+            SELECT l FROM Location l
+            WHERE l.clubId = :clubId
+            ORDER BY l.createdAt DESC
+            """.trimIndent(),
+            Location::class.java
+        )
+        query.setParameter("clubId", clubId)
+        query.firstResult = pageable.offset.toInt()
+        query.maxResults = pageable.pageSize
+
+        val locations = query.resultList
+
+        val countQuery = entityManager.createQuery(
+            "SELECT COUNT(l) FROM Location l WHERE l.clubId = :clubId",
+            Long::class.javaObjectType
+        )
+        countQuery.setParameter("clubId", clubId)
+        val total = countQuery.singleResult
+
+        return PageImpl(locations, pageable, total)
+    }
+
+    // ========================================
+    // Membership Plan Operations (by Club/Tenant)
+    // ========================================
+
+    /**
+     * Data class to hold membership plan with subscriber count.
+     */
+    data class MembershipPlanWithCount(
+        val plan: MembershipPlan,
+        val subscriberCount: Long
+    )
+
+    /**
+     * Gets all membership plans for a club with subscriber counts.
+     * Uses batch query for subscriber counts to avoid N+1 problem.
+     */
+    @Transactional(readOnly = true)
+    fun getMembershipPlansByClub(clubId: UUID, pageable: Pageable): Page<MembershipPlanWithCount> {
+        val query = entityManager.createQuery(
+            """
+            SELECT p FROM MembershipPlan p
+            WHERE p.tenantId = :tenantId
+            ORDER BY p.sortOrder ASC, p.createdAt DESC
+            """.trimIndent(),
+            MembershipPlan::class.java
+        )
+        query.setParameter("tenantId", clubId)
+        query.firstResult = pageable.offset.toInt()
+        query.maxResults = pageable.pageSize
+
+        val plans = query.resultList
+
+        val countQuery = entityManager.createQuery(
+            "SELECT COUNT(p) FROM MembershipPlan p WHERE p.tenantId = :tenantId",
+            Long::class.javaObjectType
+        )
+        countQuery.setParameter("tenantId", clubId)
+        val total = countQuery.singleResult
+
+        // Batch fetch all subscriber counts in a single query
+        val subscriberCountsMap = if (plans.isNotEmpty()) {
+            val planIds = plans.map { it.id }
+            getSubscriberCountsByPlanIds(planIds)
+        } else {
+            emptyMap()
+        }
+
+        // Map plans with their subscriber counts
+        val plansWithCounts = plans.map { plan ->
+            MembershipPlanWithCount(plan, subscriberCountsMap[plan.id] ?: 0L)
+        }
+
+        return PageImpl(plansWithCounts, pageable, total)
+    }
+
+    private fun getSubscriberCountsByPlanIds(planIds: List<UUID>): Map<UUID, Long> {
+        val query = entityManager.createQuery(
+            """
+            SELECT s.planId, COUNT(s) FROM Subscription s
+            WHERE s.planId IN :planIds AND s.status IN ('ACTIVE', 'FROZEN', 'PENDING_PAYMENT')
+            GROUP BY s.planId
+            """.trimIndent()
+        )
+        query.setParameter("planIds", planIds)
+        @Suppress("UNCHECKED_CAST")
+        val results = query.resultList as List<Array<Any>>
+        return results.associate {
+            (it[0] as UUID) to (it[1] as Long)
+        }
+    }
+
+    // ========================================
+    // Club Update Operations
+    // ========================================
+
+    /**
+     * Updates club basic information.
+     */
+    fun updateClub(clubId: UUID, request: UpdateClubRequest): Club {
+        val club = getClub(clubId)
+
+        // Update name if provided
+        if (request.nameEn != null || request.nameAr != null) {
+            club.name = LocalizedText(
+                en = request.nameEn ?: club.name.en,
+                ar = request.nameAr ?: club.name.ar
+            )
+        }
+
+        // Update description if provided
+        if (request.descriptionEn != null || request.descriptionAr != null) {
+            club.description = LocalizedText(
+                en = request.descriptionEn ?: club.description?.en ?: "",
+                ar = request.descriptionAr ?: club.description?.ar
+            )
+        }
+
+        val updatedClub = entityManager.merge(club)
+
+        auditService.log(
+            action = AuditAction.UPDATE,
+            entityType = "Club",
+            entityId = clubId,
+            description = "Club updated by platform admin"
+        )
+
+        return updatedClub
+    }
+
+    /**
+     * Activates a suspended club.
+     */
+    fun activateClub(clubId: UUID): Club {
+        val club = getClub(clubId)
+        club.activate()
+
+        val updatedClub = entityManager.merge(club)
+
+        auditService.log(
+            action = AuditAction.STATUS_CHANGE,
+            entityType = "Club",
+            entityId = clubId,
+            description = "Club activated by platform admin"
+        )
+
+        return updatedClub
+    }
+
+    /**
+     * Suspends an active club.
+     */
+    fun suspendClub(clubId: UUID): Club {
+        val club = getClub(clubId)
+        club.suspend()
+
+        val updatedClub = entityManager.merge(club)
+
+        auditService.log(
+            action = AuditAction.STATUS_CHANGE,
+            entityType = "Club",
+            entityId = clubId,
+            description = "Club suspended by platform admin"
+        )
+
+        return updatedClub
     }
 
     // ========================================

@@ -201,7 +201,7 @@ export function AgreementsStep({ form }: AgreementsStepProps) {
                   : selectedAgreement.title.en)}
             </DialogTitle>
             <DialogDescription>
-              Version {selectedAgreement?.version}
+              Version {selectedAgreement?.agreementVersion}
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="h-[60vh] pr-4">

@@ -476,7 +476,7 @@ export default function BreachRegisterPage() {
           ) : (
             <DataTable
               columns={columns}
-              data={breaches ?? []}
+              data={breaches?.content ?? []}
               searchKey="title"
               searchPlaceholder={isArabic ? "البحث عن الانتهاكات..." : "Search breaches..."}
             />

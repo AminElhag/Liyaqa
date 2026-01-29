@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ClientOnboardingWizard } from "@/components/platform/client-onboarding-wizard";
 import { OnboardingSuccessDialog } from "@/components/platform/onboarding-success-dialog";
 import { useOnboardClient } from "@/queries/platform/use-platform-clients";
+import { parseApiError, getLocalizedErrorMessage } from "@/lib/api";
 import type { OnboardClientRequest, OnboardingResult } from "@/types/platform";
 
 export default function NewClientPage() {
@@ -42,24 +43,23 @@ export default function NewClientPage() {
         : "An error occurred while creating the client",
   };
 
-  const handleSubmit = (request: OnboardClientRequest) => {
+  const handleSubmit = async (request: OnboardClientRequest) => {
     // Store admin email for success dialog
     setAdminEmail(request.adminEmail);
 
-    onboardClient.mutate(request, {
-      onSuccess: (result) => {
-        // Store result and show success dialog with credentials
-        setOnboardingResult(result);
-        setShowSuccessDialog(true);
-      },
-      onError: (error) => {
-        toast({
-          title: texts.errorTitle,
-          description: error instanceof Error ? error.message : texts.errorDesc,
-          variant: "destructive",
-        });
-      },
-    });
+    try {
+      const result = await onboardClient.mutateAsync(request);
+      // Store result and show success dialog with credentials
+      setOnboardingResult(result);
+      setShowSuccessDialog(true);
+    } catch (err) {
+      const apiError = await parseApiError(err);
+      toast({
+        title: texts.errorTitle,
+        description: getLocalizedErrorMessage(apiError, locale),
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCancel = () => {

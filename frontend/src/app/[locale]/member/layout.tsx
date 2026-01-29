@@ -27,7 +27,7 @@ export default function MemberLayout({
     if (!hasHydrated) return;
 
     if (!isLoading && !isAuthenticated) {
-      router.push(`/${locale}/login`);
+      router.push(`/${locale}/member/login`);
     }
   }, [hasHydrated, isLoading, isAuthenticated, router, locale]);
 
@@ -53,7 +53,7 @@ export default function MemberLayout({
     if (isAdmin) {
       router.push(`/${locale}/dashboard`);
     } else {
-      router.push(`/${locale}/login`);
+      router.push(`/${locale}/member/login`);
     }
     return null;
   }

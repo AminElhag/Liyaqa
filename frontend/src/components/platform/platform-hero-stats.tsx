@@ -290,7 +290,7 @@ function PlatformStatCard({ stat, locale, isRtl }: PlatformStatCardProps) {
           {/* Sparkline */}
           {stat.sparklineData && (
             <div className="absolute bottom-0 left-0 right-0 h-10 opacity-40">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <AreaChart data={stat.sparklineData.map((v, i) => ({ value: v, index: i }))}>
                   <defs>
                     <linearGradient id={`platform-gradient-${stat.id}`} x1="0" y1="0" x2="0" y2="1">

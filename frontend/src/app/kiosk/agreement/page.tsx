@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useKiosk } from "../layout";
 import { TouchButton, SignaturePad } from "@/components/kiosk";
@@ -72,6 +72,14 @@ By signing below, I acknowledge that I have read, understood, and agree to these
 };
 
 export default function KioskAgreementPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent" /></div>}>
+      <KioskAgreementContent />
+    </Suspense>
+  );
+}
+
+function KioskAgreementContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const deviceCode = searchParams.get("device") || "";
@@ -105,9 +113,10 @@ export default function KioskAgreementPage() {
         },
       });
       setStatus("success");
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : null;
       setError(
-        err?.message ||
+        message ||
           (isArabic ? "فشل في حفظ التوقيع" : "Failed to save signature")
       );
       setStatus("error");

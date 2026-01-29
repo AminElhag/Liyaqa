@@ -35,10 +35,10 @@ class KioskDevice(
     @Column(name = "hardware_id", length = 100)
     var hardwareId: String? = null,
 
-    @Column(name = "config", columnDefinition = "jsonb")
+    @Column(name = "config")
     var config: String = "{}",
 
-    @Column(name = "allowed_actions", columnDefinition = "jsonb")
+    @Column(name = "allowed_actions")
     var allowedActions: String = "[\"CHECK_IN\", \"CLASS_BOOKING\", \"PAYMENT\"]"
 ) : BaseEntity() {
 

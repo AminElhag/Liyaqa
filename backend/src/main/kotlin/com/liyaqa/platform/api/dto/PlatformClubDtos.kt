@@ -6,10 +6,17 @@ import com.liyaqa.auth.domain.model.UserStatus
 import com.liyaqa.employee.domain.model.Employee
 import com.liyaqa.employee.domain.model.EmployeeStatus
 import com.liyaqa.employee.domain.model.EmploymentType
+import com.liyaqa.membership.api.TaxableFeeResponse
+import com.liyaqa.membership.domain.model.BillingPeriod
+import com.liyaqa.membership.domain.model.MembershipPlan
 import com.liyaqa.membership.domain.model.Subscription
 import com.liyaqa.membership.domain.model.SubscriptionStatus
+import com.liyaqa.organization.api.LocalizedAddressResponse
 import com.liyaqa.organization.domain.model.Club
 import com.liyaqa.organization.domain.model.ClubStatus
+import com.liyaqa.organization.domain.model.GenderPolicy
+import com.liyaqa.organization.domain.model.Location
+import com.liyaqa.organization.domain.model.LocationStatus
 import com.liyaqa.shared.domain.AuditAction
 import com.liyaqa.shared.domain.AuditLog
 import jakarta.validation.constraints.NotBlank
@@ -220,6 +227,79 @@ data class PlatformResetPasswordRequest(
     @field:NotBlank(message = "New password is required")
     @field:Size(min = 8, message = "Password must be at least 8 characters")
     val newPassword: String
+)
+
+// ============================================
+// Club Location Response
+// ============================================
+
+data class ClubLocationResponse(
+    val id: UUID,
+    val clubId: UUID,
+    val name: LocalizedTextResponse,
+    val address: LocalizedAddressResponse?,
+    val phone: String?,
+    val email: String?,
+    val status: LocationStatus,
+    val genderPolicy: GenderPolicy,
+    val createdAt: Instant,
+    val updatedAt: Instant
+) {
+    companion object {
+        fun from(location: Location) = ClubLocationResponse(
+            id = location.id,
+            clubId = location.clubId,
+            name = LocalizedTextResponse.from(location.name),
+            address = location.address?.let { LocalizedAddressResponse.from(it) },
+            phone = location.phone,
+            email = location.email,
+            status = location.status,
+            genderPolicy = location.genderPolicy,
+            createdAt = location.createdAt,
+            updatedAt = location.updatedAt
+        )
+    }
+}
+
+// ============================================
+// Club Membership Plan Response
+// ============================================
+
+data class ClubMembershipPlanResponse(
+    val id: UUID,
+    val name: LocalizedTextResponse,
+    val description: LocalizedTextResponse?,
+    val membershipFee: TaxableFeeResponse,
+    val billingPeriod: BillingPeriod,
+    val durationDays: Int?,
+    val isActive: Boolean,
+    val subscriberCount: Long,
+    val createdAt: Instant
+) {
+    companion object {
+        fun from(plan: MembershipPlan, subscriberCount: Long) = ClubMembershipPlanResponse(
+            id = plan.id,
+            name = LocalizedTextResponse.from(plan.name),
+            description = plan.description?.let { LocalizedTextResponse.from(it) },
+            membershipFee = TaxableFeeResponse.from(plan.membershipFee),
+            billingPeriod = plan.billingPeriod,
+            durationDays = plan.durationDays,
+            isActive = plan.isActive,
+            subscriberCount = subscriberCount,
+            createdAt = plan.createdAt
+        )
+    }
+}
+
+// ============================================
+// Update Club Request
+// ============================================
+
+data class UpdateClubRequest(
+    val nameEn: String?,
+    val nameAr: String?,
+    val descriptionEn: String?,
+    val descriptionAr: String?
 )
 
 // PageResponse is defined in ClientPlanDtos.kt

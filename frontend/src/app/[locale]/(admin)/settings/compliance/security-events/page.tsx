@@ -258,7 +258,7 @@ export default function SecurityEventsPage() {
           ) : (
             <DataTable
               columns={columns}
-              data={events ?? []}
+              data={events?.content ?? []}
               searchKey="action"
               searchPlaceholder={isArabic ? "البحث..." : "Search..."}
             />

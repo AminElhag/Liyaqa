@@ -131,6 +131,9 @@ class AuthService(
             throw IllegalStateException("Account is ${user.status.name.lowercase()}")
         }
 
+        // Set tenant context for permission queries
+        TenantContext.setCurrentTenant(TenantId(user.tenantId))
+
         return generateTokens(user, command.deviceInfo)
     }
 

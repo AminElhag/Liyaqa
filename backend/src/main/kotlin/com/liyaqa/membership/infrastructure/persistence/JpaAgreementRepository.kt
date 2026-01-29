@@ -21,6 +21,23 @@ interface SpringDataAgreementRepository : JpaRepository<Agreement, UUID> {
     fun findAllMandatory(): List<Agreement>
 
     fun findByType(type: AgreementType): List<Agreement>
+
+    @Query("""
+        SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Agreement a
+        WHERE a.title.en = :titleEn
+        AND (:titleAr IS NULL AND a.title.ar IS NULL OR a.title.ar = :titleAr)
+        AND a.type = :type
+    """)
+    fun existsByTitleEnAndTitleArAndType(titleEn: String, titleAr: String?, type: AgreementType): Boolean
+
+    @Query("""
+        SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Agreement a
+        WHERE a.title.en = :titleEn
+        AND (:titleAr IS NULL AND a.title.ar IS NULL OR a.title.ar = :titleAr)
+        AND a.type = :type
+        AND a.id <> :excludeId
+    """)
+    fun existsByTitleEnAndTitleArAndTypeAndIdNot(titleEn: String, titleAr: String?, type: AgreementType, excludeId: UUID): Boolean
 }
 
 /**
@@ -65,5 +82,13 @@ class JpaAgreementRepository(
 
     override fun count(): Long {
         return springDataRepository.count()
+    }
+
+    override fun existsByTitleAndType(titleEn: String, titleAr: String?, type: AgreementType): Boolean {
+        return springDataRepository.existsByTitleEnAndTitleArAndType(titleEn, titleAr, type)
+    }
+
+    override fun existsByTitleAndTypeExcluding(titleEn: String, titleAr: String?, type: AgreementType, excludeId: UUID): Boolean {
+        return springDataRepository.existsByTitleEnAndTitleArAndTypeAndIdNot(titleEn, titleAr, type, excludeId)
     }
 }

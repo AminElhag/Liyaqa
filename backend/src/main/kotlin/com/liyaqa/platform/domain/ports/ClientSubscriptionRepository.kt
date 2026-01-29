@@ -21,6 +21,7 @@ interface ClientSubscriptionRepository {
     fun findByOrganizationId(organizationId: UUID): List<ClientSubscription>
     fun findByOrganizationIdPaged(organizationId: UUID, pageable: Pageable): Page<ClientSubscription>
     fun findActiveByOrganizationId(organizationId: UUID): Optional<ClientSubscription>
+    fun findActiveByOrganizationIds(organizationIds: List<UUID>): List<ClientSubscription>
     fun findByClientPlanId(clientPlanId: UUID, pageable: Pageable): Page<ClientSubscription>
     fun findBySalesRepId(salesRepId: UUID, pageable: Pageable): Page<ClientSubscription>
     fun findExpiring(endDateBefore: LocalDate, statuses: List<ClientSubscriptionStatus>): List<ClientSubscription>

@@ -94,6 +94,7 @@ data class UpdateMemberRequest(
 
 data class MemberResponse(
     val id: UUID,
+    val userId: UUID?,
     val firstName: LocalizedText,
     val lastName: LocalizedText,
     val fullName: LocalizedText,
@@ -120,6 +121,7 @@ data class MemberResponse(
     companion object {
         fun from(member: Member): MemberResponse = MemberResponse(
             id = member.id,
+            userId = member.userId,
             firstName = member.firstName,
             lastName = member.lastName,
             fullName = member.fullName,
@@ -147,6 +149,7 @@ data class MemberResponse(
             allMandatoryAgreementsSigned: Boolean = false
         ): MemberResponse = MemberResponse(
             id = member.id,
+            userId = member.userId,
             firstName = member.firstName,
             lastName = member.lastName,
             fullName = member.fullName,
@@ -220,4 +223,10 @@ data class UserAccountResponse(
 data class LinkUserToMemberRequest(
     @field:NotNull(message = "User ID is required")
     val userId: UUID
+)
+
+data class AdminResetPasswordRequest(
+    @field:NotBlank(message = "Password is required")
+    @field:Size(min = 8, message = "Password must be at least 8 characters")
+    val newPassword: String
 )

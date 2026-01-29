@@ -120,23 +120,17 @@ export function useClientHealth(
 
 /**
  * Hook to onboard a new client
+ * Note: Error handling is done in the page component using mutateAsync + parseApiError
+ * to properly extract and display backend error messages.
  */
 export function useOnboardClient() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: (data: OnboardClientRequest) => onboardClient(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: platformClientKeys.lists() });
       queryClient.invalidateQueries({ queryKey: platformClientKeys.stats() });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to onboard client",
-        description: error.message || "An unexpected error occurred",
-        variant: "destructive",
-      });
     },
   });
 }

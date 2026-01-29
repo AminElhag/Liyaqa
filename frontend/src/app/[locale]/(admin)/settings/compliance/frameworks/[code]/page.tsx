@@ -289,7 +289,7 @@ export default function FrameworkDetailPage() {
               ) : (
                 <DataTable
                   columns={evidenceColumns}
-                  data={evidence ?? []}
+                  data={evidence?.content ?? []}
                   searchKey="title"
                   searchPlaceholder={isArabic ? "البحث عن الأدلة..." : "Search evidence..."}
                 />

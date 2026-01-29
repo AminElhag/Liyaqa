@@ -273,6 +273,21 @@ class MemberController(
         return ResponseEntity.ok(MemberResponse.from(member))
     }
 
+    /**
+     * Reset a member's password (admin action).
+     * Sets a new password and revokes all refresh tokens for security.
+     */
+    @PostMapping("/{id}/reset-password")
+    @PreAuthorize("hasAnyAuthority('users_update', 'members_update')")
+    @Operation(summary = "Reset member password (admin)", description = "Reset a member's password and revoke all sessions")
+    fun resetMemberPassword(
+        @PathVariable id: UUID,
+        @Valid @RequestBody request: AdminResetPasswordRequest
+    ): ResponseEntity<Map<String, String>> {
+        memberService.resetMemberPassword(id, request.newPassword)
+        return ResponseEntity.ok(mapOf("message" to "Password reset successfully"))
+    }
+
     // ==================== BULK OPERATIONS ====================
 
     /**

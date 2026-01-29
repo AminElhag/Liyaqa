@@ -9,8 +9,10 @@ import com.liyaqa.scheduling.application.commands.GenerateSessionsCommand
 import com.liyaqa.scheduling.application.commands.UpdateClassScheduleCommand
 import com.liyaqa.scheduling.application.commands.UpdateClassSessionCommand
 import com.liyaqa.scheduling.application.commands.UpdateGymClassCommand
+import com.liyaqa.scheduling.domain.model.BookingPaymentSource
 import com.liyaqa.scheduling.domain.model.BookingStatus
 import com.liyaqa.scheduling.domain.model.ClassBooking
+import com.liyaqa.scheduling.domain.model.ClassPricingModel
 import com.liyaqa.scheduling.domain.model.ClassSchedule
 import com.liyaqa.scheduling.domain.model.ClassSession
 import com.liyaqa.scheduling.domain.model.ClassType
@@ -21,10 +23,12 @@ import com.liyaqa.scheduling.domain.model.GymClassStatus
 import com.liyaqa.scheduling.domain.model.SessionStatus
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.liyaqa.shared.domain.LocalizedText
+import com.liyaqa.shared.domain.Money
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.PositiveOrZero
+import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -93,6 +97,21 @@ data class CreateGymClassRequest(
     @field:PositiveOrZero(message = "Sort order must be zero or positive")
     val sortOrder: Int? = null,
 
+    // Pricing settings
+    val pricingModel: ClassPricingModel? = null,
+    val dropInPriceAmount: BigDecimal? = null,
+    val dropInPriceCurrency: String? = "SAR",
+    val taxRate: BigDecimal? = null,
+    val allowNonSubscribers: Boolean? = null,
+
+    // Booking settings
+    @field:Positive(message = "Advance booking days must be positive")
+    val advanceBookingDays: Int? = null,
+    @field:PositiveOrZero(message = "Cancellation deadline hours must be zero or positive")
+    val cancellationDeadlineHours: Int? = null,
+    val lateCancelFeeAmount: BigDecimal? = null,
+    val lateCancelFeeCurrency: String? = "SAR",
+
     // Accept schedules array - will be created after class
     val schedules: List<ScheduleInput>? = null
 ) {
@@ -126,7 +145,16 @@ data class CreateGymClassRequest(
             deductsClassFromPlan = deductsClassFromPlan ?: true,
             colorCode = colorCode,
             imageUrl = imageUrl,
-            sortOrder = sortOrder ?: 0
+            sortOrder = sortOrder ?: 0,
+            // Pricing fields
+            pricingModel = pricingModel ?: ClassPricingModel.INCLUDED_IN_MEMBERSHIP,
+            dropInPrice = dropInPriceAmount?.let { Money.of(it, dropInPriceCurrency ?: "SAR") },
+            taxRate = taxRate ?: BigDecimal("15.00"),
+            allowNonSubscribers = allowNonSubscribers ?: false,
+            // Booking settings
+            advanceBookingDays = advanceBookingDays ?: 7,
+            cancellationDeadlineHours = cancellationDeadlineHours ?: 2,
+            lateCancellationFee = lateCancelFeeAmount?.let { Money.of(it, lateCancelFeeCurrency ?: "SAR") }
         )
     }
 }
@@ -167,7 +195,22 @@ data class UpdateGymClassRequest(
     val imageUrl: String? = null,
 
     @field:PositiveOrZero(message = "Sort order must be zero or positive")
-    val sortOrder: Int? = null
+    val sortOrder: Int? = null,
+
+    // Pricing settings
+    val pricingModel: ClassPricingModel? = null,
+    val dropInPriceAmount: BigDecimal? = null,
+    val dropInPriceCurrency: String? = null,
+    val taxRate: BigDecimal? = null,
+    val allowNonSubscribers: Boolean? = null,
+
+    // Booking settings
+    @field:Positive(message = "Advance booking days must be positive")
+    val advanceBookingDays: Int? = null,
+    @field:PositiveOrZero(message = "Cancellation deadline hours must be zero or positive")
+    val cancellationDeadlineHours: Int? = null,
+    val lateCancelFeeAmount: BigDecimal? = null,
+    val lateCancelFeeCurrency: String? = null
 ) {
     fun toCommand(): UpdateGymClassCommand {
         val name = if (nameEn != null) LocalizedText(en = nameEn, ar = nameAr) else null
@@ -188,10 +231,24 @@ data class UpdateGymClassRequest(
             deductsClassFromPlan = deductsClassFromPlan,
             colorCode = colorCode,
             imageUrl = imageUrl,
-            sortOrder = sortOrder
+            sortOrder = sortOrder,
+            // Pricing fields
+            pricingModel = pricingModel,
+            dropInPrice = dropInPriceAmount?.let { Money.of(it, dropInPriceCurrency ?: "SAR") },
+            taxRate = taxRate,
+            allowNonSubscribers = allowNonSubscribers,
+            // Booking settings
+            advanceBookingDays = advanceBookingDays,
+            cancellationDeadlineHours = cancellationDeadlineHours,
+            lateCancellationFee = lateCancelFeeAmount?.let { Money.of(it, lateCancelFeeCurrency ?: "SAR") }
         )
     }
 }
+
+data class MoneyResponse(
+    val amount: BigDecimal,
+    val currency: String
+)
 
 data class GymClassResponse(
     val id: UUID,
@@ -211,6 +268,16 @@ data class GymClassResponse(
     val imageUrl: String?,
     val status: GymClassStatus,
     val sortOrder: Int,
+    // Pricing fields
+    val pricingModel: ClassPricingModel,
+    val dropInPrice: MoneyResponse?,
+    val dropInPriceWithTax: MoneyResponse?,
+    val taxRate: BigDecimal?,
+    val allowNonSubscribers: Boolean,
+    // Booking settings
+    val advanceBookingDays: Int,
+    val cancellationDeadlineHours: Int,
+    val lateCancellationFee: MoneyResponse?,
     val createdAt: Instant,
     val updatedAt: Instant
 ) {
@@ -233,6 +300,16 @@ data class GymClassResponse(
             imageUrl = gymClass.imageUrl,
             status = gymClass.status,
             sortOrder = gymClass.sortOrder,
+            // Pricing fields
+            pricingModel = gymClass.pricingModel,
+            dropInPrice = gymClass.dropInPrice?.let { MoneyResponse(it.amount, it.currency) },
+            dropInPriceWithTax = gymClass.getDropInPriceWithTax()?.let { MoneyResponse(it.amount, it.currency) },
+            taxRate = gymClass.taxRate,
+            allowNonSubscribers = gymClass.allowNonSubscribers,
+            // Booking settings
+            advanceBookingDays = gymClass.advanceBookingDays,
+            cancellationDeadlineHours = gymClass.cancellationDeadlineHours,
+            lateCancellationFee = gymClass.lateCancellationFee?.let { MoneyResponse(it.amount, it.currency) },
             createdAt = gymClass.createdAt,
             updatedAt = gymClass.updatedAt
         )
@@ -505,6 +582,11 @@ data class ClassBookingResponse(
     val classDeducted: Boolean,
     val notes: String?,
     val bookedBy: UUID?,
+    // Payment tracking
+    val paymentSource: BookingPaymentSource?,
+    val classPackBalanceId: UUID?,
+    val orderId: UUID?,
+    val paidAmount: MoneyResponse?,
     val createdAt: Instant,
     val updatedAt: Instant
 ) {
@@ -524,6 +606,11 @@ data class ClassBookingResponse(
             classDeducted = booking.classDeducted,
             notes = booking.notes,
             bookedBy = booking.bookedBy,
+            // Payment tracking
+            paymentSource = booking.paymentSource,
+            classPackBalanceId = booking.classPackBalanceId,
+            orderId = booking.orderId,
+            paidAmount = booking.paidAmount?.let { MoneyResponse(it.amount, it.currency) },
             createdAt = booking.createdAt,
             updatedAt = booking.updatedAt
         )

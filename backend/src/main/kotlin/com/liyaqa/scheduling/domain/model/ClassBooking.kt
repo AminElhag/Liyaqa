@@ -1,7 +1,11 @@
 package com.liyaqa.scheduling.domain.model
 
 import com.liyaqa.shared.domain.BaseEntity
+import com.liyaqa.shared.domain.Money
+import jakarta.persistence.AttributeOverride
+import jakarta.persistence.AttributeOverrides
 import jakarta.persistence.Column
+import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -64,7 +68,38 @@ class ClassBooking(
     var notes: String? = null,
 
     @Column(name = "booked_by")
-    val bookedBy: UUID? = null
+    val bookedBy: UUID? = null,
+
+    // ==================== PAYMENT TRACKING ====================
+
+    /**
+     * How this booking was paid for.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_source")
+    var paymentSource: BookingPaymentSource? = null,
+
+    /**
+     * Reference to the class pack balance used (if paid with class pack).
+     */
+    @Column(name = "class_pack_balance_id")
+    var classPackBalanceId: UUID? = null,
+
+    /**
+     * Reference to the order (if paid via shop/pay-per-entry).
+     */
+    @Column(name = "order_id")
+    var orderId: UUID? = null,
+
+    /**
+     * Amount paid for this booking (for pay-per-entry).
+     */
+    @Embedded
+    @AttributeOverrides(
+        AttributeOverride(name = "amount", column = Column(name = "paid_amount")),
+        AttributeOverride(name = "currency", column = Column(name = "paid_currency"))
+    )
+    var paidAmount: Money? = null
 
 ) : BaseEntity(id) {
 
@@ -150,6 +185,26 @@ class ClassBooking(
         classDeducted = true
     }
 
+    /**
+     * Checks if this booking was paid with a class pack.
+     */
+    fun isPaidWithClassPack(): Boolean = paymentSource == BookingPaymentSource.CLASS_PACK
+
+    /**
+     * Checks if this booking was paid with membership credits.
+     */
+    fun isPaidWithMembership(): Boolean = paymentSource == BookingPaymentSource.MEMBERSHIP_INCLUDED
+
+    /**
+     * Checks if this booking was a pay-per-entry purchase.
+     */
+    fun isPaidPerEntry(): Boolean = paymentSource == BookingPaymentSource.PAY_PER_ENTRY
+
+    /**
+     * Checks if this booking was complimentary.
+     */
+    fun isComplimentary(): Boolean = paymentSource == BookingPaymentSource.COMPLIMENTARY
+
     companion object {
         /**
          * Creates a confirmed booking for a member.
@@ -186,6 +241,56 @@ class ClassBooking(
                 status = BookingStatus.WAITLISTED,
                 waitlistPosition = position,
                 bookedBy = bookedBy
+            )
+        }
+
+        /**
+         * Creates a confirmed booking with a specific payment source.
+         */
+        fun createWithPayment(
+            sessionId: UUID,
+            memberId: UUID,
+            paymentSource: BookingPaymentSource,
+            subscriptionId: UUID? = null,
+            classPackBalanceId: UUID? = null,
+            orderId: UUID? = null,
+            paidAmount: Money? = null,
+            bookedBy: UUID? = null
+        ): ClassBooking {
+            return ClassBooking(
+                sessionId = sessionId,
+                memberId = memberId,
+                subscriptionId = subscriptionId,
+                status = BookingStatus.CONFIRMED,
+                bookedBy = bookedBy,
+                paymentSource = paymentSource,
+                classPackBalanceId = classPackBalanceId,
+                orderId = orderId,
+                paidAmount = paidAmount
+            )
+        }
+
+        /**
+         * Creates a waitlisted booking with a specific payment source.
+         */
+        fun createWaitlistedWithPayment(
+            sessionId: UUID,
+            memberId: UUID,
+            position: Int,
+            paymentSource: BookingPaymentSource,
+            subscriptionId: UUID? = null,
+            classPackBalanceId: UUID? = null,
+            bookedBy: UUID? = null
+        ): ClassBooking {
+            return ClassBooking(
+                sessionId = sessionId,
+                memberId = memberId,
+                subscriptionId = subscriptionId,
+                status = BookingStatus.WAITLISTED,
+                waitlistPosition = position,
+                bookedBy = bookedBy,
+                paymentSource = paymentSource,
+                classPackBalanceId = classPackBalanceId
             )
         }
     }

@@ -119,7 +119,35 @@ data class CreateMembershipPlanRequest(
     val freezeDaysAllowed: Int = 0,
 
     @field:PositiveOrZero(message = "Sort order must be zero or positive")
-    val sortOrder: Int = 0
+    val sortOrder: Int = 0,
+
+    // === CONTRACT CONFIGURATION ===
+    val categoryId: UUID? = null,
+
+    val contractType: String = "MONTH_TO_MONTH",
+
+    val supportedTerms: List<String> = listOf("MONTHLY"),
+
+    @field:Min(value = 1, message = "Default commitment must be at least 1 month")
+    @field:Max(value = 60, message = "Default commitment cannot exceed 60 months")
+    val defaultCommitmentMonths: Int = 1,
+
+    @field:Min(value = 0, message = "Minimum commitment cannot be negative")
+    @field:Max(value = 60, message = "Minimum commitment cannot exceed 60 months")
+    val minimumCommitmentMonths: Int? = null,
+
+    @field:Min(value = 0, message = "Notice period cannot be negative")
+    @field:Max(value = 90, message = "Notice period cannot exceed 90 days")
+    val defaultNoticePeriodDays: Int = 30,
+
+    val earlyTerminationFeeType: String = "NONE",
+
+    @field:PositiveOrZero(message = "Termination fee value must be zero or positive")
+    val earlyTerminationFeeValue: BigDecimal? = null,
+
+    @field:Min(value = 0, message = "Cooling-off days cannot be negative")
+    @field:Max(value = 30, message = "Cooling-off days cannot exceed 30")
+    val coolingOffDays: Int = 14
 ) {
     fun toCommand() = CreateMembershipPlanCommand(
         name = LocalizedText(en = nameEn, ar = nameAr),
@@ -141,7 +169,17 @@ data class CreateMembershipPlanRequest(
         hasSaunaAccess = hasSaunaAccess,
         hasPoolAccess = hasPoolAccess,
         freezeDaysAllowed = freezeDaysAllowed,
-        sortOrder = sortOrder
+        sortOrder = sortOrder,
+        // Contract configuration
+        categoryId = categoryId,
+        contractType = contractType,
+        supportedTerms = supportedTerms,
+        defaultCommitmentMonths = defaultCommitmentMonths,
+        minimumCommitmentMonths = minimumCommitmentMonths,
+        defaultNoticePeriodDays = defaultNoticePeriodDays,
+        earlyTerminationFeeType = earlyTerminationFeeType,
+        earlyTerminationFeeValue = earlyTerminationFeeValue,
+        coolingOffDays = coolingOffDays
     )
 }
 
@@ -200,7 +238,37 @@ data class UpdateMembershipPlanRequest(
     val freezeDaysAllowed: Int? = null,
 
     @field:PositiveOrZero(message = "Sort order must be zero or positive")
-    val sortOrder: Int? = null
+    val sortOrder: Int? = null,
+
+    // === CONTRACT CONFIGURATION ===
+    val categoryId: UUID? = null,
+
+    val contractType: String? = null,
+
+    val supportedTerms: List<String>? = null,
+
+    @field:Min(value = 1, message = "Default commitment must be at least 1 month")
+    @field:Max(value = 60, message = "Default commitment cannot exceed 60 months")
+    val defaultCommitmentMonths: Int? = null,
+
+    @field:Min(value = 0, message = "Minimum commitment cannot be negative")
+    @field:Max(value = 60, message = "Minimum commitment cannot exceed 60 months")
+    val minimumCommitmentMonths: Int? = null,
+
+    @field:Min(value = 0, message = "Notice period cannot be negative")
+    @field:Max(value = 90, message = "Notice period cannot exceed 90 days")
+    val defaultNoticePeriodDays: Int? = null,
+
+    val earlyTerminationFeeType: String? = null,
+
+    @field:PositiveOrZero(message = "Termination fee value must be zero or positive")
+    val earlyTerminationFeeValue: BigDecimal? = null,
+
+    @field:Min(value = 0, message = "Cooling-off days cannot be negative")
+    @field:Max(value = 30, message = "Cooling-off days cannot exceed 30")
+    val coolingOffDays: Int? = null,
+
+    val clearCategoryId: Boolean = false
 ) {
     fun toCommand(): UpdateMembershipPlanCommand {
         val name = if (nameEn != null) LocalizedText(en = nameEn, ar = nameAr) else null
@@ -229,7 +297,18 @@ data class UpdateMembershipPlanRequest(
             hasSaunaAccess = hasSaunaAccess,
             hasPoolAccess = hasPoolAccess,
             freezeDaysAllowed = freezeDaysAllowed,
-            sortOrder = sortOrder
+            sortOrder = sortOrder,
+            // Contract configuration
+            categoryId = categoryId,
+            contractType = contractType,
+            supportedTerms = supportedTerms,
+            defaultCommitmentMonths = defaultCommitmentMonths,
+            minimumCommitmentMonths = minimumCommitmentMonths,
+            defaultNoticePeriodDays = defaultNoticePeriodDays,
+            earlyTerminationFeeType = earlyTerminationFeeType,
+            earlyTerminationFeeValue = earlyTerminationFeeValue,
+            coolingOffDays = coolingOffDays,
+            clearCategoryId = clearCategoryId
         )
     }
 }
@@ -281,6 +360,17 @@ data class MembershipPlanResponse(
     val isActive: Boolean,
     val sortOrder: Int,
 
+    // === CONTRACT CONFIGURATION ===
+    val categoryId: UUID?,
+    val contractType: String,
+    val supportedTerms: List<String>,
+    val defaultCommitmentMonths: Int,
+    val minimumCommitmentMonths: Int?,
+    val defaultNoticePeriodDays: Int,
+    val earlyTerminationFeeType: String,
+    val earlyTerminationFeeValue: BigDecimal?,
+    val coolingOffDays: Int,
+
     // === AUDIT ===
     val createdAt: Instant,
     val updatedAt: Instant
@@ -323,6 +413,16 @@ data class MembershipPlanResponse(
             // Status & order
             isActive = plan.isActive,
             sortOrder = plan.sortOrder,
+            // Contract configuration
+            categoryId = plan.categoryId,
+            contractType = plan.contractType,
+            supportedTerms = plan.getSupportedTermsList(),
+            defaultCommitmentMonths = plan.defaultCommitmentMonths,
+            minimumCommitmentMonths = plan.minimumCommitmentMonths,
+            defaultNoticePeriodDays = plan.defaultNoticePeriodDays,
+            earlyTerminationFeeType = plan.earlyTerminationFeeType,
+            earlyTerminationFeeValue = plan.earlyTerminationFeeValue,
+            coolingOffDays = plan.coolingOffDays,
             // Audit
             createdAt = plan.createdAt,
             updatedAt = plan.updatedAt

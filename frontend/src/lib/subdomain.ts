@@ -29,6 +29,16 @@ export function extractSubdomain(): string | null {
     return null;
   }
 
+  // Handle *.localhost subdomains in development
+  // e.g., "nameofclub.localhost" -> "nameofclub"
+  if (hostname.endsWith(".localhost")) {
+    const subdomain = hostname.replace(".localhost", "");
+    if (subdomain && subdomain !== "www") {
+      return subdomain;
+    }
+    return null;
+  }
+
   // Extract subdomain from hostname using configured base domain
   const baseParts = baseDomain.split(".");
   const hostParts = hostname.split(".");

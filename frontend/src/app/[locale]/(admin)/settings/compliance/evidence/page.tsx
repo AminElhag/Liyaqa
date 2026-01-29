@@ -107,9 +107,10 @@ export default function EvidenceManagementPage() {
   });
 
   // Stats
-  const totalEvidence = evidence?.length ?? 0;
-  const verifiedCount = evidence?.filter((e) => e.verified).length ?? 0;
-  const expiredCount = evidence?.filter((e) => e.isExpired).length ?? 0;
+  const evidenceList = evidence?.content ?? [];
+  const totalEvidence = evidenceList.length;
+  const verifiedCount = evidenceList.filter((e) => e.verified).length;
+  const expiredCount = evidenceList.filter((e) => e.isExpired).length;
   const pendingCount = totalEvidence - verifiedCount - expiredCount;
 
   return (
@@ -152,7 +153,7 @@ export default function EvidenceManagementPage() {
                     <SelectValue placeholder={isArabic ? "اختر الضابط" : "Select control"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {requirements?.map((req) => (
+                    {(requirements?.content ?? []).map((req) => (
                       <SelectItem key={req.id} value={req.id}>
                         {req.requirementCode} - {req.title}
                       </SelectItem>
@@ -346,7 +347,7 @@ export default function EvidenceManagementPage() {
           ) : (
             <DataTable
               columns={columns}
-              data={evidence ?? []}
+              data={evidenceList}
               searchKey="title"
               searchPlaceholder={isArabic ? "البحث عن الأدلة..." : "Search evidence..."}
             />

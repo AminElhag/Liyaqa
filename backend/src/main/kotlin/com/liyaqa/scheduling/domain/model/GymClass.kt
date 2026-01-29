@@ -4,6 +4,7 @@ import com.liyaqa.organization.domain.model.AccessGender
 import com.liyaqa.organization.domain.model.GenderRestriction
 import com.liyaqa.shared.domain.BaseEntity
 import com.liyaqa.shared.domain.LocalizedText
+import com.liyaqa.shared.domain.Money
 import jakarta.persistence.AttributeOverride
 import jakarta.persistence.AttributeOverrides
 import jakarta.persistence.Column
@@ -15,6 +16,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.Filter
 import org.hibernate.annotations.FilterDef
 import org.hibernate.annotations.ParamDef
+import java.math.BigDecimal
 import java.util.UUID
 
 /**
@@ -98,7 +100,65 @@ class GymClass(
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "gender_restriction", length = 20)
-    var genderRestriction: GenderRestriction? = null
+    var genderRestriction: GenderRestriction? = null,
+
+    // ==================== PRICING SETTINGS ====================
+
+    /**
+     * How this class can be paid for.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "pricing_model", nullable = false)
+    var pricingModel: ClassPricingModel = ClassPricingModel.INCLUDED_IN_MEMBERSHIP,
+
+    /**
+     * Price for drop-in/pay-per-entry bookings.
+     * Required if pricingModel is PAY_PER_ENTRY or HYBRID.
+     */
+    @Embedded
+    @AttributeOverrides(
+        AttributeOverride(name = "amount", column = Column(name = "drop_in_price_amount")),
+        AttributeOverride(name = "currency", column = Column(name = "drop_in_price_currency"))
+    )
+    var dropInPrice: Money? = null,
+
+    /**
+     * Tax rate percentage for pricing (e.g., 15.00 for 15% VAT).
+     */
+    @Column(name = "tax_rate")
+    var taxRate: BigDecimal? = BigDecimal("15.00"),
+
+    /**
+     * Whether non-subscribers can book this class (requires pay-per-entry or class pack).
+     */
+    @Column(name = "allow_non_subscribers", nullable = false)
+    var allowNonSubscribers: Boolean = false,
+
+    // ==================== BOOKING SETTINGS ====================
+
+    /**
+     * How many days in advance members can book this class.
+     */
+    @Column(name = "advance_booking_days", nullable = false)
+    var advanceBookingDays: Int = 7,
+
+    /**
+     * Hours before class start when cancellation becomes "late".
+     * Late cancellations may incur a fee.
+     */
+    @Column(name = "cancellation_deadline_hours", nullable = false)
+    var cancellationDeadlineHours: Int = 2,
+
+    /**
+     * Fee charged for late cancellations.
+     * Null means no late cancellation fee.
+     */
+    @Embedded
+    @AttributeOverrides(
+        AttributeOverride(name = "amount", column = Column(name = "late_cancel_fee_amount")),
+        AttributeOverride(name = "currency", column = Column(name = "late_cancel_fee_currency"))
+    )
+    var lateCancellationFee: Money? = null
 
 ) : BaseEntity(id) {
 
@@ -160,5 +220,53 @@ class GymClass(
      */
     fun removeDefaultTrainer() {
         this.defaultTrainerId = null
+    }
+
+    // ==================== PRICING HELPERS ====================
+
+    /**
+     * Checks if this class accepts membership credits as payment.
+     */
+    fun acceptsMembershipCredits(): Boolean =
+        pricingModel == ClassPricingModel.INCLUDED_IN_MEMBERSHIP || pricingModel == ClassPricingModel.HYBRID
+
+    /**
+     * Checks if this class accepts class pack credits as payment.
+     */
+    fun acceptsClassPackCredits(): Boolean =
+        pricingModel == ClassPricingModel.CLASS_PACK_ONLY || pricingModel == ClassPricingModel.HYBRID
+
+    /**
+     * Checks if this class accepts pay-per-entry payment.
+     */
+    fun acceptsPayPerEntry(): Boolean =
+        pricingModel == ClassPricingModel.PAY_PER_ENTRY || pricingModel == ClassPricingModel.HYBRID
+
+    /**
+     * Validates that pricing configuration is consistent.
+     * Throws IllegalStateException if configuration is invalid.
+     */
+    fun validatePricingConfiguration() {
+        when (pricingModel) {
+            ClassPricingModel.PAY_PER_ENTRY, ClassPricingModel.HYBRID -> {
+                requireNotNull(dropInPrice) {
+                    "Drop-in price is required for ${pricingModel.name} pricing model"
+                }
+                require(dropInPrice!!.amount > java.math.BigDecimal.ZERO) {
+                    "Drop-in price must be positive"
+                }
+            }
+            else -> { /* No validation needed */ }
+        }
+    }
+
+    /**
+     * Gets the drop-in price with tax included.
+     */
+    fun getDropInPriceWithTax(): Money? {
+        val price = dropInPrice ?: return null
+        val rate = taxRate ?: BigDecimal.ZERO
+        val taxAmount = price.amount.multiply(rate).divide(BigDecimal("100"), 2, java.math.RoundingMode.HALF_UP)
+        return Money(price.amount.add(taxAmount), price.currency)
     }
 }

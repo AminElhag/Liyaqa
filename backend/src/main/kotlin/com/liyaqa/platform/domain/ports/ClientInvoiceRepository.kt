@@ -51,6 +51,12 @@ interface ClientInvoiceRepository {
     fun countByStatus(status: ClientInvoiceStatus): Long
     fun countByOrganizationId(organizationId: UUID): Long
 
+    /**
+     * Gets all status counts in a single query for performance.
+     * Returns a map of status to count.
+     */
+    fun countAllByStatus(): Map<ClientInvoiceStatus, Long>
+
     // Existence and delete
     fun existsById(id: UUID): Boolean
     fun deleteById(id: UUID)

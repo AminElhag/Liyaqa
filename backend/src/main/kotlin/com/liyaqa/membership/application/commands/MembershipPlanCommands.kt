@@ -3,7 +3,9 @@ package com.liyaqa.membership.application.commands
 import com.liyaqa.membership.domain.model.BillingPeriod
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.TaxableFee
+import java.math.BigDecimal
 import java.time.LocalDate
+import java.util.UUID
 
 /**
  * Command for creating a new membership plan.
@@ -40,7 +42,18 @@ data class CreateMembershipPlanCommand(
     val hasSaunaAccess: Boolean = false,
     val hasPoolAccess: Boolean = false,
     val freezeDaysAllowed: Int = 0,
-    val sortOrder: Int = 0
+    val sortOrder: Int = 0,
+
+    // Contract configuration
+    val categoryId: UUID? = null,
+    val contractType: String = "MONTH_TO_MONTH",
+    val supportedTerms: List<String> = listOf("MONTHLY"),
+    val defaultCommitmentMonths: Int = 1,
+    val minimumCommitmentMonths: Int? = null,
+    val defaultNoticePeriodDays: Int = 30,
+    val earlyTerminationFeeType: String = "NONE",
+    val earlyTerminationFeeValue: BigDecimal? = null,
+    val coolingOffDays: Int = 14
 )
 
 /**
@@ -79,5 +92,17 @@ data class UpdateMembershipPlanCommand(
     val hasSaunaAccess: Boolean? = null,
     val hasPoolAccess: Boolean? = null,
     val freezeDaysAllowed: Int? = null,
-    val sortOrder: Int? = null
+    val sortOrder: Int? = null,
+
+    // Contract configuration
+    val categoryId: UUID? = null,
+    val contractType: String? = null,
+    val supportedTerms: List<String>? = null,
+    val defaultCommitmentMonths: Int? = null,
+    val minimumCommitmentMonths: Int? = null,
+    val defaultNoticePeriodDays: Int? = null,
+    val earlyTerminationFeeType: String? = null,
+    val earlyTerminationFeeValue: BigDecimal? = null,
+    val coolingOffDays: Int? = null,
+    val clearCategoryId: Boolean = false
 )

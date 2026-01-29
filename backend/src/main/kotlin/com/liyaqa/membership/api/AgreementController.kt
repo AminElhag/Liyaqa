@@ -47,7 +47,7 @@ class AgreementController(
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('agreements_view')")
+    @PreAuthorize("hasAnyAuthority('agreements_view', 'members_create', 'members_update')")
     @Operation(summary = "Get agreement by ID")
     fun getAgreement(@PathVariable id: UUID): ResponseEntity<AgreementResponse> {
         val agreement = agreementService.getAgreement(id)
@@ -55,7 +55,7 @@ class AgreementController(
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('agreements_view')")
+    @PreAuthorize("hasAnyAuthority('agreements_view', 'members_create', 'members_update')")
     @Operation(summary = "Get all agreements with optional active filter")
     fun getAllAgreements(
         @RequestParam(defaultValue = "false") activeOnly: Boolean,
@@ -87,7 +87,7 @@ class AgreementController(
     }
 
     @GetMapping("/mandatory")
-    @PreAuthorize("hasAuthority('agreements_view')")
+    @PreAuthorize("hasAnyAuthority('agreements_view', 'members_create', 'members_update')")
     @Operation(summary = "Get all mandatory agreements")
     fun getMandatoryAgreements(): ResponseEntity<List<AgreementSummaryResponse>> {
         val agreements = agreementService.getMandatoryAgreements()
@@ -95,7 +95,7 @@ class AgreementController(
     }
 
     @GetMapping("/type/{type}")
-    @PreAuthorize("hasAuthority('agreements_view')")
+    @PreAuthorize("hasAnyAuthority('agreements_view', 'members_create', 'members_update')")
     @Operation(summary = "Get agreements by type")
     fun getAgreementsByType(@PathVariable type: AgreementType): ResponseEntity<List<AgreementSummaryResponse>> {
         val agreements = agreementService.getAgreementsByType(type)
@@ -154,7 +154,7 @@ class MemberAgreementController(
 ) {
 
     @GetMapping
-    @PreAuthorize("hasAuthority('agreements_view')")
+    @PreAuthorize("hasAnyAuthority('agreements_view', 'members_view', 'members_create', 'members_update')")
     @Operation(summary = "Get member's signed agreements")
     fun getMemberAgreements(
         @PathVariable memberId: UUID
@@ -172,7 +172,7 @@ class MemberAgreementController(
     }
 
     @GetMapping("/status")
-    @PreAuthorize("hasAuthority('agreements_view')")
+    @PreAuthorize("hasAnyAuthority('agreements_view', 'members_view', 'members_create', 'members_update')")
     @Operation(summary = "Get member's agreement status (signed vs pending)")
     fun getMemberAgreementStatus(
         @PathVariable memberId: UUID
@@ -199,7 +199,7 @@ class MemberAgreementController(
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('agreements_update')")
+    @PreAuthorize("hasAnyAuthority('agreements_update', 'members_create', 'members_update')")
     @Operation(summary = "Sign an agreement for a member")
     fun signAgreement(
         @PathVariable memberId: UUID,
@@ -218,8 +218,29 @@ class MemberAgreementController(
             .body(MemberAgreementResponse.from(memberAgreement, agreement))
     }
 
+    @PostMapping("/{agreementId}/sign")
+    @PreAuthorize("hasAnyAuthority('agreements_update', 'members_create', 'members_update')")
+    @Operation(summary = "Sign a specific agreement for a member")
+    fun signAgreementById(
+        @PathVariable memberId: UUID,
+        @PathVariable agreementId: UUID,
+        @RequestBody(required = false) request: SignAgreementDetailsRequest?
+    ): ResponseEntity<MemberAgreementResponse> {
+        val memberAgreement = agreementService.signAgreement(
+            memberId = memberId,
+            agreementId = agreementId,
+            ipAddress = request?.ipAddress,
+            userAgent = request?.userAgent,
+            signatureData = request?.signatureData,
+            healthData = request?.healthData
+        )
+        val agreement = agreementService.getAgreement(agreementId)
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(MemberAgreementResponse.from(memberAgreement, agreement))
+    }
+
     @PostMapping("/bulk")
-    @PreAuthorize("hasAuthority('agreements_update')")
+    @PreAuthorize("hasAnyAuthority('agreements_update', 'members_create', 'members_update')")
     @Operation(summary = "Sign multiple agreements for a member")
     fun signAgreements(
         @PathVariable memberId: UUID,

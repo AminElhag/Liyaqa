@@ -230,17 +230,22 @@ class ClientInvoiceService(
 
     /**
      * Gets invoice statistics.
+     * Uses a single optimized query instead of 7 separate queries.
      */
     @Transactional(readOnly = true)
     fun getInvoiceStats(): ClientInvoiceStats {
+        // Single query to get all status counts - much faster than 7 separate queries
+        val statusCounts = invoiceRepository.countAllByStatus()
+        val total = statusCounts.values.sum()
+
         return ClientInvoiceStats(
-            total = invoiceRepository.count(),
-            draft = invoiceRepository.countByStatus(ClientInvoiceStatus.DRAFT),
-            issued = invoiceRepository.countByStatus(ClientInvoiceStatus.ISSUED),
-            paid = invoiceRepository.countByStatus(ClientInvoiceStatus.PAID),
-            partiallyPaid = invoiceRepository.countByStatus(ClientInvoiceStatus.PARTIALLY_PAID),
-            overdue = invoiceRepository.countByStatus(ClientInvoiceStatus.OVERDUE),
-            cancelled = invoiceRepository.countByStatus(ClientInvoiceStatus.CANCELLED)
+            total = total,
+            draft = statusCounts[ClientInvoiceStatus.DRAFT] ?: 0,
+            issued = statusCounts[ClientInvoiceStatus.ISSUED] ?: 0,
+            paid = statusCounts[ClientInvoiceStatus.PAID] ?: 0,
+            partiallyPaid = statusCounts[ClientInvoiceStatus.PARTIALLY_PAID] ?: 0,
+            overdue = statusCounts[ClientInvoiceStatus.OVERDUE] ?: 0,
+            cancelled = statusCounts[ClientInvoiceStatus.CANCELLED] ?: 0
         )
     }
 

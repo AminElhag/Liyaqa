@@ -17,6 +17,11 @@ import {
   getClubSubscriptionStats,
   getClubAuditLogs,
   getAuditActions,
+  getClubLocations,
+  getClubMembershipPlans,
+  updateClub,
+  activateClub,
+  suspendClub,
 } from "@/lib/api/platform/club-detail";
 import type { PageResponse, UUID } from "@/types/api";
 import type {
@@ -31,6 +36,9 @@ import type {
   ClubDetailQueryParams,
   ClubAuditLogQueryParams,
   ResetPasswordRequest,
+  ClubLocation,
+  ClubMembershipPlan,
+  UpdateClubRequest,
 } from "@/types/platform";
 
 // ============================================
@@ -56,6 +64,12 @@ export const platformClubKeys = {
   auditLogsList: (clubId: UUID, params: ClubAuditLogQueryParams) =>
     [...platformClubKeys.auditLogs(clubId), "list", params] as const,
   auditActions: () => [...platformClubKeys.all, "audit-actions"] as const,
+  locations: (clubId: UUID) => [...platformClubKeys.all, clubId, "locations"] as const,
+  locationsList: (clubId: UUID, params: ClubDetailQueryParams) =>
+    [...platformClubKeys.locations(clubId), "list", params] as const,
+  membershipPlans: (clubId: UUID) => [...platformClubKeys.all, clubId, "membership-plans"] as const,
+  membershipPlansList: (clubId: UUID, params: ClubDetailQueryParams) =>
+    [...platformClubKeys.membershipPlans(clubId), "list", params] as const,
 };
 
 // ============================================
@@ -229,5 +243,91 @@ export function useAuditActions(
     queryFn: () => getAuditActions(),
     staleTime: Infinity, // Actions don't change
     ...options,
+  });
+}
+
+// ============================================
+// Club Locations Hooks
+// ============================================
+
+/**
+ * Hook to fetch locations for a club
+ */
+export function useClubLocations(
+  clubId: UUID,
+  params: ClubDetailQueryParams = {},
+  options?: Omit<UseQueryOptions<PageResponse<ClubLocation>>, "queryKey" | "queryFn">
+) {
+  return useQuery({
+    queryKey: platformClubKeys.locationsList(clubId, params),
+    queryFn: () => getClubLocations(clubId, params),
+    enabled: !!clubId,
+    ...options,
+  });
+}
+
+// ============================================
+// Club Membership Plans Hooks
+// ============================================
+
+/**
+ * Hook to fetch membership plans for a club
+ */
+export function useClubMembershipPlans(
+  clubId: UUID,
+  params: ClubDetailQueryParams = {},
+  options?: Omit<UseQueryOptions<PageResponse<ClubMembershipPlan>>, "queryKey" | "queryFn">
+) {
+  return useQuery({
+    queryKey: platformClubKeys.membershipPlansList(clubId, params),
+    queryFn: () => getClubMembershipPlans(clubId, params),
+    enabled: !!clubId,
+    ...options,
+  });
+}
+
+// ============================================
+// Club Update Hooks
+// ============================================
+
+/**
+ * Hook to update club basic info
+ */
+export function useUpdateClub(clubId: UUID) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: UpdateClubRequest) => updateClub(clubId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: platformClubKeys.detail(clubId) });
+    },
+  });
+}
+
+/**
+ * Hook to activate a suspended club
+ */
+export function useActivateClub(clubId: UUID) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => activateClub(clubId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: platformClubKeys.detail(clubId) });
+    },
+  });
+}
+
+/**
+ * Hook to suspend an active club
+ */
+export function useSuspendClub(clubId: UUID) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => suspendClub(clubId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: platformClubKeys.detail(clubId) });
+    },
   });
 }

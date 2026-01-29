@@ -75,6 +75,30 @@ export interface Money {
 }
 
 /**
+ * Taxable fee with computed tax amounts
+ */
+export interface TaxableFee {
+  amount: number;
+  currency: string;
+  taxRate: number;
+  taxAmount: number;
+  grossAmount: number;
+}
+
+/**
+ * Localized address object
+ */
+export interface LocalizedAddress {
+  street?: LocalizedText;
+  building?: LocalizedText;
+  city?: LocalizedText;
+  district?: LocalizedText;
+  postalCode?: string;
+  countryCode?: string;
+  formatted: string;
+}
+
+/**
  * Date range filter
  */
 export interface DateRange {

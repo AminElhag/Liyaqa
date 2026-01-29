@@ -50,6 +50,17 @@ export default function NewClassPage() {
         durationMinutes: data.durationMinutes,
         trainerId: data.trainerId || undefined,
         locationId: data.locationId || undefined,
+        // Pricing settings
+        pricingModel: data.pricingModel,
+        dropInPriceAmount: data.dropInPriceAmount || undefined,
+        dropInPriceCurrency: data.dropInPriceCurrency || undefined,
+        taxRate: data.taxRate,
+        allowNonSubscribers: data.allowNonSubscribers,
+        // Booking settings
+        advanceBookingDays: data.advanceBookingDays,
+        cancellationDeadlineHours: data.cancellationDeadlineHours,
+        lateCancellationFeeAmount: data.lateCancellationFeeAmount || undefined,
+        lateCancellationFeeCurrency: data.lateCancellationFeeCurrency || undefined,
         schedules: data.schedules,
       });
       router.push(`/${locale}/classes`);

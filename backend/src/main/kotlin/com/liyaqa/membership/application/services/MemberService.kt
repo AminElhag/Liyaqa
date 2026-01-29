@@ -3,6 +3,7 @@ package com.liyaqa.membership.application.services
 import com.liyaqa.auth.domain.model.Role
 import com.liyaqa.auth.domain.model.User
 import com.liyaqa.auth.domain.model.UserStatus
+import com.liyaqa.auth.domain.ports.RefreshTokenRepository
 import com.liyaqa.auth.domain.ports.UserRepository
 import com.liyaqa.membership.application.commands.CreateMemberCommand
 import com.liyaqa.membership.application.commands.UpdateMemberCommand
@@ -18,6 +19,8 @@ import com.liyaqa.referral.application.services.ReferralCodeService
 import com.liyaqa.referral.application.services.ReferralTrackingService
 import com.liyaqa.shared.application.services.PermissionService
 import com.liyaqa.shared.domain.LocalizedText
+import com.liyaqa.shared.exception.DuplicateField
+import com.liyaqa.shared.exception.DuplicateFieldException
 import com.liyaqa.webhook.application.services.WebhookEventPublisher
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
@@ -40,14 +43,18 @@ class MemberService(
     private val permissionService: PermissionService,
     private val webhookPublisher: WebhookEventPublisher,
     private val referralCodeService: ReferralCodeService,
-    private val referralTrackingService: ReferralTrackingService
+    private val referralTrackingService: ReferralTrackingService,
+    private val refreshTokenRepository: RefreshTokenRepository
 ) {
     private val logger = LoggerFactory.getLogger(MemberService::class.java)
 
     fun createMember(command: CreateMemberCommand): Member {
-        require(!memberRepository.existsByEmail(command.email)) {
-            "A member with email ${command.email} already exists"
-        }
+        // Validate uniqueness for all fields
+        validateUniquenessForCreate(
+            email = command.email,
+            phone = command.phone,
+            nationalId = command.nationalId
+        )
 
         val member = Member(
             firstName = command.firstName,
@@ -204,6 +211,14 @@ class MemberService(
 
     fun updateMember(id: UUID, command: UpdateMemberCommand): Member {
         val member = getMember(id)
+
+        // Validate uniqueness for updated fields (excluding current member)
+        validateUniquenessForUpdate(
+            memberId = id,
+            email = null, // Email updates not supported through this command
+            phone = command.phone,
+            nationalId = command.nationalId
+        )
 
         command.firstName?.let { member.firstName = it }
         command.lastName?.let { member.lastName = it }
@@ -365,6 +380,27 @@ class MemberService(
         return memberRepository.save(member)
     }
 
+    /**
+     * Resets a member's password (admin action).
+     * Sets a new password and revokes all refresh tokens for security.
+     */
+    fun resetMemberPassword(memberId: UUID, newPassword: String) {
+        val member = getMember(memberId)
+        val userId = member.userId
+            ?: throw IllegalStateException("Member does not have a user account")
+
+        val user = userRepository.findById(userId)
+            .orElseThrow { NoSuchElementException("User not found") }
+
+        user.changePassword(passwordEncoder.encode(newPassword) ?: throw IllegalStateException("Failed to encode password"))
+        userRepository.save(user)
+
+        // Revoke all refresh tokens for security
+        refreshTokenRepository.revokeAllByUserId(userId)
+
+        logger.info("Reset password for member $memberId (user $userId)")
+    }
+
     // ==================== NOTIFICATION HELPERS ====================
 
     private fun sendWelcomeNotification(member: Member) {
@@ -508,6 +544,79 @@ class MemberService(
             runCatching {
                 memberRepository.deleteById(id)
             }
+        }
+    }
+
+    // ==================== UNIQUENESS VALIDATION ====================
+
+    /**
+     * Validates uniqueness constraints for creating a new member.
+     * Checks email, phone, and nationalId against existing members.
+     * @throws DuplicateFieldException if any field already exists
+     */
+    private fun validateUniquenessForCreate(
+        email: String,
+        phone: String?,
+        nationalId: String?
+    ) {
+        // Email is always required and must be unique
+        if (memberRepository.existsByEmail(email)) {
+            throw DuplicateFieldException(
+                field = DuplicateField.EMAIL,
+                message = "A member with this email already exists"
+            )
+        }
+
+        // Phone must be unique if provided and not blank
+        if (!phone.isNullOrBlank() && memberRepository.existsByPhone(phone)) {
+            throw DuplicateFieldException(
+                field = DuplicateField.PHONE,
+                message = "A member with this phone number already exists"
+            )
+        }
+
+        // National ID must be unique if provided and not blank
+        if (!nationalId.isNullOrBlank() && memberRepository.existsByNationalId(nationalId)) {
+            throw DuplicateFieldException(
+                field = DuplicateField.NATIONAL_ID,
+                message = "A member with this national ID already exists"
+            )
+        }
+    }
+
+    /**
+     * Validates uniqueness constraints for updating an existing member.
+     * Excludes the member being updated from the uniqueness check.
+     * @throws DuplicateFieldException if any field conflicts with another member
+     */
+    private fun validateUniquenessForUpdate(
+        memberId: UUID,
+        email: String?,
+        phone: String?,
+        nationalId: String?
+    ) {
+        // Email must be unique if being changed
+        if (!email.isNullOrBlank() && memberRepository.existsByEmailAndIdNot(email, memberId)) {
+            throw DuplicateFieldException(
+                field = DuplicateField.EMAIL,
+                message = "A member with this email already exists"
+            )
+        }
+
+        // Phone must be unique if provided and not blank
+        if (!phone.isNullOrBlank() && memberRepository.existsByPhoneAndIdNot(phone, memberId)) {
+            throw DuplicateFieldException(
+                field = DuplicateField.PHONE,
+                message = "A member with this phone number already exists"
+            )
+        }
+
+        // National ID must be unique if provided and not blank
+        if (!nationalId.isNullOrBlank() && memberRepository.existsByNationalIdAndIdNot(nationalId, memberId)) {
+            throw DuplicateFieldException(
+                field = DuplicateField.NATIONAL_ID,
+                message = "A member with this national ID already exists"
+            )
         }
     }
 }

@@ -35,7 +35,7 @@ class EquipmentProviderConfig(
     @Column(name = "webhook_secret_encrypted")
     var webhookSecretEncrypted: String? = null,
 
-    @Column(name = "custom_config", columnDefinition = "jsonb")
+    @Column(name = "custom_config")
     var customConfig: String = "{}",
 
     @Column(name = "is_active", nullable = false)

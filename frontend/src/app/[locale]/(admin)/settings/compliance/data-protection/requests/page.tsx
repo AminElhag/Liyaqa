@@ -424,7 +424,7 @@ export default function DSRWorkflowPage() {
           ) : (
             <DataTable
               columns={columns}
-              data={dsrs ?? []}
+              data={dsrs?.content ?? []}
               searchKey="requesterName"
               searchPlaceholder={isArabic ? "البحث عن الطلبات..." : "Search requests..."}
             />

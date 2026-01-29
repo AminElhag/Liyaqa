@@ -44,7 +44,7 @@ import {
   useArchivePolicy,
   useReturnToDraft,
 } from "@/queries/use-policies";
-import type { SecurityPolicy, PolicyType, PolicyParams } from "@/types/policy";
+import type { SecurityPolicy, PolicyType, PolicyStatus, PolicyParams } from "@/types/policy";
 
 export default function PoliciesListPage() {
   const locale = useLocale();
@@ -118,10 +118,11 @@ export default function PoliciesListPage() {
   });
 
   // Stats
-  const totalPolicies = policies?.length ?? 0;
-  const publishedCount = policies?.filter((p) => p.status === "PUBLISHED").length ?? 0;
-  const draftCount = policies?.filter((p) => p.status === "DRAFT").length ?? 0;
-  const reviewDueCount = policies?.filter((p) => p.isReviewDue).length ?? 0;
+  const policiesList = policies?.content ?? [];
+  const totalPolicies = policiesList.length;
+  const publishedCount = policiesList.filter((p) => p.status === "PUBLISHED").length;
+  const draftCount = policiesList.filter((p) => p.status === "DRAFT").length;
+  const reviewDueCount = policiesList.filter((p) => p.isReviewDue).length;
 
   const policyTypeOptions: { value: PolicyType; label: { en: string; ar: string } }[] = [
     { value: "INFORMATION_SECURITY", label: { en: "Information Security", ar: "أمن المعلومات" } },
@@ -358,7 +359,7 @@ export default function PoliciesListPage() {
           ) : (
             <DataTable
               columns={columns}
-              data={policies ?? []}
+              data={policiesList}
               searchKey="title"
               searchPlaceholder={isArabic ? "البحث عن السياسات..." : "Search policies..."}
             />

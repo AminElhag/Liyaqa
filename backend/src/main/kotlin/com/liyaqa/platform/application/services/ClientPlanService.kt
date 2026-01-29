@@ -36,14 +36,33 @@ class ClientPlanService(
             maxLocationsPerClub = command.maxLocationsPerClub,
             maxMembers = command.maxMembers,
             maxStaffUsers = command.maxStaffUsers,
+            // Legacy features
             hasAdvancedReporting = command.hasAdvancedReporting,
             hasApiAccess = command.hasApiAccess,
             hasPrioritySupport = command.hasPrioritySupport,
             hasWhiteLabeling = command.hasWhiteLabeling,
             hasCustomIntegrations = command.hasCustomIntegrations,
+            // Member Engagement features
+            hasMemberPortal = command.hasMemberPortal,
+            hasMobileApp = command.hasMobileApp,
+            hasWearablesIntegration = command.hasWearablesIntegration,
+            // Marketing & Loyalty features
+            hasMarketingAutomation = command.hasMarketingAutomation,
+            hasLoyaltyProgram = command.hasLoyaltyProgram,
+            // Operations features
+            hasAccessControl = command.hasAccessControl,
+            hasFacilityBooking = command.hasFacilityBooking,
+            hasPersonalTraining = command.hasPersonalTraining,
+            // Accounts & Payments features
+            hasCorporateAccounts = command.hasCorporateAccounts,
+            hasFamilyGroups = command.hasFamilyGroups,
+            hasOnlinePayments = command.hasOnlinePayments,
             sortOrder = command.sortOrder,
             isActive = true
         )
+
+        // Validate feature dependencies
+        plan.validateFeatureDependencies()
 
         return clientPlanRepository.save(plan)
     }
@@ -110,13 +129,29 @@ class ClientPlanService(
             maxStaffUsers = command.maxStaffUsers
         )
 
-        // Update features
-        plan.updateFeatures(
+        // Update all features (legacy + new) with dependency validation
+        plan.updateAllFeatures(
+            // Legacy features
             advancedReporting = command.hasAdvancedReporting,
             apiAccess = command.hasApiAccess,
             prioritySupport = command.hasPrioritySupport,
             whiteLabeling = command.hasWhiteLabeling,
-            customIntegrations = command.hasCustomIntegrations
+            customIntegrations = command.hasCustomIntegrations,
+            // Member Engagement features
+            memberPortal = command.hasMemberPortal,
+            mobileApp = command.hasMobileApp,
+            wearablesIntegration = command.hasWearablesIntegration,
+            // Marketing & Loyalty features
+            marketingAutomation = command.hasMarketingAutomation,
+            loyaltyProgram = command.hasLoyaltyProgram,
+            // Operations features
+            accessControl = command.hasAccessControl,
+            facilityBooking = command.hasFacilityBooking,
+            personalTraining = command.hasPersonalTraining,
+            // Accounts & Payments features
+            corporateAccounts = command.hasCorporateAccounts,
+            familyGroups = command.hasFamilyGroups,
+            onlinePayments = command.hasOnlinePayments
         )
 
         command.sortOrder?.let { plan.sortOrder = it }

@@ -18,7 +18,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { MembershipPlan, BillingPeriod } from "@/types/member";
-import { Calendar, Users, DollarSign, Sparkles, Settings } from "lucide-react";
+import { Calendar, Users, DollarSign, Sparkles, Settings, FileText } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useMembershipCategories } from "@/queries/use-admin-contracts";
+import type { ContractType, ContractTerm, TerminationFeeType } from "@/types/contract";
 
 const billingPeriodOptions = [
   "DAILY",
@@ -98,6 +103,33 @@ const planFormSchema = z.object({
     (val) => (val === "" || Number.isNaN(val) ? 0 : val),
     z.number().default(0)
   ),
+
+  // Contract configuration
+  categoryId: z.string().uuid().nullish(),
+  contractType: z.enum(["MONTH_TO_MONTH", "FIXED_TERM"]).default("MONTH_TO_MONTH"),
+  supportedTerms: z.array(z.enum(["MONTHLY", "QUARTERLY", "SEMI_ANNUAL", "ANNUAL"]))
+    .min(1, "Select at least one supported contract term"),
+  defaultCommitmentMonths: z.preprocess(
+    (val) => (val === "" || Number.isNaN(val) ? 1 : val),
+    z.number().int().min(1).max(60).default(1)
+  ),
+  minimumCommitmentMonths: z.preprocess(
+    (val) => (val === "" || Number.isNaN(val) ? undefined : val),
+    z.number().int().min(0).max(60).nullish()
+  ),
+  defaultNoticePeriodDays: z.preprocess(
+    (val) => (val === "" || Number.isNaN(val) ? 30 : val),
+    z.number().int().min(0).max(90).default(30)
+  ),
+  earlyTerminationFeeType: z.enum(["NONE", "FLAT_FEE", "REMAINING_MONTHS", "PERCENTAGE"]).default("NONE"),
+  earlyTerminationFeeValue: z.preprocess(
+    (val) => (val === "" || Number.isNaN(val) ? undefined : val),
+    z.number().min(0).nullish()
+  ),
+  coolingOffDays: z.preprocess(
+    (val) => (val === "" || Number.isNaN(val) ? 14 : val),
+    z.number().int().min(0).max(30).default(14)
+  ),
 }).refine(
   (data) => !data.availableFrom || !data.availableUntil ||
             new Date(data.availableFrom) <= new Date(data.availableUntil),
@@ -105,6 +137,31 @@ const planFormSchema = z.object({
 ).refine(
   (data) => !data.minimumAge || !data.maximumAge || data.minimumAge <= data.maximumAge,
   { message: "Minimum age must be less than maximum age", path: ["maximumAge"] }
+).refine(
+  (data) => {
+    // Validation: Fixed-term requires minimum commitment
+    if (data.contractType === "FIXED_TERM" && !data.minimumCommitmentMonths) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Fixed-term contracts require a minimum commitment period",
+    path: ["minimumCommitmentMonths"]
+  }
+).refine(
+  (data) => {
+    // Validation: Fee types require fee value
+    if (data.earlyTerminationFeeType !== "NONE" &&
+        (data.earlyTerminationFeeValue === undefined || data.earlyTerminationFeeValue === null || data.earlyTerminationFeeValue <= 0)) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Fee value required when termination fee type is set",
+    path: ["earlyTerminationFeeValue"]
+  }
 );
 
 export type PlanFormData = z.infer<typeof planFormSchema>;
@@ -123,6 +180,9 @@ function calculateGross(amount: number, taxRate: number): number {
 export function PlanForm({ plan, onSubmit, isPending }: PlanFormProps) {
   const locale = useLocale();
   const isArabic = locale === "ar";
+
+  // Fetch membership categories
+  const { data: categories, isLoading: categoriesLoading } = useMembershipCategories();
 
   const {
     register,
@@ -171,12 +231,25 @@ export function PlanForm({ plan, onSubmit, isPending }: PlanFormProps) {
       freezeDaysAllowed: plan?.freezeDaysAllowed ?? 0,
       isActive: plan?.isActive ?? true,
       sortOrder: plan?.sortOrder ?? 0,
+      // Contract configuration
+      categoryId: plan?.categoryId ?? undefined,
+      contractType: (plan?.contractType as "MONTH_TO_MONTH" | "FIXED_TERM" | undefined) ?? "MONTH_TO_MONTH",
+      supportedTerms: (plan?.supportedTerms as ("MONTHLY" | "QUARTERLY" | "SEMI_ANNUAL" | "ANNUAL")[]) ?? ["MONTHLY"],
+      defaultCommitmentMonths: plan?.defaultCommitmentMonths ?? 1,
+      minimumCommitmentMonths: plan?.minimumCommitmentMonths ?? undefined,
+      defaultNoticePeriodDays: plan?.defaultNoticePeriodDays ?? 30,
+      earlyTerminationFeeType: (plan?.earlyTerminationFeeType as "NONE" | "FLAT_FEE" | "REMAINING_MONTHS" | "PERCENTAGE" | undefined) ?? "NONE",
+      earlyTerminationFeeValue: plan?.earlyTerminationFeeValue ?? undefined,
+      coolingOffDays: plan?.coolingOffDays ?? 14,
     },
   });
 
   const watchedValues = watch();
   const selectedBillingPeriod = watchedValues.billingPeriod;
   const hasGuestPasses = watchedValues.hasGuestPasses;
+  const contractType = watchedValues.contractType;
+  const earlyTerminationFeeType = watchedValues.earlyTerminationFeeType;
+  const supportedTerms = watchedValues.supportedTerms;
 
   const billingPeriodLabels: Record<BillingPeriod, { en: string; ar: string }> = {
     DAILY: { en: "Daily", ar: "يومي" },
@@ -241,6 +314,34 @@ export function PlanForm({ plan, onSubmit, isPending }: PlanFormProps) {
     saving: isArabic ? "جاري الحفظ..." : "Saving...",
     saveChanges: isArabic ? "حفظ التغييرات" : "Save Changes",
     createPlan: isArabic ? "إنشاء الباقة" : "Create Plan",
+
+    // Contract configuration
+    contractConfig: isArabic ? "إعدادات العقد" : "Contract Configuration",
+    contractConfigDesc: isArabic ? "حدد نوع العقد والشروط وسياسات الإنهاء" : "Configure contract type, terms, and termination policies",
+    category: isArabic ? "الفئة" : "Membership Category",
+    categoryDesc: isArabic ? "اختياري - حدد فئة العضوية" : "Optional - Select a membership category",
+    contractTypeLabel: isArabic ? "نوع العقد" : "Contract Type",
+    monthToMonth: isArabic ? "شهر لشهر" : "Month-to-Month",
+    fixedTerm: isArabic ? "مدة ثابتة" : "Fixed Term",
+    supportedTermsLabel: isArabic ? "الشروط المدعومة" : "Supported Terms",
+    supportedTermsDesc: isArabic ? "حدد مدد العقد المتاحة" : "Select available contract durations",
+    monthly: isArabic ? "شهري" : "Monthly",
+    quarterly: isArabic ? "ربع سنوي" : "Quarterly",
+    semiAnnual: isArabic ? "نصف سنوي" : "Semi-Annual",
+    annual: isArabic ? "سنوي" : "Annual",
+    defaultCommitment: isArabic ? "التزام افتراضي (أشهر)" : "Default Commitment (Months)",
+    minimumCommitment: isArabic ? "الحد الأدنى للالتزام (أشهر)" : "Minimum Commitment (Months)",
+    noticePeriod: isArabic ? "فترة الإشعار (أيام)" : "Notice Period (Days)",
+    coolingOff: isArabic ? "فترة التهدئة (أيام)" : "Cooling-Off Period (Days)",
+    terminationFeeType: isArabic ? "نوع رسوم الإنهاء" : "Termination Fee Type",
+    terminationFeeValue: isArabic ? "قيمة رسوم الإنهاء" : "Termination Fee Value",
+    feeNone: isArabic ? "لا شيء" : "None",
+    feeFlat: isArabic ? "رسم ثابت" : "Flat Fee",
+    feeRemaining: isArabic ? "الأشهر المتبقية" : "Remaining Months",
+    feePercentage: isArabic ? "نسبة مئوية" : "Percentage",
+    pricingTiersInfo: isArabic
+      ? "بعد إنشاء هذه الباقة، يمكنك تكوين مستويات التسعير للشروط المختلفة في صفحة مستويات التسعير."
+      : "After creating this plan, configure pricing tiers for different terms in the Pricing Tiers page.",
   };
 
   return (
@@ -592,6 +693,205 @@ export function PlanForm({ plan, onSubmit, isPending }: PlanFormProps) {
               </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Contract Configuration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            {texts.contractConfig}
+          </CardTitle>
+          <CardDescription>{texts.contractConfigDesc}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Membership Category */}
+          <div className="space-y-2">
+            <Label htmlFor="categoryId">{texts.category}</Label>
+            <Select
+              value={watchedValues.categoryId || undefined}
+              onValueChange={(value) => setValue("categoryId", value || undefined)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={texts.categoryDesc} />
+              </SelectTrigger>
+              <SelectContent>
+                {categories?.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {isArabic ? category.nameAr || category.nameEn : category.nameEn}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">{texts.categoryDesc}</p>
+          </div>
+
+          {/* Contract Type */}
+          <div className="space-y-3">
+            <Label>{texts.contractTypeLabel}</Label>
+            <RadioGroup
+              value={contractType}
+              onValueChange={(value: ContractType) => setValue("contractType", value)}
+              className="flex gap-4"
+            >
+              <div className="flex items-center space-x-2 border rounded-lg p-3 flex-1">
+                <RadioGroupItem value="MONTH_TO_MONTH" id="monthToMonth" />
+                <Label htmlFor="monthToMonth" className="cursor-pointer flex-1">
+                  {texts.monthToMonth}
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2 border rounded-lg p-3 flex-1">
+                <RadioGroupItem value="FIXED_TERM" id="fixedTerm" />
+                <Label htmlFor="fixedTerm" className="cursor-pointer flex-1">
+                  {texts.fixedTerm}
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {/* Supported Terms */}
+          <div className="space-y-3">
+            <Label>{texts.supportedTermsLabel}</Label>
+            <p className="text-sm text-muted-foreground">{texts.supportedTermsDesc}</p>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { value: "MONTHLY", label: texts.monthly },
+                { value: "QUARTERLY", label: texts.quarterly },
+                { value: "SEMI_ANNUAL", label: texts.semiAnnual },
+                { value: "ANNUAL", label: texts.annual },
+              ].map((term) => (
+                <div key={term.value} className="flex items-center space-x-2 border rounded-lg p-3">
+                  <Checkbox
+                    id={term.value}
+                    checked={supportedTerms?.includes(term.value as ContractTerm)}
+                    onCheckedChange={(checked) => {
+                      const current = supportedTerms || [];
+                      if (checked) {
+                        setValue("supportedTerms", [...current, term.value as ContractTerm]);
+                      } else {
+                        setValue("supportedTerms", current.filter((t) => t !== term.value));
+                      }
+                    }}
+                  />
+                  <Label htmlFor={term.value} className="cursor-pointer flex-1">
+                    {term.label}
+                  </Label>
+                </div>
+              ))}
+            </div>
+            {errors.supportedTerms && (
+              <p className="text-sm text-destructive">{errors.supportedTerms.message}</p>
+            )}
+          </div>
+
+          {/* Commitment, Notice, and Cooling-off Periods */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="defaultCommitmentMonths">{texts.defaultCommitment}</Label>
+              <Input
+                id="defaultCommitmentMonths"
+                type="number"
+                {...register("defaultCommitmentMonths", { valueAsNumber: true })}
+                placeholder="1"
+                min={1}
+                max={60}
+              />
+              {errors.defaultCommitmentMonths && (
+                <p className="text-sm text-destructive">{errors.defaultCommitmentMonths.message}</p>
+              )}
+            </div>
+
+            {contractType === "FIXED_TERM" && (
+              <div className="space-y-2">
+                <Label htmlFor="minimumCommitmentMonths">{texts.minimumCommitment}</Label>
+                <Input
+                  id="minimumCommitmentMonths"
+                  type="number"
+                  {...register("minimumCommitmentMonths", { valueAsNumber: true })}
+                  placeholder="1"
+                  min={0}
+                  max={60}
+                />
+                {errors.minimumCommitmentMonths && (
+                  <p className="text-sm text-destructive">{errors.minimumCommitmentMonths.message}</p>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="defaultNoticePeriodDays">{texts.noticePeriod}</Label>
+              <Input
+                id="defaultNoticePeriodDays"
+                type="number"
+                {...register("defaultNoticePeriodDays", { valueAsNumber: true })}
+                placeholder="30"
+                min={0}
+                max={90}
+              />
+              {errors.defaultNoticePeriodDays && (
+                <p className="text-sm text-destructive">{errors.defaultNoticePeriodDays.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="coolingOffDays">{texts.coolingOff}</Label>
+              <Input
+                id="coolingOffDays"
+                type="number"
+                {...register("coolingOffDays", { valueAsNumber: true })}
+                placeholder="14"
+                min={0}
+                max={30}
+              />
+              {errors.coolingOffDays && (
+                <p className="text-sm text-destructive">{errors.coolingOffDays.message}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Termination Fee */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="earlyTerminationFeeType">{texts.terminationFeeType}</Label>
+              <Select
+                value={earlyTerminationFeeType}
+                onValueChange={(value: TerminationFeeType) => setValue("earlyTerminationFeeType", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NONE">{texts.feeNone}</SelectItem>
+                  <SelectItem value="FLAT_FEE">{texts.feeFlat}</SelectItem>
+                  <SelectItem value="REMAINING_MONTHS">{texts.feeRemaining}</SelectItem>
+                  <SelectItem value="PERCENTAGE">{texts.feePercentage}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {earlyTerminationFeeType !== "NONE" && (
+              <div className="space-y-2">
+                <Label htmlFor="earlyTerminationFeeValue">{texts.terminationFeeValue}</Label>
+                <Input
+                  id="earlyTerminationFeeValue"
+                  type="number"
+                  {...register("earlyTerminationFeeValue", { valueAsNumber: true })}
+                  placeholder={earlyTerminationFeeType === "PERCENTAGE" ? "50" : "100"}
+                  min={0}
+                  step="0.01"
+                />
+                {errors.earlyTerminationFeeValue && (
+                  <p className="text-sm text-destructive">{errors.earlyTerminationFeeValue.message}</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Info Alert */}
+          <Alert>
+            <AlertDescription>{texts.pricingTiersInfo}</AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
 

@@ -51,7 +51,7 @@ class LeadAssignmentRule(
     var priority: Int = 0,
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "config", nullable = false, columnDefinition = "jsonb")
+    @Column(name = "config", nullable = false)
     var config: String = "{}"
 
 ) : BaseEntity(id) {

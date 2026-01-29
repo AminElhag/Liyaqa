@@ -66,7 +66,17 @@ class MembershipPlanService(
             hasPoolAccess = command.hasPoolAccess,
             freezeDaysAllowed = command.freezeDaysAllowed,
             sortOrder = command.sortOrder,
-            isActive = command.isActive
+            isActive = command.isActive,
+            // Contract configuration
+            categoryId = command.categoryId,
+            contractType = command.contractType,
+            supportedTerms = command.supportedTerms.joinToString(","),
+            defaultCommitmentMonths = command.defaultCommitmentMonths,
+            minimumCommitmentMonths = command.minimumCommitmentMonths,
+            defaultNoticePeriodDays = command.defaultNoticePeriodDays,
+            earlyTerminationFeeType = command.earlyTerminationFeeType,
+            earlyTerminationFeeValue = command.earlyTerminationFeeValue,
+            coolingOffDays = command.coolingOffDays
         )
 
         return membershipPlanRepository.save(plan)
@@ -189,6 +199,21 @@ class MembershipPlanService(
         command.hasPoolAccess?.let { plan.hasPoolAccess = it }
         command.freezeDaysAllowed?.let { plan.freezeDaysAllowed = it }
         command.sortOrder?.let { plan.sortOrder = it }
+
+        // Update contract configuration
+        if (command.clearCategoryId) {
+            plan.categoryId = null
+        } else {
+            command.categoryId?.let { plan.categoryId = it }
+        }
+        command.contractType?.let { plan.contractType = it }
+        command.supportedTerms?.let { plan.setSupportedTermsList(it) }
+        command.defaultCommitmentMonths?.let { plan.defaultCommitmentMonths = it }
+        command.minimumCommitmentMonths?.let { plan.minimumCommitmentMonths = it }
+        command.defaultNoticePeriodDays?.let { plan.defaultNoticePeriodDays = it }
+        command.earlyTerminationFeeType?.let { plan.earlyTerminationFeeType = it }
+        command.earlyTerminationFeeValue?.let { plan.earlyTerminationFeeValue = it }
+        command.coolingOffDays?.let { plan.coolingOffDays = it }
 
         return membershipPlanRepository.save(plan)
     }

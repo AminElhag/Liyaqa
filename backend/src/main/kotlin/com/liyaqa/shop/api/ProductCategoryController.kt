@@ -33,7 +33,7 @@ class ProductCategoryController(
      * Get all categories with optional filtering.
      */
     @GetMapping
-    @PreAuthorize("hasAuthority('product_categories_view')")
+    @PreAuthorize("hasAuthority('shop_view')")
     fun getCategories(
         @RequestParam department: Department?,
         @RequestParam active: Boolean?,
@@ -51,7 +51,7 @@ class ProductCategoryController(
      * Get category by ID.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('product_categories_view')")
+    @PreAuthorize("hasAuthority('shop_view')")
     fun getCategory(@PathVariable id: UUID): ResponseEntity<ProductCategoryResponse> {
         val category = categoryService.getById(id)
         return ResponseEntity.ok(ProductCategoryResponse.from(category))
@@ -61,7 +61,7 @@ class ProductCategoryController(
      * Get category statistics.
      */
     @GetMapping("/stats")
-    @PreAuthorize("hasAuthority('product_categories_view')")
+    @PreAuthorize("hasAuthority('shop_view')")
     fun getStats(): ResponseEntity<CategoryStatsResponse> {
         val stats = categoryService.getStats()
         return ResponseEntity.ok(CategoryStatsResponse.from(stats))
@@ -71,7 +71,7 @@ class ProductCategoryController(
      * Create a new category.
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('product_categories_create')")
+    @PreAuthorize("hasAuthority('shop_create')")
     fun createCategory(
         @Valid @RequestBody request: CreateProductCategoryRequest
     ): ResponseEntity<ProductCategoryResponse> {
@@ -84,7 +84,7 @@ class ProductCategoryController(
      * Update a category.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('product_categories_update')")
+    @PreAuthorize("hasAuthority('shop_update')")
     fun updateCategory(
         @PathVariable id: UUID,
         @Valid @RequestBody request: UpdateProductCategoryRequest
@@ -97,7 +97,7 @@ class ProductCategoryController(
      * Activate a category.
      */
     @PostMapping("/{id}/activate")
-    @PreAuthorize("hasAuthority('product_categories_update')")
+    @PreAuthorize("hasAuthority('shop_update')")
     fun activateCategory(@PathVariable id: UUID): ResponseEntity<ProductCategoryResponse> {
         val category = categoryService.activate(id)
         return ResponseEntity.ok(ProductCategoryResponse.from(category))
@@ -107,7 +107,7 @@ class ProductCategoryController(
      * Deactivate a category.
      */
     @PostMapping("/{id}/deactivate")
-    @PreAuthorize("hasAuthority('product_categories_update')")
+    @PreAuthorize("hasAuthority('shop_update')")
     fun deactivateCategory(@PathVariable id: UUID): ResponseEntity<ProductCategoryResponse> {
         val category = categoryService.deactivate(id)
         return ResponseEntity.ok(ProductCategoryResponse.from(category))
@@ -117,7 +117,7 @@ class ProductCategoryController(
      * Delete a category.
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('product_categories_delete')")
+    @PreAuthorize("hasAuthority('shop_delete')")
     fun deleteCategory(@PathVariable id: UUID): ResponseEntity<Void> {
         categoryService.delete(id)
         return ResponseEntity.noContent().build()
