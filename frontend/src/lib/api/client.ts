@@ -165,8 +165,8 @@ function getApiBaseUrl(): string {
   // Client-side: derive from current location
   const { protocol, hostname, port } = window.location;
 
-  // Local development (localhost or IP without subdomain)
-  if (hostname === "localhost" || hostname === "127.0.0.1") {
+  // Local development (localhost, 127.0.0.1, or *.localhost subdomains)
+  if (hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".localhost")) {
     // In local dev, frontend is on 3000, backend on 8080
     return "http://localhost:8080";
   }
@@ -186,7 +186,7 @@ function createApiClient(): KyInstance {
   return ky.create({
     prefixUrl: API_BASE_URL,
     timeout: 30000,
-    cache: "no-store", // Prevent browser disk cache - always fetch fresh data
+    cache: "no-store", // Never cache API responses - auth safety
     hooks: {
       beforeRequest: [
         (request) => {
@@ -227,6 +227,7 @@ function createApiClient(): KyInstance {
       afterResponse: [
         async (request, options, response) => {
           // Handle 401 Unauthorized - attempt token refresh
+          // Note: 403 Forbidden means permission denied (user lacks authority), not session expiry
           if (response.status === 401 && refreshTokenFn) {
             const refreshed = await refreshTokenFn();
             if (refreshed) {
@@ -253,6 +254,9 @@ function createApiClient(): KyInstance {
 
 // Export the API client instance
 export const api = createApiClient();
+
+// Alias for backward compatibility
+export const apiClient = api;
 
 /**
  * Parse API error response
