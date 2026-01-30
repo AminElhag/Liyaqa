@@ -24,6 +24,7 @@ import com.liyaqa.scheduling.domain.ports.ClassSessionRepository
 import com.liyaqa.scheduling.domain.ports.GymClassRepository
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.TenantContext
+import com.liyaqa.trainer.application.services.TrainerEarningsService
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
@@ -43,7 +44,8 @@ class ClassService(
     private val bookingRepository: ClassBookingRepository,
     private val memberRepository: MemberRepository,
     private val locationRepository: LocationRepository,
-    private val notificationService: NotificationService
+    private val notificationService: NotificationService,
+    private val trainerEarningsService: TrainerEarningsService
 ) {
     private val logger = LoggerFactory.getLogger(ClassService::class.java)
     private val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
@@ -428,7 +430,37 @@ class ClassService(
         val session = sessionRepository.findById(id)
             .orElseThrow { NoSuchElementException("Session not found: $id") }
         session.complete()
-        return sessionRepository.save(session)
+        val savedSession = sessionRepository.save(session)
+
+        // Auto-create earnings record for trainer
+        try {
+            val gymClass = gymClassRepository.findById(savedSession.gymClassId).orElse(null)
+            if (gymClass != null && savedSession.trainerId != null) {
+                val durationMinutes = java.time.Duration.between(
+                    savedSession.startTime,
+                    savedSession.endTime
+                ).toMinutes().toInt()
+
+                trainerEarningsService.autoCreateEarningForClassSession(
+                    sessionId = savedSession.id,
+                    trainerId = savedSession.trainerId!!,
+                    sessionDate = savedSession.sessionDate,
+                    durationMinutes = durationMinutes,
+                    attendeeCount = savedSession.currentBookings,
+                    pricePerAttendee = gymClass.dropInPrice ?: com.liyaqa.shared.domain.Money(
+                        java.math.BigDecimal.ZERO,
+                        "SAR"
+                    )
+                )
+                logger.info("Earnings record created for class session: ${savedSession.id}")
+            }
+        } catch (e: IllegalStateException) {
+            logger.warn("Earnings already exist for session: ${savedSession.id}")
+        } catch (e: Exception) {
+            logger.error("Failed to create earnings for class session ${savedSession.id}: ${e.message}", e)
+        }
+
+        return savedSession
     }
 
     /**

@@ -30,7 +30,9 @@ class PersonalTrainingService(
     private val ptSessionRepository: PersonalTrainingSessionRepository,
     private val trainerRepository: TrainerRepository,
     private val memberRepository: MemberRepository,
-    private val trainerService: TrainerService
+    private val trainerService: TrainerService,
+    private val trainerClientService: TrainerClientService,
+    private val trainerEarningsService: TrainerEarningsService
 ) {
     private val logger = LoggerFactory.getLogger(PersonalTrainingService::class.java)
 
@@ -87,6 +89,14 @@ class PersonalTrainingService(
         val savedSession = ptSessionRepository.save(session)
         logger.info("PT session request created: ${savedSession.id} (trainer: $trainerId, member: $memberId)")
 
+        // Auto-create or get existing trainer-client relationship
+        try {
+            trainerClientService.getOrCreateClientRelationship(trainerId, memberId)
+            logger.debug("Trainer-client relationship ensured: trainer=$trainerId, member=$memberId")
+        } catch (e: Exception) {
+            logger.error("Failed to create trainer-client relationship: ${e.message}", e)
+        }
+
         return savedSession
     }
 
@@ -111,6 +121,15 @@ class PersonalTrainingService(
         session.cancel(cancelledByUserId, reason)
         val savedSession = ptSessionRepository.save(session)
         logger.info("PT session cancelled: $sessionId (by: $cancelledByUserId)")
+
+        // Record cancellation for client statistics
+        try {
+            trainerClientService.recordSessionCancelled(savedSession.trainerId, savedSession.memberId)
+            logger.debug("Session cancellation recorded for client: ${savedSession.id}")
+        } catch (e: Exception) {
+            logger.error("Failed to record session cancellation: ${e.message}", e)
+        }
+
         return savedSession
     }
 
@@ -133,6 +152,25 @@ class PersonalTrainingService(
         session.complete(trainerNotes)
         val savedSession = ptSessionRepository.save(session)
         logger.info("PT session completed: $sessionId")
+
+        // Record session completed for client statistics
+        try {
+            trainerClientService.recordSessionCompleted(savedSession.trainerId, savedSession.memberId, savedSession.sessionDate)
+            logger.debug("Session completion recorded for client: ${savedSession.id}")
+        } catch (e: Exception) {
+            logger.error("Failed to record session completion: ${e.message}", e)
+        }
+
+        // Auto-create earnings record
+        try {
+            trainerEarningsService.autoCreateEarningForPTSession(savedSession.id)
+            logger.info("Earnings record created for PT session: ${savedSession.id}")
+        } catch (e: IllegalStateException) {
+            logger.warn("Earnings already exist for session: ${savedSession.id}")
+        } catch (e: Exception) {
+            logger.error("Failed to create earnings for session ${savedSession.id}: ${e.message}", e)
+        }
+
         return savedSession
     }
 
@@ -144,6 +182,15 @@ class PersonalTrainingService(
         session.markNoShow()
         val savedSession = ptSessionRepository.save(session)
         logger.info("PT session marked as no-show: $sessionId")
+
+        // Record no-show for client statistics
+        try {
+            trainerClientService.recordNoShow(savedSession.trainerId, savedSession.memberId, savedSession.sessionDate)
+            logger.debug("No-show recorded for client: ${savedSession.id}")
+        } catch (e: Exception) {
+            logger.error("Failed to record no-show: ${e.message}", e)
+        }
+
         return savedSession
     }
 

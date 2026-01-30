@@ -108,3 +108,142 @@ enum class PTSessionStatus {
     /** Member did not show up for the session */
     NO_SHOW
 }
+
+/**
+ * Status of trainer-client relationship.
+ */
+enum class TrainerClientStatus {
+    /** Currently training together */
+    ACTIVE,
+
+    /** No longer training together */
+    INACTIVE,
+
+    /** Relationship temporarily paused (e.g., vacation, injury) */
+    ON_HOLD,
+
+    /** Goals achieved, relationship ended positively */
+    COMPLETED
+}
+
+/**
+ * Type of earning for a trainer.
+ */
+enum class EarningType {
+    /** Earning from a personal training session */
+    PT_SESSION,
+
+    /** Earning from teaching a group fitness class */
+    GROUP_CLASS,
+
+    /** Performance or achievement bonus */
+    BONUS,
+
+    /** Sales commission (e.g., from membership sales) */
+    COMMISSION
+}
+
+/**
+ * Payment status of trainer earnings.
+ */
+enum class EarningStatus {
+    /** Awaiting admin approval */
+    PENDING,
+
+    /** Approved for payment but not yet paid */
+    APPROVED,
+
+    /** Payment has been processed */
+    PAID,
+
+    /** Under review or dispute */
+    DISPUTED
+}
+
+/**
+ * Status of trainer certification.
+ */
+enum class CertificationStatus {
+    /** Certification is valid and current */
+    ACTIVE,
+
+    /** Certification has passed its expiry date */
+    EXPIRED,
+
+    /** Certification has been revoked or invalidated */
+    REVOKED
+}
+
+/**
+ * Type of notification sent to trainers.
+ */
+enum class NotificationType {
+    // PT Session notifications
+    /** New PT session request from member */
+    PT_REQUEST,
+
+    /** PT session was accepted */
+    PT_ACCEPTED,
+
+    /** PT session was declined */
+    PT_DECLINED,
+
+    /** PT session was cancelled */
+    PT_CANCELLED,
+
+    /** Reminder for upcoming PT session */
+    PT_REMINDER,
+
+    // Class notifications
+    /** Member cancelled class booking */
+    BOOKING_CANCELLED,
+
+    /** Reminder for upcoming class */
+    CLASS_REMINDER,
+
+    /** Trainer was assigned to a class */
+    CLASS_ASSIGNED,
+
+    // Substitution notifications
+    /** Another trainer requested substitute */
+    SUBSTITUTE_REQUEST,
+
+    /** Substitute request was accepted */
+    SUBSTITUTE_ACCEPTED,
+
+    /** Substitute request was declined */
+    SUBSTITUTE_DECLINED,
+
+    // Earnings notifications
+    /** Earnings were approved for payment */
+    EARNINGS_APPROVED,
+
+    /** Payment was processed */
+    EARNINGS_PAID,
+
+    // Communication
+    /** New message received */
+    MESSAGE,
+
+    // Time block notifications
+    /** Time off request was approved */
+    TIME_BLOCK_APPROVED,
+
+    /** Time off request was rejected */
+    TIME_BLOCK_REJECTED,
+
+    // Profile notifications
+    /** Certification is expiring soon */
+    CERTIFICATION_EXPIRING,
+
+    /** Profile is incomplete */
+    PROFILE_INCOMPLETE,
+
+    // Schedule notifications
+    /** Schedule conflict detected */
+    SCHEDULE_CONFLICT,
+
+    // General
+    /** System notification */
+    SYSTEM
+}

@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.validation.FieldError
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -153,6 +154,39 @@ class GlobalExceptionHandler {
                     message = "One or more fields have validation errors",
                     messageAr = "يوجد أخطاء في التحقق من حقل واحد أو أكثر",
                     errors = errors,
+                    timestamp = Instant.now(),
+                    path = request.requestURI
+                )
+            )
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleHttpMessageNotReadable(ex: HttpMessageNotReadableException, request: HttpServletRequest): ResponseEntity<LocalizedErrorResponse> {
+        logger.debug("Invalid request body: ${ex.message}")
+
+        val message = when {
+            ex.message?.contains("missing (therefore NULL) value") == true -> "Required field is missing"
+            ex.message?.contains("Cannot deserialize") == true -> "Invalid request format"
+            ex.message?.contains("not a valid") == true -> "Invalid field value"
+            else -> "Invalid request body"
+        }
+
+        val messageAr = when {
+            ex.message?.contains("missing (therefore NULL) value") == true -> "الحقل المطلوب مفقود"
+            ex.message?.contains("Cannot deserialize") == true -> "صيغة الطلب غير صالحة"
+            ex.message?.contains("not a valid") == true -> "قيمة الحقل غير صالحة"
+            else -> "نص الطلب غير صالح"
+        }
+
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(
+                LocalizedErrorResponse(
+                    status = HttpStatus.BAD_REQUEST.value(),
+                    error = "Bad Request",
+                    errorAr = "طلب غير صالح",
+                    message = message,
+                    messageAr = messageAr,
                     timestamp = Instant.now(),
                     path = request.requestURI
                 )
