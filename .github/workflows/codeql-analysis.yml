@@ -1,0 +1,90 @@
+name: "CodeQL Analysis"
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run weekly on Sundays at 2 AM KSA (Saturday 11 PM UTC)
+    - cron: '0 23 * * 6'
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    permissions:
+      # Required for all workflows
+      security-events: write
+      # Required for workflows in private repositories
+      contents: read
+      actions: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'java-kotlin', 'javascript-typescript' ]
+        # CodeQL supports:
+        # 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'swift',
+        # 'csharp', 'cpp', 'go', 'c'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (for Kotlin)
+        if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          # Use security-and-quality query suite for comprehensive scanning
+          queries: +security-and-quality
+          # Optional: Specify CodeQL config file
+          # config-file: ./.github/codeql/codeql-config.yml
+
+      # Autobuild attempts to build any compiled languages (Kotlin)
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+        # Alternative: Manual build for Kotlin
+        # - name: Build Kotlin
+        #   if: matrix.language == 'java-kotlin'
+        #   run: |
+        #     cd backend
+        #     ./gradlew clean build -x test
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+          # Upload results to GitHub Security tab
+          upload: true
+          # Optional: Fail workflow on security findings
+          # fail-on: 'error'
+
+      - name: Upload CodeQL results as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-results-${{ matrix.language }}
+          path: ${{ runner.temp }}/codeql_databases
+          retention-days: 7
+
+  # Optional: Job to check for new vulnerabilities and notify
+  check-results:
+    name: Check CodeQL Results
+    needs: analyze
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check for security alerts
+        run: |
+          echo "CodeQL analysis complete. Check the Security tab for results."
+          echo "https://github.com/${{ github.repository }}/security/code-scanning"
