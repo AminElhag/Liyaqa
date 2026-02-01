@@ -9,7 +9,6 @@ import java.util.*
 
 @Entity
 @Table(name = "intervention_templates")
-@FilterDef(name = "tenantFilter", parameters = [ParamDef(name = "tenantId", type = UUID::class)])
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 class InterventionTemplate(
     id: UUID = UUID.randomUUID(),

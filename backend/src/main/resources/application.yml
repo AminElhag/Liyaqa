@@ -47,16 +47,32 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       show-details: when_authorized
+  # Prometheus metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+      environment: ${ENVIRONMENT:dev}
+  # Distributed tracing
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLE_RATE:0.1}  # Sample 10% of requests (100% in dev)
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
 
 # JWT Configuration
 jwt:
   secret: ${JWT_SECRET:liyaqa-dev-secret-key-must-be-at-least-32-characters-long}
   access-token-expiration: 900000      # 15 minutes in milliseconds
   refresh-token-expiration: 604800000  # 7 days in milliseconds
+  absolute-session-timeout: 86400000   # 24 hours in milliseconds (maximum session duration)
 
 # Liyaqa Custom Configuration
 liyaqa:

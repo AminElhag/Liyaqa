@@ -27,10 +27,6 @@ import java.util.UUID
         UniqueConstraint(columnNames = ["trainer_id", "club_id"])
     ]
 )
-@FilterDef(
-    name = "tenantFilter",
-    parameters = [ParamDef(name = "tenantId", type = UUID::class)]
-)
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 class TrainerClubAssignment(
     id: UUID = UUID.randomUUID(),

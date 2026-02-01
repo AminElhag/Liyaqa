@@ -25,4 +25,5 @@ interface UserRepository {
     fun existsByEmailAndTenantId(email: String, tenantId: UUID): Boolean
     fun deleteById(id: UUID)
     fun count(): Long
+    fun findByOAuthProviderAndProviderId(oauthProvider: String, oauthProviderId: String): User?
 }

@@ -10,7 +10,6 @@ import java.util.*
 
 @Entity
 @Table(name = "member_points")
-@FilterDef(name = "tenantFilter", parameters = [ParamDef(name = "tenantId", type = UUID::class)])
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 class MemberPoints(
     id: UUID = UUID.randomUUID(),

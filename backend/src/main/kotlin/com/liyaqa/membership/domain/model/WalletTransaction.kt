@@ -25,7 +25,6 @@ import java.util.UUID
  */
 @Entity
 @Table(name = "wallet_transactions")
-@FilterDef(name = "tenantFilter", parameters = [ParamDef(name = "tenantId", type = UUID::class)])
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 class WalletTransaction(
     @Id

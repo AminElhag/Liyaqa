@@ -27,7 +27,10 @@ class JwtTokenProvider(
     private val accessTokenExpiration: Long,
 
     @Value("\${jwt.refresh-token-expiration}")
-    private val refreshTokenExpiration: Long
+    private val refreshTokenExpiration: Long,
+
+    @Value("\${jwt.absolute-session-timeout}")
+    private val absoluteSessionTimeout: Long
 ) {
     private val logger = LoggerFactory.getLogger(JwtTokenProvider::class.java)
     private val key: SecretKey by lazy { Keys.hmacShaKeyFor(secret.toByteArray()) }
@@ -258,6 +261,12 @@ class JwtTokenProvider(
      * Gets the refresh token expiration duration in milliseconds.
      */
     fun getRefreshTokenExpirationMs(): Long = refreshTokenExpiration
+
+    /**
+     * Gets the absolute session timeout duration in milliseconds.
+     * This enforces a maximum session duration regardless of token refreshes.
+     */
+    fun getAbsoluteSessionTimeoutMs(): Long = absoluteSessionTimeout
 
     /**
      * Hashes a token for secure storage.

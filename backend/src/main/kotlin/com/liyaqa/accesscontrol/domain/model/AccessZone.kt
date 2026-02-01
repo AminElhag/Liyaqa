@@ -9,7 +9,6 @@ import java.util.*
 
 @Entity
 @Table(name = "access_zones")
-@FilterDef(name = "tenantFilter", parameters = [ParamDef(name = "tenantId", type = UUID::class)])
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 class AccessZone(
     @Column(name = "location_id", nullable = false)

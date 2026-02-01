@@ -19,10 +19,6 @@ import java.util.UUID
  */
 @Entity
 @Table(name = "member_class_pack_balances")
-@FilterDef(
-    name = "tenantFilter",
-    parameters = [ParamDef(name = "tenantId", type = UUID::class)]
-)
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 class MemberClassPackBalance(
     id: UUID = UUID.randomUUID(),

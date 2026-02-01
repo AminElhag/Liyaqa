@@ -30,15 +30,7 @@ import java.util.UUID
  */
 @Entity
 @Table(name = "invoices")
-@FilterDef(
-    name = "tenantFilter",
-    parameters = [ParamDef(name = "tenantId", type = UUID::class)]
-)
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
-@FilterDef(
-    name = "organizationFilter",
-    parameters = [ParamDef(name = "organizationId", type = UUID::class)]
-)
 @Filter(name = "organizationFilter", condition = "organization_id = :organizationId")
 class Invoice(
     id: UUID = UUID.randomUUID(),

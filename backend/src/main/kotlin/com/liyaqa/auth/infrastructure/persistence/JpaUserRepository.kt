@@ -18,6 +18,7 @@ interface SpringDataUserRepository : JpaRepository<User, UUID> {
     fun findByStatus(status: UserStatus, pageable: Pageable): Page<User>
     fun findByRole(role: Role, pageable: Pageable): Page<User>
     fun existsByEmailAndTenantId(email: String, tenantId: UUID): Boolean
+    fun findByOauthProviderAndOauthProviderId(oauthProvider: String, oauthProviderId: String): User?
 }
 
 @Repository
@@ -60,4 +61,7 @@ class JpaUserRepository(
 
     override fun count(): Long =
         springDataRepository.count()
+
+    override fun findByOAuthProviderAndProviderId(oauthProvider: String, oauthProviderId: String): User? =
+        springDataRepository.findByOauthProviderAndOauthProviderId(oauthProvider, oauthProviderId)
 }

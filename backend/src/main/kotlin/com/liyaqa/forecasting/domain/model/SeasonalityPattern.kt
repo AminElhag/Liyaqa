@@ -10,7 +10,6 @@ import java.util.*
 
 @Entity
 @Table(name = "seasonality_patterns")
-@FilterDef(name = "tenantFilter", parameters = [ParamDef(name = "tenantId", type = UUID::class)])
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 class SeasonalityPattern(
     id: UUID = UUID.randomUUID(),

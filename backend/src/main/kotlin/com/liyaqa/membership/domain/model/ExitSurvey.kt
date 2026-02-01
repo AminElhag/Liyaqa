@@ -19,10 +19,6 @@ import java.util.UUID
  */
 @Entity
 @Table(name = "exit_surveys")
-@FilterDef(
-    name = "tenantFilter",
-    parameters = [ParamDef(name = "tenantId", type = UUID::class)]
-)
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 class ExitSurvey(
     id: UUID = UUID.randomUUID(),

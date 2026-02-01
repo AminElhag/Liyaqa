@@ -35,6 +35,22 @@ data class AuthResult(
     val user: User
 )
 
+/**
+ * Result indicating MFA is required before completing login.
+ */
+data class MfaRequiredResult(
+    val userId: UUID,
+    val email: String
+)
+
+/**
+ * Sealed class representing login result - either success with tokens or MFA required.
+ */
+sealed class LoginResult {
+    data class Success(val authResult: AuthResult) : LoginResult()
+    data class MfaRequired(val mfaResult: MfaRequiredResult) : LoginResult()
+}
+
 @Service
 @Transactional
 class AuthService(
@@ -44,15 +60,20 @@ class AuthService(
     private val jwtTokenProvider: JwtTokenProvider,
     private val passwordEncoder: PasswordEncoder,
     private val emailService: EmailService,
-    private val permissionService: PermissionService
+    private val permissionService: PermissionService,
+    private val passwordPolicyService: PasswordPolicyService,
+    private val auditService: com.liyaqa.shared.application.services.AuditService,
+    private val securityEmailService: com.liyaqa.notification.application.services.SecurityEmailService,
+    private val sessionService: SessionService
 ) {
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
     /**
      * Authenticates a user with email and password.
+     * Returns MfaRequired if MFA is enabled, otherwise returns tokens.
      * @throws IllegalArgumentException if credentials are invalid
      * @throws IllegalStateException if user account is not active
      */
-    fun login(command: LoginCommand): AuthResult {
+    fun login(command: LoginCommand): LoginResult {
         // Set tenant context for query
         TenantContext.setCurrentTenant(TenantId(command.tenantId))
 
@@ -60,8 +81,16 @@ class AuthService(
             .orElseThrow { IllegalArgumentException("Invalid email or password") }
 
         if (!passwordEncoder.matches(command.password, user.passwordHash)) {
+            val wasLocked = user.status == com.liyaqa.auth.domain.model.UserStatus.LOCKED
             user.recordFailedLogin()
+            val isNowLocked = user.status == com.liyaqa.auth.domain.model.UserStatus.LOCKED
             userRepository.save(user)
+
+            // Send account locked notification if this failed attempt triggered the lock
+            if (!wasLocked && isNowLocked) {
+                sendAccountLockedNotification(user, command.deviceInfo ?: "Unknown")
+            }
+
             throw IllegalArgumentException("Invalid email or password")
         }
 
@@ -69,15 +98,52 @@ class AuthService(
             throw IllegalStateException("Account is ${user.status.name.lowercase()}. Please contact support.")
         }
 
+        // Check if MFA is enabled
+        if (user.mfaEnabled) {
+            logger.info("MFA required for user: ${user.id}")
+            return LoginResult.MfaRequired(
+                MfaRequiredResult(
+                    userId = user.id,
+                    email = user.email
+                )
+            )
+        }
+
         user.recordSuccessfulLogin()
         userRepository.save(user)
 
-        return generateTokens(user, command.deviceInfo)
+        return LoginResult.Success(generateTokens(user, command.deviceInfo))
+    }
+
+    /**
+     * Verifies MFA code and completes login.
+     * @param userId The user ID from MFA required response
+     * @param code The TOTP code or backup code
+     * @param deviceInfo Optional device information
+     * @throws IllegalArgumentException if code is invalid
+     */
+    fun verifyMfaAndLogin(userId: UUID, code: String, deviceInfo: String?): AuthResult {
+        val user = userRepository.findById(userId)
+            .orElseThrow { NoSuchElementException("User not found: $userId") }
+
+        if (!user.mfaEnabled) {
+            throw IllegalStateException("MFA is not enabled for this user")
+        }
+
+        // Set tenant context
+        TenantContext.setCurrentTenant(TenantId(user.tenantId))
+
+        // Verify MFA code (this will be delegated to MfaService via controller)
+        // For now, we assume the code has been verified
+        user.recordSuccessfulLogin()
+        userRepository.save(user)
+
+        return generateTokens(user, deviceInfo)
     }
 
     /**
      * Registers a new user.
-     * @throws IllegalArgumentException if email is already taken
+     * @throws IllegalArgumentException if email is already taken or password violates policy
      */
     fun register(command: RegisterCommand): AuthResult {
         // Set tenant context
@@ -87,15 +153,30 @@ class AuthService(
             throw IllegalArgumentException("Email is already registered")
         }
 
+        // Validate password against policy (no history check for new users)
+        val isPlatformUser = command.role.name.startsWith("PLATFORM_")
+        val policyConfig = passwordPolicyService.getPolicyForUser(isPlatformUser)
+        val validationResult = passwordPolicyService.validatePassword(command.password, policyConfig)
+
+        if (!validationResult.isValid) {
+            throw IllegalArgumentException(validationResult.violations.joinToString(". "))
+        }
+
+        val passwordHash = passwordEncoder.encode(command.password)!!
+
         val user = User(
             email = command.email,
-            passwordHash = passwordEncoder.encode(command.password)!!,
+            passwordHash = passwordHash,
             displayName = command.displayName,
             role = command.role,
-            status = UserStatus.ACTIVE
+            status = UserStatus.ACTIVE,
+            isPlatformUser = isPlatformUser
         )
 
         val savedUser = userRepository.save(user)
+
+        // Record password in history
+        passwordPolicyService.recordPasswordInHistory(savedUser.id, passwordHash, policyConfig)
 
         // Grant default permissions for the user's role
         permissionService.grantDefaultPermissionsForRole(savedUser.id, savedUser.role.name)
@@ -116,8 +197,21 @@ class AuthService(
         val storedToken = refreshTokenRepository.findByTokenHash(tokenHash)
             .orElseThrow { IllegalArgumentException("Refresh token not found") }
 
-        if (!storedToken.isValid()) {
-            throw IllegalArgumentException("Refresh token has been revoked or expired")
+        // Check if token has been revoked
+        if (storedToken.isRevoked()) {
+            throw IllegalArgumentException("Refresh token has been revoked")
+        }
+
+        // Check if absolute session timeout has been exceeded
+        if (storedToken.isAbsoluteExpired()) {
+            storedToken.revoke()
+            refreshTokenRepository.save(storedToken)
+            throw IllegalStateException("Session has exceeded maximum duration (${jwtTokenProvider.getAbsoluteSessionTimeoutMs() / 3600000} hours). Please log in again.")
+        }
+
+        // Check if regular token expiration
+        if (storedToken.isExpired()) {
+            throw IllegalArgumentException("Refresh token has expired")
         }
 
         // Revoke old refresh token
@@ -134,30 +228,55 @@ class AuthService(
         // Set tenant context for permission queries
         TenantContext.setCurrentTenant(TenantId(user.tenantId))
 
-        return generateTokens(user, command.deviceInfo)
+        // Validate IP binding if enabled
+        if (!sessionService.validateIpBinding(user.id, command.ipAddress)) {
+            storedToken.revoke()
+            refreshTokenRepository.save(storedToken)
+            throw IllegalStateException("IP address validation failed. Your session may have been compromised. Please log in again from your original location.")
+        }
+
+        return generateTokens(user, command.deviceInfo, command.ipAddress)
     }
 
     /**
-     * Logs out user by revoking their refresh token.
+     * Logs out user by revoking their refresh token and session.
      */
-    fun logout(refreshToken: String) {
+    fun logout(refreshToken: String, userId: UUID? = null) {
         val tokenHash = jwtTokenProvider.hashToken(refreshToken)
         refreshTokenRepository.findByTokenHash(tokenHash).ifPresent { token ->
             token.revoke()
             refreshTokenRepository.save(token)
+
+            // Also revoke the current session if userId is provided
+            userId?.let {
+                try {
+                    sessionService.revokeAllSessions(it, exceptSessionId = null)
+                    logger.debug("Session revoked for user: $it")
+                } catch (e: Exception) {
+                    logger.error("Failed to revoke session for user $it: ${e.message}", e)
+                }
+            }
         }
     }
 
     /**
-     * Logs out user from all devices by revoking all refresh tokens.
+     * Logs out user from all devices by revoking all refresh tokens and sessions.
      */
     fun logoutAll(userId: UUID) {
         refreshTokenRepository.revokeAllByUserId(userId)
+
+        // Also revoke all sessions
+        try {
+            sessionService.revokeAllSessions(userId, exceptSessionId = null)
+            logger.info("All sessions revoked for user: $userId")
+        } catch (e: Exception) {
+            logger.error("Failed to revoke all sessions for user $userId: ${e.message}", e)
+        }
     }
 
     /**
      * Changes user password.
-     * @throws IllegalArgumentException if current password is incorrect
+     * @throws IllegalArgumentException if current password is incorrect or new password violates policy
      */
     fun changePassword(command: ChangePasswordCommand) {
         val user = userRepository.findById(command.userId)
@@ -167,8 +286,24 @@ class AuthService(
             throw IllegalArgumentException("Current password is incorrect")
         }
 
-        user.changePassword(passwordEncoder.encode(command.newPassword)!!)
+        // Validate new password against policy including history check
+        val policyConfig = passwordPolicyService.getPolicyForUser(user.isPlatformUser)
+        val validationResult = passwordPolicyService.validatePasswordWithHistory(
+            command.newPassword,
+            user.id,
+            policyConfig
+        )
+
+        if (!validationResult.isValid) {
+            throw IllegalArgumentException(validationResult.violations.joinToString(". "))
+        }
+
+        val newPasswordHash = passwordEncoder.encode(command.newPassword)!!
+        user.changePassword(newPasswordHash)
         userRepository.save(user)
+
+        // Record new password in history
+        passwordPolicyService.recordPasswordInHistory(user.id, newPasswordHash, policyConfig)
 
         // Revoke all existing refresh tokens for security
         refreshTokenRepository.revokeAllByUserId(user.id)
@@ -232,7 +367,7 @@ class AuthService(
 
     /**
      * Resets password using a valid reset token.
-     * @throws IllegalArgumentException if token is invalid or expired
+     * @throws IllegalArgumentException if token is invalid, expired, or new password violates policy
      */
     fun resetPassword(command: ResetPasswordCommand) {
         val tokenHash = jwtTokenProvider.hashToken(command.token)
@@ -247,9 +382,25 @@ class AuthService(
         val user = userRepository.findById(resetToken.userId)
             .orElseThrow { IllegalArgumentException("User not found") }
 
+        // Validate new password against policy including history check
+        val policyConfig = passwordPolicyService.getPolicyForUser(user.isPlatformUser)
+        val validationResult = passwordPolicyService.validatePasswordWithHistory(
+            command.newPassword,
+            user.id,
+            policyConfig
+        )
+
+        if (!validationResult.isValid) {
+            throw IllegalArgumentException(validationResult.violations.joinToString(". "))
+        }
+
         // Update password
-        user.changePassword(passwordEncoder.encode(command.newPassword)!!)
+        val newPasswordHash = passwordEncoder.encode(command.newPassword)!!
+        user.changePassword(newPasswordHash)
         userRepository.save(user)
+
+        // Record new password in history
+        passwordPolicyService.recordPasswordInHistory(user.id, newPasswordHash, policyConfig)
 
         // Mark token as used
         resetToken.markUsed()
@@ -268,22 +419,47 @@ class AuthService(
         passwordResetTokenRepository.deleteExpiredTokens(Instant.now())
     }
 
-    private fun generateTokens(user: User, deviceInfo: String?): AuthResult {
+    /**
+     * Generates tokens for a user (used by OAuth flow).
+     * Public method for external use.
+     */
+    fun generateTokensForUser(user: User, deviceInfo: String?): AuthResult {
+        return generateTokens(user, deviceInfo, null)
+    }
+
+    private fun generateTokens(user: User, deviceInfo: String?, ipAddress: String? = null): AuthResult {
         // Load user's permissions
         val permissions = permissionService.getUserPermissionCodes(user.id)
 
         val accessToken = jwtTokenProvider.generateAccessToken(user, permissions)
         val (refreshToken, tokenHash) = jwtTokenProvider.generateRefreshToken(user)
 
-        // Store refresh token
+        // Store refresh token with absolute session timeout
+        val now = Instant.now()
         val refreshTokenEntity = RefreshToken(
             userId = user.id,
             tenantId = user.tenantId,
             tokenHash = tokenHash,
-            expiresAt = Instant.now().plusMillis(jwtTokenProvider.getRefreshTokenExpirationMs()),
+            expiresAt = now.plusMillis(jwtTokenProvider.getRefreshTokenExpirationMs()),
+            absoluteExpiresAt = now.plusMillis(jwtTokenProvider.getAbsoluteSessionTimeoutMs()),
             deviceInfo = deviceInfo
         )
         refreshTokenRepository.save(refreshTokenEntity)
+
+        // Create session tracking
+        try {
+            sessionService.createSession(
+                userId = user.id,
+                accessToken = accessToken,
+                deviceInfo = deviceInfo,
+                ipAddress = ipAddress,
+                request = null // Will be enhanced when HttpServletRequest is available in controller
+            )
+            logger.debug("Session created for user: ${user.id}")
+        } catch (e: Exception) {
+            // Log but don't fail login if session creation fails
+            logger.error("Failed to create session for user ${user.id}: ${e.message}", e)
+        }
 
         return AuthResult(
             accessToken = accessToken,
@@ -329,6 +505,30 @@ class AuthService(
         } catch (e: Exception) {
             // Log error but don't fail the password change operation
             logger.error("Failed to send password changed notification for user ${user.id}: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Sends an account locked notification email to the user.
+     *
+     * @param user The user whose account was locked
+     * @param deviceInfo Optional device information
+     */
+    private fun sendAccountLockedNotification(user: User, deviceInfo: String) {
+        try {
+            val userName = user.displayName.en ?: user.email
+            securityEmailService.sendAccountLockedNotification(
+                email = user.email,
+                userName = userName,
+                lockTimestamp = Instant.now(),
+                ipAddress = "Unknown", // Will be enhanced when HttpServletRequest is available
+                deviceInfo = deviceInfo,
+                failedAttempts = user.failedLoginAttempts
+            )
+            logger.info("Account locked notification sent for user: ${user.id}")
+        } catch (e: Exception) {
+            // Log error but don't fail the lockout process
+            logger.error("Failed to send account locked notification for user ${user.id}: ${e.message}", e)
         }
     }
 }

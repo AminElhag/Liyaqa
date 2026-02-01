@@ -35,10 +35,6 @@ import java.util.UUID
 @Entity
 @Table(name = "clubs")
 @EntityListeners(AuditingEntityListener::class)
-@FilterDef(
-    name = "organizationFilter",
-    parameters = [ParamDef(name = "organizationId", type = UUID::class)]
-)
 @Filter(name = "organizationFilter", condition = "organization_id = :organizationId")
 class Club(
     @Id

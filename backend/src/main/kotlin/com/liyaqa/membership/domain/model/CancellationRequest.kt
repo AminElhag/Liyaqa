@@ -24,10 +24,6 @@ import java.util.UUID
  */
 @Entity
 @Table(name = "cancellation_requests")
-@FilterDef(
-    name = "tenantFilter",
-    parameters = [ParamDef(name = "tenantId", type = UUID::class)]
-)
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 class CancellationRequest(
     id: UUID = UUID.randomUUID(),

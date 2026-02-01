@@ -13,10 +13,6 @@ import java.util.UUID
 
 @Entity
 @Table(name = "member_freeze_balances")
-@FilterDef(
-    name = "tenantFilter",
-    parameters = [ParamDef(name = "tenantId", type = UUID::class)]
-)
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 class MemberFreezeBalance(
     id: UUID = UUID.randomUUID(),

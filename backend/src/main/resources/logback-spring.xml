@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Import Spring Boot defaults -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- Get properties from Spring environment -->
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="liyaqa"/>
+    <springProperty scope="context" name="LOG_LEVEL" source="logging.level.root" defaultValue="INFO"/>
+    <springProperty scope="context" name="LOG_FILE" source="logging.file.name" defaultValue="logs/liyaqa.log"/>
+
+    <!--
+    ════════════════════════════════════════════════════════════════════════════
+     CONSOLE APPENDER - JSON FORMAT (Production)
+    ════════════════════════════════════════════════════════════════════════════
+    Used in production for structured logging. Outputs JSON that can be:
+    - Parsed by CloudWatch Logs
+    - Indexed by Elasticsearch/OpenSearch
+    - Processed by Loki
+    - Analyzed by log aggregation tools
+    -->
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!-- Include MDC (Mapped Diagnostic Context) fields -->
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>spanId</includeMdcKeyName>
+            <includeMdcKeyName>userId</includeMdcKeyName>
+            <includeMdcKeyName>tenantId</includeMdcKeyName>
+            <includeMdcKeyName>requestId</includeMdcKeyName>
+            <includeMdcKeyName>username</includeMdcKeyName>
+
+            <!-- Include stack traces for exceptions -->
+            <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                <maxLength>2048</maxLength>
+                <shortenedClassNameLength>20</shortenedClassNameLength>
+                <exclude>sun\.reflect\..*</exclude>
+                <exclude>java\.lang\.reflect\..*</exclude>
+                <rootCauseFirst>true</rootCauseFirst>
+            </throwableConverter>
+
+            <!-- Add custom fields to every log entry -->
+            <customFields>{"service":"${APP_NAME}","environment":"${ENVIRONMENT:-unknown}"}</customFields>
+
+            <!-- Enable caller info (file, line number) - disable in production for performance -->
+            <includeCallerData>false</includeCallerData>
+        </encoder>
+    </appender>
+
+    <!--
+    ════════════════════════════════════════════════════════════════════════════
+     CONSOLE APPENDER - HUMAN READABLE FORMAT (Development)
+    ════════════════════════════════════════════════════════════════════════════
+    Used in development for easy reading during debugging
+    -->
+    <appender name="HUMAN_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%15.15t] %cyan(%-40.40logger{39}) : %msg%n%throwable
+            </pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!--
+    ════════════════════════════════════════════════════════════════════════════
+     FILE APPENDER - ROLLING FILES (Development & Staging)
+    ════════════════════════════════════════════════════════════════════════════
+    Creates daily log files with automatic rotation and compression
+    -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE}</file>
+
+        <!-- Rolling policy: daily rotation -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- Daily rollover with automatic compression -->
+            <fileNamePattern>logs/liyaqa.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+
+            <!-- Keep 30 days of history -->
+            <maxHistory>30</maxHistory>
+
+            <!-- Total size cap for all log files -->
+            <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+
+        <!-- Use JSON format for file logs too (easier to process) -->
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>spanId</includeMdcKeyName>
+            <includeMdcKeyName>userId</includeMdcKeyName>
+            <includeMdcKeyName>tenantId</includeMdcKeyName>
+            <includeMdcKeyName>requestId</includeMdcKeyName>
+            <customFields>{"service":"${APP_NAME}","environment":"${ENVIRONMENT:-unknown}"}</customFields>
+        </encoder>
+    </appender>
+
+    <!--
+    ════════════════════════════════════════════════════════════════════════════
+     ASYNC APPENDERS (Better Performance)
+    ════════════════════════════════════════════════════════════════════════════
+    Wrap synchronous appenders in async to prevent logging from blocking
+    application threads
+    -->
+    <appender name="ASYNC_JSON_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="JSON_CONSOLE"/>
+    </appender>
+
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="FILE"/>
+    </appender>
+
+    <!--
+    ════════════════════════════════════════════════════════════════════════════
+     LOGGER CONFIGURATIONS
+    ════════════════════════════════════════════════════════════════════════════
+    -->
+
+    <!-- Liyaqa application logging -->
+    <logger name="com.liyaqa" level="DEBUG" additivity="false">
+        <appender-ref ref="ASYNC_JSON_CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+    </logger>
+
+    <!-- Spring Framework (less verbose) -->
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="org.springframework.web" level="INFO"/>
+    <logger name="org.springframework.security" level="INFO"/>
+
+    <!-- Hibernate/JPA (show SQL in debug, but not in production) -->
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
+        <springProfile name="dev,test">
+            <appender-ref ref="HUMAN_CONSOLE"/>
+        </springProfile>
+    </logger>
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" additivity="false">
+        <springProfile name="dev,test">
+            <appender-ref ref="HUMAN_CONSOLE"/>
+        </springProfile>
+    </logger>
+
+    <!-- Database connection pool -->
+    <logger name="com.zaxxer.hikari" level="INFO"/>
+
+    <!-- Security-related (show authentication attempts) -->
+    <logger name="org.springframework.security.authentication" level="INFO"/>
+    <logger name="org.springframework.security.web.authentication" level="INFO"/>
+
+    <!-- External services -->
+    <logger name="com.google.firebase" level="INFO"/>
+    <logger name="com.twilio" level="INFO"/>
+
+    <!--
+    ════════════════════════════════════════════════════════════════════════════
+     ROOT LOGGER
+    ════════════════════════════════════════════════════════════════════════════
+    -->
+    <root level="${LOG_LEVEL}">
+        <!-- Development profile: Human-readable console + file -->
+        <springProfile name="dev,test">
+            <appender-ref ref="HUMAN_CONSOLE"/>
+            <appender-ref ref="ASYNC_FILE"/>
+        </springProfile>
+
+        <!-- Production profile: JSON console only (Docker captures stdout) -->
+        <springProfile name="prod,staging">
+            <appender-ref ref="ASYNC_JSON_CONSOLE"/>
+        </springProfile>
+
+        <!-- Default (no profile): Human-readable console -->
+        <springProfile name="default">
+            <appender-ref ref="HUMAN_CONSOLE"/>
+        </springProfile>
+    </root>
+
+</configuration>

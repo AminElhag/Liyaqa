@@ -26,10 +26,6 @@ import java.util.UUID
  */
 @Entity
 @Table(name = "trainer_certifications")
-@FilterDef(
-    name = "tenantFilter",
-    parameters = [ParamDef(name = "tenantId", type = UUID::class)]
-)
 @Filter(
     name = "tenantFilter",
     condition = "tenant_id = :tenantId OR organization_id = (SELECT c.organization_id FROM clubs c WHERE c.id = :tenantId)"

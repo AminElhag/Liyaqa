@@ -22,6 +22,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @EnableMethodSecurity(prePostEnabled = true)
 class SecurityConfig(
     private val jwtAuthenticationFilter: JwtAuthenticationFilter,
+    private val cookieAuthenticationFilter: CookieAuthenticationFilter,
     @param:Value("\${liyaqa.security.hsts-enabled:false}")
     private val hstsEnabled: Boolean,
     @param:Value("\${liyaqa.security.hsts-max-age-seconds:31536000}")
@@ -58,6 +59,8 @@ class SecurityConfig(
             "X-Tenant-ID",
             "X-Organization-ID",
             "X-Super-Tenant",
+            "X-CSRF-Token",
+            "X-Auth-Mode",
             "Accept",
             "Accept-Language",
             "Cache-Control"
@@ -65,7 +68,8 @@ class SecurityConfig(
         configuration.exposedHeaders = listOf(
             "X-RateLimit-Limit",
             "X-RateLimit-Remaining",
-            "X-RateLimit-Reset"
+            "X-RateLimit-Reset",
+            "Set-Cookie"
         )
         configuration.allowCredentials = true
         configuration.maxAge = 3600L
@@ -105,6 +109,13 @@ class SecurityConfig(
                     .requestMatchers("/api/auth/forgot-password").permitAll()
                     .requestMatchers("/api/auth/reset-password").permitAll()
                     .requestMatchers("/api/auth/tenant-info").permitAll()
+                    .requestMatchers("/api/auth/csrf").permitAll()
+                    .requestMatchers("/api/auth/mfa/verify-login").permitAll()
+
+                    // OAuth endpoints - public for SSO flow
+                    .requestMatchers("/api/auth/oauth/providers").permitAll()
+                    .requestMatchers("/api/auth/oauth/authorize/**").permitAll()
+                    .requestMatchers("/api/auth/oauth/callback/**").permitAll()
 
                     // Platform auth endpoints - internal team login
                     .requestMatchers("/api/platform/auth/login").permitAll()
@@ -127,7 +138,9 @@ class SecurityConfig(
                     // All other requests require authentication
                     .anyRequest().authenticated()
             }
-            // Add JWT filter before the standard auth filter
+            // Add cookie authentication filter first, then JWT filter
+            // Cookie filter handles cookie-based auth, JWT filter handles Bearer token auth
+            .addFilterBefore(cookieAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
             // Security headers
             .headers { headers ->

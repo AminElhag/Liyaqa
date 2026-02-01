@@ -78,9 +78,10 @@ data class RefreshTokenRequest(
 
     val deviceInfo: String? = null
 ) {
-    fun toCommand() = RefreshTokenCommand(
+    fun toCommand(ipAddress: String? = null) = RefreshTokenCommand(
         refreshToken = refreshToken,
-        deviceInfo = deviceInfo
+        deviceInfo = deviceInfo,
+        ipAddress = ipAddress
     )
 }
 
@@ -137,6 +138,19 @@ data class MessageResponse(
     val messageAr: String? = null
 )
 
+data class PasswordStrengthRequest(
+    @field:NotBlank(message = "Password is required")
+    val password: String,
+
+    val isPlatformUser: Boolean? = false
+)
+
+data class PasswordStrengthResponse(
+    val score: Int,
+    val isValid: Boolean,
+    val violations: List<String>
+)
+
 // === Response DTOs ===
 
 data class AuthResponse(
@@ -155,6 +169,17 @@ data class AuthResponse(
         )
     }
 }
+
+/**
+ * Response when MFA is required during login.
+ * Returned instead of AuthResponse when user has MFA enabled.
+ */
+data class MfaRequiredResponse(
+    val mfaRequired: Boolean = true,
+    val userId: UUID,
+    val email: String,
+    val message: String = "MFA verification required"
+)
 
 data class UserResponse(
     val id: UUID,

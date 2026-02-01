@@ -11,7 +11,6 @@ import java.util.*
 
 @Entity
 @Table(name = "forecast_models")
-@FilterDef(name = "tenantFilter", parameters = [ParamDef(name = "tenantId", type = UUID::class)])
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 class ForecastModel(
     id: UUID = UUID.randomUUID(),

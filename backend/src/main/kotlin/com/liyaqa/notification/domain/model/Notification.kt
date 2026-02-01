@@ -22,10 +22,6 @@ import java.util.UUID
  */
 @Entity
 @Table(name = "notifications")
-@FilterDef(
-    name = "tenantFilter",
-    parameters = [ParamDef(name = "tenantId", type = UUID::class)]
-)
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 class Notification(
     id: UUID = UUID.randomUUID(),

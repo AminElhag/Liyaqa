@@ -17,10 +17,6 @@ import java.util.UUID
  */
 @Entity
 @Table(name = "lead_activities")
-@FilterDef(
-    name = "tenantFilter",
-    parameters = [ParamDef(name = "tenantId", type = UUID::class)]
-)
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 class LeadActivity(
     id: UUID = UUID.randomUUID(),

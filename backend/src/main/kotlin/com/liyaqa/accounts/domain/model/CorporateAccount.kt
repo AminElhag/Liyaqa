@@ -11,7 +11,6 @@ import java.util.*
 
 @Entity
 @Table(name = "corporate_accounts")
-@FilterDef(name = "tenantFilter", parameters = [ParamDef(name = "tenantId", type = UUID::class)])
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 class CorporateAccount(
     id: UUID = UUID.randomUUID(),

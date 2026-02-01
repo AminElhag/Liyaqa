@@ -14,10 +14,6 @@ import java.util.UUID
 
 @Entity
 @Table(name = "subscription_freeze_history")
-@FilterDef(
-    name = "tenantFilter",
-    parameters = [ParamDef(name = "tenantId", type = UUID::class)]
-)
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 class FreezeHistory(
     id: UUID = UUID.randomUUID(),

@@ -7,6 +7,7 @@ plugins {
     kotlin("plugin.jpa") version "2.2.0"
     id("org.springframework.boot") version "3.4.1"
     id("io.spring.dependency-management") version "1.1.7"
+    id("jacoco")
 }
 
 group = "com.liyaqa"
@@ -64,6 +65,13 @@ dependencies {
     implementation("com.google.zxing:core:3.5.2")
     implementation("com.google.zxing:javase:3.5.2")
 
+    // TOTP (Time-based One-Time Password) for MFA
+    implementation("com.warrenstrange:googleauth:1.5.0")
+
+    // OAuth 2.0 / OpenID Connect (for SSO integration)
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+    implementation("org.springframework.security:spring-security-oauth2-jose")
+
     // Prayer Time Calculation (Umm Al-Qura method for Saudi Arabia)
     implementation("com.batoulapps.adhan:adhan:1.2.1")
 
@@ -82,6 +90,19 @@ dependencies {
     // Spring Retry - For resilient external service calls
     implementation("org.springframework.retry:spring-retry:2.0.11")
     implementation("org.springframework:spring-aspects:6.2.2")
+
+    // AWS Secrets Manager (for production secrets management)
+    implementation("software.amazon.awssdk:secretsmanager:2.20.+")
+
+    // Structured Logging (JSON format for production)
+    implementation("net.logstash.logback:logstash-logback-encoder:7.4")
+
+    // Distributed Tracing (OpenTelemetry + Zipkin)
+    implementation("io.micrometer:micrometer-tracing-bridge-otel")
+    implementation("io.opentelemetry:opentelemetry-exporter-zipkin")
+
+    // Prometheus Metrics (for Grafana integration)
+    implementation("io.micrometer:micrometer-registry-prometheus")
 
     // Development
     developmentOnly("org.springframework.boot:spring-boot-devtools")
@@ -113,4 +134,127 @@ allOpen {
     annotation("jakarta.persistence.Entity")
     annotation("jakarta.persistence.MappedSuperclass")
     annotation("jakarta.persistence.Embeddable")
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// JaCoCo Test Coverage Configuration
+////////////////////////////////////////////////////////////////////////////////
+
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+tasks.test {
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+
+    classDirectories.setFrom(
+        files(classDirectories.files.map {
+            fileTree(it) {
+                exclude(
+                    // Configuration classes
+                    "**/config/**",
+
+                    // DTOs and request/response objects
+                    "**/dto/**",
+                    "**/request/**",
+                    "**/response/**",
+
+                    // Main application class
+                    "**/*Application*",
+
+                    // Generated code
+                    "**/Q*.class",
+
+                    // Entities (mostly data classes)
+                    "**/entity/**",
+                    "**/model/**",
+
+                    // Enums
+                    "**/*\$Companion.class",
+
+                    // Spring-generated proxies
+                    "**/*\$\$*"
+                )
+            }
+        })
+    )
+}
+
+tasks.jacocoTestCoverageVerification {
+    dependsOn(tasks.jacocoTestReport)
+
+    violationRules {
+        // Overall project coverage rule
+        rule {
+            limit {
+                minimum = "0.80".toBigDecimal() // 80% overall coverage
+                counter = "LINE"
+                value = "COVEREDRATIO"
+            }
+        }
+
+        // Per-class coverage rule
+        rule {
+            element = "CLASS"
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = "0.70".toBigDecimal() // 70% per class
+            }
+
+            // Exclude same patterns as report
+            excludes = listOf(
+                "*.config.*",
+                "*.dto.*",
+                "*.request.*",
+                "*.response.*",
+                "*Application*",
+                "*.entity.*",
+                "*.model.*"
+            )
+        }
+
+        // Branch coverage rule
+        rule {
+            limit {
+                counter = "BRANCH"
+                value = "COVEREDRATIO"
+                minimum = "0.70".toBigDecimal() // 70% branch coverage
+            }
+        }
+    }
+
+    classDirectories.setFrom(
+        files(classDirectories.files.map {
+            fileTree(it) {
+                exclude(
+                    "**/config/**",
+                    "**/dto/**",
+                    "**/request/**",
+                    "**/response/**",
+                    "**/*Application*",
+                    "**/Q*.class",
+                    "**/entity/**",
+                    "**/model/**",
+                    "**/*\$Companion.class",
+                    "**/*\$\$*"
+                )
+            }
+        })
+    )
+}
+
+// Run coverage verification as part of check task
+tasks.check {
+    dependsOn(tasks.jacocoTestCoverageVerification)
 }

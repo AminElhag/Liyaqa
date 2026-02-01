@@ -93,11 +93,13 @@ class PlatformAuthController(
         val (refreshToken, tokenHash) = jwtTokenProvider.generatePlatformRefreshToken(user)
 
         // Store refresh token (platform users use their own ID as tenant ID)
+        val now = Instant.now()
         val refreshTokenEntity = RefreshToken(
             userId = user.id,
             tenantId = user.id, // Platform users use their own ID
             tokenHash = tokenHash,
-            expiresAt = Instant.now().plusMillis(jwtTokenProvider.getRefreshTokenExpirationMs()),
+            expiresAt = now.plusMillis(jwtTokenProvider.getRefreshTokenExpirationMs()),
+            absoluteExpiresAt = now.plusMillis(jwtTokenProvider.getAbsoluteSessionTimeoutMs()),
             deviceInfo = request.deviceInfo
         )
         refreshTokenRepository.save(refreshTokenEntity)
@@ -151,11 +153,13 @@ class PlatformAuthController(
         val accessToken = jwtTokenProvider.generatePlatformAccessToken(user)
         val (refreshToken, newTokenHash) = jwtTokenProvider.generatePlatformRefreshToken(user)
 
+        val now = Instant.now()
         val refreshTokenEntity = RefreshToken(
             userId = user.id,
             tenantId = user.id,
             tokenHash = newTokenHash,
-            expiresAt = Instant.now().plusMillis(jwtTokenProvider.getRefreshTokenExpirationMs()),
+            expiresAt = now.plusMillis(jwtTokenProvider.getRefreshTokenExpirationMs()),
+            absoluteExpiresAt = now.plusMillis(jwtTokenProvider.getAbsoluteSessionTimeoutMs()),
             deviceInfo = request.deviceInfo
         )
         refreshTokenRepository.save(refreshTokenEntity)

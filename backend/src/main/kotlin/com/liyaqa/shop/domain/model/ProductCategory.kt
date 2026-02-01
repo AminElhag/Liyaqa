@@ -21,7 +21,6 @@ import java.util.UUID
  */
 @Entity
 @Table(name = "product_categories")
-@FilterDef(name = "tenantFilter", parameters = [ParamDef(name = "tenantId", type = UUID::class)])
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 class ProductCategory(
     id: UUID = UUID.randomUUID(),

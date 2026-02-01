@@ -30,7 +30,8 @@ data class RegisterCommand(
  */
 data class RefreshTokenCommand(
     val refreshToken: String,
-    val deviceInfo: String? = null
+    val deviceInfo: String? = null,
+    val ipAddress: String? = null
 )
 
 /**

@@ -18,10 +18,6 @@ import java.util.UUID
 
 @Entity
 @Table(name = "users")
-@FilterDef(
-    name = "tenantFilter",
-    parameters = [ParamDef(name = "tenantId", type = UUID::class)]
-)
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 class User(
     id: UUID = UUID.randomUUID(),
@@ -65,7 +61,35 @@ class User(
 
     /** The platform organization ID for internal users (null for client users) */
     @Column(name = "platform_organization_id")
-    var platformOrganizationId: UUID? = null
+    var platformOrganizationId: UUID? = null,
+
+    /** Indicates if MFA is enabled for this user */
+    @Column(name = "mfa_enabled", nullable = false)
+    var mfaEnabled: Boolean = false,
+
+    /** Encrypted TOTP secret for MFA (Base32 encoded) */
+    @Column(name = "mfa_secret")
+    var mfaSecret: String? = null,
+
+    /** Timestamp when MFA was verified and enabled */
+    @Column(name = "mfa_verified_at")
+    var mfaVerifiedAt: Instant? = null,
+
+    /** Hashed backup codes for MFA recovery (JSON array) */
+    @Column(name = "backup_codes_hash", columnDefinition = "TEXT")
+    var backupCodesHash: String? = null,
+
+    /** OAuth provider type if user signed up via OAuth (GOOGLE, MICROSOFT, etc.) */
+    @Column(name = "oauth_provider", length = 50)
+    var oauthProvider: String? = null,
+
+    /** OAuth provider's unique user ID */
+    @Column(name = "oauth_provider_id", length = 255)
+    var oauthProviderId: String? = null,
+
+    /** IP binding enabled - validates IP address on token refresh for enhanced security */
+    @Column(name = "ip_binding_enabled", nullable = false)
+    var ipBindingEnabled: Boolean = false
 
 ) : BaseEntity(id) {
 
@@ -169,9 +193,62 @@ class User(
     }
 
     /**
+     * Links this user account to an OAuth provider.
+     * @param provider OAuth provider name (GOOGLE, MICROSOFT, etc.)
+     * @param providerId OAuth provider's unique user ID
+     */
+    fun linkOAuthProvider(provider: String, providerId: String) {
+        this.oauthProvider = provider
+        this.oauthProviderId = providerId
+    }
+
+    /**
+     * Unlinks OAuth provider from this user account.
+     */
+    fun unlinkOAuthProvider() {
+        this.oauthProvider = null
+        this.oauthProviderId = null
+    }
+
+    /**
+     * Checks if this user is linked to an OAuth provider.
+     */
+    fun isOAuthLinked(): Boolean = oauthProvider != null && oauthProviderId != null
+
+    /**
      * Unlinks this user from any member.
      */
     fun unlinkMember() {
         this.memberId = null
+    }
+
+    /**
+     * Enables MFA for this user.
+     * @param mfaSecret The TOTP secret (Base32 encoded)
+     * @param backupCodesHash Hashed backup codes
+     */
+    fun enableMfa(mfaSecret: String, backupCodesHash: String) {
+        this.mfaSecret = mfaSecret
+        this.backupCodesHash = backupCodesHash
+        this.mfaEnabled = true
+        this.mfaVerifiedAt = Instant.now()
+    }
+
+    /**
+     * Disables MFA for this user.
+     */
+    fun disableMfa() {
+        this.mfaEnabled = false
+        this.mfaSecret = null
+        this.mfaVerifiedAt = null
+        this.backupCodesHash = null
+    }
+
+    /**
+     * Updates backup codes for MFA.
+     * @param backupCodesHash New hashed backup codes
+     */
+    fun updateBackupCodes(backupCodesHash: String) {
+        this.backupCodesHash = backupCodesHash
     }
 }
