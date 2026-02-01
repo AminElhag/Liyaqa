@@ -23,6 +23,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { authApi } from "@/lib/api/auth";
 import { isSubdomainAccess } from "@/lib/subdomain";
 import type { LocalizedText } from "@/types/api";
+import { MfaVerificationModal } from "@/components/auth/mfa-verification-modal";
 
 // Schema when subdomain is detected (tenantId optional)
 const loginSchemaWithSubdomain = z.object({
@@ -51,12 +52,22 @@ export default function LoginPage() {
   const tErrors = useTranslations("errors");
   const locale = useLocale();
   const router = useRouter();
-  const { login, isLoading, error, clearError } = useAuthStore();
+  const {
+    login,
+    verifyMfaAndLogin,
+    isLoading,
+    error,
+    clearError,
+    mfaRequired,
+    mfaEmail,
+    clearMfaState,
+  } = useAuthStore();
   const [showPassword, setShowPassword] = React.useState(false);
   const [subdomainTenant, setSubdomainTenant] =
     React.useState<SubdomainTenant | null>(null);
   const [isLoadingTenant, setIsLoadingTenant] = React.useState(true);
   const [roleError, setRoleError] = React.useState<string | null>(null);
+  const [mfaError, setMfaError] = React.useState<string | null>(null);
 
   // Localized texts for staff-only validation
   const texts = {
@@ -108,6 +119,7 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     clearError();
     setRoleError(null);
+    setMfaError(null);
 
     try {
       // Use subdomain tenant if available, otherwise use form input
@@ -118,6 +130,12 @@ export default function LoginPage() {
       }
 
       await login({ ...data, tenantId });
+
+      // Check if MFA is required - if so, modal will open automatically
+      const { mfaRequired: isMfaRequired } = useAuthStore.getState();
+      if (isMfaRequired) {
+        return; // Wait for MFA verification
+      }
 
       // Small delay to ensure Zustand persist writes to localStorage
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -139,6 +157,39 @@ export default function LoginPage() {
     } catch {
       // Error is handled in store
     }
+  };
+
+  const handleMfaVerify = async (code: string) => {
+    setMfaError(null);
+    try {
+      await verifyMfaAndLogin(code);
+
+      // Small delay to ensure Zustand persist writes to localStorage
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Get the user from the store to determine redirect
+      const { user, logout } = useAuthStore.getState();
+
+      // Validate role - only staff roles can use this login
+      const allowedRoles = ["SUPER_ADMIN", "CLUB_ADMIN", "STAFF"];
+      if (!user?.role || !allowedRoles.includes(user.role)) {
+        setRoleError(texts.wrongRole);
+        // Logout to clear invalid session
+        logout();
+        return;
+      }
+
+      // Redirect to staff dashboard
+      router.replace(`/${locale}/dashboard`);
+    } catch (err) {
+      const error = err as Error & { message?: string };
+      setMfaError(error.message || (locale === "ar" ? "رمز MFA غير صالح" : "Invalid MFA code"));
+    }
+  };
+
+  const handleMfaCancel = () => {
+    clearMfaState();
+    setMfaError(null);
   };
 
   // Helper to get localized club name
@@ -273,6 +324,16 @@ export default function LoginPage() {
           </p>
         </CardFooter>
       </form>
+
+      {/* MFA Verification Modal */}
+      <MfaVerificationModal
+        open={mfaRequired}
+        onOpenChange={(open) => !open && handleMfaCancel()}
+        onVerify={handleMfaVerify}
+        isLoading={isLoading}
+        error={mfaError}
+        email={mfaEmail || undefined}
+      />
     </Card>
   );
 }

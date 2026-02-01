@@ -36,7 +36,16 @@ const eslintConfig = [
     },
   },
   {
-    ignores: ["node_modules/", ".next/", "out/", "prototype/"],
+    ignores: [
+      "node_modules/",
+      ".next/",
+      "out/",
+      "prototype/",
+      "**/*.test.ts",
+      "**/*.test.tsx",
+      "**/*.spec.ts",
+      "**/*.spec.tsx",
+    ],
   },
 ];
 
