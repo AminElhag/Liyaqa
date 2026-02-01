@@ -13,7 +13,8 @@ export type UserRole =
   | "SUPER_ADMIN"
   | "CLUB_ADMIN"
   | "STAFF"
-  | "MEMBER";
+  | "MEMBER"
+  | "TRAINER";
 
 /**
  * Platform roles array for type checking
@@ -33,6 +34,7 @@ export const CLIENT_ROLES: UserRole[] = [
   "CLUB_ADMIN",
   "STAFF",
   "MEMBER",
+  "TRAINER",
 ];
 
 /**
@@ -167,4 +169,23 @@ export interface TenantInfoResponse {
   clubName?: LocalizedText;
   /** The subdomain slug used to resolve the tenant */
   slug?: string;
+}
+
+/**
+ * MFA required response (returned when user has MFA enabled during login)
+ */
+export interface MfaRequiredResponse {
+  mfaRequired: boolean;
+  userId: UUID;
+  email: string;
+  message: string;
+}
+
+/**
+ * Type guard to check if login response requires MFA
+ */
+export function isMfaRequired(
+  response: LoginResponse | MfaRequiredResponse
+): response is MfaRequiredResponse {
+  return "mfaRequired" in response && response.mfaRequired === true;
 }

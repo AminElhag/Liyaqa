@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { User, LoginRequest, RegisterRequest, PlatformLoginRequest } from "@/types/auth";
-import { isPlatformRole } from "@/types/auth";
+import { isPlatformRole, isMfaRequired } from "@/types/auth";
 import { authApi } from "@/lib/api/auth";
+import { mfaApi } from "@/lib/api/mfa";
 import {
   setAccessToken,
   setRefreshToken,
@@ -23,9 +24,15 @@ interface AuthState {
   error: string | null;
   _hasHydrated: boolean;
 
+  // MFA state
+  mfaRequired: boolean;
+  mfaPendingUserId: string | null;
+  mfaEmail: string | null;
+
   // Actions
   login: (credentials: LoginRequest) => Promise<void>;
   platformLogin: (credentials: PlatformLoginRequest) => Promise<void>;
+  verifyMfaAndLogin: (code: string, deviceInfo?: string) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<boolean>;
@@ -37,6 +44,7 @@ interface AuthState {
   hasAnyPermission: (permissionCodes: string[]) => boolean;
   hasAllPermissions: (permissionCodes: string[]) => boolean;
   setHasHydrated: (state: boolean) => void;
+  clearMfaState: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -47,15 +55,37 @@ export const useAuthStore = create<AuthState>()(
       isLoading: false,
       error: null,
       _hasHydrated: false,
+      mfaRequired: false,
+      mfaPendingUserId: null,
+      mfaEmail: null,
 
       setHasHydrated: (state: boolean) => {
         set({ _hasHydrated: state });
+      },
+
+      clearMfaState: () => {
+        set({
+          mfaRequired: false,
+          mfaPendingUserId: null,
+          mfaEmail: null,
+        });
       },
 
       login: async (credentials: LoginRequest) => {
         set({ isLoading: true, error: null });
         try {
           const response = await authApi.login(credentials);
+
+          // Check if MFA is required
+          if (isMfaRequired(response)) {
+            set({
+              isLoading: false,
+              mfaRequired: true,
+              mfaPendingUserId: response.userId,
+              mfaEmail: response.email,
+            });
+            return;
+          }
 
           // Store tokens
           setAccessToken(response.accessToken);
@@ -83,11 +113,68 @@ export const useAuthStore = create<AuthState>()(
             user: response.user,
             isAuthenticated: true,
             isLoading: false,
+            mfaRequired: false,
+            mfaPendingUserId: null,
+            mfaEmail: null,
           });
         } catch (error) {
           set({
             isLoading: false,
             error: "Invalid credentials",
+          });
+          throw error;
+        }
+      },
+
+      verifyMfaAndLogin: async (code: string, deviceInfo?: string) => {
+        const { mfaPendingUserId } = get();
+        if (!mfaPendingUserId) {
+          throw new Error("No pending MFA verification");
+        }
+
+        set({ isLoading: true, error: null });
+        try {
+          const response = await mfaApi.verifyLogin({
+            userId: mfaPendingUserId,
+            code,
+            deviceInfo,
+          });
+
+          // Store tokens
+          setAccessToken(response.accessToken);
+          setRefreshToken(response.refreshToken);
+
+          // Disable platform mode for regular login
+          setPlatformMode(false);
+
+          // Set tenant context from user
+          if (response.user.tenantId) {
+            setTenantContext(
+              response.user.tenantId,
+              response.user.organizationId || null,
+              response.user.role === "SUPER_ADMIN"
+            );
+            // Also update tenant-store for display purposes
+            useTenantStore.getState().setTenant(
+              response.user.tenantId,
+              undefined,
+              response.user.organizationId || undefined
+            );
+          }
+
+          set({
+            user: response.user,
+            isAuthenticated: true,
+            isLoading: false,
+            mfaRequired: false,
+            mfaPendingUserId: null,
+            mfaEmail: null,
+          });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Invalid MFA code";
+          set({
+            isLoading: false,
+            error: errorMessage,
           });
           throw error;
         }
@@ -177,6 +264,9 @@ export const useAuthStore = create<AuthState>()(
           user: null,
           isAuthenticated: false,
           error: null,
+          mfaRequired: false,
+          mfaPendingUserId: null,
+          mfaEmail: null,
         });
       },
 
