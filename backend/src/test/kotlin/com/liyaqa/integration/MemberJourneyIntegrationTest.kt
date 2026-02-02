@@ -10,7 +10,9 @@ import com.liyaqa.crm.domain.model.LeadStatus
 import com.liyaqa.membership.application.commands.CreateMemberCommand
 import com.liyaqa.membership.application.services.MemberService
 import com.liyaqa.membership.application.services.SubscriptionService
+import com.liyaqa.membership.domain.model.Gender
 import com.liyaqa.membership.domain.model.MemberStatus
+import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.scheduling.application.commands.CreateBookingCommand
 import com.liyaqa.scheduling.application.services.BookingService
 import com.liyaqa.scheduling.domain.model.BookingStatus
@@ -330,7 +332,6 @@ class MemberJourneyIntegrationTest {
         // Then: Both members should exist in the system
         assertThat(newMember).isNotNull
         assertThat(newMember.email).isEqualTo("fatima@example.com")
-        assertThat(allMembers.content.size >= 2).isTrue()
 
         val allMembers = memberService.getAllMembers(org.springframework.data.domain.PageRequest.of(0, 100))
         assertThat(allMembers.content.size).isGreaterThanOrEqualTo(2)
@@ -349,7 +350,7 @@ class MemberJourneyIntegrationTest {
                 name = "Omar Khalid",
                 email = "omar@example.com",
                 phone = "+966503333333",
-                source = LeadSource.ONLINE
+                source = LeadSource.WEBSITE
             )
         )
 

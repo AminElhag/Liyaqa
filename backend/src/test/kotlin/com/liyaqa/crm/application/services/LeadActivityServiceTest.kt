@@ -57,13 +57,12 @@ class LeadActivityServiceTest {
         )
 
         val savedActivity = LeadActivity(
+            id = UUID.randomUUID(),
             leadId = command.leadId,
             type = command.type,
             notes = command.notes,
             performedByUserId = command.performedByUserId
-        ).apply {
-            id = UUID.randomUUID()
-        }
+        )
 
         given(leadRepository.findById(leadId)).willReturn(Optional.of(lead))
         given(leadActivityRepository.save(any<LeadActivity>())).willReturn(savedActivity)
@@ -109,12 +108,12 @@ class LeadActivityServiceTest {
         // Given
         val leadId = UUID.randomUUID()
         val lead = Lead(
+            id = leadId,
             name = "John Doe",
             email = "john@example.com",
             phone = "+966501234567",
             source = LeadSource.WALK_IN
         ).apply {
-            id = leadId
             score = 50
         }
 
@@ -125,12 +124,11 @@ class LeadActivityServiceTest {
         )
 
         val savedActivity = LeadActivity(
+            id = UUID.randomUUID(),
             leadId = command.leadId,
             type = command.type,
             notes = command.notes
-        ).apply {
-            id = UUID.randomUUID()
-        }
+        )
 
         given(leadRepository.findById(leadId)).willReturn(Optional.of(lead))
         given(leadActivityRepository.save(any<LeadActivity>())).willReturn(savedActivity)
@@ -162,12 +160,11 @@ class LeadActivityServiceTest {
         )
 
         val savedActivity = LeadActivity(
+            id = UUID.randomUUID(),
             leadId = command.leadId,
             type = command.type,
             notes = command.notes
-        ).apply {
-            id = UUID.randomUUID()
-        }
+        )
 
         given(leadRepository.findById(leadId)).willReturn(Optional.of(lead))
         given(leadActivityRepository.save(any<LeadActivity>())).willReturn(savedActivity)
@@ -216,10 +213,9 @@ class LeadActivityServiceTest {
             outcome = command.outcome,
             followUpDate = command.followUpDate,
             durationMinutes = command.durationMinutes,
-            performedByUserId = command.performedByUserId
-        ).apply {
+            performedByUserId = command.performedByUserId,
             id = UUID.randomUUID()
-        }
+        )
 
         given(leadRepository.findById(leadId)).willReturn(Optional.of(lead))
         given(leadActivityRepository.save(any<LeadActivity>())).willReturn(savedActivity)
@@ -240,12 +236,11 @@ class LeadActivityServiceTest {
         // Given
         val activityId = UUID.randomUUID()
         val activity = LeadActivity(
+            id = activityId,
             leadId = UUID.randomUUID(),
             type = LeadActivityType.EMAIL,
             notes = "Sent welcome email"
-        ).apply {
-            id = activityId
-        }
+        )
 
         given(leadActivityRepository.findById(activityId)).willReturn(Optional.of(activity))
 

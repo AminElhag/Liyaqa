@@ -124,9 +124,9 @@ class LeadServiceTest {
             name = command.name,
             email = command.email,
             phone = command.phone,
-            source = command.source
-        ).apply {
+            source = command.source,
             id = UUID.randomUUID()
+        ).apply {
             score = 85 // Score applied by scoring service
         }
 
@@ -160,9 +160,9 @@ class LeadServiceTest {
             name = command.name,
             email = command.email,
             phone = command.phone,
-            source = command.source
-        ).apply {
+            source = command.source,
             id = UUID.randomUUID()
+        ).apply {
             assignedToUserId = autoAssignedUserId
         }
 
@@ -195,10 +195,9 @@ class LeadServiceTest {
             email = command.email,
             phone = command.phone,
             source = command.source,
-            assignedToUserId = assignedUserId
-        ).apply {
+            assignedToUserId = assignedUserId,
             id = UUID.randomUUID()
-        }
+        )
 
         given(leadRepository.existsByEmail(any())).willReturn(false)
         given(leadRepository.save(any<Lead>())).willReturn(savedLead)
@@ -224,9 +223,9 @@ class LeadServiceTest {
             name = command.name,
             email = command.email,
             phone = command.phone,
-            source = command.source
-        ).apply {
+            source = command.source,
             id = UUID.randomUUID()
+        ).apply {
             score = 75
         }
 
@@ -262,10 +261,9 @@ class LeadServiceTest {
             name = command.name,
             email = command.email,
             phone = command.phone,
-            source = command.source
-        ).apply {
+            source = command.source,
             id = UUID.randomUUID()
-        }
+        )
 
         given(leadRepository.existsByEmail(any())).willReturn(false)
         given(leadRepository.save(any<Lead>())).willReturn(savedLead)
@@ -295,10 +293,9 @@ class LeadServiceTest {
             name = command.name,
             email = command.email,
             phone = command.phone,
-            source = command.source
-        ).apply {
+            source = command.source,
             id = UUID.randomUUID()
-        }
+        )
 
         given(leadRepository.existsByEmail(any())).willReturn(false)
         given(leadRepository.save(any<Lead>())).willReturn(savedLead)
@@ -333,10 +330,9 @@ class LeadServiceTest {
             source = command.source,
             campaignSource = command.campaignSource,
             campaignMedium = command.campaignMedium,
-            campaignName = command.campaignName
-        ).apply {
+            campaignName = command.campaignName,
             id = UUID.randomUUID()
-        }
+        )
 
         given(leadRepository.existsByEmail(any())).willReturn(false)
         given(leadRepository.save(any<Lead>())).willReturn(savedLead)
