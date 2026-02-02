@@ -11,7 +11,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5434/liyaqa
     username: liyaqa
-    password: liyaqa
+    password: liyaqa_dev_password
 
   jpa:
     hibernate:
