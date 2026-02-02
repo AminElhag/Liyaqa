@@ -1,5 +1,8 @@
 "use client";
 
+// Force all admin pages to be dynamic (not statically generated)
+export const dynamic = 'force-dynamic';
+
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
