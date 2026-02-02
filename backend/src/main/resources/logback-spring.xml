@@ -120,8 +120,14 @@
 
     <!-- Liyaqa application logging -->
     <logger name="com.liyaqa" level="DEBUG" additivity="false">
-        <appender-ref ref="ASYNC_JSON_CONSOLE"/>
-        <appender-ref ref="ASYNC_FILE"/>
+        <!-- Console logging for all profiles -->
+        <springProfile name="prod,staging">
+            <appender-ref ref="ASYNC_JSON_CONSOLE"/>
+        </springProfile>
+        <springProfile name="dev,test,local">
+            <appender-ref ref="HUMAN_CONSOLE"/>
+            <appender-ref ref="ASYNC_FILE"/>
+        </springProfile>
     </logger>
 
     <!-- Spring Framework (less verbose) -->
