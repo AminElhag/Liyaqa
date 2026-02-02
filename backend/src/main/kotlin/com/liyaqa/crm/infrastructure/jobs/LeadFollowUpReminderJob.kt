@@ -4,7 +4,7 @@ import com.liyaqa.auth.domain.ports.UserRepository
 import com.liyaqa.crm.domain.model.LeadActivity
 import com.liyaqa.crm.domain.ports.LeadActivityRepository
 import com.liyaqa.crm.domain.ports.LeadRepository
-import com.liyaqa.shared.infrastructure.email.EmailService
+import com.liyaqa.notification.domain.ports.EmailService
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
@@ -126,12 +126,13 @@ class LeadFollowUpReminderJob(
             append("$dueCount due today")
         }
 
-        val htmlBody = buildFollowUpEmailHtml(followUps)
+        val body = buildFollowUpEmailHtml(followUps)
 
-        emailService.sendHtmlEmail(
+        emailService.sendEmail(
             to = userEmail,
             subject = subject,
-            htmlBody = htmlBody
+            body = body,
+            isHtml = true
         )
     }
 

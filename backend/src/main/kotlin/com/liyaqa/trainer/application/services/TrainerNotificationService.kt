@@ -3,7 +3,7 @@ package com.liyaqa.trainer.application.services
 import com.liyaqa.notification.application.services.PushNotificationService
 import com.liyaqa.notification.application.services.PushPayload
 import com.liyaqa.shared.domain.LocalizedText
-import com.liyaqa.shared.infrastructure.email.EmailService
+import com.liyaqa.notification.domain.ports.EmailService
 import com.liyaqa.trainer.domain.model.NotificationType
 import com.liyaqa.trainer.domain.model.TrainerNotification
 import com.liyaqa.trainer.domain.ports.TrainerNotificationRepository

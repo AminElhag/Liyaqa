@@ -10,7 +10,7 @@ import com.liyaqa.notification.domain.ports.NotificationPreferenceRepository
 import com.liyaqa.notification.domain.ports.NotificationRepository
 import com.liyaqa.notification.infrastructure.sms.SmsService
 import com.liyaqa.shared.domain.LocalizedText
-import com.liyaqa.shared.infrastructure.email.EmailService
+import com.liyaqa.notification.domain.ports.EmailService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -92,7 +92,7 @@ class NotificationServiceTest {
 
         // Then
         assertNotNull(result)
-        verify(emailService).sendHtmlEmail(any(), any(), any())
+        verify(emailService).sendEmail(any<String>(), any<String>(), any<String>(), any<Boolean>())
     }
 
     @Test
@@ -115,7 +115,7 @@ class NotificationServiceTest {
         // Then
         assertNotNull(result)
         assertEquals(NotificationStatus.FAILED, result.status)
-        verify(emailService, never()).sendHtmlEmail(any(), any(), any())
+        verify(emailService, never()).sendEmail(any<String>(), any<String>(), any<String>(), any<Boolean>())
     }
 
     @Test

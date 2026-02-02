@@ -1,6 +1,6 @@
 package com.liyaqa.notification.application.services
 
-import com.liyaqa.shared.infrastructure.email.EmailService
+import com.liyaqa.notification.domain.ports.EmailService
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
@@ -44,7 +44,7 @@ class SecurityEmailService(
                 .withZone(ZoneId.systemDefault())
                 .format(lockTimestamp)
 
-            val htmlBody = buildAccountLockedEmailHtml(
+            val body = buildAccountLockedEmailHtml(
                 userName,
                 formattedTime,
                 ipAddress,
@@ -52,10 +52,10 @@ class SecurityEmailService(
                 failedAttempts
             )
 
-            emailService.sendHtmlEmail(
+            emailService.sendEmail(
                 to = email,
                 subject = "Account Locked - حساب محظور - Liyaqa Security Alert",
-                htmlBody = htmlBody
+                body = body, isHtml = true
             )
 
             logger.info("Account locked notification sent to: $email")
@@ -92,7 +92,7 @@ class SecurityEmailService(
                 .withZone(ZoneId.systemDefault())
                 .format(attemptTimestamp)
 
-            val htmlBody = buildSuspiciousActivityEmailHtml(
+            val body = buildSuspiciousActivityEmailHtml(
                 userName,
                 formattedTime,
                 ipAddress,
@@ -101,10 +101,10 @@ class SecurityEmailService(
                 reason
             )
 
-            emailService.sendHtmlEmail(
+            emailService.sendEmail(
                 to = email,
                 subject = "Suspicious Login Activity - نشاط مشبوه - Liyaqa Security Alert",
-                htmlBody = htmlBody
+                body = body, isHtml = true
             )
 
             logger.info("Suspicious activity notification sent to: $email")
@@ -138,7 +138,7 @@ class SecurityEmailService(
                 .withZone(ZoneId.systemDefault())
                 .format(loginTimestamp)
 
-            val htmlBody = buildNewDeviceEmailHtml(
+            val body = buildNewDeviceEmailHtml(
                 userName,
                 formattedTime,
                 ipAddress,
@@ -146,10 +146,10 @@ class SecurityEmailService(
                 deviceInfo ?: "Unknown Device"
             )
 
-            emailService.sendHtmlEmail(
+            emailService.sendEmail(
                 to = email,
                 subject = "New Device Login - تسجيل دخول من جهاز جديد - Liyaqa",
-                htmlBody = htmlBody
+                body = body, isHtml = true
             )
 
             logger.info("New device notification sent to: $email")

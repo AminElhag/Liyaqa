@@ -11,7 +11,7 @@ import com.liyaqa.notification.domain.ports.NotificationRepository
 import com.liyaqa.notification.infrastructure.sms.SmsService
 import com.liyaqa.notification.infrastructure.sms.SmsSendException
 import com.liyaqa.shared.domain.LocalizedText
-import com.liyaqa.shared.infrastructure.email.EmailService
+import com.liyaqa.notification.domain.ports.EmailService
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
@@ -75,10 +75,11 @@ class NotificationService(
             val subject = notification.subject?.get(locale) ?: "Liyaqa Notification"
             val body = notification.body.get(locale)
 
-            emailService.sendHtmlEmail(
+            emailService.sendEmail(
                 to = notification.recipientEmail ?: throw IllegalStateException("No email address"),
                 subject = subject,
-                htmlBody = body
+                body = body,
+                isHtml = true
             )
 
             notification.markSent()

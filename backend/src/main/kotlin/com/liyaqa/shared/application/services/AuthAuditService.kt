@@ -37,11 +37,11 @@ data class GeoLocation(
  * All logging operations are performed asynchronously to not impact user-facing performance.
  */
 @Service
-class AuditService(
+class AuthAuditService(
     private val loginAttemptRepository: LoginAttemptRepository,
     private val securityAnomalyService: com.liyaqa.security.application.services.SecurityAnomalyService
 ) {
-    private val logger = LoggerFactory.getLogger(AuditService::class.java)
+    private val logger = LoggerFactory.getLogger(AuthAuditService::class.java)
 
     /**
      * Logs a login attempt asynchronously.

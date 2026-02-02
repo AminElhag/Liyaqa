@@ -13,7 +13,7 @@ import com.liyaqa.auth.domain.ports.UserRepository
 import com.liyaqa.auth.infrastructure.security.JwtTokenProvider
 import com.liyaqa.shared.application.services.PermissionService
 import com.liyaqa.shared.domain.LocalizedText
-import com.liyaqa.shared.infrastructure.email.EmailService
+import com.liyaqa.notification.domain.ports.EmailService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -63,7 +63,7 @@ class AuthServiceTest {
     private lateinit var passwordPolicyService: PasswordPolicyService
 
     @Mock
-    private lateinit var auditService: com.liyaqa.shared.application.services.AuditService
+    private lateinit var auditService: com.liyaqa.shared.application.services.AuthAuditService
 
     @Mock
     private lateinit var securityEmailService: com.liyaqa.notification.application.services.SecurityEmailService

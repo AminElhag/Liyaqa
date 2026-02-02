@@ -17,7 +17,7 @@ import com.liyaqa.auth.infrastructure.security.JwtTokenProvider
 import com.liyaqa.shared.application.services.PermissionService
 import com.liyaqa.shared.domain.TenantContext
 import com.liyaqa.shared.domain.TenantId
-import com.liyaqa.shared.infrastructure.email.EmailService
+import com.liyaqa.notification.domain.ports.EmailService
 import org.slf4j.LoggerFactory
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -62,7 +62,7 @@ class AuthService(
     private val emailService: EmailService,
     private val permissionService: PermissionService,
     private val passwordPolicyService: PasswordPolicyService,
-    private val auditService: com.liyaqa.shared.application.services.AuditService,
+    private val auditService: com.liyaqa.shared.application.services.AuthAuditService,
     private val securityEmailService: com.liyaqa.notification.application.services.SecurityEmailService,
     private val sessionService: SessionService
 ) {
@@ -357,7 +357,20 @@ class AuthService(
 
         // Send password reset email (or log if email service is disabled)
         try {
-            emailService.sendPasswordResetEmail(user.email, rawToken, locale)
+            val resetLink = "https://app.liyaqa.com/reset-password?token=$rawToken" // TODO: Make configurable
+            val subject = if (locale == "ar") "إعادة تعيين كلمة المرور" else "Reset Your Password"
+            val body = """
+                <html>
+                <body>
+                    <h2>${if (locale == "ar") "إعادة تعيين كلمة المرور" else "Reset Your Password"}</h2>
+                    <p>${if (locale == "ar") "تلقينا طلبًا لإعادة تعيين كلمة المرور الخاصة بك." else "We received a request to reset your password."}</p>
+                    <p><a href="$resetLink">${if (locale == "ar") "إعادة تعيين كلمة المرور" else "Reset Password"}</a></p>
+                    <p>${if (locale == "ar") "أو انسخ هذا الرابط:" else "Or copy this link:"} $resetLink</p>
+                    <p>${if (locale == "ar") "هذا الرابط صالح لمدة 24 ساعة." else "This link is valid for 24 hours."}</p>
+                </body>
+                </html>
+            """.trimIndent()
+            emailService.sendEmail(user.email, subject, body, isHtml = true)
             logger.info("Password reset initiated for user: ${user.id}")
         } catch (e: Exception) {
             logger.error("Failed to send password reset email for user: ${user.id}", e)
@@ -473,7 +486,7 @@ class AuthService(
      */
     private fun sendPasswordChangedNotification(user: User) {
         try {
-            val htmlBody = """
+            val body = """
                 <html>
                 <body style="font-family: Arial, sans-serif; line-height: 1.6;">
                     <h2>Password Changed Successfully</h2>
@@ -495,10 +508,11 @@ class AuthService(
                 </html>
             """.trimIndent()
 
-            emailService.sendHtmlEmail(
+            emailService.sendEmail(
                 to = user.email,
                 subject = "Password Changed - تم تغيير كلمة المرور - Liyaqa",
-                htmlBody = htmlBody
+                body = body,
+                isHtml = true
             )
             logger.info("Password changed notification sent for user: ${user.id}")
         } catch (e: Exception) {
