@@ -50,15 +50,13 @@ jobs:
           # Optional: Specify CodeQL config file
           # config-file: ./.github/codeql/codeql-config.yml
 
-      # Autobuild attempts to build any compiled languages (Kotlin)
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-        # Alternative: Manual build for Kotlin
-        # - name: Build Kotlin
-        #   if: matrix.language == 'java-kotlin'
-        #   run: |
-        #     cd backend
-        #     ./gradlew clean build -x test
+      # Manual build for Kotlin backend (autobuild fails with multiple projects)
+      - name: Build Kotlin
+        if: matrix.language == 'java-kotlin'
+        run: |
+          cd backend
+          chmod +x gradlew
+          ./gradlew clean build -x test --no-daemon
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
