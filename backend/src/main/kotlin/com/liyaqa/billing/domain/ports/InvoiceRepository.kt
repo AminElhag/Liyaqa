@@ -24,6 +24,7 @@ interface InvoiceRepository {
 
     // Status queries
     fun findByStatus(status: InvoiceStatus, pageable: Pageable): Page<Invoice>
+    fun findByStatusIn(statuses: List<InvoiceStatus>): List<Invoice>
     fun findOverdueInvoices(pageable: Pageable): Page<Invoice>
     fun findIssuedInvoicesPastDueDate(currentDate: LocalDate, pageable: Pageable): Page<Invoice>
     fun findIssuedInvoicesDueOn(dueDate: LocalDate, pageable: Pageable): Page<Invoice>

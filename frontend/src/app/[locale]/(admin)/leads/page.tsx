@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
-import { Plus, Users, RefreshCw, Filter, LayoutGrid, BarChart3 } from "lucide-react";
+import { Plus, Users, RefreshCw, Filter, LayoutGrid, BarChart3, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -124,6 +124,11 @@ export default function LeadsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Link href={`/${locale}/leads/follow-ups`}>
+            <Button variant="outline" size="icon" title={isArabic ? "المتابعات" : "Follow-ups"}>
+              <Bell className="h-4 w-4" />
+            </Button>
+          </Link>
           <Link href={`/${locale}/leads/dashboard`}>
             <Button variant="outline" size="icon" title={isArabic ? "لوحة المبيعات" : "Sales Dashboard"}>
               <BarChart3 className="h-4 w-4" />

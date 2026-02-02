@@ -1,41 +1,83 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { oauthApi } from '@/lib/api/oauth';
-import type { OAuthProvider } from '@/lib/api/oauth';
-import { toast } from 'sonner';
+"use client";
+
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type UseQueryOptions,
+} from "@tanstack/react-query";
+import { oauthApi } from "@/lib/api/oauth";
+import type {
+  OAuthProvider,
+  OAuthCallbackParams,
+  LinkOAuthAccountRequest,
+} from "@/types/oauth";
 
 /**
  * Query key factory for OAuth
  */
 export const oauthKeys = {
-  all: ['oauth'] as const,
-  providers: (organizationId?: string) => [...oauthKeys.all, 'providers', organizationId] as const,
+  all: ["oauth"] as const,
+  providers: (organizationId?: string) =>
+    [...oauthKeys.all, "providers", organizationId] as const,
 };
 
 /**
- * Hook to get OAuth providers for an organization
+ * Hook to fetch OAuth providers
  */
-export function useOAuthProviders(organizationId?: string) {
+export function useOAuthProviders(
+  organizationId?: string,
+  options?: Omit<UseQueryOptions<OAuthProvider[]>, "queryKey" | "queryFn">
+) {
   return useQuery({
     queryKey: oauthKeys.providers(organizationId),
-    queryFn: () => oauthApi.getProviders(organizationId),
+    queryFn: () => oauthApi.fetchOAuthProviders(organizationId),
     staleTime: 5 * 60 * 1000, // 5 minutes
+    ...options,
+  });
+}
+
+/**
+ * Hook to initiate OAuth login
+ * This is a mutation that triggers browser redirect
+ */
+export function useInitiateOAuth() {
+  return useMutation({
+    mutationFn: ({
+      provider,
+      organizationId,
+    }: {
+      provider: string;
+      organizationId?: string;
+    }) => {
+      // This function doesn't return a promise since it redirects
+      oauthApi.initiateOAuthLogin(provider, organizationId);
+      return Promise.resolve();
+    },
+  });
+}
+
+/**
+ * Hook to handle OAuth callback
+ */
+export function useOAuthCallback() {
+  return useMutation({
+    mutationFn: (params: OAuthCallbackParams) =>
+      oauthApi.handleOAuthCallback(params),
   });
 }
 
 /**
  * Hook to link OAuth provider to account
  */
-export function useLinkOAuthProvider() {
+export function useLinkOAuthAccount() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: oauthApi.linkProvider,
-    onSuccess: (data) => {
-      toast.success(data.message || 'OAuth provider linked successfully');
+    mutationFn: (data: LinkOAuthAccountRequest) =>
+      oauthApi.linkOAuthAccount(data),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: oauthKeys.all });
-    },
-    onError: (error: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(error.response?.data?.message || 'Failed to link OAuth provider');
     },
   });
 }
@@ -43,17 +85,13 @@ export function useLinkOAuthProvider() {
 /**
  * Hook to unlink OAuth provider from account
  */
-export function useUnlinkOAuthProvider() {
+export function useUnlinkOAuthAccount() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: oauthApi.unlinkProvider,
-    onSuccess: (data) => {
-      toast.success(data.message || 'OAuth provider unlinked successfully');
+    mutationFn: (provider: string) => oauthApi.unlinkOAuthAccount(provider),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: oauthKeys.all });
-    },
-    onError: (error: Error & { response?: { data?: { message?: string } } }) => {
-      toast.error(error.response?.data?.message || 'Failed to unlink OAuth provider');
     },
   });
 }

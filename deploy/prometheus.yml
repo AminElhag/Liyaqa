@@ -1,0 +1,101 @@
+# Prometheus Configuration
+# Metrics collection for Liyaqa platform
+
+global:
+  scrape_interval: 15s          # How often to scrape targets
+  evaluation_interval: 15s      # How often to evaluate rules
+  scrape_timeout: 10s           # Scrape timeout
+  external_labels:
+    cluster: 'liyaqa-prod'
+    environment: '${ENVIRONMENT:-production}'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Load alerting rules
+rule_files:
+  - '/etc/prometheus/alerts.yml'
+
+# Scrape configurations
+scrape_configs:
+
+  ############################################################################
+  # Prometheus itself
+  ############################################################################
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  ############################################################################
+  # Liyaqa Backend (Spring Boot Actuator)
+  ############################################################################
+  - job_name: 'liyaqa-backend'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['backend:8080']
+        labels:
+          service: 'backend'
+          application: 'liyaqa'
+
+  ############################################################################
+  # PostgreSQL Database
+  ############################################################################
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+        labels:
+          service: 'database'
+          database: 'postgres'
+
+  ############################################################################
+  # Docker containers (if using cAdvisor)
+  ############################################################################
+  # Uncomment if you add cAdvisor to docker-compose
+  # - job_name: 'cadvisor'
+  #   static_configs:
+  #     - targets: ['cadvisor:8080']
+  #       labels:
+  #         service: 'docker'
+
+  ############################################################################
+  # Node Exporter (system metrics)
+  ############################################################################
+  # Uncomment if you add Node Exporter
+  # - job_name: 'node'
+  #   static_configs:
+  #     - targets: ['node-exporter:9100']
+  #       labels:
+  #         service: 'node'
+
+  ############################################################################
+  # Alertmanager
+  ############################################################################
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+        labels:
+          service: 'alertmanager'
+
+  ############################################################################
+  # Grafana
+  ############################################################################
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+        labels:
+          service: 'grafana'
+
+# Storage configuration
+storage:
+  tsdb:
+    path: /prometheus
+    retention:
+      time: 30d        # Keep metrics for 30 days
+      size: 10GB       # Maximum 10GB of data

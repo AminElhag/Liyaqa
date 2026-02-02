@@ -71,6 +71,29 @@ interface SpringDataClassBookingRepository : JpaRepository<ClassBooking, UUID> {
         @Param("memberId") memberId: UUID,
         @Param("sessionDate") sessionDate: LocalDate
     ): List<ClassBooking>
+
+    /**
+     * Finds active bookings for a member on a specific date with sessions and gym classes preloaded.
+     * This eliminates N+1 queries by fetching all related data in a single query.
+     *
+     * Returns a map where:
+     * - Key: ClassBooking
+     * - Value: Pair of (ClassSession, GymClass)
+     *
+     * This allows BookingService to validate overlapping bookings without additional queries.
+     */
+    @Query("""
+        SELECT b, s, gc FROM ClassBooking b
+        JOIN ClassSession s ON b.sessionId = s.id
+        JOIN GymClass gc ON s.gymClassId = gc.id
+        WHERE b.memberId = :memberId
+        AND s.sessionDate = :sessionDate
+        AND b.status IN ('CONFIRMED', 'WAITLISTED')
+    """)
+    fun findActiveBookingsWithSessionsAndClasses(
+        @Param("memberId") memberId: UUID,
+        @Param("sessionDate") sessionDate: LocalDate
+    ): List<Array<Any>>
 }
 
 @Repository
@@ -156,4 +179,7 @@ class JpaClassBookingRepository(
 
     override fun findActiveBookingsByMemberAndDate(memberId: UUID, sessionDate: LocalDate): List<ClassBooking> =
         springDataRepository.findActiveBookingsByMemberAndDate(memberId, sessionDate)
+
+    override fun findActiveBookingsWithSessionsAndClasses(memberId: UUID, sessionDate: LocalDate): List<Array<Any>> =
+        springDataRepository.findActiveBookingsWithSessionsAndClasses(memberId, sessionDate)
 }

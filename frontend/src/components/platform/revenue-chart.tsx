@@ -119,7 +119,7 @@ export function RevenueChart({ revenue, monthlyRevenue }: RevenueChartProps) {
             <div className="text-xl font-bold">
               {revenue.collectionRate.toFixed(1)}%
             </div>
-            <div className="w-full bg-neutral-200 rounded-full h-1.5 mt-2">
+            <div className="w-full bg-neutral-200 dark:bg-neutral-800 rounded-full h-1.5 mt-2">
               <div
                 className="bg-primary h-1.5 rounded-full"
                 style={{ width: `${Math.min(revenue.collectionRate, 100)}%` }}

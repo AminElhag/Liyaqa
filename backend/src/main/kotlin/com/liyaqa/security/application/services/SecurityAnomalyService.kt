@@ -5,7 +5,7 @@ import com.liyaqa.auth.domain.ports.LoginAttemptRepository
 import com.liyaqa.auth.domain.ports.UserSessionRepository
 import com.liyaqa.security.domain.model.AlertType
 import com.liyaqa.security.domain.model.SecurityAlert
-import com.liyaqa.security.domain.model.Severity
+import com.liyaqa.security.domain.model.AlertSeverity
 import com.liyaqa.security.domain.ports.SecurityAlertRepository
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
@@ -66,9 +66,6 @@ class SecurityAnomalyService(
             // 4. Unusual Time Detection
             detectUnusualTime(loginAttempt, userId)?.let { alerts.add(it) }
 
-            // 5. Multiple Sessions Detection
-            detectMultipleSessions(userId)?.let { alerts.add(it) }
-
             // Save all alerts
             alerts.forEach { alert ->
                 securityAlertRepository.save(alert)
@@ -99,9 +96,8 @@ class SecurityAnomalyService(
                 val alert = SecurityAlert(
                     userId = userId,
                     alertType = AlertType.BRUTE_FORCE,
-                    severity = Severity.HIGH,
+                    severity = AlertSeverity.HIGH,
                     details = "Detected $failedAttempts failed login attempts from IP $ipAddress in the last ${BRUTE_FORCE_WINDOW_MINUTES} minutes",
-                    ipAddress = ipAddress,
                     loginAttemptId = recentAttempt.id
                 )
 
@@ -146,13 +142,10 @@ class SecurityAnomalyService(
             return SecurityAlert(
                 userId = userId,
                 alertType = AlertType.IMPOSSIBLE_TRAVEL,
-                severity = Severity.CRITICAL,
+                severity = AlertSeverity.CRITICAL,
                 details = "Login from ${currentAttempt.city ?: "unknown location"} (${currentAttempt.country}) " +
                         "detected ${timeDiff} minutes after login from ${previousAttempt.city ?: "unknown location"} " +
-                        "(${previousAttempt.country}). Distance: ${distance.toInt()} km",
-                ipAddress = currentAttempt.ipAddress,
-                deviceInfo = currentAttempt.deviceFingerprint,
-                location = "${currentAttempt.city}, ${currentAttempt.country}",
+                        "(${previousAttempt.country}). Distance: ${distance.toInt()} km. IP: ${currentAttempt.ipAddress}",
                 loginAttemptId = currentAttempt.id
             )
         }
@@ -176,11 +169,8 @@ class SecurityAnomalyService(
             return SecurityAlert(
                 userId = userId,
                 alertType = AlertType.NEW_DEVICE,
-                severity = Severity.MEDIUM,
-                details = "Login from a new device. User agent: ${currentAttempt.userAgent}",
-                ipAddress = currentAttempt.ipAddress,
-                deviceInfo = deviceFingerprint,
-                location = "${currentAttempt.city}, ${currentAttempt.country}",
+                severity = AlertSeverity.MEDIUM,
+                details = "Login from a new device. User agent: ${currentAttempt.userAgent}. Location: ${currentAttempt.city}, ${currentAttempt.country}. IP: ${currentAttempt.ipAddress}",
                 loginAttemptId = currentAttempt.id
             )
         }
@@ -207,10 +197,8 @@ class SecurityAnomalyService(
             return SecurityAlert(
                 userId = userId,
                 alertType = AlertType.NEW_LOCATION,
-                severity = Severity.MEDIUM,
-                details = "Login from a new location: ${currentCity ?: "Unknown city"}, $currentCountry",
-                ipAddress = currentAttempt.ipAddress,
-                location = "${currentCity ?: "Unknown"}, $currentCountry",
+                severity = AlertSeverity.MEDIUM,
+                details = "Login from a new location: ${currentCity ?: "Unknown city"}, $currentCountry. IP: ${currentAttempt.ipAddress}",
                 loginAttemptId = currentAttempt.id
             )
         }
@@ -249,29 +237,9 @@ class SecurityAnomalyService(
             return SecurityAlert(
                 userId = userId,
                 alertType = AlertType.UNUSUAL_TIME,
-                severity = Severity.LOW,
-                details = "Login at unusual time: ${currentHour}:00 UTC. Typical login hours: ${mean.toInt()}:00 ± ${stdDev.toInt()} hours",
-                ipAddress = currentAttempt.ipAddress,
+                severity = AlertSeverity.LOW,
+                details = "Login at unusual time: ${currentHour}:00 UTC. Typical login hours: ${mean.toInt()}:00 ± ${stdDev.toInt()} hours. IP: ${currentAttempt.ipAddress}",
                 loginAttemptId = currentAttempt.id
-            )
-        }
-
-        return null
-    }
-
-    /**
-     * Detects unusual number of concurrent sessions.
-     */
-    private fun detectMultipleSessions(userId: UUID): SecurityAlert? {
-        val activeSessionCount = userSessionRepository.countActiveSessionsByUserId(userId)
-
-        if (activeSessionCount >= MAX_CONCURRENT_SESSIONS) {
-            return SecurityAlert(
-                userId = userId,
-                alertType = AlertType.MULTIPLE_SESSIONS,
-                severity = Severity.MEDIUM,
-                details = "User has $activeSessionCount active sessions (maximum allowed: $MAX_CONCURRENT_SESSIONS)",
-                ipAddress = null
             )
         }
 

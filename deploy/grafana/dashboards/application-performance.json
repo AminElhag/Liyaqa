@@ -1,0 +1,225 @@
+{
+  "dashboard": {
+    "title": "Liyaqa Application Performance",
+    "tags": ["liyaqa", "performance", "jvm", "http"],
+    "timezone": "browser",
+    "editable": true,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "title": "HTTP Request Rate",
+        "type": "graph",
+        "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(rate(http_server_requests_seconds_count[5m])) by (status)",
+            "refId": "A",
+            "legendFormat": "{{status}}"
+          }
+        ],
+        "xaxis": { "mode": "time" },
+        "yaxes": [
+          { "format": "reqps", "label": "Requests/sec" },
+          { "format": "short" }
+        ]
+      },
+      {
+        "title": "HTTP Response Time (p95)",
+        "type": "graph",
+        "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (uri, le))",
+            "refId": "A",
+            "legendFormat": "{{uri}}"
+          }
+        ],
+        "xaxis": { "mode": "time" },
+        "yaxes": [
+          { "format": "ms", "label": "Response Time (p95)" },
+          { "format": "short" }
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": { "params": [500], "type": "gt" },
+              "operator": { "type": "and" },
+              "query": { "params": ["A", "5m", "now"] },
+              "reducer": { "params": [], "type": "avg" },
+              "type": "query"
+            }
+          ],
+          "name": "Slow API Response",
+          "message": "API response time p95 exceeded 500ms"
+        }
+      },
+      {
+        "title": "Error Rate",
+        "type": "graph",
+        "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m])) / sum(rate(http_server_requests_seconds_count[5m])) * 100",
+            "refId": "A",
+            "legendFormat": "Error Rate %"
+          }
+        ],
+        "xaxis": { "mode": "time" },
+        "yaxes": [
+          { "format": "percent", "label": "Error Rate" },
+          { "format": "short" }
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": { "params": [5], "type": "gt" },
+              "operator": { "type": "and" },
+              "query": { "params": ["A", "5m", "now"] },
+              "reducer": { "params": [], "type": "avg" },
+              "type": "query"
+            }
+          ],
+          "name": "High Error Rate",
+          "message": "HTTP error rate exceeded 5%"
+        }
+      },
+      {
+        "title": "JVM Heap Usage",
+        "type": "graph",
+        "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "jvm_memory_used_bytes{area=\"heap\"} / jvm_memory_max_bytes{area=\"heap\"} * 100",
+            "refId": "A",
+            "legendFormat": "Heap Usage %"
+          }
+        ],
+        "xaxis": { "mode": "time" },
+        "yaxes": [
+          { "format": "percent", "label": "Heap Usage", "min": 0, "max": 100 },
+          { "format": "short" }
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": { "params": [85], "type": "gt" },
+              "operator": { "type": "and" },
+              "query": { "params": ["A", "5m", "now"] },
+              "reducer": { "params": [], "type": "avg" },
+              "type": "query"
+            }
+          ],
+          "name": "High Heap Usage",
+          "message": "JVM heap usage exceeded 85%"
+        }
+      },
+      {
+        "title": "Thread Pool Utilization",
+        "type": "graph",
+        "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "liyaqa_pool_thread_size / liyaqa_pool_thread_max * 100",
+            "refId": "A",
+            "legendFormat": "{{pool}}"
+          }
+        ],
+        "xaxis": { "mode": "time" },
+        "yaxes": [
+          { "format": "percent", "label": "Pool Utilization", "min": 0, "max": 100 },
+          { "format": "short" }
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": { "params": [80], "type": "gt" },
+              "operator": { "type": "and" },
+              "query": { "params": ["A", "5m", "now"] },
+              "reducer": { "params": [], "type": "avg" },
+              "type": "query"
+            }
+          ],
+          "name": "High Thread Pool Usage",
+          "message": "Thread pool utilization exceeded 80%"
+        }
+      },
+      {
+        "title": "Database Connection Pool Utilization",
+        "type": "graph",
+        "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "liyaqa_pool_connection_active / liyaqa_pool_connection_total * 100",
+            "refId": "A",
+            "legendFormat": "Pool Utilization %"
+          },
+          {
+            "expr": "liyaqa_pool_connection_waiting",
+            "refId": "B",
+            "legendFormat": "Threads Waiting"
+          }
+        ],
+        "xaxis": { "mode": "time" },
+        "yaxes": [
+          { "format": "percent", "label": "Utilization %" },
+          { "format": "short", "label": "Waiting Threads" }
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": { "params": [1], "type": "gt" },
+              "operator": { "type": "and" },
+              "query": { "params": ["B", "5m", "now"] },
+              "reducer": { "params": [], "type": "avg" },
+              "type": "query"
+            }
+          ],
+          "name": "Threads Waiting for DB Connection",
+          "message": "Threads are waiting for database connections - pool may be saturated"
+        }
+      },
+      {
+        "title": "GC Pause Time",
+        "type": "graph",
+        "gridPos": { "x": 0, "y": 24, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "rate(jvm_gc_pause_seconds_sum[5m]) * 1000",
+            "refId": "A",
+            "legendFormat": "GC Pause Time (ms/sec)"
+          }
+        ],
+        "xaxis": { "mode": "time" },
+        "yaxes": [
+          { "format": "ms", "label": "GC Pause Time" },
+          { "format": "short" }
+        ]
+      },
+      {
+        "title": "Active HTTP Sessions",
+        "type": "graph",
+        "gridPos": { "x": 12, "y": 24, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "tomcat_sessions_active_current_sessions",
+            "refId": "A",
+            "legendFormat": "Active Sessions"
+          }
+        ],
+        "xaxis": { "mode": "time" },
+        "yaxes": [
+          { "format": "short", "label": "Sessions" },
+          { "format": "short" }
+        ]
+      }
+    ],
+    "refresh": "10s",
+    "schemaVersion": 36,
+    "version": 1
+  },
+  "overwrite": true
+}

@@ -1,0 +1,91 @@
+################################################################################
+# Liyaqa Production Crontab Configuration
+#
+# This file contains cron job definitions for automated backup and maintenance
+# tasks. Install this crontab on the production server using:
+#
+#   crontab deploy/crontab.txt
+#
+# Or manually add these entries to your existing crontab:
+#
+#   crontab -e
+#
+# Make sure to update paths to match your deployment location.
+################################################################################
+
+# Set environment variables
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+LIYAQA_HOME=/opt/liyaqa
+
+# Email notifications (optional - configure your email)
+# MAILTO=ops@liyaqa.com
+
+################################################################################
+# Database Backups
+################################################################################
+
+# Daily backup at 2:00 AM (every day)
+# This creates a compressed backup with 30-day retention
+0 2 * * * cd $LIYAQA_HOME && ./backend/scripts/backup-database.sh >> /var/log/liyaqa-backup.log 2>&1
+
+# Weekly backup verification on Sundays at 3:00 AM
+# Verifies the latest backup can be restored successfully
+0 3 * * 0 cd $LIYAQA_HOME && ./backend/scripts/verify-backup.sh >> /var/log/liyaqa-backup.log 2>&1
+
+# Monthly full backup on the 1st of each month at 1:00 AM
+# These backups are kept forever for long-term retention
+0 1 1 * * cd $LIYAQA_HOME && ./backend/scripts/backup-database.sh monthly >> /var/log/liyaqa-backup.log 2>&1
+
+################################################################################
+# Log Rotation and Cleanup
+################################################################################
+
+# Rotate application logs daily at midnight
+# Note: You may want to use logrotate instead for more advanced rotation
+# 0 0 * * * find /var/log/liyaqa -name "*.log" -mtime +7 -delete
+
+# Clean old Docker images weekly on Saturdays at 4:00 AM
+# Removes dangling images to free up disk space
+0 4 * * 6 docker image prune -f >> /var/log/liyaqa-maintenance.log 2>&1
+
+################################################################################
+# Monitoring and Health Checks
+################################################################################
+
+# Health check every 5 minutes
+# Ensures the application is responding and restarts if necessary
+# Uncomment if you want automated restart on health check failure
+# */5 * * * * curl -f http://localhost:8080/api/health || (cd $LIYAQA_HOME && docker-compose restart backend) >> /var/log/liyaqa-health.log 2>&1
+
+################################################################################
+# Database Maintenance
+################################################################################
+
+# Vacuum PostgreSQL database weekly on Sundays at 5:00 AM
+# This reclaims storage and updates statistics for query optimization
+0 5 * * 0 docker compose -f $LIYAQA_HOME/docker-compose.yml exec -T postgres vacuumdb -U liyaqa -d liyaqa -z >> /var/log/liyaqa-maintenance.log 2>&1
+
+# Analyze database tables weekly on Sundays at 5:30 AM
+# Updates query planner statistics for better performance
+30 5 * * 0 docker compose -f $LIYAQA_HOME/docker-compose.yml exec -T postgres psql -U liyaqa -d liyaqa -c "ANALYZE;" >> /var/log/liyaqa-maintenance.log 2>&1
+
+################################################################################
+# SSL Certificate Renewal (if using Let's Encrypt)
+################################################################################
+
+# Renew SSL certificates twice daily (certbot will only renew if needed)
+# Uncomment if using Let's Encrypt
+# 0 0,12 * * * certbot renew --quiet --post-hook "docker-compose -f $LIYAQA_HOME/docker-compose.yml restart nginx" >> /var/log/letsencrypt-renew.log 2>&1
+
+################################################################################
+# Performance Metrics Collection (optional)
+################################################################################
+
+# Collect system metrics hourly for capacity planning
+# Uncomment if you want to track system resource usage
+# 0 * * * * echo "$(date),$(free -m | awk 'NR==2{print $3}'),$(df -h / | awk 'NR==2{print $5}')" >> /var/log/liyaqa-metrics.csv
+
+################################################################################
+# End of Crontab
+################################################################################

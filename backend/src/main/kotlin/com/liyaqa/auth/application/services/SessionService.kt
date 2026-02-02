@@ -3,241 +3,186 @@ package com.liyaqa.auth.application.services
 import com.liyaqa.auth.domain.model.UserSession
 import com.liyaqa.auth.domain.ports.UserRepository
 import com.liyaqa.auth.domain.ports.UserSessionRepository
-import com.liyaqa.auth.infrastructure.security.JwtTokenProvider
-import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.security.MessageDigest
+import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 
-/**
- * Service for managing user sessions across devices.
- */
 @Service
-@Transactional
 class SessionService(
     private val sessionRepository: UserSessionRepository,
-    private val jwtTokenProvider: JwtTokenProvider,
     private val userRepository: UserRepository
 ) {
-    private val logger = LoggerFactory.getLogger(SessionService::class.java)
+    private val log = LoggerFactory.getLogger(SessionService::class.java)
 
     companion object {
-        private const val MAX_CONCURRENT_SESSIONS = 5
+        private const val MAX_SESSIONS_PER_USER = 5
+        private val SESSION_DURATION = Duration.ofDays(7)
     }
 
-    /**
-     * Creates a new session for a user.
-     * Automatically revokes the oldest session if max concurrent sessions exceeded.
-     *
-     * @param userId The user ID
-     * @param accessToken The JWT access token
-     * @param deviceInfo Optional device information string
-     * @param ipAddress Optional IP address
-     * @param request Optional HttpServletRequest for extracting device info
-     * @return The created session
-     */
+    @Transactional
     fun createSession(
         userId: UUID,
         accessToken: String,
-        deviceInfo: String? = null,
-        ipAddress: String? = null,
-        request: HttpServletRequest? = null
+        deviceInfo: String?,
+        ipAddress: String?,
+        location: LocationInfo? = null
     ): UserSession {
-        // Check if user has reached max concurrent sessions
+        val parsedDeviceInfo = parseDeviceInfo(deviceInfo)
+        // Check active session count
         val activeSessionCount = sessionRepository.countActiveSessionsByUserId(userId)
-        if (activeSessionCount >= MAX_CONCURRENT_SESSIONS) {
-            // Revoke the oldest session
-            revokeOldestSession(userId)
-            logger.info("Revoked oldest session for user $userId (max sessions reached)")
+
+        if (activeSessionCount >= MAX_SESSIONS_PER_USER) {
+            // Revoke oldest session
+            val sessions = sessionRepository.findActiveSessionsByUserId(userId)
+                .sortedBy { it.createdAt }
+
+            if (sessions.isNotEmpty()) {
+                val oldestSession = sessions.first()
+                oldestSession.revoke()
+                sessionRepository.save(oldestSession)
+                log.info("Revoked oldest session for user {} due to session limit", userId)
+            }
         }
 
-        // Parse device information
-        val userAgent = request?.getHeader("User-Agent") ?: deviceInfo
-        val (deviceName, os, browser) = UserSession.parseDeviceInfo(userAgent)
-
-        // Calculate expiration (same as access token)
-        val expiresAt = jwtTokenProvider.getExpiration(accessToken)
-
-        // Hash the access token for identification (last 8 chars of hash)
-        val tokenHash = hashToken(accessToken).takeLast(8)
-
-        // Create session with originating IP for IP binding validation
-        val currentIp = ipAddress ?: request?.remoteAddr
         val session = UserSession(
             userId = userId,
-            accessTokenHash = tokenHash,
-            deviceName = deviceName,
-            os = os,
-            browser = browser,
-            ipAddress = currentIp,
-            originatingIpAddress = currentIp, // Store originating IP for IP binding
-            expiresAt = expiresAt
+            accessTokenHash = hashToken(accessToken),
+            deviceName = parsedDeviceInfo.deviceName,
+            os = parsedDeviceInfo.os,
+            browser = parsedDeviceInfo.browser,
+            ipAddress = ipAddress ?: "unknown",
+            country = location?.country,
+            city = location?.city,
+            expiresAt = Instant.now().plus(SESSION_DURATION)
         )
 
         val savedSession = sessionRepository.save(session)
-        logger.info("Created session ${savedSession.sessionId} for user $userId")
-
+        log.info("Created session {} for user {}", savedSession.sessionId, userId)
         return savedSession
     }
 
-    /**
-     * Updates the last active timestamp for a session.
-     *
-     * @param sessionId The session ID
-     */
+    @Transactional
     fun updateLastActive(sessionId: UUID) {
-        val session = sessionRepository.findBySessionId(sessionId)
-        if (session != null && session.isValid()) {
-            session.updateLastActive()
+        val session = sessionRepository.findBySessionId(sessionId) ?: return
+        
+        if (session.isActive && !session.isExpired()) {
+            session.updateActivity()
             sessionRepository.save(session)
         }
     }
 
-    /**
-     * Lists all active sessions for a user.
-     *
-     * @param userId The user ID
-     * @return List of active sessions
-     */
     @Transactional(readOnly = true)
     fun listActiveSessions(userId: UUID): List<UserSession> {
         return sessionRepository.findActiveSessionsByUserId(userId)
+            .filter { !it.isExpired() }
     }
 
-    /**
-     * Lists all sessions for a user (including inactive).
-     *
-     * @param userId The user ID
-     * @return List of all sessions
-     */
-    @Transactional(readOnly = true)
-    fun listAllSessions(userId: UUID): List<UserSession> {
-        return sessionRepository.findAllByUserId(userId)
-    }
-
-    /**
-     * Revokes a specific session.
-     *
-     * @param sessionId The session ID
-     * @param userId The user ID (for authorization check)
-     * @throws IllegalArgumentException if session not found or doesn't belong to user
-     */
+    @Transactional
     fun revokeSession(sessionId: UUID, userId: UUID) {
         val session = sessionRepository.findBySessionId(sessionId)
-            ?: throw IllegalArgumentException("Session not found")
-
-        if (session.userId != userId) {
-            throw IllegalArgumentException("Session does not belong to user")
+        
+        if (session != null && session.userId == userId) {
+            session.revoke()
+            sessionRepository.save(session)
+            log.info("Revoked session {} for user {}", sessionId, userId)
         }
-
-        session.revoke()
-        sessionRepository.save(session)
-
-        logger.info("Revoked session $sessionId for user $userId")
     }
 
-    /**
-     * Revokes all sessions for a user except the current one.
-     *
-     * @param userId The user ID
-     * @param exceptSessionId Optional session ID to keep active
-     */
+    @Transactional
     fun revokeAllSessions(userId: UUID, exceptSessionId: UUID? = null) {
         sessionRepository.revokeAllExcept(userId, exceptSessionId)
-
-        logger.info("Revoked all sessions for user $userId (except: $exceptSessionId)")
-    }
-
-    /**
-     * Counts active sessions for a user.
-     *
-     * @param userId The user ID
-     * @return Number of active sessions
-     */
-    @Transactional(readOnly = true)
-    fun countActiveSessions(userId: UUID): Long {
-        return sessionRepository.countActiveSessionsByUserId(userId)
-    }
-
-    /**
-     * Revokes the oldest active session for a user.
-     * Called when max concurrent sessions is reached.
-     */
-    private fun revokeOldestSession(userId: UUID) {
-        val sessions = sessionRepository.findActiveSessionsByUserId(userId)
-        if (sessions.isNotEmpty()) {
-            // Sessions are ordered by lastActiveAt DESC, so the oldest is at the end
-            val oldestSession = sessions.last()
-            oldestSession.revoke()
-            sessionRepository.save(oldestSession)
+        if (exceptSessionId != null) {
+            log.info("Revoked all sessions for user {} except {}", userId, exceptSessionId)
+        } else {
+            log.info("Revoked all sessions for user {}", userId)
         }
     }
 
-    /**
-     * Scheduled task to cleanup expired sessions.
-     * Runs every hour.
-     */
-    @Scheduled(cron = "0 0 * * * *")
+    @Transactional
     fun cleanupExpiredSessions() {
-        val deletedCount = sessionRepository.deleteExpiredSessions(Instant.now())
-        if (deletedCount > 0) {
-            logger.info("Cleaned up $deletedCount expired sessions")
-        }
+        val cutoffDate = Instant.now().minus(Duration.ofDays(30))
+        sessionRepository.deleteExpiredSessions(cutoffDate)
+        log.info("Cleaned up expired sessions older than {}", cutoffDate)
     }
 
     /**
-     * Validates IP binding for a user session.
-     * Returns true if IP binding is disabled or IP validation passes.
-     * Returns false if IP binding is enabled and validation fails.
+     * Validates IP binding for a user's session.
+     * If user has IP binding enabled, validates that the current IP matches the session's originating IP.
      *
      * @param userId The user ID
-     * @param currentIpAddress The current IP address to validate
-     * @return true if validation passes, false otherwise
+     * @param ipAddress The current IP address to validate
+     * @return true if IP is valid (or IP binding is disabled), false if IP mismatch detected
      */
-    fun validateIpBinding(userId: UUID, currentIpAddress: String?): Boolean {
-        if (currentIpAddress == null) {
-            logger.warn("Cannot validate IP binding for user $userId: current IP is null")
-            return true // Allow if IP is not available
-        }
+    fun validateIpBinding(userId: UUID, ipAddress: String?): Boolean {
+        try {
+            // If no IP provided, allow (can't validate)
+            if (ipAddress == null) {
+                return true
+            }
 
-        // Get user's IP binding preference
-        val user = userRepository.findById(userId).orElse(null)
-        if (user == null || !user.ipBindingEnabled) {
-            // IP binding not enabled, allow request
+            // Check if user has IP binding enabled
+            val user = userRepository.findById(userId).orElse(null) ?: return true
+
+            if (!user.ipBindingEnabled) {
+                // IP binding disabled for this user
+                return true
+            }
+
+            // Find user's active sessions
+            val activeSessions = sessionRepository.findActiveSessionsByUserId(userId)
+
+            if (activeSessions.isEmpty()) {
+                // No active sessions, allow (will create new session)
+                return true
+            }
+
+            // Check if any active session matches the current IP
+            val ipMatches = activeSessions.any { it.ipAddress == ipAddress }
+
+            if (!ipMatches) {
+                log.warn("IP binding violation for user {}: current IP {} does not match any active session IPs",
+                    userId, ipAddress)
+                return false
+            }
+
+            return true
+        } catch (e: Exception) {
+            log.error("Error validating IP binding for user {}: {}", userId, e.message, e)
+            // On error, allow access (fail open for availability)
             return true
         }
-
-        // Get active sessions for user
-        val activeSessions = sessionRepository.findActiveSessionsByUserId(userId)
-        if (activeSessions.isEmpty()) {
-            // No active sessions, allow (new session will be created)
-            return true
-        }
-
-        // Check if current IP matches any active session's originating IP
-        val matchingSession = activeSessions.find { session ->
-            session.validateIpBinding(currentIpAddress)
-        }
-
-        if (matchingSession != null) {
-            logger.debug("IP binding validation passed for user $userId: IP matches session ${matchingSession.sessionId}")
-            return true
-        }
-
-        logger.warn("IP binding validation failed for user $userId: IP $currentIpAddress does not match any originating IP")
-        return false
     }
 
-    /**
-     * Hashes a token using SHA-256.
-     */
+    private fun parseDeviceInfo(deviceInfoString: String?): DeviceInfo {
+        if (deviceInfoString == null) {
+            return DeviceInfo(null, null, null)
+        }
+        // Simple parsing - can be enhanced with User-Agent parsing library
+        return DeviceInfo(
+            deviceName = deviceInfoString,
+            os = null,
+            browser = null
+        )
+    }
+
     private fun hashToken(token: String): String {
         val digest = MessageDigest.getInstance("SHA-256")
-        val hashBytes = digest.digest(token.toByteArray())
+        val hashBytes = digest.digest(token.takeLast(20).toByteArray())
         return hashBytes.joinToString("") { "%02x".format(it) }
     }
 }
+
+data class DeviceInfo(
+    val deviceName: String? = null,
+    val os: String? = null,
+    val browser: String? = null
+)
+
+data class LocationInfo(
+    val country: String? = null,
+    val city: String? = null
+)

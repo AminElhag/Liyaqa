@@ -59,4 +59,16 @@ interface SubscriptionRepository {
      * Used for churn analysis reports.
      */
     fun getChurnByPlan(startDate: LocalDate, endDate: LocalDate): List<Map<String, Any>>
+
+    /**
+     * Find subscriptions due for billing within the given date range.
+     * Looks for active subscriptions where currentBillingPeriodEnd falls within the range.
+     *
+     * Used by automated billing job to find subscriptions that need invoices generated.
+     *
+     * @param fromDate Start of billing window
+     * @param toDate End of billing window
+     * @return List of subscriptions due for billing
+     */
+    fun findDueForBilling(fromDate: LocalDate, toDate: LocalDate): List<Subscription>
 }

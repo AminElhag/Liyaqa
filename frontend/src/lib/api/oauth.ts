@@ -1,66 +1,78 @@
-import { apiClient } from './client';
-
-/**
- * OAuth provider information
- */
-export interface OAuthProvider {
-  id: string;
-  provider: string;
-  displayName: string | null;
-  iconUrl: string | null;
-  enabled: boolean;
-}
-
-/**
- * OAuth providers list response
- */
-export interface OAuthProvidersResponse {
-  providers: OAuthProvider[];
-}
-
-/**
- * Request for linking OAuth provider
- */
-export interface LinkOAuthRequest {
-  providerId: string;
-  oauthUserId: string;
-}
+import { api } from "./client";
+import type {
+  OAuthProvider,
+  OAuthLoginResponse,
+  OAuthCallbackParams,
+  LinkOAuthAccountRequest,
+} from "@/types/oauth";
 
 /**
  * OAuth API functions
  */
 export const oauthApi = {
   /**
-   * Get list of enabled OAuth providers for an organization
+   * Fetch available OAuth providers for an organization
+   * GET /api/auth/oauth/providers
    */
-  async getProviders(organizationId?: string): Promise<OAuthProvider[]> {
-    const params = organizationId ? `?organizationId=${organizationId}` : '';
-    const response = await apiClient.get(`/auth/oauth/providers${params}`).json<OAuthProvidersResponse>();
+  async fetchOAuthProviders(organizationId?: string): Promise<OAuthProvider[]> {
+    const params = organizationId ? `?organizationId=${organizationId}` : "";
+    const response = await api
+      .get(`api/auth/oauth/providers${params}`)
+      .json<{ providers: OAuthProvider[] }>();
     return response.providers;
   },
 
   /**
-   * Initiate OAuth authorization flow (redirects to provider)
-   * @param providerId OAuth provider ID
-   * @param baseUrl Optional base URL for redirect (defaults to current origin)
+   * Initiate OAuth login flow
+   * Redirects to provider authorization page
+   * GET /api/auth/oauth/authorize/{provider}
    */
-  initiateOAuth(providerId: string, baseUrl?: string): void {
-    const params = baseUrl ? `?baseUrl=${encodeURIComponent(baseUrl)}` : '';
-    const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/auth/oauth/authorize/${providerId}${params}`;
+  initiateOAuthLogin(provider: string, organizationId?: string): void {
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+    const params = new URLSearchParams();
+    if (baseUrl) params.set("baseUrl", baseUrl);
+    if (organizationId) params.set("organizationId", organizationId);
+
+    const queryString = params.toString();
+    const url = queryString
+      ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"}/api/auth/oauth/authorize/${provider}?${queryString}`
+      : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"}/api/auth/oauth/authorize/${provider}`;
+
     window.location.href = url;
   },
 
   /**
-   * Link OAuth provider to current user account
+   * Handle OAuth callback after provider redirect
+   * GET /api/auth/oauth/callback
    */
-  async linkProvider(request: LinkOAuthRequest): Promise<{ message: string }> {
-    return apiClient.post('/auth/oauth/link', { json: request }).json<{ message: string }>();
+  async handleOAuthCallback(params: OAuthCallbackParams): Promise<OAuthLoginResponse> {
+    const queryString = new URLSearchParams({
+      code: params.code,
+      state: params.state,
+    }).toString();
+
+    return api
+      .get(`api/auth/oauth/callback?${queryString}`)
+      .json<OAuthLoginResponse>();
+  },
+
+  /**
+   * Link OAuth account to existing user
+   * POST /api/auth/oauth/link
+   */
+  async linkOAuthAccount(data: LinkOAuthAccountRequest): Promise<{ message: string }> {
+    return api
+      .post("api/auth/oauth/link", { json: data })
+      .json<{ message: string }>();
   },
 
   /**
    * Unlink OAuth provider from current user account
+   * POST /api/auth/oauth/unlink
    */
-  async unlinkProvider(): Promise<{ message: string }> {
-    return apiClient.post('/auth/oauth/unlink').json<{ message: string }>();
+  async unlinkOAuthAccount(provider: string): Promise<{ message: string }> {
+    return api
+      .delete(`api/auth/oauth/unlink/${provider}`)
+      .json<{ message: string }>();
   },
 };

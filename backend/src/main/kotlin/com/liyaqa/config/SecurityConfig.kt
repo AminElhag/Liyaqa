@@ -23,6 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 class SecurityConfig(
     private val jwtAuthenticationFilter: JwtAuthenticationFilter,
     private val cookieAuthenticationFilter: CookieAuthenticationFilter,
+    private val csrfValidationFilter: CsrfValidationFilter,
     @param:Value("\${liyaqa.security.hsts-enabled:false}")
     private val hstsEnabled: Boolean,
     @param:Value("\${liyaqa.security.hsts-max-age-seconds:31536000}")
@@ -42,14 +43,21 @@ class SecurityConfig(
 
         val configuration = CorsConfiguration()
 
-        // Use pattern-based origins for subdomain support (e.g., https://*.liyaqa.com)
-        if (patterns.isNotEmpty()) {
-            configuration.allowedOriginPatterns = patterns
-        }
-
-        // Also allow explicit origins
+        // SECURITY: When allowCredentials=true, we MUST use specific origins, not patterns
+        // Patterns with credentials create a security vulnerability (credential exposure to wildcards)
         if (origins.isNotEmpty()) {
+            // Production-safe: Use explicit allowed origins with credentials
             configuration.allowedOrigins = origins
+            configuration.allowCredentials = true
+        } else if (patterns.isNotEmpty()) {
+            // Development mode: Use patterns WITHOUT credentials
+            // This is safe for development but should not be used in production
+            configuration.allowedOriginPatterns = patterns
+            configuration.allowCredentials = false
+        } else {
+            // Fallback: No CORS (same-origin only)
+            configuration.allowedOrigins = listOf()
+            configuration.allowCredentials = false
         }
 
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
@@ -71,7 +79,6 @@ class SecurityConfig(
             "X-RateLimit-Reset",
             "Set-Cookie"
         )
-        configuration.allowCredentials = true
         configuration.maxAge = 3600L
 
         val source = UrlBasedCorsConfigurationSource()
@@ -138,9 +145,12 @@ class SecurityConfig(
                     // All other requests require authentication
                     .anyRequest().authenticated()
             }
-            // Add cookie authentication filter first, then JWT filter
-            // Cookie filter handles cookie-based auth, JWT filter handles Bearer token auth
+            // Add authentication filters
+            // 1. Cookie auth filter (reads JWT from cookie)
+            // 2. CSRF validation filter (validates CSRF token for cookie auth)
+            // 3. JWT auth filter (reads JWT from Authorization header)
             .addFilterBefore(cookieAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
+            .addFilterAfter(csrfValidationFilter, CookieAuthenticationFilter::class.java)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
             // Security headers
             .headers { headers ->

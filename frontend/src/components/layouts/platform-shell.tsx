@@ -182,6 +182,14 @@ export function PlatformShell({ children }: PlatformShellProps) {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Skip Links for Accessibility */}
+      <a href="#main-content" className="skip-link">
+        {isRtl ? "تخطي إلى المحتوى الرئيسي" : "Skip to main content"}
+      </a>
+      <a href="#navigation" className="skip-link">
+        {isRtl ? "تخطي إلى التنقل" : "Skip to navigation"}
+      </a>
+
       {/* Impersonation Banner */}
       {isImpersonating && impersonatedUser && (
         <div
@@ -224,6 +232,9 @@ export function PlatformShell({ children }: PlatformShellProps) {
 
       {/* Sidebar */}
       <aside
+        id="navigation"
+        role="navigation"
+        aria-label={isRtl ? "التنقل الرئيسي" : "Main navigation"}
         className={cn(
           "fixed z-50 h-full bg-neutral-900 dark:bg-neutral-950 text-white transition-all duration-300",
           sidebarCollapsed ? "w-16" : "w-64",
@@ -236,18 +247,18 @@ export function PlatformShell({ children }: PlatformShellProps) {
           <Link href={`/${locale}/platform-dashboard`} className="flex items-center">
             {sidebarCollapsed ? (
               <Image
-                src="/assets/logo-icon.svg"
+                src="/assets/logo-liyaqa-icon.svg"
                 alt="Liyaqa"
-                width={32}
-                height={32}
+                width={64}
+                height={64}
                 className="h-8 w-8"
               />
             ) : (
               <Image
-                src="/assets/logo-white.svg"
+                src="/assets/logo-liyaqa-white.svg"
                 alt="Liyaqa - لياقة"
-                width={160}
-                height={60}
+                width={280}
+                height={80}
                 className="h-12 w-auto"
                 priority
               />
@@ -379,7 +390,14 @@ export function PlatformShell({ children }: PlatformShellProps) {
         </header>
 
         {/* Page content */}
-        <main className="p-4 lg:p-6">{children}</main>
+        <main
+          id="main-content"
+          role="main"
+          aria-label={isRtl ? "المحتوى الرئيسي" : "Main content"}
+          className="p-4 lg:p-6"
+        >
+          {children}
+        </main>
       </div>
 
       {/* Command Palette */}

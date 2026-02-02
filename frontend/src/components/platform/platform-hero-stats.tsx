@@ -3,6 +3,7 @@
 import { useLocale } from "next-intl";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useMemo, memo } from "react";
 import {
   Building2,
   Banknote,
@@ -70,6 +71,7 @@ const cardVariants = {
 };
 
 // Generate sparkline data with realistic patterns
+// Memoized at component level to avoid regenerating on every render
 function generateSparklineData(baseValue: number, length: number = 7): number[] {
   return Array.from({ length }, (_, i) => {
     const variance = Math.random() * 0.2 - 0.1;
@@ -77,6 +79,45 @@ function generateSparklineData(baseValue: number, length: number = 7): number[] 
     return Math.max(0, Math.round(baseValue * (1 + variance + trend)));
   });
 }
+
+// Memoized sparkline chart component to prevent re-renders
+interface SparklineChartProps {
+  data: number[];
+  color: string;
+  id: string;
+}
+
+const SparklineChart = memo<SparklineChartProps>(({ data, color, id }) => {
+  // Pre-transform data to avoid doing it on every render
+  const chartData = useMemo(
+    () => data.map((v, i) => ({ value: v, index: i })),
+    [data]
+  );
+
+  return (
+    <div className="absolute bottom-0 left-0 right-0 h-10 opacity-40">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+        <AreaChart data={chartData}>
+          <defs>
+            <linearGradient id={`platform-gradient-${id}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.5} />
+              <stop offset="100%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke={color}
+            strokeWidth={1.5}
+            fill={`url(#platform-gradient-${id})`}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+});
+
+SparklineChart.displayName = "SparklineChart";
 
 export function PlatformHeroStats({
   summary,
@@ -91,7 +132,9 @@ export function PlatformHeroStats({
     return <PlatformHeroStatsSkeleton />;
   }
 
-  const stats: StatCardData[] = [
+  // Memoize stats array to prevent regenerating sparkline data on every render
+  // Only recalculate when summary, revenue, or health changes
+  const stats: StatCardData[] = useMemo(() => [
     {
       id: "clients",
       titleEn: "Total Clients",
@@ -158,7 +201,7 @@ export function PlatformHeroStats({
       alert: (health?.overallHealthScore || 85) < 70,
       sparklineData: generateSparklineData(health?.overallHealthScore || 85, 7),
     },
-  ];
+  ], [summary, revenue, health]);
 
   return (
     <motion.div
@@ -180,33 +223,34 @@ interface PlatformStatCardProps {
   isRtl: boolean;
 }
 
-function PlatformStatCard({ stat, locale, isRtl }: PlatformStatCardProps) {
+// Memoize stat card to prevent re-renders when parent updates
+const PlatformStatCard = memo<PlatformStatCardProps>(({ stat, locale, isRtl }) => {
   const Icon = stat.icon;
   const title = locale === "ar" ? stat.titleAr : stat.titleEn;
   const secondaryLabel = locale === "ar" ? stat.secondaryLabelAr : stat.secondaryLabelEn;
 
-  // Platform B2B color scheme
+  // Platform B2B color scheme with coral theme
   const gradientClasses: Record<string, string> = {
-    clients: "from-blue-500/15 to-blue-500/5 hover:from-blue-500/25 hover:to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/10",
+    clients: "from-[#FF6B4A]/15 to-[#E85D3A]/5 hover:from-[#FF6B4A]/25 hover:to-[#E85D3A]/10 dark:from-[#FF6B4A]/20 dark:to-[#E85D3A]/10",
     revenue: "from-emerald-500/15 to-emerald-500/5 hover:from-emerald-500/25 hover:to-emerald-500/10 dark:from-emerald-500/20 dark:to-emerald-500/10",
     deals: "from-amber-500/15 to-amber-500/5 hover:from-amber-500/25 hover:to-amber-500/10 dark:from-amber-500/20 dark:to-amber-500/10",
-    subscriptions: "from-cyan-500/15 to-cyan-500/5 hover:from-cyan-500/25 hover:to-cyan-500/10 dark:from-cyan-500/20 dark:to-cyan-500/10",
+    subscriptions: "from-[#FF9A82]/15 to-[#FF9A82]/5 hover:from-[#FF9A82]/25 hover:to-[#FF9A82]/10 dark:from-[#FF9A82]/20 dark:to-[#FF9A82]/10",
     health: "from-violet-500/15 to-violet-500/5 hover:from-violet-500/25 hover:to-violet-500/10 dark:from-violet-500/20 dark:to-violet-500/10",
   };
 
   const iconClasses: Record<string, string> = {
-    clients: "bg-blue-500/20 text-blue-600 dark:bg-blue-500/30 dark:text-blue-400",
+    clients: "bg-[#FF6B4A]/20 text-[#FF6B4A] dark:bg-[#FF6B4A]/30 dark:text-[#FF9A82]",
     revenue: "bg-emerald-500/20 text-emerald-600 dark:bg-emerald-500/30 dark:text-emerald-400",
     deals: "bg-amber-500/20 text-amber-600 dark:bg-amber-500/30 dark:text-amber-400",
-    subscriptions: "bg-cyan-500/20 text-cyan-600 dark:bg-cyan-500/30 dark:text-cyan-400",
+    subscriptions: "bg-[#FF9A82]/20 text-[#E85D3A] dark:bg-[#FF9A82]/30 dark:text-[#FF9A82]",
     health: "bg-violet-500/20 text-violet-600 dark:bg-violet-500/30 dark:text-violet-400",
   };
 
   const chartColors: Record<string, string> = {
-    clients: "#3b82f6",
+    clients: "#FF6B4A",
     revenue: "#10b981",
     deals: "#f59e0b",
-    subscriptions: "#06b6d4",
+    subscriptions: "#FF9A82",
     health: "#8b5cf6",
   };
 
@@ -289,31 +333,19 @@ function PlatformStatCard({ stat, locale, isRtl }: PlatformStatCardProps) {
 
           {/* Sparkline */}
           {stat.sparklineData && (
-            <div className="absolute bottom-0 left-0 right-0 h-10 opacity-40">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <AreaChart data={stat.sparklineData.map((v, i) => ({ value: v, index: i }))}>
-                  <defs>
-                    <linearGradient id={`platform-gradient-${stat.id}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={chartColors[stat.accentColor]} stopOpacity={0.5} />
-                      <stop offset="100%" stopColor={chartColors[stat.accentColor]} stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke={chartColors[stat.accentColor]}
-                    strokeWidth={1.5}
-                    fill={`url(#platform-gradient-${stat.id})`}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+            <SparklineChart
+              data={stat.sparklineData}
+              color={chartColors[stat.accentColor]}
+              id={stat.id}
+            />
           )}
         </div>
       </Link>
     </motion.div>
   );
-}
+});
+
+PlatformStatCard.displayName = "PlatformStatCard";
 
 function PlatformHeroStatsSkeleton() {
   return (

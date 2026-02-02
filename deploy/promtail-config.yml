@@ -1,0 +1,193 @@
+# Promtail Configuration
+# Ships logs from Docker containers and system logs to Loki
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: info
+
+# Position file to track read progress
+positions:
+  filename: /tmp/positions.yaml
+
+# Loki endpoint
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    # Optional: Add basic auth or bearer token for security
+    # basic_auth:
+    #   username: loki
+    #   password: secret
+
+# Scrape configurations
+scrape_configs:
+  ############################################################################
+  # Docker Container Logs
+  ############################################################################
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: label
+            values: ["logging=promtail"]
+
+    relabel_configs:
+      # Container name
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+
+      # Container image
+      - source_labels: ['__meta_docker_container_image']
+        target_label: 'image'
+
+      # Container labels
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: 'project'
+
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'service'
+
+    # Pipeline stages to process logs
+    pipeline_stages:
+      # Parse JSON logs from Logstash encoder
+      - json:
+          expressions:
+            timestamp: '@timestamp'
+            level: level
+            logger: logger_name
+            message: message
+            thread: thread_name
+            userId: userId
+            tenantId: tenantId
+            requestId: requestId
+            traceId: traceId
+            spanId: spanId
+
+      # Extract timestamp
+      - timestamp:
+          source: timestamp
+          format: RFC3339Nano
+
+      # Set log level as label
+      - labels:
+          level:
+          service:
+          userId:
+          tenantId:
+
+      # Output the message
+      - output:
+          source: message
+
+  ############################################################################
+  # Liyaqa Application Logs (from file)
+  ############################################################################
+  - job_name: liyaqa-app
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: liyaqa
+          service: backend
+          __path__: /var/log/liyaqa*.log
+
+    pipeline_stages:
+      # Parse JSON logs
+      - json:
+          expressions:
+            timestamp: '@timestamp'
+            level: level
+            logger: logger_name
+            message: message
+            userId: userId
+            tenantId: tenantId
+            requestId: requestId
+
+      - timestamp:
+          source: timestamp
+          format: RFC3339Nano
+
+      - labels:
+          level:
+          userId:
+          tenantId:
+
+      - output:
+          source: message
+
+  ############################################################################
+  # System Logs (syslog)
+  ############################################################################
+  - job_name: syslog
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: syslog
+          __path__: /var/log/syslog
+
+    pipeline_stages:
+      # Parse syslog format
+      - regex:
+          expression: '^(?P<timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<hostname>\S+)\s+(?P<app>\S+)(\[(?P<pid>\d+)\])?:\s+(?P<message>.*)'
+
+      - timestamp:
+          source: timestamp
+          format: 'Jan 2 15:04:05'
+
+      - labels:
+          app:
+          hostname:
+
+      - output:
+          source: message
+
+  ############################################################################
+  # Nginx Access Logs (if using Nginx as reverse proxy)
+  ############################################################################
+  - job_name: nginx-access
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx
+          type: access
+          __path__: /var/log/nginx/access*.log
+
+    pipeline_stages:
+      # Parse combined log format
+      - regex:
+          expression: '^(?P<remote_addr>[\w\.]+) - (?P<remote_user>[^ ]*) \[(?P<time_local>.*)\] "(?P<method>\S+)(?: +(?P<path>[^\"]*?)(?: +\S*)?)?" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^\"]*)" "(?P<http_user_agent>[^\"]*)"'
+
+      - labels:
+          method:
+          status:
+          path:
+
+      - timestamp:
+          source: time_local
+          format: '02/Jan/2006:15:04:05 -0700'
+
+  ############################################################################
+  # Nginx Error Logs
+  ############################################################################
+  - job_name: nginx-error
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx
+          type: error
+          __path__: /var/log/nginx/error*.log
+
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}) \[(?P<level>\w+)\] (?P<message>.*)'
+
+      - timestamp:
+          source: timestamp
+          format: '2006/01/02 15:04:05'
+
+      - labels:
+          level:

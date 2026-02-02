@@ -47,7 +47,10 @@ export default function QRCodePage() {
       setExpiresAt(expiry);
       setIsExpired(false);
     } catch (err) {
-      console.error("Failed to generate QR code:", err);
+      // Only log in development
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to generate QR code:", err);
+      }
     }
   }, [profile?.id]);
 

@@ -1,0 +1,410 @@
+# ===========================================
+# Liyaqa Alertmanager Configuration
+# ===========================================
+# Alert routing and notification configuration
+#
+# Environment variables used:
+#   SLACK_WEBHOOK_URL - Slack webhook for general alerts
+#   SLACK_CRITICAL_WEBHOOK_URL - Slack webhook for critical alerts
+#   PAGERDUTY_SERVICE_KEY - PagerDuty integration key
+#   SMTP_HOST - Email server hostname
+#   SMTP_PORT - Email server port
+#   SMTP_USERNAME - Email auth username
+#   SMTP_PASSWORD - Email auth password
+#   SMTP_FROM - From email address
+
+global:
+  # Resolve timeout - how long to wait before auto-resolving
+  resolve_timeout: 5m
+
+  # Slack API URL (using webhooks)
+  slack_api_url: '${SLACK_WEBHOOK_URL}'
+
+  # SMTP configuration for email alerts
+  smtp_smarthost: '${SMTP_HOST:-smtp.sendgrid.net}:${SMTP_PORT:-587}'
+  smtp_from: '${SMTP_FROM:-alerts@liyaqa.com}'
+  smtp_auth_username: '${SMTP_USERNAME}'
+  smtp_auth_password: '${SMTP_PASSWORD}'
+  smtp_require_tls: true
+
+  # PagerDuty URL
+  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+# Templates for alert messages
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# ===========================================
+# ROUTING CONFIGURATION
+# ===========================================
+# Routes define how alerts are grouped and where they're sent
+
+route:
+  # Default receiver for unmatched alerts
+  receiver: 'default'
+
+  # How long to wait before sending a notification
+  group_wait: 30s
+
+  # How long to wait before sending updates about new alerts
+  group_interval: 5m
+
+  # How often to resend the same alert
+  repeat_interval: 4h
+
+  # Group alerts by these labels
+  group_by: ['alertname', 'severity', 'category']
+
+  # Child routes for specific alert types
+  routes:
+    # ===========================================
+    # CRITICAL ALERTS - Immediate notification
+    # ===========================================
+    - match:
+        severity: critical
+      receiver: 'critical'
+      group_wait: 10s
+      group_interval: 2m
+      repeat_interval: 30m
+      continue: true  # Also match other routes
+
+    # ===========================================
+    # WARNING ALERTS - Regular notification
+    # ===========================================
+    - match:
+        severity: warning
+      receiver: 'warning'
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+
+    # ===========================================
+    # BUSINESS ALERTS - Notify product team
+    # ===========================================
+    - match:
+        category: business
+      receiver: 'business'
+      group_wait: 1m
+      group_interval: 10m
+      repeat_interval: 6h
+
+    # ===========================================
+    # DATABASE ALERTS - Notify DBA team
+    # ===========================================
+    - match:
+        category: database
+      receiver: 'database'
+      group_wait: 20s
+      group_interval: 3m
+      repeat_interval: 2h
+
+    # ===========================================
+    # INFRASTRUCTURE ALERTS - Notify DevOps
+    # ===========================================
+    - match:
+        category: infrastructure
+      receiver: 'infrastructure'
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 3h
+
+    # ===========================================
+    # SECURITY ALERTS - Notify security team
+    # ===========================================
+    - match:
+        category: security
+      receiver: 'security'
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 1h
+
+# ===========================================
+# INHIBITION RULES
+# ===========================================
+# Suppress redundant alerts
+
+inhibit_rules:
+  # Suppress warning if critical alert is firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']
+
+  # Suppress high memory if instance is down
+  - source_match:
+      alertname: 'InstanceDown'
+    target_match_re:
+      alertname: '(HighMemoryUsage|HighCPUUsage|HighDiskUsage)'
+    equal: ['instance']
+
+  # Suppress application alerts if service is down
+  - source_match:
+      alertname: 'ServiceDown'
+    target_match_re:
+      alertname: '(HighErrorRate|SlowAPIResponseTime|Database.*)'
+    equal: ['instance']
+
+  # Suppress slow queries if database is down
+  - source_match:
+      alertname: 'PostgreSQLDown'
+    target_match_re:
+      alertname: '(SlowDatabaseQueries|DatabaseConnection.*)'
+    equal: ['instance']
+
+# ===========================================
+# RECEIVERS CONFIGURATION
+# ===========================================
+# Define notification channels
+
+receivers:
+  # Default receiver - low-priority alerts
+  - name: 'default'
+    slack_configs:
+      - channel: '#liyaqa-alerts'
+        title: ':information_source: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Severity:* {{ .Labels.severity }}
+          *Instance:* {{ .Labels.instance }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          {{ if .Annotations.dashboard }}
+          *Dashboard:* {{ .Annotations.dashboard }}
+          {{ end }}
+          {{ end }}
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+        send_resolved: true
+
+    email_configs:
+      - to: 'engineering@liyaqa.com'
+        headers:
+          Subject: '[Liyaqa Alert] {{ .GroupLabels.alertname }}'
+        html: |
+          <!DOCTYPE html>
+          <html>
+          <body>
+            <h2>{{ .GroupLabels.alertname }}</h2>
+            {{ range .Alerts }}
+            <h3>{{ .Labels.alertname }}</h3>
+            <ul>
+              <li><strong>Severity:</strong> {{ .Labels.severity }}</li>
+              <li><strong>Instance:</strong> {{ .Labels.instance }}</li>
+              <li><strong>Summary:</strong> {{ .Annotations.summary }}</li>
+              <li><strong>Description:</strong> {{ .Annotations.description }}</li>
+            </ul>
+            {{ end }}
+          </body>
+          </html>
+
+  # Critical alerts - immediate notification
+  - name: 'critical'
+    slack_configs:
+      - api_url: '${SLACK_CRITICAL_WEBHOOK_URL}'
+        channel: '#liyaqa-critical'
+        title: ':rotating_light: CRITICAL: {{ .GroupLabels.alertname }}'
+        text: |
+          <!channel>
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Severity:* {{ .Labels.severity | toUpper }}
+          *Instance:* {{ .Labels.instance }}
+          *Category:* {{ .Labels.category }}
+          *Team:* {{ .Labels.team }}
+
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+
+          {{ if .Annotations.runbook }}
+          *Runbook:* {{ .Annotations.runbook }}
+          {{ end }}
+          {{ if .Annotations.dashboard }}
+          *Dashboard:* {{ .Annotations.dashboard }}
+          {{ end }}
+
+          *Status:* {{ .Status | toUpper }}
+          {{ if eq .Status "firing" }}
+          *Started:* {{ .StartsAt.Format "2006-01-02 15:04:05 MST" }}
+          {{ else }}
+          *Resolved:* {{ .EndsAt.Format "2006-01-02 15:04:05 MST" }}
+          {{ end }}
+          {{ end }}
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        send_resolved: true
+
+    # PagerDuty for critical alerts (on-call)
+    pagerduty_configs:
+      - service_key: '${PAGERDUTY_SERVICE_KEY}'
+        description: '{{ .GroupLabels.alertname }}: {{ .GroupLabels.instance }}'
+        details:
+          severity: '{{ .GroupLabels.severity }}'
+          category: '{{ .GroupLabels.category }}'
+          team: '{{ .GroupLabels.team }}'
+          summary: '{{ .CommonAnnotations.summary }}'
+          description: '{{ .CommonAnnotations.description }}'
+        url: '{{ .CommonAnnotations.dashboard }}'
+        client: 'Liyaqa Alertmanager'
+        client_url: 'https://alertmanager.liyaqa.com'
+
+    # Email to team leads
+    email_configs:
+      - to: 'team-leads@liyaqa.com,oncall@liyaqa.com'
+        headers:
+          Subject: '[CRITICAL] {{ .GroupLabels.alertname }}'
+          Priority: '1'
+        html: |
+          <!DOCTYPE html>
+          <html>
+          <body style="font-family: Arial, sans-serif;">
+            <div style="background-color: #f44336; color: white; padding: 20px;">
+              <h1>🚨 CRITICAL ALERT</h1>
+              <h2>{{ .GroupLabels.alertname }}</h2>
+            </div>
+            <div style="padding: 20px;">
+              {{ range .Alerts }}
+              <h3>{{ .Labels.alertname }}</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr style="background-color: #f5f5f5;">
+                  <td style="padding: 10px; border: 1px solid #ddd;"><strong>Severity</strong></td>
+                  <td style="padding: 10px; border: 1px solid #ddd;">{{ .Labels.severity | toUpper }}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px; border: 1px solid #ddd;"><strong>Instance</strong></td>
+                  <td style="padding: 10px; border: 1px solid #ddd;">{{ .Labels.instance }}</td>
+                </tr>
+                <tr style="background-color: #f5f5f5;">
+                  <td style="padding: 10px; border: 1px solid #ddd;"><strong>Category</strong></td>
+                  <td style="padding: 10px; border: 1px solid #ddd;">{{ .Labels.category }}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px; border: 1px solid #ddd;"><strong>Team</strong></td>
+                  <td style="padding: 10px; border: 1px solid #ddd;">{{ .Labels.team }}</td>
+                </tr>
+                <tr style="background-color: #f5f5f5;">
+                  <td style="padding: 10px; border: 1px solid #ddd;"><strong>Summary</strong></td>
+                  <td style="padding: 10px; border: 1px solid #ddd;">{{ .Annotations.summary }}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px; border: 1px solid #ddd;"><strong>Description</strong></td>
+                  <td style="padding: 10px; border: 1px solid #ddd;">{{ .Annotations.description }}</td>
+                </tr>
+                {{ if .Annotations.runbook }}
+                <tr style="background-color: #f5f5f5;">
+                  <td style="padding: 10px; border: 1px solid #ddd;"><strong>Runbook</strong></td>
+                  <td style="padding: 10px; border: 1px solid #ddd;"><a href="{{ .Annotations.runbook }}">{{ .Annotations.runbook }}</a></td>
+                </tr>
+                {{ end }}
+                {{ if .Annotations.dashboard }}
+                <tr>
+                  <td style="padding: 10px; border: 1px solid #ddd;"><strong>Dashboard</strong></td>
+                  <td style="padding: 10px; border: 1px solid #ddd;"><a href="{{ .Annotations.dashboard }}">View Dashboard</a></td>
+                </tr>
+                {{ end }}
+              </table>
+              {{ end }}
+            </div>
+          </body>
+          </html>
+
+  # Warning alerts - standard notification
+  - name: 'warning'
+    slack_configs:
+      - channel: '#liyaqa-alerts'
+        title: ':warning: Warning: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Instance:* {{ .Labels.instance }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+        color: 'warning'
+        send_resolved: true
+
+  # Business alerts - product team
+  - name: 'business'
+    slack_configs:
+      - channel: '#liyaqa-business-alerts'
+        title: ':chart_with_downwards_trend: Business Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+        send_resolved: true
+
+    email_configs:
+      - to: 'product@liyaqa.com'
+        headers:
+          Subject: '[Business Alert] {{ .GroupLabels.alertname }}'
+
+  # Database alerts - DBA team
+  - name: 'database'
+    slack_configs:
+      - channel: '#liyaqa-database'
+        title: ':floppy_disk: Database Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Instance:* {{ .Labels.instance }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          {{ if .Annotations.runbook }}
+          *Runbook:* {{ .Annotations.runbook }}
+          {{ end }}
+          {{ end }}
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        send_resolved: true
+
+    email_configs:
+      - to: 'dba@liyaqa.com,backend@liyaqa.com'
+        headers:
+          Subject: '[Database] {{ .GroupLabels.alertname }}'
+
+  # Infrastructure alerts - DevOps team
+  - name: 'infrastructure'
+    slack_configs:
+      - channel: '#liyaqa-infrastructure'
+        title: ':gear: Infrastructure Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Instance:* {{ .Labels.instance }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+        send_resolved: true
+
+    email_configs:
+      - to: 'devops@liyaqa.com'
+        headers:
+          Subject: '[Infrastructure] {{ .GroupLabels.alertname }}'
+
+  # Security alerts - security team
+  - name: 'security'
+    slack_configs:
+      - channel: '#liyaqa-security'
+        title: ':lock: Security Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          <!channel>
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Instance:* {{ .Labels.instance }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          {{ if .Annotations.runbook }}
+          *Runbook:* {{ .Annotations.runbook }}
+          {{ end }}
+          {{ end }}
+        color: 'danger'
+        send_resolved: true
+
+    email_configs:
+      - to: 'security@liyaqa.com,team-leads@liyaqa.com'
+        headers:
+          Subject: '[SECURITY] {{ .GroupLabels.alertname }}'
+          Priority: '1'

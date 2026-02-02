@@ -23,6 +23,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { authApi } from "@/lib/api/auth";
 import { isSubdomainAccess } from "@/lib/subdomain";
 import type { LocalizedText } from "@/types/api";
+import { OAuthLoginButtons } from "@/components/auth/oauth-login-buttons";
 
 // Schema when subdomain is detected (tenantId optional)
 const loginSchemaWithSubdomain = z.object({
@@ -168,6 +169,9 @@ export default function MemberLoginPage() {
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
+            {/* OAuth Login Buttons */}
+            <OAuthLoginButtons organizationId={subdomainTenant?.tenantId} />
+
             {(error || roleError) && (
               <div className="p-3 text-sm text-danger bg-danger-50 rounded-lg border border-danger-500/20">
                 {roleError || t("invalidCredentials")}

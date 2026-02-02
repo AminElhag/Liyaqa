@@ -113,10 +113,10 @@ export function MemberForm({
       locale === "ar"
         ? "أدخل معلومات العضو الأساسية"
         : "Enter the member's basic information",
-    firstNameEn: locale === "ar" ? "الاسم الأول (إنجليزي)" : "First Name (EN)",
-    firstNameAr: locale === "ar" ? "الاسم الأول (عربي)" : "First Name (AR)",
-    lastNameEn: locale === "ar" ? "اسم العائلة (إنجليزي)" : "Last Name (EN)",
-    lastNameAr: locale === "ar" ? "اسم العائلة (عربي)" : "Last Name (AR)",
+    firstNameEn: locale === "ar" ? "الاسم الأول (إنجليزي)" : "First Name (English)",
+    firstNameAr: locale === "ar" ? "الاسم الأول (عربي)" : "First Name (Arabic)",
+    lastNameEn: locale === "ar" ? "اسم العائلة (إنجليزي)" : "Last Name (English)",
+    lastNameAr: locale === "ar" ? "اسم العائلة (عربي)" : "Last Name (Arabic)",
     nameRequiredHint:
       locale === "ar"
         ? "* مطلوب بلغة واحدة على الأقل"
@@ -130,15 +130,15 @@ export function MemberForm({
     other: locale === "ar" ? "آخر" : "Other",
     preferNotToSay: locale === "ar" ? "أفضل عدم الإفصاح" : "Prefer not to say",
     selectGender: locale === "ar" ? "اختر الجنس" : "Select gender",
-    addressEn: locale === "ar" ? "العنوان (إنجليزي)" : "Address (EN)",
-    addressAr: locale === "ar" ? "العنوان (عربي)" : "Address (AR)",
+    addressEn: locale === "ar" ? "العنوان (إنجليزي)" : "Address (English)",
+    addressAr: locale === "ar" ? "العنوان (عربي)" : "Address (Arabic)",
     emergencyTitle:
       locale === "ar" ? "معلومات الطوارئ" : "Emergency Information",
     emergencyName: locale === "ar" ? "اسم جهة الاتصال" : "Emergency Contact",
     emergencyPhone:
       locale === "ar" ? "هاتف جهة الاتصال" : "Emergency Phone",
-    notesEn: locale === "ar" ? "ملاحظات (إنجليزي)" : "Notes (EN)",
-    notesAr: locale === "ar" ? "ملاحظات (عربي)" : "Notes (AR)",
+    notesEn: locale === "ar" ? "ملاحظات (إنجليزي)" : "Notes (English)",
+    notesAr: locale === "ar" ? "ملاحظات (عربي)" : "Notes (Arabic)",
     cancel: locale === "ar" ? "إلغاء" : "Cancel",
     save: locale === "ar" ? "حفظ" : "Save",
     saving: locale === "ar" ? "جاري الحفظ..." : "Saving...",

@@ -12,7 +12,7 @@ export default defineConfig({
     exclude: ["node_modules", "e2e", "tests"],
     coverage: {
       provider: "v8",
-      reporter: ["text", "json", "html"],
+      reporter: ["text", "json", "html", "lcov"],
       exclude: [
         "node_modules",
         "e2e",
@@ -20,7 +20,18 @@ export default defineConfig({
         "**/*.d.ts",
         "**/*.config.*",
         "**/types/**",
+        "**/*.spec.{ts,tsx}",
+        "**/*.test.{ts,tsx}",
+        "**/app/**/layout.tsx",
+        "**/app/**/page.tsx",
+        "**/middleware.ts",
       ],
+      thresholds: {
+        lines: 60,
+        functions: 60,
+        branches: 60,
+        statements: 60,
+      },
     },
   },
   resolve: {

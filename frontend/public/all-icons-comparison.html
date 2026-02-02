@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liyaqa Icon Comparison - Choose Your Favorite</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: white;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #FF6B4A 0%, #E85D3A 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #94a3b8;
+      margin-bottom: 48px;
+      font-size: 1.2rem;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 32px;
+      margin-bottom: 40px;
+    }
+
+    .option-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 32px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .option-card:hover {
+      border-color: #FF6B4A;
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(255, 107, 74, 0.3);
+    }
+
+    .option-number {
+      display: inline-block;
+      background: linear-gradient(135deg, #FF6B4A 0%, #E85D3A 100%);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.875rem;
+      margin-bottom: 20px;
+    }
+
+    .option-title {
+      font-size: 1.5rem;
+      color: #FF6B4A;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+
+    .option-description {
+      color: #cbd5e1;
+      line-height: 1.6;
+      margin-bottom: 24px;
+      font-size: 0.95rem;
+    }
+
+    .icon-preview {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .size-tests {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .pros-cons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .pros, .cons {
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+
+    .pros {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .cons {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .pros-title, .cons-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .pros-title { color: #86efac; }
+    .cons-title { color: #fca5a5; }
+
+    .pros ul, .cons ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .pros li::before {
+      content: "✓ ";
+      color: #86efac;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    .cons li::before {
+      content: "✗ ";
+      color: #fca5a5;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    .current-badge {
+      display: inline-block;
+      background: #16a34a;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    @media (max-width: 768px) {
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+      .pros-cons {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 Choose Your Liyaqa Icon</h1>
+    <p class="subtitle">Compare all icon designs and pick your favorite</p>
+
+    <div class="options-grid">
+
+      <!-- OPTION 1: Current Geometric L -->
+      <div class="option-card">
+        <span class="option-number">OPTION 1</span>
+        <span class="current-badge">CURRENT</span>
+        <h2 class="option-title">Geometric "ل" Letter</h2>
+        <p class="option-description">
+          Circular icon with stylized "ل" (L) letterform - bold geometric design with accent dot
+        </p>
+
+        <div class="icon-preview">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="128" height="128">
+            <defs>
+              <linearGradient id="opt1Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#FF6B4A"/>
+                <stop offset="100%" style="stop-color:#E85D3A"/>
+              </linearGradient>
+            </defs>
+            <circle cx="32" cy="32" r="30" fill="url(#opt1Grad)"/>
+            <g fill="#ffffff">
+              <rect x="22" y="18" width="6" height="28" rx="3"/>
+              <rect x="22" y="40" width="20" height="6" rx="3"/>
+              <circle cx="42" cy="22" r="4"/>
+            </g>
+          </svg>
+        </div>
+
+        <div class="size-tests">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+            <defs>
+              <linearGradient id="opt1-64" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#FF6B4A"/>
+                <stop offset="100%" style="stop-color:#E85D3A"/>
+              </linearGradient>
+            </defs>
+            <circle cx="32" cy="32" r="30" fill="url(#opt1-64)"/>
+            <g fill="#ffffff">
+              <rect x="22" y="18" width="6" height="28" rx="3"/>
+              <rect x="22" y="40" width="20" height="6" rx="3"/>
+              <circle cx="42" cy="22" r="4"/>
+            </g>
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32">
+            <defs>
+              <linearGradient id="opt1-32" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#FF6B4A"/>
+                <stop offset="100%" style="stop-color:#E85D3A"/>
+              </linearGradient>
+            </defs>
+            <circle cx="32" cy="32" r="30" fill="url(#opt1-32)"/>
+            <g fill="#ffffff">
+              <rect x="22" y="18" width="6" height="28" rx="3"/>
+              <rect x="22" y="40" width="20" height="6" rx="3"/>
+              <circle cx="42" cy="22" r="4"/>
+            </g>
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="16" height="16">
+            <defs>
+              <linearGradient id="opt1-16" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#FF6B4A"/>
+                <stop offset="100%" style="stop-color:#E85D3A"/>
+              </linearGradient>
+            </defs>
+            <circle cx="32" cy="32" r="30" fill="url(#opt1-16)"/>
+            <g fill="#ffffff">
+              <rect x="22" y="18" width="6" height="28" rx="3"/>
+              <rect x="22" y="40" width="20" height="6" rx="3"/>
+              <circle cx="42" cy="22" r="4"/>
+            </g>
+          </svg>
+        </div>
+
+        <div class="pros-cons">
+          <div class="pros">
+            <div class="pros-title">Pros</div>
+            <ul>
+              <li>Simple & memorable</li>
+              <li>Perfect for app icons</li>
+              <li>Scales beautifully</li>
+              <li>Clean geometric design</li>
+              <li>Arabic letter reference</li>
+            </ul>
+          </div>
+          <div class="cons">
+            <div class="cons-title">Cons</div>
+            <ul>
+              <li>Abstract (not full word)</li>
+              <li>May need explanation</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPTION 2: Arabic Text لياقة -->
+      <div class="option-card">
+        <span class="option-number">OPTION 2</span>
+        <h2 class="option-title">Arabic Text "لياقة"</h2>
+        <p class="option-description">
+          Full word "لياقة" (Liyaqa) using authentic Arabic calligraphy fonts with gradient
+        </p>
+
+        <div class="icon-preview">
+          <svg width="128" height="128" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <style>
+                @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@700&amp;display=swap');
+              </style>
+              <linearGradient id="opt2Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FF6B4A"/>
+                <stop offset="100%" stop-color="#E85D3A"/>
+              </linearGradient>
+            </defs>
+            <text x="32" y="38" font-family="'Amiri', serif" font-size="28" font-weight="700" fill="url(#opt2Grad)" text-anchor="middle" direction="rtl" dominant-baseline="middle">لياقة</text>
+          </svg>
+        </div>
+
+        <div class="size-tests">
+          <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <style>@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@700&amp;display=swap');</style>
+              <linearGradient id="opt2-64" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FF6B4A"/>
+                <stop offset="100%" stop-color="#E85D3A"/>
+              </linearGradient>
+            </defs>
+            <text x="32" y="38" font-family="'Amiri', serif" font-size="28" font-weight="700" fill="url(#opt2-64)" text-anchor="middle" direction="rtl" dominant-baseline="middle">لياقة</text>
+          </svg>
+          <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <style>@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@700&amp;display=swap');</style>
+              <linearGradient id="opt2-32" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FF6B4A"/>
+                <stop offset="100%" stop-color="#E85D3A"/>
+              </linearGradient>
+            </defs>
+            <text x="16" y="19" font-family="'Amiri', serif" font-size="16" font-weight="700" fill="url(#opt2-32)" text-anchor="middle" direction="rtl" dominant-baseline="middle">لياقة</text>
+          </svg>
+          <svg width="16" height="16" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <style>@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@700&amp;display=swap');</style>
+              <linearGradient id="opt2-16" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FF6B4A"/>
+                <stop offset="100%" stop-color="#E85D3A"/>
+              </linearGradient>
+            </defs>
+            <text x="16" y="19" font-family="'Amiri', serif" font-size="16" font-weight="700" fill="url(#opt2-16)" text-anchor="middle" direction="rtl" dominant-baseline="middle">لياقة</text>
+          </svg>
+        </div>
+
+        <div class="pros-cons">
+          <div class="pros">
+            <div class="pros-title">Pros</div>
+            <ul>
+              <li>Full brand name visible</li>
+              <li>Authentic Arabic calligraphy</li>
+              <li>Culturally accurate</li>
+              <li>Readable text</li>
+              <li>Professional fonts</li>
+            </ul>
+          </div>
+          <div class="cons">
+            <div class="cons-title">Cons</div>
+            <ul>
+              <li>Requires font loading</li>
+              <li>Less distinctive as icon</li>
+              <li>Hard to read at 16px</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPTION 3: Text with Circle Background -->
+      <div class="option-card">
+        <span class="option-number">OPTION 3</span>
+        <h2 class="option-title">Text "لياقة" + Circle</h2>
+        <p class="option-description">
+          Combination: Arabic text "لياقة" on circular gradient background
+        </p>
+
+        <div class="icon-preview">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="128" height="128">
+            <defs>
+              <style>
+                @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@700&amp;display=swap');
+              </style>
+              <linearGradient id="opt3Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FF6B4A"/>
+                <stop offset="100%" stop-color="#E85D3A"/>
+              </linearGradient>
+            </defs>
+            <circle cx="32" cy="32" r="30" fill="url(#opt3Grad)"/>
+            <text x="32" y="38" font-family="'Amiri', serif" font-size="24" font-weight="700" fill="white" text-anchor="middle" direction="rtl" dominant-baseline="middle">لياقة</text>
+          </svg>
+        </div>
+
+        <div class="size-tests">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+            <defs>
+              <style>@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@700&amp;display=swap');</style>
+              <linearGradient id="opt3-64" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FF6B4A"/>
+                <stop offset="100%" stop-color="#E85D3A"/>
+              </linearGradient>
+            </defs>
+            <circle cx="32" cy="32" r="30" fill="url(#opt3-64)"/>
+            <text x="32" y="38" font-family="'Amiri', serif" font-size="24" font-weight="700" fill="white" text-anchor="middle" direction="rtl" dominant-baseline="middle">لياقة</text>
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32">
+            <defs>
+              <style>@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@700&amp;display=swap');</style>
+              <linearGradient id="opt3-32" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FF6B4A"/>
+                <stop offset="100%" stop-color="#E85D3A"/>
+              </linearGradient>
+            </defs>
+            <circle cx="32" cy="32" r="30" fill="url(#opt3-32)"/>
+            <text x="32" y="38" font-family="'Amiri', serif" font-size="24" font-weight="700" fill="white" text-anchor="middle" direction="rtl" dominant-baseline="middle">لياقة</text>
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="16" height="16">
+            <defs>
+              <style>@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@700&amp;display=swap');</style>
+              <linearGradient id="opt3-16" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FF6B4A"/>
+                <stop offset="100%" stop-color="#E85D3A"/>
+              </linearGradient>
+            </defs>
+            <circle cx="32" cy="32" r="30" fill="url(#opt3-16)"/>
+            <text x="32" y="38" font-family="'Amiri', serif" font-size="24" font-weight="700" fill="white" text-anchor="middle" direction="rtl" dominant-baseline="middle">لياقة</text>
+          </svg>
+        </div>
+
+        <div class="pros-cons">
+          <div class="pros">
+            <div class="pros-title">Pros</div>
+            <ul>
+              <li>Full brand name</li>
+              <li>Circular app icon shape</li>
+              <li>High contrast (white on gradient)</li>
+              <li>Professional look</li>
+            </ul>
+          </div>
+          <div class="cons">
+            <div class="cons-title">Cons</div>
+            <ul>
+              <li>Requires font loading</li>
+              <li>Text readability at small sizes</li>
+              <li>Less unique/distinctive</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPTION 4: Minimalist L Monogram -->
+      <div class="option-card">
+        <span class="option-number">OPTION 4</span>
+        <h2 class="option-title">Minimalist "L" Monogram</h2>
+        <p class="option-description">
+          Ultra-simple monogram with just the "L" shape - minimal and modern
+        </p>
+
+        <div class="icon-preview">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="128" height="128">
+            <defs>
+              <linearGradient id="opt4Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FF6B4A"/>
+                <stop offset="100%" stop-color="#E85D3A"/>
+              </linearGradient>
+            </defs>
+            <rect x="18" y="16" width="8" height="32" rx="4" fill="url(#opt4Grad)"/>
+            <rect x="18" y="40" width="28" height="8" rx="4" fill="url(#opt4Grad)"/>
+          </svg>
+        </div>
+
+        <div class="size-tests">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+            <defs>
+              <linearGradient id="opt4-64" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FF6B4A"/>
+                <stop offset="100%" stop-color="#E85D3A"/>
+              </linearGradient>
+            </defs>
+            <rect x="18" y="16" width="8" height="32" rx="4" fill="url(#opt4-64)"/>
+            <rect x="18" y="40" width="28" height="8" rx="4" fill="url(#opt4-64)"/>
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32">
+            <defs>
+              <linearGradient id="opt4-32" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FF6B4A"/>
+                <stop offset="100%" stop-color="#E85D3A"/>
+              </linearGradient>
+            </defs>
+            <rect x="18" y="16" width="8" height="32" rx="4" fill="url(#opt4-32)"/>
+            <rect x="18" y="40" width="28" height="8" rx="4" fill="url(#opt4-32)"/>
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="16" height="16">
+            <defs>
+              <linearGradient id="opt4-16" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color:#FF6B4A"/>
+                <stop offset="100%" stop-color:#E85D3A"/>
+              </linearGradient>
+            </defs>
+            <rect x="18" y="16" width="8" height="32" rx="4" fill="url(#opt4-16)"/>
+            <rect x="18" y="40" width="28" height="8" rx="4" fill="url(#opt4-16)"/>
+          </svg>
+        </div>
+
+        <div class="pros-cons">
+          <div class="pros">
+            <div class="pros-title">Pros</div>
+            <ul>
+              <li>Ultra-minimalist</li>
+              <li>Very scalable</li>
+              <li>Modern & clean</li>
+              <li>No fonts needed</li>
+              <li>Instant recognition</li>
+            </ul>
+          </div>
+          <div class="cons">
+            <div class="cons-title">Cons</div>
+            <ul>
+              <li>Very simple/generic</li>
+              <li>No background</li>
+              <li>Less Arabic identity</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="background: rgba(255, 107, 74, 0.1); border: 2px solid rgba(255, 107, 74, 0.3); border-radius: 16px; padding: 32px; text-align: center;">
+      <h2 style="color: #FF6B4A; margin-bottom: 16px; font-size: 1.5rem;">📝 Tell me which option you prefer!</h2>
+      <p style="color: #cbd5e1; font-size: 1.1rem;">
+        Type the option number (1, 2, 3, or 4) and I'll implement it as your final icon design.
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>

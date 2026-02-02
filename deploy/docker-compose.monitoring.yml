@@ -1,0 +1,226 @@
+version: '3.8'
+
+################################################################################
+# Liyaqa Monitoring Stack
+#
+# This Docker Compose file sets up the complete monitoring and observability
+# stack for Liyaqa:
+#
+# - Prometheus: Metrics collection and storage
+# - Grafana: Visualization dashboards
+# - Loki: Log aggregation
+# - Promtail: Log shipping to Loki
+# - Alertmanager: Alert routing and notification
+# - Postgres Exporter: Database metrics
+#
+# Usage:
+#   docker-compose -f docker-compose.monitoring.yml up -d
+#
+# Access:
+#   - Grafana: http://localhost:3001 (admin/admin)
+#   - Prometheus: http://localhost:9090
+#   - Alertmanager: http://localhost:9093
+#   - Loki: http://localhost:3100
+################################################################################
+
+services:
+
+  ############################################################################
+  # Loki - Log Aggregation
+  ############################################################################
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: liyaqa-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: unless-stopped
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  ############################################################################
+  # Promtail - Log Shipper
+  ############################################################################
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: liyaqa-promtail
+    volumes:
+      # Ship Docker container logs
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log:/var/log:ro
+      - ./promtail-config.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    restart: unless-stopped
+    networks:
+      - monitoring
+    depends_on:
+      - loki
+
+  ############################################################################
+  # Prometheus - Metrics Collection
+  ############################################################################
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: liyaqa-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  ############################################################################
+  # Alertmanager - Alert Routing
+  ############################################################################
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: liyaqa-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    restart: unless-stopped
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+
+  ############################################################################
+  # Grafana - Visualization
+  ############################################################################
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: liyaqa-grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-piechart-panel
+      # Anonymous access for public dashboards (optional)
+      # - GF_AUTH_ANONYMOUS_ENABLED=true
+      # - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    restart: unless-stopped
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+      - loki
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  ############################################################################
+  # Postgres Exporter - Database Metrics
+  ############################################################################
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: liyaqa-postgres-exporter
+    ports:
+      - "9187:9187"
+    volumes:
+      - ./postgres-exporter-queries.yml:/etc/postgres-exporter/queries.yml:ro
+    environment:
+      # Connect to the main Liyaqa database
+      # Update this to match your actual database credentials
+      DATA_SOURCE_NAME: "postgresql://${DB_USERNAME:-liyaqa}:${DB_PASSWORD:-liyaqa}@postgres:5432/liyaqa?sslmode=disable"
+      # Enable custom queries
+      PG_EXPORTER_EXTEND_QUERY_PATH: "/etc/postgres-exporter/queries.yml"
+      # Auto-discover databases
+      PG_EXPORTER_AUTO_DISCOVER_DATABASES: "true"
+      # Disable default metrics that we've customized
+      PG_EXPORTER_DISABLE_DEFAULT_METRICS: "false"
+      # Disable settings metrics (can be noisy)
+      PG_EXPORTER_DISABLE_SETTINGS_METRICS: "true"
+    restart: unless-stopped
+    networks:
+      - monitoring
+      - default  # Connect to main app network to access postgres
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9187/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  ############################################################################
+  # Zipkin - Distributed Tracing
+  ############################################################################
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: liyaqa-zipkin
+    ports:
+      - "9411:9411"
+    environment:
+      - STORAGE_TYPE=mem
+      - MEM_MAX_SPANS=100000
+      - JAVA_OPTS=-Xms256m -Xmx512m
+    restart: unless-stopped
+    networks:
+      - monitoring
+      - default
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9411/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+################################################################################
+# Networks
+################################################################################
+networks:
+  monitoring:
+    driver: bridge
+  default:
+    external: true
+    name: liyaqa_default  # Connect to main app network
+
+################################################################################
+# Volumes
+################################################################################
+volumes:
+  loki-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  alertmanager-data:
+    driver: local

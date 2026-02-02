@@ -12,7 +12,7 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 199 89% 48%;
+    --primary: 11 100% 64%;
     --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -24,8 +24,13 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 199 89% 48%;
+    --ring: 11 100% 64%;
     --radius: 0.5rem;
+
+    /* Brand colors */
+    --brand-coral: 11 100% 64%;
+    --brand-terracotta: 11 84% 58%;
+    --brand-tint: 11 100% 71%;
 
     /* MD3 Shape Corners */
     --md3-shape-corner-xs: 4px;
@@ -45,7 +50,7 @@
     --md3-surface-container-highest: 0 0% 91%;
 
     /* MD3 Surface Tint (primary color with opacity for elevation) */
-    --md3-surface-tint: 199 89% 48%;
+    --md3-surface-tint: 11 100% 64%;
 
     /* MD3 Outline Colors */
     --md3-outline: 220 13% 46%;
@@ -65,7 +70,7 @@
     --md3-touch-target: 48px;
 
     /* Dashboard gradient accents */
-    --gradient-primary: linear-gradient(135deg, hsl(199 89% 48%) 0%, hsl(199 89% 38%) 100%);
+    --gradient-primary: linear-gradient(135deg, #FF6B4A 0%, #E85D3A 100%);
     --gradient-success: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
     --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
     --gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
@@ -92,7 +97,7 @@
     --card-foreground: 210 40% 98%;
     --popover: 224 71% 6%;
     --popover-foreground: 210 40% 98%;
-    --primary: 263 70% 50%;
+    --primary: 11 100% 64%;
     --primary-foreground: 0 0% 100%;
     --secondary: 224 30% 15%;
     --secondary-foreground: 210 40% 98%;
@@ -104,7 +109,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 224 30% 15%;
     --input: 224 30% 15%;
-    --ring: 263 70% 50%;
+    --ring: 11 100% 64%;
 
     /* MD3 Dark Mode Surface Colors */
     --md3-surface: 224 71% 6%;
@@ -733,4 +738,261 @@
   .pwa-content {
     min-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   }
+}
+
+/* =========================
+   Accessibility (WCAG AA)
+   ========================= */
+
+/* Focus indicators for keyboard navigation */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary;
+  outline-style: solid;
+}
+
+/* Enhanced focus for interactive elements */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[role="link"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary ring-2 ring-primary/20;
+}
+
+/* Focus within for form groups */
+.form-group:focus-within {
+  @apply ring-2 ring-primary/20 rounded-md;
+}
+
+/* Skip link - for keyboard navigation */
+.skip-link {
+  @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[9999];
+  @apply bg-primary text-primary-foreground px-4 py-2 rounded-md;
+  @apply outline-2 outline-offset-2 outline-primary;
+  @apply font-medium text-sm;
+  @apply transition-all duration-200;
+}
+
+.skip-link:focus-visible {
+  @apply shadow-lg;
+}
+
+/* Screen reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only-focusable:focus,
+.sr-only-focusable:active {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Not screen reader only - visible but skip in navigation */
+.not-sr-only {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: initial;
+  margin: initial;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Disable transitions */
+  * {
+    transition: none !important;
+  }
+
+  /* Disable scroll behavior */
+  html {
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  * {
+    @apply border-current;
+  }
+
+  button,
+  a,
+  [role="button"],
+  [role="link"] {
+    @apply border-2 border-current;
+  }
+
+  input,
+  textarea,
+  select {
+    @apply border-2 border-current;
+  }
+}
+
+/* Focus visible ring for dark mode */
+.dark *:focus-visible {
+  @apply outline-primary-foreground ring-primary-foreground/30;
+}
+
+/* Disabled state - ensure proper contrast */
+[disabled],
+[aria-disabled="true"] {
+  @apply opacity-50 cursor-not-allowed;
+  pointer-events: none;
+}
+
+/* Invalid/error state */
+[aria-invalid="true"],
+.error-state {
+  @apply border-destructive focus:ring-destructive/20;
+}
+
+[aria-invalid="true"]:focus-visible {
+  @apply outline-destructive ring-destructive/20;
+}
+
+/* Required field indicator */
+[aria-required="true"]::before,
+.required::before {
+  content: "*";
+  @apply text-destructive mr-1;
+}
+
+/* Live region announcements */
+[aria-live="polite"],
+[aria-live="assertive"] {
+  @apply sr-only;
+}
+
+/* Tooltip accessibility */
+[role="tooltip"] {
+  @apply z-50;
+  pointer-events: none;
+}
+
+/* Dialog/Modal accessibility */
+[role="dialog"],
+[role="alertdialog"] {
+  @apply focus:outline-none;
+}
+
+/* Ensure modals trap focus */
+.modal-open {
+  @apply overflow-hidden;
+}
+
+/* Alert accessibility */
+[role="alert"] {
+  @apply font-medium;
+}
+
+/* Status messages */
+[role="status"] {
+  @apply font-normal;
+}
+
+/* Progress indicator */
+[role="progressbar"] {
+  @apply relative overflow-hidden;
+}
+
+/* Tab accessibility */
+[role="tab"][aria-selected="true"] {
+  @apply font-semibold;
+}
+
+[role="tab"]:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary;
+}
+
+/* Menu accessibility */
+[role="menu"],
+[role="menubar"] {
+  @apply focus:outline-none;
+}
+
+[role="menuitem"]:focus-visible,
+[role="menuitemcheckbox"]:focus-visible,
+[role="menuitemradio"]:focus-visible {
+  @apply bg-primary/10;
+}
+
+/* Table accessibility */
+table[role="table"] caption {
+  @apply sr-only;
+}
+
+th[scope="col"],
+th[scope="row"] {
+  @apply font-semibold;
+}
+
+/* Link accessibility - ensure underline on focus */
+a:focus-visible {
+  @apply underline decoration-2 underline-offset-4;
+}
+
+/* Button accessibility - ensure visible focus */
+button:focus-visible {
+  @apply shadow-outline;
+}
+
+/* Landmark regions */
+[role="banner"],
+[role="navigation"],
+[role="main"],
+[role="complementary"],
+[role="contentinfo"] {
+  @apply focus:outline-none;
+}
+
+/* Loading states accessibility */
+[aria-busy="true"] {
+  @apply relative;
+}
+
+[aria-busy="true"]::after {
+  content: "";
+  @apply absolute inset-0 bg-background/50 cursor-wait;
+}
+
+/* Visually hidden but accessible headings */
+.visually-hidden {
+  @apply sr-only;
+}
+
+/* Ensure images have alt text indicator in dev mode */
+img:not([alt]) {
+  @apply outline-2 outline-dashed outline-destructive;
 }

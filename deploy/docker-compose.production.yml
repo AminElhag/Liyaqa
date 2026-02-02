@@ -1,0 +1,344 @@
+# ===========================================
+# Liyaqa Production Stack - DigitalOcean
+# ===========================================
+# Optimized for DigitalOcean Droplets
+# Includes: PostgreSQL, Redis, Backend, Frontend, Nginx
+#
+# Recommended Droplet Sizes:
+#   - Minimum: 4GB RAM / 2 vCPU / 80GB SSD ($24/month)
+#   - Recommended: 8GB RAM / 4 vCPU / 160GB SSD ($48/month)
+#   - Scale-up: 16GB RAM / 8 vCPU / 320GB SSD ($96/month)
+#
+# Quick Start:
+#   1. cp .env.production .env
+#   2. Edit .env with your values
+#   3. docker compose -f docker-compose.production.yml up -d
+#   4. docker compose logs -f
+#
+# Health Check:
+#   docker compose ps
+#   curl http://localhost/actuator/health
+#
+# ===========================================
+
+version: '3.8'
+
+services:
+  # ===========================================
+  # PostgreSQL Database
+  # ===========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: liyaqa-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-liyaqa}
+      POSTGRES_USER: ${POSTGRES_USER:-liyaqa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Error: POSTGRES_PASSWORD is required}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:5432:5432"
+    networks:
+      - liyaqa-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-liyaqa} -d ${POSTGRES_DB:-liyaqa}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+    command: >
+      postgres
+      -c max_connections=100
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=128MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=8MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+      -c max_worker_processes=4
+      -c max_parallel_workers_per_gather=2
+      -c max_parallel_workers=4
+      -c max_parallel_maintenance_workers=2
+
+  # ===========================================
+  # Redis Cache & Session Store
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: liyaqa-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:?Error: REDIS_PASSWORD is required}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    volumes:
+      - redis_data:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+    networks:
+      - liyaqa-internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+        reservations:
+          memory: 128M
+          cpus: '0.25'
+
+  # ===========================================
+  # Liyaqa Backend API
+  # ===========================================
+  backend:
+    image: amegung/liyaqa-backend:latest
+    container_name: liyaqa-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Spring Configuration
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      SERVER_PORT: 8080
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+
+      # JVM Settings
+      JAVA_OPTS: ${JAVA_OPTS:--Xms512m -Xmx1024m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp}
+
+      # Database
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-liyaqa}
+      DATABASE_USERNAME: ${POSTGRES_USER:-liyaqa}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-20}
+      DB_POOL_MIN_IDLE: ${DB_POOL_MIN_IDLE:-5}
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_DATABASE: ${REDIS_DATABASE:-0}
+      REDIS_TIMEOUT: ${REDIS_TIMEOUT:-5000}
+      SPRING_SESSION_STORE_TYPE: ${SPRING_SESSION_STORE_TYPE:-redis}
+      SPRING_SESSION_TIMEOUT: ${SPRING_SESSION_TIMEOUT:-1800}
+
+      # Security
+      JWT_SECRET: ${JWT_SECRET:?Error: JWT_SECRET is required (min 32 chars)}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost}
+      HSTS_ENABLED: ${HSTS_ENABLED:-false}
+
+      # Domain & Multi-tenancy
+      LIYAQA_BASE_DOMAIN: ${LIYAQA_BASE_DOMAIN:-liyaqa.local}
+
+      # Email
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-sendgrid}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@liyaqa.com}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+
+      # SMS
+      SMS_ENABLED: ${SMS_ENABLED:-false}
+      SMS_PROVIDER: ${SMS_PROVIDER:-twilio}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+
+      # Storage
+      STORAGE_TYPE: ${STORAGE_TYPE:-local}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-}
+      AWS_REGION: ${AWS_REGION:-me-south-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+
+      # Payments
+      PAYTABS_ENABLED: ${PAYTABS_ENABLED:-false}
+      PAYTABS_PROFILE_ID: ${PAYTABS_PROFILE_ID:-}
+      PAYTABS_SERVER_KEY: ${PAYTABS_SERVER_KEY:-}
+
+      # ZATCA E-Invoicing
+      ZATCA_ENABLED: ${ZATCA_ENABLED:-false}
+      ZATCA_ENVIRONMENT: ${ZATCA_ENVIRONMENT:-sandbox}
+      ZATCA_SELLER_NAME: ${ZATCA_SELLER_NAME:-}
+      ZATCA_VAT_NUMBER: ${ZATCA_VAT_NUMBER:-}
+
+      # Monitoring
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:-health,info,metrics,prometheus}
+      TRACING_ENABLED: ${TRACING_ENABLED:-false}
+      ZIPKIN_ENDPOINT: ${ZIPKIN_ENDPOINT:-http://zipkin:9411/api/v2/spans}
+
+      # Logging
+      LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
+      LOGGING_LEVEL_COM_LIYAQA: ${LOGGING_LEVEL_COM_LIYAQA:-INFO}
+
+    volumes:
+      - backend_logs:/var/log/liyaqa
+      - backend_uploads:/app/uploads
+    networks:
+      - liyaqa-internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 120s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+          cpus: '2.0'
+        reservations:
+          memory: 512M
+          cpus: '1.0'
+
+  # ===========================================
+  # Liyaqa Frontend (Next.js)
+  # ===========================================
+  frontend:
+    image: amegung/liyaqa-frontend:latest
+    container_name: liyaqa-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost/api}
+      NODE_OPTIONS: ${NODE_OPTIONS:---max-old-space-size=512}
+    networks:
+      - liyaqa-internal
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+
+  # ===========================================
+  # Nginx Reverse Proxy
+  # ===========================================
+  nginx:
+    image: nginx:alpine
+    container_name: liyaqa-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - liyaqa-internal
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.5'
+        reservations:
+          memory: 64M
+          cpus: '0.25'
+
+  # ===========================================
+  # Certbot (SSL Certificate Management)
+  # ===========================================
+  certbot:
+    image: certbot/certbot:latest
+    container_name: liyaqa-certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $${!}; done;'"
+    networks:
+      - liyaqa-internal
+    profiles:
+      - ssl
+
+# ===========================================
+# Networks
+# ===========================================
+networks:
+  liyaqa-internal:
+    name: liyaqa-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# ===========================================
+# Volumes (Persistent Data)
+# ===========================================
+volumes:
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/liyaqa/data/postgres
+
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/liyaqa/data/redis
+
+  backend_logs:
+    driver: local
+
+  backend_uploads:
+    driver: local
+
+  nginx_logs:
+    driver: local

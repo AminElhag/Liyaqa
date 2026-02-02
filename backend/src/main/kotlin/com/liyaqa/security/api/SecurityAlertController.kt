@@ -1,208 +1,98 @@
 package com.liyaqa.security.api
 
 import com.liyaqa.auth.infrastructure.security.JwtUserPrincipal
-import com.liyaqa.security.domain.model.AlertType
+import com.liyaqa.security.domain.model.AlertSeverity
 import com.liyaqa.security.domain.model.SecurityAlert
-import com.liyaqa.security.domain.model.Severity
 import com.liyaqa.security.domain.ports.SecurityAlertRepository
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Sort
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
+import java.time.Instant
 import java.util.UUID
 
-/**
- * REST controller for security alerts.
- */
 @RestController
 @RequestMapping("/api/security/alerts")
+@Tag(name = "Security Alerts", description = "Security anomaly alerts and monitoring")
 class SecurityAlertController(
     private val securityAlertRepository: SecurityAlertRepository
 ) {
 
-    /**
-     * Gets all security alerts for the authenticated user.
-     */
+    @Operation(
+        summary = "List User Security Alerts",
+        description = "Returns security alerts for the authenticated user"
+    )
     @GetMapping
-    fun getAlerts(
+    fun listAlerts(
         @AuthenticationPrincipal principal: JwtUserPrincipal,
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int,
-        @RequestParam(required = false) resolved: Boolean?
-    ): ResponseEntity<SecurityAlertPageResponse> {
-        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
-        val alerts = securityAlertRepository.findByUserId(principal.userId, pageable)
-
-        val filteredAlerts = if (resolved != null) {
-            alerts.filter { it.resolved == resolved }
+        @RequestParam(required = false) unreadOnly: Boolean?
+    ): ResponseEntity<List<SecurityAlertResponse>> {
+        val alerts = if (unreadOnly == true) {
+            securityAlertRepository.findUnreadByUserId(principal.userId)
         } else {
-            alerts.content
+            securityAlertRepository.findUnresolvedByUserId(principal.userId)
         }
 
-        return ResponseEntity.ok(
-            SecurityAlertPageResponse(
-                content = filteredAlerts.map { SecurityAlertDto.from(it) },
-                totalElements = alerts.totalElements,
-                totalPages = alerts.totalPages,
-                currentPage = page,
-                pageSize = size
-            )
-        )
+        val response = alerts.map { SecurityAlertResponse.from(it) }
+        return ResponseEntity.ok(response)
     }
 
-    /**
-     * Gets unread security alerts for the authenticated user.
-     */
-    @GetMapping("/unread")
-    fun getUnreadAlerts(
-        @AuthenticationPrincipal principal: JwtUserPrincipal
-    ): ResponseEntity<SecurityAlertsResponse> {
-        val alerts = securityAlertRepository.findUnreadByUserId(principal.userId)
-        return ResponseEntity.ok(
-            SecurityAlertsResponse(
-                alerts = alerts.map { SecurityAlertDto.from(it) },
-                count = alerts.size
-            )
-        )
-    }
-
-    /**
-     * Gets count of unread alerts.
-     */
-    @GetMapping("/unread/count")
+    @Operation(
+        summary = "Get Unresolved Alert Count",
+        description = "Returns count of unresolved security alerts"
+    )
+    @GetMapping("/count")
     fun getUnreadCount(
         @AuthenticationPrincipal principal: JwtUserPrincipal
-    ): ResponseEntity<UnreadCountResponse> {
+    ): ResponseEntity<Map<String, Long>> {
         val count = securityAlertRepository.countUnreadByUserId(principal.userId)
-        return ResponseEntity.ok(UnreadCountResponse(count))
+        return ResponseEntity.ok(mapOf("count" to count))
     }
 
-    /**
-     * Acknowledges a specific alert.
-     */
+    @Operation(
+        summary = "Acknowledge Alert",
+        description = "Marks a security alert as acknowledged/resolved"
+    )
     @PostMapping("/{alertId}/acknowledge")
     fun acknowledgeAlert(
         @PathVariable alertId: UUID,
         @AuthenticationPrincipal principal: JwtUserPrincipal
-    ): ResponseEntity<MessageResponse> {
+    ): ResponseEntity<Unit> {
         val alert = securityAlertRepository.findByIdOrNull(alertId)
             ?: return ResponseEntity.notFound().build()
 
         if (alert.userId != principal.userId) {
-            return ResponseEntity.status(403).body(MessageResponse("Not authorized"))
+            return ResponseEntity.status(403).build()
         }
 
         alert.acknowledge()
         securityAlertRepository.save(alert)
 
-        return ResponseEntity.ok(MessageResponse("Alert acknowledged"))
-    }
-
-    /**
-     * Dismisses a specific alert.
-     */
-    @PostMapping("/{alertId}/dismiss")
-    fun dismissAlert(
-        @PathVariable alertId: UUID,
-        @AuthenticationPrincipal principal: JwtUserPrincipal
-    ): ResponseEntity<MessageResponse> {
-        val alert = securityAlertRepository.findByIdOrNull(alertId)
-            ?: return ResponseEntity.notFound().build()
-
-        if (alert.userId != principal.userId) {
-            return ResponseEntity.status(403).body(MessageResponse("Not authorized"))
-        }
-
-        alert.dismiss()
-        securityAlertRepository.save(alert)
-
-        return ResponseEntity.ok(MessageResponse("Alert dismissed"))
-    }
-
-    /**
-     * Acknowledges all unread alerts.
-     */
-    @PostMapping("/acknowledge-all")
-    fun acknowledgeAllAlerts(
-        @AuthenticationPrincipal principal: JwtUserPrincipal
-    ): ResponseEntity<MessageResponse> {
-        val unreadAlerts = securityAlertRepository.findUnreadByUserId(principal.userId)
-
-        unreadAlerts.forEach { alert ->
-            alert.acknowledge()
-            securityAlertRepository.save(alert)
-        }
-
-        return ResponseEntity.ok(MessageResponse("All alerts acknowledged"))
+        return ResponseEntity.noContent().build()
     }
 }
 
-/**
- * DTO for security alert.
- */
-data class SecurityAlertDto(
+data class SecurityAlertResponse(
     val id: UUID,
     val alertType: String,
-    val severity: String,
-    val description: String,
+    val severity: AlertSeverity,
     val details: String?,
-    val ipAddress: String?,
-    val deviceInfo: String?,
-    val location: String?,
     val resolved: Boolean,
-    val acknowledgedAt: String?,
-    val createdAt: String
+    val acknowledgedAt: Instant?,
+    val createdAt: Instant
 ) {
     companion object {
-        fun from(alert: SecurityAlert): SecurityAlertDto {
-            return SecurityAlertDto(
-                id = alert.id,
+        fun from(alert: SecurityAlert): SecurityAlertResponse {
+            return SecurityAlertResponse(
+                id = alert.id!!,
                 alertType = alert.alertType.name,
-                severity = alert.severity.name,
-                description = alert.getDescription(),
+                severity = alert.severity,
                 details = alert.details,
-                ipAddress = alert.ipAddress,
-                deviceInfo = alert.deviceInfo,
-                location = alert.location,
                 resolved = alert.resolved,
-                acknowledgedAt = alert.acknowledgedAt?.toString(),
-                createdAt = alert.createdAt.toString()
+                acknowledgedAt = alert.acknowledgedAt,
+                createdAt = alert.createdAt
             )
         }
     }
 }
-
-/**
- * Response for paginated alerts.
- */
-data class SecurityAlertPageResponse(
-    val content: List<SecurityAlertDto>,
-    val totalElements: Long,
-    val totalPages: Int,
-    val currentPage: Int,
-    val pageSize: Int
-)
-
-/**
- * Response for list of alerts.
- */
-data class SecurityAlertsResponse(
-    val alerts: List<SecurityAlertDto>,
-    val count: Int
-)
-
-/**
- * Response for unread count.
- */
-data class UnreadCountResponse(
-    val count: Long
-)
-
-/**
- * Generic message response.
- */
-data class MessageResponse(
-    val message: String
-)

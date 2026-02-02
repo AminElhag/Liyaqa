@@ -2,140 +2,62 @@ package com.liyaqa.auth.api
 
 import com.liyaqa.auth.application.services.SessionService
 import com.liyaqa.auth.infrastructure.security.JwtUserPrincipal
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 import java.util.UUID
 
-/**
- * REST controller for session management.
- * Allows users to view and manage their active sessions across devices.
- */
 @RestController
 @RequestMapping("/api/auth/sessions")
+@Tag(name = "Session Management", description = "Manage active user sessions across devices")
 class SessionController(
     private val sessionService: SessionService
 ) {
 
-    /**
-     * Lists all active sessions for the authenticated user.
-     */
+    @Operation(
+        summary = "List Active Sessions",
+        description = "Returns all active sessions for the authenticated user across all devices"
+    )
     @GetMapping
-    fun listActiveSessions(
+    fun listSessions(
         @AuthenticationPrincipal principal: JwtUserPrincipal
-    ): ResponseEntity<SessionListResponse> {
+    ): ResponseEntity<List<SessionResponse>> {
         val sessions = sessionService.listActiveSessions(principal.userId)
-        val sessionDtos = sessions.map { SessionDto.from(it) }
-        return ResponseEntity.ok(SessionListResponse(sessionDtos, sessionDtos.size))
+        
+        // Note: We don't have the current session ID easily accessible here
+        // Could be enhanced by storing session ID in JWT claims
+        val response = sessions.map { SessionResponse.from(it) }
+        
+        return ResponseEntity.ok(response)
     }
 
-    /**
-     * Lists all sessions (including inactive) for the authenticated user.
-     */
-    @GetMapping("/all")
-    fun listAllSessions(
-        @AuthenticationPrincipal principal: JwtUserPrincipal
-    ): ResponseEntity<SessionListResponse> {
-        val sessions = sessionService.listAllSessions(principal.userId)
-        val sessionDtos = sessions.map { SessionDto.from(it) }
-        return ResponseEntity.ok(SessionListResponse(sessionDtos, sessionDtos.size))
-    }
-
-    /**
-     * Revokes a specific session.
-     * User can only revoke their own sessions.
-     */
+    @Operation(
+        summary = "Revoke Session",
+        description = "Revokes a specific session by ID (remote logout for that device)"
+    )
     @PostMapping("/{sessionId}/revoke")
     fun revokeSession(
         @PathVariable sessionId: UUID,
         @AuthenticationPrincipal principal: JwtUserPrincipal
-    ): ResponseEntity<MessageResponse> {
+    ): ResponseEntity<Unit> {
         sessionService.revokeSession(sessionId, principal.userId)
-        return ResponseEntity.ok(MessageResponse("Session revoked successfully"))
+        return ResponseEntity.noContent().build()
     }
 
-    /**
-     * Revokes all sessions except the current one.
-     * Useful for "logout from all other devices" functionality.
-     */
+    @Operation(
+        summary = "Revoke All Other Sessions",
+        description = "Revokes all sessions except the current one (logout all other devices)"
+    )
     @PostMapping("/revoke-all")
-    fun revokeAllSessions(
+    fun revokeAllOtherSessions(
         @AuthenticationPrincipal principal: JwtUserPrincipal,
-        @RequestBody request: RevokeAllSessionsRequest
-    ): ResponseEntity<MessageResponse> {
-        sessionService.revokeAllSessions(principal.userId, request.exceptSessionId)
-        return ResponseEntity.ok(MessageResponse("All other sessions revoked successfully"))
-    }
-
-    /**
-     * Gets the count of active sessions for the authenticated user.
-     */
-    @GetMapping("/count")
-    fun getActiveSessionCount(
-        @AuthenticationPrincipal principal: JwtUserPrincipal
-    ): ResponseEntity<SessionCountResponse> {
-        val count = sessionService.countActiveSessions(principal.userId)
-        return ResponseEntity.ok(SessionCountResponse(count))
+        @Valid @RequestBody(required = false) request: RevokeSessionRequest?
+    ): ResponseEntity<Unit> {
+        val exceptSessionId = request?.sessionId
+        sessionService.revokeAllSessions(principal.userId, exceptSessionId)
+        return ResponseEntity.noContent().build()
     }
 }
-
-/**
- * DTO for session information.
- */
-data class SessionDto(
-    val sessionId: UUID,
-    val deviceName: String?,
-    val os: String?,
-    val browser: String?,
-    val deviceDescription: String,
-    val ipAddress: String?,
-    val country: String?,
-    val city: String?,
-    val locationDescription: String,
-    val lastActiveAt: String,
-    val expiresAt: String,
-    val isActive: Boolean,
-    val createdAt: String
-) {
-    companion object {
-        fun from(session: com.liyaqa.auth.domain.model.UserSession): SessionDto {
-            return SessionDto(
-                sessionId = session.sessionId,
-                deviceName = session.deviceName,
-                os = session.os,
-                browser = session.browser,
-                deviceDescription = session.getDeviceDescription(),
-                ipAddress = session.ipAddress,
-                country = session.country,
-                city = session.city,
-                locationDescription = session.getLocationDescription(),
-                lastActiveAt = session.lastActiveAt.toString(),
-                expiresAt = session.expiresAt.toString(),
-                isActive = session.isActive,
-                createdAt = session.createdAt.toString()
-            )
-        }
-    }
-}
-
-/**
- * Response for session list endpoint.
- */
-data class SessionListResponse(
-    val sessions: List<SessionDto>,
-    val count: Int
-)
-
-/**
- * Response for session count endpoint.
- */
-data class SessionCountResponse(
-    val count: Long
-)
-
-/**
- * Request for revoking all sessions except one.
- */
-data class RevokeAllSessionsRequest(
-    val exceptSessionId: UUID?
-)

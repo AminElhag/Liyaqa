@@ -1,0 +1,14 @@
+apiVersion: 1
+
+providers:
+  # Dashboard provider for Liyaqa custom dashboards
+  - name: 'Liyaqa Dashboards'
+    org assignId: 1
+    folder: 'Liyaqa'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: true

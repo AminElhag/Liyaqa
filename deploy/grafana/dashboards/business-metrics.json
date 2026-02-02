@@ -1,0 +1,313 @@
+{
+  "dashboard": {
+    "title": "Liyaqa Business Metrics",
+    "tags": ["liyaqa", "business", "revenue", "members"],
+    "timezone": "browser",
+    "editable": true,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "title": "Member Registrations (Today)",
+        "type": "stat",
+        "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(increase(liyaqa_business_members_registered_total[24h]))",
+            "refId": "A",
+            "legendFormat": "Registrations"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 5, "color": "yellow" },
+                { "value": 10, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "title": "Total Check-Ins (Today)",
+        "type": "stat",
+        "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(increase(liyaqa_business_checkins_total[24h]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 50, "color": "yellow" },
+                { "value": 100, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "title": "Revenue (Today)",
+        "type": "stat",
+        "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(increase(liyaqa_business_revenue_total[24h]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencySAR",
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 5000, "color": "yellow" },
+                { "value": 10000, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "title": "Active Subscriptions",
+        "type": "stat",
+        "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(liyaqa_business_subscriptions_activated_total) - sum(liyaqa_business_subscriptions_cancelled_total)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 100, "color": "yellow" },
+                { "value": 500, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "title": "Member Registrations Over Time",
+        "type": "graph",
+        "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(rate(liyaqa_business_members_registered_total[5m])) * 300",
+            "refId": "A",
+            "legendFormat": "Registrations/5min"
+          }
+        ],
+        "xaxis": { "mode": "time" },
+        "yaxes": [
+          { "format": "short", "label": "Registrations" },
+          { "format": "short" }
+        ],
+        "legend": { "show": true, "alignAsTable": true, "rightSide": false }
+      },
+      {
+        "title": "Check-Ins Over Time",
+        "type": "graph",
+        "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(rate(liyaqa_business_checkins_total[5m])) * 300",
+            "refId": "A",
+            "legendFormat": "Check-Ins/5min"
+          }
+        ],
+        "xaxis": { "mode": "time" },
+        "yaxes": [
+          { "format": "short", "label": "Check-Ins" },
+          { "format": "short" }
+        ]
+      },
+      {
+        "title": "Revenue by Invoice Type",
+        "type": "piechart",
+        "gridPos": { "x": 0, "y": 12, "w": 8, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum by(invoice_type) (increase(liyaqa_business_revenue_total[24h]))",
+            "refId": "A",
+            "legendFormat": "{{invoice_type}}"
+          }
+        ],
+        "options": {
+          "legend": { "displayMode": "table", "placement": "right" },
+          "pieType": "pie"
+        },
+        "fieldConfig": {
+          "defaults": { "unit": "currencySAR" }
+        }
+      },
+      {
+        "title": "Payment Success Rate",
+        "type": "graph",
+        "gridPos": { "x": 8, "y": 12, "w": 8, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(rate(liyaqa_business_payments_success_total[5m])) / (sum(rate(liyaqa_business_payments_success_total[5m])) + sum(rate(liyaqa_business_payments_failed_total[5m]))) * 100",
+            "refId": "A",
+            "legendFormat": "Success Rate %"
+          }
+        ],
+        "xaxis": { "mode": "time" },
+        "yaxes": [
+          { "format": "percent", "label": "Success Rate", "min": 0, "max": 100 },
+          { "format": "short" }
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": { "params": [95], "type": "lt" },
+              "operator": { "type": "and" },
+              "query": { "params": ["A", "5m", "now"] },
+              "reducer": { "params": [], "type": "avg" },
+              "type": "query"
+            }
+          ],
+          "name": "Payment Success Rate Alert",
+          "message": "Payment success rate has dropped below 95%"
+        }
+      },
+      {
+        "title": "Class Booking Rate",
+        "type": "graph",
+        "gridPos": { "x": 16, "y": 12, "w": 8, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(rate(liyaqa_business_bookings_created_total[5m])) * 300",
+            "refId": "A",
+            "legendFormat": "Bookings/5min"
+          },
+          {
+            "expr": "sum(rate(liyaqa_business_bookings_cancelled_total[5m])) * 300",
+            "refId": "B",
+            "legendFormat": "Cancellations/5min"
+          }
+        ],
+        "xaxis": { "mode": "time" },
+        "yaxes": [
+          { "format": "short", "label": "Bookings" },
+          { "format": "short" }
+        ]
+      },
+      {
+        "title": "MRR (Monthly Recurring Revenue)",
+        "type": "stat",
+        "gridPos": { "x": 0, "y": 20, "w": 12, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(liyaqa_business_revenue_mrr)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencySAR",
+            "decimals": 2,
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 50000, "color": "yellow" },
+                { "value": 100000, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "title": "Churn Rate (Last 30 Days)",
+        "type": "stat",
+        "gridPos": { "x": 12, "y": 20, "w": 12, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(increase(liyaqa_business_subscriptions_cancelled_total[30d])) / sum(liyaqa_business_subscriptions_activated_total) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "decimals": 1,
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 5, "color": "yellow" },
+                { "value": 10, "color": "red" }
+              ]
+            }
+          }
+        },
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": { "params": [10], "type": "gt" },
+              "operator": { "type": "and" },
+              "query": { "params": ["A", "5m", "now"] },
+              "reducer": { "params": [], "type": "avg" },
+              "type": "query"
+            }
+          ],
+          "name": "High Churn Rate Alert",
+          "message": "Churn rate has exceeded 10%"
+        }
+      }
+    ],
+    "refresh": "30s",
+    "schemaVersion": 36,
+    "version": 1
+  },
+  "overwrite": true
+}

@@ -1,11 +1,13 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useOAuthProviders } from '@/queries/use-oauth';
-import { oauthApi } from '@/lib/api/oauth';
-import { Chrome, Github } from 'lucide-react';
-import Image from 'next/image';
+import * as React from "react";
+import { useLocale } from "next-intl";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useOAuthProviders, useInitiateOAuth } from "@/queries/use-oauth";
+import { ProviderType } from "@/types/oauth";
+import { Chrome, Github, Loader2 } from "lucide-react";
+import Image from "next/image";
 
 interface OAuthLoginButtonsProps {
   organizationId?: string;
@@ -15,21 +17,29 @@ interface OAuthLoginButtonsProps {
 /**
  * OAuth login buttons component.
  * Displays enabled OAuth providers with appropriate branding.
+ * Supports bilingual text (English/Arabic).
  */
-export function OAuthLoginButtons({ organizationId, className }: OAuthLoginButtonsProps) {
+export function OAuthLoginButtons({
+  organizationId,
+  className,
+}: OAuthLoginButtonsProps) {
+  const locale = useLocale();
   const { data: providers, isLoading, error } = useOAuthProviders(organizationId);
+  const { mutate: initiateOAuth, isPending } = useInitiateOAuth();
 
   const handleOAuthLogin = (providerId: string) => {
-    oauthApi.initiateOAuth(providerId);
+    initiateOAuth({ provider: providerId, organizationId });
   };
 
   const getProviderIcon = (provider: string) => {
-    switch (provider.toUpperCase()) {
-      case 'GOOGLE':
+    const providerUpper = provider.toUpperCase();
+
+    switch (providerUpper) {
+      case ProviderType.GOOGLE:
         return <Chrome className="h-5 w-5" />;
-      case 'GITHUB':
+      case ProviderType.GITHUB:
         return <Github className="h-5 w-5" />;
-      case 'MICROSOFT':
+      case ProviderType.MICROSOFT:
         return (
           <svg className="h-5 w-5" viewBox="0 0 23 23" fill="none">
             <path fill="#F35325" d="M0 0h11v11H0z" />
@@ -38,25 +48,36 @@ export function OAuthLoginButtons({ organizationId, className }: OAuthLoginButto
             <path fill="#FFBA08" d="M12 12h11v11H12z" />
           </svg>
         );
+      case ProviderType.OKTA:
+        return (
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 16c-3.314 0-6-2.686-6-6s2.686-6 6-6 6 2.686 6 6-2.686 6-6 6z" />
+          </svg>
+        );
       default:
         return <Chrome className="h-5 w-5" />;
     }
   };
 
-  const getProviderDisplayName = (provider: string, displayName: string | null) => {
+  const getProviderDisplayName = (provider: string, displayName?: string | null) => {
     if (displayName) return displayName;
 
-    switch (provider.toUpperCase()) {
-      case 'GOOGLE':
-        return 'Continue with Google';
-      case 'MICROSOFT':
-        return 'Continue with Microsoft';
-      case 'GITHUB':
-        return 'Continue with GitHub';
-      case 'OKTA':
-        return 'Continue with Okta';
+    const providerUpper = provider.toUpperCase();
+    const isArabic = locale === "ar";
+
+    switch (providerUpper) {
+      case ProviderType.GOOGLE:
+        return isArabic ? "تسجيل الدخول بواسطة Google" : "Sign in with Google";
+      case ProviderType.MICROSOFT:
+        return isArabic ? "تسجيل الدخول بواسطة Microsoft" : "Sign in with Microsoft";
+      case ProviderType.GITHUB:
+        return isArabic ? "تسجيل الدخول بواسطة GitHub" : "Sign in with GitHub";
+      case ProviderType.OKTA:
+        return isArabic ? "تسجيل الدخول بواسطة Okta" : "Sign in with Okta";
       default:
-        return `Continue with ${provider}`;
+        return isArabic
+          ? `تسجيل الدخول بواسطة ${provider}`
+          : `Sign in with ${provider}`;
     }
   };
 
@@ -75,17 +96,10 @@ export function OAuthLoginButtons({ organizationId, className }: OAuthLoginButto
     return null;
   }
 
+  const dividerText = locale === "ar" ? "أو" : "or";
+
   return (
     <div className={className}>
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-        </div>
-      </div>
-
       <div className="space-y-2">
         {providers.map((provider) => (
           <Button
@@ -94,15 +108,35 @@ export function OAuthLoginButtons({ organizationId, className }: OAuthLoginButto
             type="button"
             className="w-full"
             onClick={() => handleOAuthLogin(provider.id)}
+            disabled={isPending}
           >
-            {provider.iconUrl ? (
-              <Image src={provider.iconUrl} alt={provider.provider} width={20} height={20} className="mr-2" />
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : provider.iconUrl ? (
+              <Image
+                src={provider.iconUrl}
+                alt={provider.provider}
+                width={20}
+                height={20}
+                className="ltr:mr-2 rtl:ml-2"
+              />
             ) : (
-              <span className="mr-2">{getProviderIcon(provider.provider)}</span>
+              <span className="ltr:mr-2 rtl:ml-2">{getProviderIcon(provider.provider)}</span>
             )}
             {getProviderDisplayName(provider.provider, provider.displayName)}
           </Button>
         ))}
+      </div>
+
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">
+            {dividerText}
+          </span>
+        </div>
       </div>
     </div>
   );

@@ -40,6 +40,8 @@ dependencies {
 
     // Caching
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.springframework.session:spring-session-data-redis")
 
     // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -78,6 +80,13 @@ dependencies {
     // Email (optional)
     implementation("org.springframework.boot:spring-boot-starter-mail")
 
+    // Template Engine (Handlebars for notification templates)
+    implementation("com.github.jknack:handlebars:4.3.1")
+
+    // Transactional Email Services
+    implementation("com.sendgrid:sendgrid-java:4.10.2")
+    implementation("software.amazon.awssdk:ses:2.20.+")
+
     // Note: SMS via Twilio uses REST API directly (no SDK dependency needed)
 
     // API Documentation (Swagger/OpenAPI)
@@ -93,6 +102,13 @@ dependencies {
 
     // AWS Secrets Manager (for production secrets management)
     implementation("software.amazon.awssdk:secretsmanager:2.20.+")
+
+    // AWS S3 (for cloud file storage)
+    implementation("software.amazon.awssdk:s3:2.20.+")
+    implementation("software.amazon.awssdk:sts:2.20.+")
+
+    // MinIO Client (alternative to S3 for on-premise)
+    implementation("io.minio:minio:8.5.7")
 
     // Structured Logging (JSON format for production)
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")

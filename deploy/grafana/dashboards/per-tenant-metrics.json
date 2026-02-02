@@ -1,0 +1,298 @@
+{
+  "dashboard": {
+    "title": "Liyaqa Per-Tenant Metrics",
+    "tags": ["liyaqa", "multi-tenant", "tenants"],
+    "timezone": "browser",
+    "editable": true,
+    "graphTooltip": 1,
+    "templating": {
+      "list": [
+        {
+          "name": "tenant",
+          "label": "Tenant",
+          "type": "query",
+          "query": "label_values(liyaqa_business_members_registered_total, tenant_id)",
+          "refresh": 1,
+          "multi": false,
+          "includeAll": false
+        }
+      ]
+    },
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "title": "Tenant Overview - $tenant",
+        "type": "row",
+        "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }
+      },
+      {
+        "title": "Total Members",
+        "type": "stat",
+        "gridPos": { "x": 0, "y": 1, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(liyaqa_business_members_registered_total{tenant_id=\"$tenant\"})",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area"
+        }
+      },
+      {
+        "title": "Active Subscriptions",
+        "type": "stat",
+        "gridPos": { "x": 6, "y": 1, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(liyaqa_business_subscriptions_activated_total{tenant_id=\"$tenant\"}) - sum(liyaqa_business_subscriptions_cancelled_total{tenant_id=\"$tenant\"})",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value"
+        }
+      },
+      {
+        "title": "Revenue (24h)",
+        "type": "stat",
+        "gridPos": { "x": 12, "y": 1, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(increase(liyaqa_business_revenue_total{tenant_id=\"$tenant\"}[24h]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area"
+        },
+        "fieldConfig": {
+          "defaults": { "unit": "currencySAR" }
+        }
+      },
+      {
+        "title": "Check-Ins (24h)",
+        "type": "stat",
+        "gridPos": { "x": 18, "y": 1, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(increase(liyaqa_business_checkins_total{tenant_id=\"$tenant\"}[24h]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area"
+        }
+      },
+      {
+        "title": "Member Growth",
+        "type": "graph",
+        "gridPos": { "x": 0, "y": 5, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(liyaqa_business_members_registered_total{tenant_id=\"$tenant\"})",
+            "refId": "A",
+            "legendFormat": "Total Members"
+          }
+        ],
+        "xaxis": { "mode": "time" },
+        "yaxes": [
+          { "format": "short", "label": "Members" },
+          { "format": "short" }
+        ]
+      },
+      {
+        "title": "Revenue Trend",
+        "type": "graph",
+        "gridPos": { "x": 12, "y": 5, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(increase(liyaqa_business_revenue_total{tenant_id=\"$tenant\"}[1h]))",
+            "refId": "A",
+            "legendFormat": "Revenue/hour"
+          }
+        ],
+        "xaxis": { "mode": "time" },
+        "yaxes": [
+          { "format": "currencySAR", "label": "Revenue" },
+          { "format": "short" }
+        ]
+      },
+      {
+        "title": "Check-Ins by Hour",
+        "type": "graph",
+        "gridPos": { "x": 0, "y": 13, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(rate(liyaqa_business_checkins_total{tenant_id=\"$tenant\"}[5m])) * 300",
+            "refId": "A",
+            "legendFormat": "Check-Ins/5min"
+          }
+        ],
+        "xaxis": { "mode": "time" },
+        "yaxes": [
+          { "format": "short", "label": "Check-Ins" },
+          { "format": "short" }
+        ]
+      },
+      {
+        "title": "Class Bookings vs Cancellations",
+        "type": "graph",
+        "gridPos": { "x": 12, "y": 13, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(rate(liyaqa_business_bookings_created_total{tenant_id=\"$tenant\"}[5m])) * 300",
+            "refId": "A",
+            "legendFormat": "Bookings/5min"
+          },
+          {
+            "expr": "sum(rate(liyaqa_business_bookings_cancelled_total{tenant_id=\"$tenant\"}[5m])) * 300",
+            "refId": "B",
+            "legendFormat": "Cancellations/5min"
+          }
+        ],
+        "xaxis": { "mode": "time" },
+        "yaxes": [
+          { "format": "short", "label": "Bookings" },
+          { "format": "short" }
+        ]
+      },
+      {
+        "title": "Payment Success Rate",
+        "type": "gauge",
+        "gridPos": { "x": 0, "y": 21, "w": 8, "h": 6 },
+        "targets": [
+          {
+            "expr": "sum(rate(liyaqa_business_payments_success_total{tenant_id=\"$tenant\"}[5m])) / (sum(rate(liyaqa_business_payments_success_total{tenant_id=\"$tenant\"}[5m])) + sum(rate(liyaqa_business_payments_failed_total{tenant_id=\"$tenant\"}[5m]))) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 90, "color": "yellow" },
+                { "value": 95, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "title": "MRR (Monthly Recurring Revenue)",
+        "type": "stat",
+        "gridPos": { "x": 8, "y": 21, "w": 8, "h": 6 },
+        "targets": [
+          {
+            "expr": "sum(liyaqa_business_revenue_mrr{tenant_id=\"$tenant\"})",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencySAR",
+            "decimals": 2
+          }
+        }
+      },
+      {
+        "title": "Churn Rate (30 Days)",
+        "type": "gauge",
+        "gridPos": { "x": 16, "y": 21, "w": 8, "h": 6 },
+        "targets": [
+          {
+            "expr": "sum(increase(liyaqa_business_subscriptions_cancelled_total{tenant_id=\"$tenant\"}[30d])) / sum(liyaqa_business_subscriptions_activated_total{tenant_id=\"$tenant\"}) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 20,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 5, "color": "yellow" },
+                { "value": 10, "color": "red" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "title": "Top Performing Classes",
+        "type": "table",
+        "gridPos": { "x": 0, "y": 27, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "topk(10, sum by (class_type) (increase(liyaqa_business_bookings_created_total{tenant_id=\"$tenant\"}[24h])))",
+            "refId": "A",
+            "format": "table"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": { "Time": true },
+              "indexByName": {},
+              "renameByName": {
+                "class_type": "Class Type",
+                "Value": "Bookings (24h)"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "title": "Revenue by Plan Type",
+        "type": "piechart",
+        "gridPos": { "x": 12, "y": 27, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum by(plan_type) (increase(liyaqa_business_revenue_mrr{tenant_id=\"$tenant\"}[24h]))",
+            "refId": "A",
+            "legendFormat": "{{plan_type}}"
+          }
+        ],
+        "options": {
+          "legend": { "displayMode": "table", "placement": "right" },
+          "pieType": "pie"
+        },
+        "fieldConfig": {
+          "defaults": { "unit": "currencySAR" }
+        }
+      }
+    ],
+    "refresh": "30s",
+    "schemaVersion": 36,
+    "version": 1
+  },
+  "overwrite": true
+}

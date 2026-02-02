@@ -125,7 +125,7 @@ export function PlatformRevenueDashboard({
               value={revenue?.revenueThisMonth || 0}
               isCurrency
               icon={Banknote}
-              color="blue"
+              color="coral"
               locale={locale}
               isRtl={isRtl}
             />
@@ -161,8 +161,8 @@ export function PlatformRevenueDashboard({
                 >
                   <defs>
                     <linearGradient id="platformRevenueGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                      <stop offset="0%" stopColor="#FF6B4A" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#E85D3A" stopOpacity={0.05} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -184,7 +184,7 @@ export function PlatformRevenueDashboard({
                   <Area
                     type="monotone"
                     dataKey="revenue"
-                    stroke="#10b981"
+                    stroke="#FF6B4A"
                     strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#platformRevenueGradient)"
@@ -212,7 +212,7 @@ interface StatBoxProps {
   secondaryValue?: number;
   secondaryLabel?: string;
   icon: React.ElementType;
-  color: "emerald" | "blue" | "violet" | "amber" | "slate";
+  color: "emerald" | "blue" | "violet" | "amber" | "slate" | "coral";
   locale: string;
   isRtl: boolean;
 }
@@ -236,6 +236,7 @@ function StatBox({
     violet: "bg-violet-500/10 dark:bg-violet-500/20",
     amber: "bg-amber-500/10 dark:bg-amber-500/20",
     slate: "bg-slate-500/10 dark:bg-slate-500/20",
+    coral: "bg-[#FF6B4A]/10 dark:bg-[#FF6B4A]/20",
   };
 
   const iconColors: Record<string, string> = {
@@ -244,6 +245,7 @@ function StatBox({
     violet: "text-violet-600 dark:text-violet-400",
     amber: "text-amber-600 dark:text-amber-400",
     slate: "text-slate-600 dark:text-slate-400",
+    coral: "text-[#FF6B4A] dark:text-[#FF9A82]",
   };
 
   return (

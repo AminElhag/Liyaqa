@@ -190,10 +190,44 @@ spring:
     password: ${DATABASE_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 30
-      minimum-idle: 5
-      idle-timeout: 300000
-      connection-timeout: 20000
+      # Connection Pool Sizing
+      # Formula: connections = ((core_count * 2) + effective_spindle_count)
+      # For typical server: (4 cores * 2) + 1 = 9, rounded to 10-20
+      maximum-pool-size: ${DB_POOL_SIZE:20}  # Max connections (reduced from 30 to avoid saturation)
+      minimum-idle: ${DB_POOL_MIN_IDLE:5}    # Min idle connections
+
+      # Connection Timeouts
+      connection-timeout: 30000              # 30s - Max wait for connection from pool
+      idle-timeout: 600000                   # 10min - Max idle time before connection close
+      max-lifetime: 1800000                  # 30min - Max connection lifetime (prevents stale connections)
+
+      # Validation
+      validation-timeout: 5000               # 5s - Max time for connection validation
+
+      # Keepalive (prevents connection drops)
+      keepalive-time: 300000                 # 5min - Keepalive interval
+
+      # Leak Detection (dev/staging only)
+      leak-detection-threshold: ${DB_LEAK_DETECTION:0}  # 0=disabled, 30000=30s in dev
+
+      # Pool Name
+      pool-name: LiyaqaHikariPool
+
+      # Auto-commit (false for explicit transaction control)
+      auto-commit: false
+
+      # Connection Properties
+      data-source-properties:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+        useServerPrepStmts: true
+        useLocalSessionState: true
+        rewriteBatchedStatements: true
+        cacheResultSetMetadata: true
+        cacheServerConfiguration: true
+        elideSetAutoCommits: true
+        maintainTimeStats: false
 
   jpa:
     hibernate:

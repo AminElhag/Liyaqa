@@ -1,0 +1,575 @@
+# ===========================================
+# Liyaqa Prometheus Alert Rules
+# ===========================================
+# Alert rules for production monitoring
+# Organized by category: application, infrastructure, database, business
+
+groups:
+  # ===========================================
+  # APPLICATION ALERTS
+  # ===========================================
+  - name: application_alerts
+    interval: 30s
+    rules:
+      # High error rate (5xx responses)
+      - alert: HighErrorRate
+        expr: |
+          (
+            rate(http_server_requests_seconds_count{status=~"5.."}[5m]) /
+            rate(http_server_requests_seconds_count[5m])
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          category: application
+          team: backend
+        annotations:
+          summary: "High error rate detected on {{ $labels.instance }}"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%) over the last 5 minutes on {{ $labels.instance }}"
+          dashboard: "https://grafana.liyaqa.com/d/app-overview"
+          runbook: "https://docs.liyaqa.com/runbooks/high-error-rate"
+
+      # Moderate error rate warning
+      - alert: ModerateErrorRate
+        expr: |
+          (
+            rate(http_server_requests_seconds_count{status=~"5.."}[5m]) /
+            rate(http_server_requests_seconds_count[5m])
+          ) > 0.01
+        for: 10m
+        labels:
+          severity: warning
+          category: application
+          team: backend
+        annotations:
+          summary: "Moderate error rate on {{ $labels.instance }}"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 1%) over the last 10 minutes"
+
+      # Slow API response time (p95)
+      - alert: SlowAPIResponseTime
+        expr: |
+          histogram_quantile(0.95,
+            rate(http_server_requests_seconds_bucket{uri!~"/actuator.*"}[5m])
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          team: backend
+        annotations:
+          summary: "Slow API response time on {{ $labels.instance }}"
+          description: "95th percentile response time is {{ $value }}s (threshold: 2s) for {{ $labels.uri }}"
+          dashboard: "https://grafana.liyaqa.com/d/app-performance"
+
+      # Very slow API response time (p95)
+      - alert: VerySlowAPIResponseTime
+        expr: |
+          histogram_quantile(0.95,
+            rate(http_server_requests_seconds_bucket{uri!~"/actuator.*"}[5m])
+          ) > 5
+        for: 3m
+        labels:
+          severity: critical
+          category: performance
+          team: backend
+        annotations:
+          summary: "Critical: Very slow API response time on {{ $labels.instance }}"
+          description: "95th percentile response time is {{ $value }}s (threshold: 5s) for {{ $labels.uri }}"
+          runbook: "https://docs.liyaqa.com/runbooks/slow-api"
+
+      # High request rate (potential DDoS)
+      - alert: HighRequestRate
+        expr: |
+          rate(http_server_requests_seconds_count[1m]) > 1000
+        for: 2m
+        labels:
+          severity: warning
+          category: security
+          team: devops
+        annotations:
+          summary: "Unusually high request rate on {{ $labels.instance }}"
+          description: "Request rate is {{ $value }} req/s (threshold: 1000 req/s)"
+          runbook: "https://docs.liyaqa.com/runbooks/high-traffic"
+
+      # Service down
+      - alert: ServiceDown
+        expr: up{job="liyaqa-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: availability
+          team: devops
+        annotations:
+          summary: "Service is DOWN"
+          description: "{{ $labels.instance }} ({{ $labels.job }}) is unreachable for 1 minute"
+          runbook: "https://docs.liyaqa.com/runbooks/service-down"
+
+      # Too many restarts
+      - alert: FrequentRestarts
+        expr: |
+          increase(process_uptime_seconds[1h]) < 3600
+        for: 5m
+        labels:
+          severity: warning
+          category: stability
+          team: devops
+        annotations:
+          summary: "Application restarting frequently on {{ $labels.instance }}"
+          description: "Application has restarted multiple times in the last hour"
+
+  # ===========================================
+  # JVM / MEMORY ALERTS
+  # ===========================================
+  - name: jvm_alerts
+    interval: 30s
+    rules:
+      # High heap memory usage
+      - alert: HighHeapMemoryUsage
+        expr: |
+          (
+            jvm_memory_used_bytes{area="heap"} /
+            jvm_memory_max_bytes{area="heap"}
+          ) > 0.9
+        for: 5m
+        labels:
+          severity: critical
+          category: memory
+          team: backend
+        annotations:
+          summary: "Critical heap memory usage on {{ $labels.instance }}"
+          description: "Heap usage at {{ $value | humanizePercentage }} (threshold: 90%)"
+          runbook: "https://docs.liyaqa.com/runbooks/high-memory"
+
+      # Moderate heap memory usage
+      - alert: ModerateHeapMemoryUsage
+        expr: |
+          (
+            jvm_memory_used_bytes{area="heap"} /
+            jvm_memory_max_bytes{area="heap"}
+          ) > 0.75
+        for: 10m
+        labels:
+          severity: warning
+          category: memory
+          team: backend
+        annotations:
+          summary: "High heap memory usage on {{ $labels.instance }}"
+          description: "Heap usage at {{ $value | humanizePercentage }} (threshold: 75%)"
+
+      # Frequent GC activity
+      - alert: FrequentGarbageCollection
+        expr: |
+          rate(jvm_gc_pause_seconds_count[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: memory
+          team: backend
+        annotations:
+          summary: "Frequent garbage collection on {{ $labels.instance }}"
+          description: "GC rate is {{ $value }} collections/second (threshold: 10/s)"
+
+      # Long GC pauses
+      - alert: LongGarbageCollectionPauses
+        expr: |
+          rate(jvm_gc_pause_seconds_sum[5m]) /
+          rate(jvm_gc_pause_seconds_count[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          category: memory
+          team: backend
+        annotations:
+          summary: "Long GC pauses on {{ $labels.instance }}"
+          description: "Average GC pause time is {{ $value }}s (threshold: 0.5s)"
+
+  # ===========================================
+  # DATABASE ALERTS
+  # ===========================================
+  - name: database_alerts
+    interval: 30s
+    rules:
+      # Database connection pool exhaustion
+      - alert: DatabaseConnectionPoolHigh
+        expr: |
+          (
+            hikaricp_connections_active /
+            hikaricp_connections_max
+          ) > 0.8
+        for: 2m
+        labels:
+          severity: warning
+          category: database
+          team: backend
+        annotations:
+          summary: "Database connection pool usage high on {{ $labels.instance }}"
+          description: "{{ $value | humanizePercentage }} of connections in use (threshold: 80%)"
+          runbook: "https://docs.liyaqa.com/runbooks/db-connection-pool"
+
+      # Database connection pool critical
+      - alert: DatabaseConnectionPoolCritical
+        expr: |
+          (
+            hikaricp_connections_active /
+            hikaricp_connections_max
+          ) > 0.95
+        for: 1m
+        labels:
+          severity: critical
+          category: database
+          team: backend
+        annotations:
+          summary: "Database connection pool nearly exhausted on {{ $labels.instance }}"
+          description: "{{ $value | humanizePercentage }} of connections in use (threshold: 95%)"
+          runbook: "https://docs.liyaqa.com/runbooks/db-connection-pool"
+
+      # Slow database queries
+      - alert: SlowDatabaseQueries
+        expr: |
+          histogram_quantile(0.95,
+            rate(hikaricp_connections_usage_seconds_bucket[5m])
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+          team: backend
+        annotations:
+          summary: "Slow database queries on {{ $labels.instance }}"
+          description: "95th percentile query time is {{ $value }}s (threshold: 1s)"
+
+      # Database connection errors
+      - alert: DatabaseConnectionErrors
+        expr: |
+          rate(hikaricp_connections_timeout_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: critical
+          category: database
+          team: backend
+        annotations:
+          summary: "Database connection errors on {{ $labels.instance }}"
+          description: "Connection timeout rate: {{ $value }} errors/second"
+          runbook: "https://docs.liyaqa.com/runbooks/db-connection-errors"
+
+      # PostgreSQL down
+      - alert: PostgreSQLDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: database
+          team: devops
+        annotations:
+          summary: "PostgreSQL is DOWN"
+          description: "PostgreSQL database on {{ $labels.instance }} is unreachable"
+          runbook: "https://docs.liyaqa.com/runbooks/postgres-down"
+
+      # High database disk usage
+      - alert: HighDatabaseDiskUsage
+        expr: |
+          (
+            pg_database_size_bytes /
+            1024 / 1024 / 1024
+          ) > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+          team: devops
+        annotations:
+          summary: "Database disk usage high"
+          description: "Database {{ $labels.datname }} is {{ $value }}GB (threshold: 80GB)"
+
+      # Too many database connections
+      - alert: TooManyDatabaseConnections
+        expr: |
+          pg_stat_database_numbackends > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+          team: backend
+        annotations:
+          summary: "High number of database connections"
+          description: "{{ $value }} active connections to {{ $labels.datname }} (threshold: 80)"
+
+  # ===========================================
+  # BUSINESS METRICS ALERTS
+  # ===========================================
+  - name: business_alerts
+    interval: 60s
+    rules:
+      # No bookings in last hour (during business hours)
+      - alert: NoRecentBookings
+        expr: |
+          (
+            increase(bookings_created_total[1h]) == 0
+          ) and (
+            hour() >= 6 and hour() < 22
+          )
+        for: 1h
+        labels:
+          severity: warning
+          category: business
+          team: product
+        annotations:
+          summary: "No bookings created in the last hour"
+          description: "Zero bookings created during business hours - potential issue"
+
+      # High booking cancellation rate
+      - alert: HighBookingCancellationRate
+        expr: |
+          (
+            rate(bookings_cancelled_total[1h]) /
+            rate(bookings_created_total[1h])
+          ) > 0.2
+        for: 30m
+        labels:
+          severity: warning
+          category: business
+          team: product
+        annotations:
+          summary: "High booking cancellation rate"
+          description: "Cancellation rate is {{ $value | humanizePercentage }} (threshold: 20%)"
+
+      # Payment failure rate
+      - alert: HighPaymentFailureRate
+        expr: |
+          (
+            rate(payments_failed_total[10m]) /
+            rate(payments_attempted_total[10m])
+          ) > 0.1
+        for: 10m
+        labels:
+          severity: critical
+          category: business
+          team: backend
+        annotations:
+          summary: "High payment failure rate"
+          description: "Payment failure rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+          runbook: "https://docs.liyaqa.com/runbooks/payment-failures"
+
+      # Low check-in rate
+      - alert: LowCheckInRate
+        expr: |
+          (
+            rate(attendance_checked_in_total[1h]) /
+            rate(bookings_created_total[24h])
+          ) < 0.6
+        for: 2h
+        labels:
+          severity: warning
+          category: business
+          team: product
+        annotations:
+          summary: "Low class check-in rate"
+          description: "Check-in rate is {{ $value | humanizePercentage }} (threshold: 60%)"
+
+  # ===========================================
+  # INFRASTRUCTURE ALERTS
+  # ===========================================
+  - name: infrastructure_alerts
+    interval: 30s
+    rules:
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+          team: devops
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value }}% (threshold: 80%)"
+
+      # Critical CPU usage
+      - alert: CriticalCPUUsage
+        expr: |
+          100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+        for: 3m
+        labels:
+          severity: critical
+          category: infrastructure
+          team: devops
+        annotations:
+          summary: "Critical CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value }}% (threshold: 95%)"
+          runbook: "https://docs.liyaqa.com/runbooks/high-cpu"
+
+      # High disk usage
+      - alert: HighDiskUsage
+        expr: |
+          (
+            node_filesystem_avail_bytes{mountpoint="/",fstype!="tmpfs"} /
+            node_filesystem_size_bytes{mountpoint="/",fstype!="tmpfs"}
+          ) < 0.2
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+          team: devops
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Only {{ $value | humanizePercentage }} free space remaining"
+
+      # Critical disk usage
+      - alert: CriticalDiskUsage
+        expr: |
+          (
+            node_filesystem_avail_bytes{mountpoint="/",fstype!="tmpfs"} /
+            node_filesystem_size_bytes{mountpoint="/",fstype!="tmpfs"}
+          ) < 0.1
+        for: 2m
+        labels:
+          severity: critical
+          category: infrastructure
+          team: devops
+        annotations:
+          summary: "Critical disk space on {{ $labels.instance }}"
+          description: "Only {{ $value | humanizePercentage }} free space remaining"
+          runbook: "https://docs.liyaqa.com/runbooks/disk-full"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) /
+            node_memory_MemTotal_bytes
+          ) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+          team: devops
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value | humanizePercentage }} (threshold: 85%)"
+
+      # Instance down
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: infrastructure
+          team: devops
+        annotations:
+          summary: "Instance is DOWN"
+          description: "{{ $labels.instance }} has been down for more than 1 minute"
+          runbook: "https://docs.liyaqa.com/runbooks/instance-down"
+
+  # ===========================================
+  # SSL CERTIFICATE ALERTS
+  # ===========================================
+  - name: ssl_alerts
+    interval: 1h
+    rules:
+      # SSL certificate expiring soon
+      - alert: SSLCertificateExpiringSoon
+        expr: |
+          probe_ssl_earliest_cert_expiry - time() < 86400 * 30
+        for: 1h
+        labels:
+          severity: warning
+          category: security
+          team: devops
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}"
+
+      # SSL certificate expiring very soon
+      - alert: SSLCertificateExpiringVerySoon
+        expr: |
+          probe_ssl_earliest_cert_expiry - time() < 86400 * 7
+        for: 1h
+        labels:
+          severity: critical
+          category: security
+          team: devops
+        annotations:
+          summary: "SSL certificate expiring in less than 7 days"
+          description: "SSL certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}"
+          runbook: "https://docs.liyaqa.com/runbooks/ssl-renewal"
+
+  # ===========================================
+  # LOGGING ALERTS
+  # ===========================================
+  - name: logging_alerts
+    interval: 30s
+    rules:
+      # High log error rate
+      - alert: HighLogErrorRate
+        expr: |
+          rate(logback_events_total{level="error"}[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          category: application
+          team: backend
+        annotations:
+          summary: "High error log rate on {{ $labels.instance }}"
+          description: "Error log rate is {{ $value }} errors/second (threshold: 1/s)"
+
+      # Critical log error rate
+      - alert: CriticalLogErrorRate
+        expr: |
+          rate(logback_events_total{level="error"}[5m]) > 10
+        for: 2m
+        labels:
+          severity: critical
+          category: application
+          team: backend
+        annotations:
+          summary: "Critical error log rate on {{ $labels.instance }}"
+          description: "Error log rate is {{ $value }} errors/second (threshold: 10/s)"
+
+  # ===========================================
+  # EXTERNAL DEPENDENCY ALERTS
+  # ===========================================
+  - name: dependency_alerts
+    interval: 60s
+    rules:
+      # Email service down
+      - alert: EmailServiceDown
+        expr: |
+          rate(email_send_failures_total[5m]) /
+          rate(email_send_attempts_total[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: critical
+          category: integration
+          team: backend
+        annotations:
+          summary: "Email service having issues"
+          description: "Email failure rate is {{ $value | humanizePercentage }} (threshold: 50%)"
+
+      # SMS service down
+      - alert: SMSServiceDown
+        expr: |
+          rate(sms_send_failures_total[5m]) /
+          rate(sms_send_attempts_total[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: critical
+          category: integration
+          team: backend
+        annotations:
+          summary: "SMS service having issues"
+          description: "SMS failure rate is {{ $value | humanizePercentage }} (threshold: 50%)"
+
+      # Payment gateway errors
+      - alert: PaymentGatewayErrors
+        expr: |
+          rate(payment_gateway_errors_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: critical
+          category: integration
+          team: backend
+        annotations:
+          summary: "Payment gateway errors"
+          description: "Payment gateway error rate: {{ $value }} errors/second"
+          runbook: "https://docs.liyaqa.com/runbooks/payment-gateway"

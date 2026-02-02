@@ -8,12 +8,18 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",
-    theme_color: "#0d9488",
+    theme_color: "#FF6B4A",
     orientation: "portrait-primary",
     icons: [
       {
-        src: "/assets/logo-icon.svg",
+        src: "/assets/logo-liyaqa-icon.svg",
         sizes: "any",
+        type: "image/svg+xml",
+        purpose: "any",
+      },
+      {
+        src: "/assets/favicon.svg",
+        sizes: "32x32",
         type: "image/svg+xml",
         purpose: "any",
       },

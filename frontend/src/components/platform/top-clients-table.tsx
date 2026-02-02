@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { useLocale } from "next-intl";
 import Link from "next/link";
 import { Building2 } from "lucide-react";
@@ -38,6 +39,64 @@ const STATUS_LABELS: Record<string, { en: string; ar: string }> = {
   CANCELLED: { en: "Cancelled", ar: "ملغى" },
 };
 
+// Memoized ClientRow component to prevent unnecessary re-renders
+interface ClientRowProps {
+  client: TopClient;
+  index: number;
+  locale: string;
+}
+
+const ClientRow = memo<ClientRowProps>(({ client, index, locale }) => {
+  const statusLabel =
+    STATUS_LABELS[client.subscriptionStatus] || STATUS_LABELS.PENDING;
+
+  return (
+    <Link
+      href={`/${locale}/clients/${client.organizationId}`}
+      className="block"
+    >
+      <div className="flex items-center justify-between py-3 px-2 border-b last:border-0 hover:bg-neutral-50 rounded-lg transition-colors cursor-pointer">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-bold">
+            {index + 1}
+          </div>
+          <div>
+            <p className="font-medium">
+              {locale === "ar" && client.organizationNameAr
+                ? client.organizationNameAr
+                : client.organizationNameEn}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {client.invoiceCount}{" "}
+              {locale === "ar" ? "فاتورة" : "invoices"}
+            </p>
+          </div>
+        </div>
+        <div className="text-end">
+          <p className="font-medium">
+            {formatCurrency(
+              client.totalRevenue,
+              client.currency,
+              locale
+            )}
+          </p>
+          <Badge
+            variant={
+              STATUS_VARIANTS[client.subscriptionStatus] ||
+              "secondary"
+            }
+            className="text-xs mt-1"
+          >
+            {locale === "ar" ? statusLabel.ar : statusLabel.en}
+          </Badge>
+        </div>
+      </div>
+    </Link>
+  );
+});
+
+ClientRow.displayName = "ClientRow";
+
 export function TopClientsTable({ clients }: TopClientsTableProps) {
   const locale = useLocale();
 
@@ -63,56 +122,14 @@ export function TopClientsTable({ clients }: TopClientsTableProps) {
       <CardContent>
         {clients.length > 0 ? (
           <div className="space-y-3">
-            {clients.map((client, index) => {
-              const statusLabel =
-                STATUS_LABELS[client.subscriptionStatus] ||
-                STATUS_LABELS.PENDING;
-
-              return (
-                <Link
-                  key={client.organizationId}
-                  href={`/${locale}/clients/${client.organizationId}`}
-                  className="block"
-                >
-                  <div className="flex items-center justify-between py-3 px-2 border-b last:border-0 hover:bg-neutral-50 rounded-lg transition-colors cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-bold">
-                        {index + 1}
-                      </div>
-                      <div>
-                        <p className="font-medium">
-                          {locale === "ar" && client.organizationNameAr
-                            ? client.organizationNameAr
-                            : client.organizationNameEn}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {client.invoiceCount}{" "}
-                          {locale === "ar" ? "فاتورة" : "invoices"}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-end">
-                      <p className="font-medium">
-                        {formatCurrency(
-                          client.totalRevenue,
-                          client.currency,
-                          locale
-                        )}
-                      </p>
-                      <Badge
-                        variant={
-                          STATUS_VARIANTS[client.subscriptionStatus] ||
-                          "secondary"
-                        }
-                        className="text-xs mt-1"
-                      >
-                        {locale === "ar" ? statusLabel.ar : statusLabel.en}
-                      </Badge>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
+            {clients.map((client, index) => (
+              <ClientRow
+                key={client.organizationId}
+                client={client}
+                index={index}
+                locale={locale}
+              />
+            ))}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-8 text-center">

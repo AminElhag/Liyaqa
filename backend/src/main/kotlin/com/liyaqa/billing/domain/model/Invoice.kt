@@ -144,6 +144,13 @@ class Invoice(
     @Column(name = "tamara_instalments")
     var tamaraInstalments: Int? = null,
 
+    // ==================== PAYMENT RETRY TRACKING ====================
+    @Column(name = "payment_retry_count")
+    var paymentRetryCount: Int? = 0,
+
+    @Column(name = "last_payment_retry_at")
+    var lastPaymentRetryAt: java.time.Instant? = null,
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "invoice_line_items",

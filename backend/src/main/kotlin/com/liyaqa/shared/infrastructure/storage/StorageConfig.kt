@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration
 @ConfigurationProperties(prefix = "liyaqa.storage")
 class StorageConfig {
     /**
-     * Storage type: "local" or "s3" (s3 for future implementation).
+     * Storage type: "local", "s3", or "minio".
      */
     var type: String = "local"
 
@@ -48,4 +48,48 @@ class LocalStorageConfig {
      * Base directory for file uploads.
      */
     var uploadDir: String = "./uploads"
+}
+
+/**
+ * AWS S3 storage configuration.
+ */
+@Configuration
+@ConfigurationProperties(prefix = "liyaqa.storage.s3")
+class S3StorageConfig {
+    /**
+     * S3 bucket name.
+     */
+    var bucket: String = ""
+
+    /**
+     * AWS region (e.g., "us-east-1").
+     */
+    var region: String = "us-east-1"
+}
+
+/**
+ * MinIO storage configuration.
+ */
+@Configuration
+@ConfigurationProperties(prefix = "liyaqa.storage.minio")
+class MinioStorageConfig {
+    /**
+     * MinIO endpoint URL (e.g., "https://minio.example.com").
+     */
+    var endpoint: String = ""
+
+    /**
+     * MinIO access key.
+     */
+    var accessKey: String = ""
+
+    /**
+     * MinIO secret key.
+     */
+    var secretKey: String = ""
+
+    /**
+     * MinIO bucket name.
+     */
+    var bucket: String = ""
 }

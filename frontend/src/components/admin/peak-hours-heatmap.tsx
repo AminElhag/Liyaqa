@@ -20,6 +20,13 @@ export function PeakHoursHeatmap({ data, locale }: PeakHoursHeatmapProps) {
     };
   }, [data]);
 
+  // Memoize filtered data to avoid O(n) filter operations on every render
+  const { morningData, afternoonData, eveningData } = useMemo(() => ({
+    morningData: normalizedData.filter((d) => d.hour >= 5 && d.hour <= 11),
+    afternoonData: normalizedData.filter((d) => d.hour >= 12 && d.hour <= 17),
+    eveningData: normalizedData.filter((d) => d.hour >= 18 && d.hour <= 22),
+  }), [normalizedData]);
+
   const getBackgroundColor = (intensity: number) => {
     if (intensity === 0) return "bg-neutral-100";
     if (intensity < 0.2) return "bg-blue-100";
@@ -62,9 +69,7 @@ export function PeakHoursHeatmap({ data, locale }: PeakHoursHeatmapProps) {
             {locale === "ar" ? "الصباح" : "Morning"} (5 AM - 11 AM)
           </p>
           <div className="grid grid-cols-7 gap-2">
-            {normalizedData
-              .filter((d) => d.hour >= 5 && d.hour <= 11)
-              .map((item) => (
+            {morningData.map((item) => (
                 <div
                   key={item.hour}
                   className={`relative p-3 rounded-lg text-center transition-all hover:scale-105 ${getBackgroundColor(
@@ -84,9 +89,7 @@ export function PeakHoursHeatmap({ data, locale }: PeakHoursHeatmapProps) {
             {locale === "ar" ? "بعد الظهر" : "Afternoon"} (12 PM - 5 PM)
           </p>
           <div className="grid grid-cols-6 gap-2">
-            {normalizedData
-              .filter((d) => d.hour >= 12 && d.hour <= 17)
-              .map((item) => (
+            {afternoonData.map((item) => (
                 <div
                   key={item.hour}
                   className={`relative p-3 rounded-lg text-center transition-all hover:scale-105 ${getBackgroundColor(
@@ -106,9 +109,7 @@ export function PeakHoursHeatmap({ data, locale }: PeakHoursHeatmapProps) {
             {locale === "ar" ? "المساء" : "Evening"} (6 PM - 10 PM)
           </p>
           <div className="grid grid-cols-5 gap-2">
-            {normalizedData
-              .filter((d) => d.hour >= 18 && d.hour <= 22)
-              .map((item) => (
+            {eveningData.map((item) => (
                 <div
                   key={item.hour}
                   className={`relative p-3 rounded-lg text-center transition-all hover:scale-105 ${getBackgroundColor(

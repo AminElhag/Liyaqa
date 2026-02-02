@@ -38,4 +38,11 @@ interface ClassBookingRepository {
      * Used for concurrent booking validation to prevent double-booking.
      */
     fun findActiveBookingsByMemberAndDate(memberId: UUID, sessionDate: LocalDate): List<ClassBooking>
+
+    /**
+     * Finds active bookings with sessions and gym classes preloaded.
+     * Optimized for overlap validation - returns tuple of (booking, session, gymClass).
+     * This eliminates N+1 queries by fetching all data in a single query.
+     */
+    fun findActiveBookingsWithSessionsAndClasses(memberId: UUID, sessionDate: LocalDate): List<Array<Any>>
 }

@@ -209,18 +209,32 @@ class BookingService(
      * @param newSession The session being booked
      * @throws IllegalArgumentException if there's an overlapping booking
      */
+    /**
+     * Validates that the member doesn't have overlapping bookings on the same day.
+     * Uses optimized query to prevent N+1 queries (fetches bookings, sessions, and classes in one go).
+     */
     private fun validateNoOverlappingBookings(memberId: UUID, newSession: ClassSession) {
-        val existingBookings = bookingRepository.findActiveBookingsByMemberAndDate(
+        // Optimized query: fetches bookings with sessions and gym classes in a single query
+        // Returns List<Array<Any>> where each array contains [ClassBooking, ClassSession, GymClass]
+        val bookingsWithData = bookingRepository.findActiveBookingsWithSessionsAndClasses(
             memberId,
             newSession.sessionDate
         )
 
-        for (booking in existingBookings) {
-            val existingSession = sessionRepository.findById(booking.sessionId).orElse(null) ?: continue
+        for (row in bookingsWithData) {
+            // Unpack the result tuple
+            val booking = row[0] as ClassBooking
+            val existingSession = row[1] as ClassSession
+            val existingClass = row[2] as GymClass
 
-            if (sessionsOverlap(newSession.startTime, newSession.endTime, existingSession.startTime, existingSession.endTime)) {
-                val existingClass = gymClassRepository.findById(existingSession.gymClassId).orElse(null)
-                val className = existingClass?.name?.en ?: "another class"
+            // Check for time overlap
+            if (sessionsOverlap(
+                    newSession.startTime,
+                    newSession.endTime,
+                    existingSession.startTime,
+                    existingSession.endTime
+                )) {
+                val className = existingClass.name.en
                 throw IllegalArgumentException(
                     "Cannot book: time conflicts with $className (${existingSession.startTime}-${existingSession.endTime})"
                 )

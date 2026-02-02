@@ -1,0 +1,448 @@
+# =============================================================================
+# PostgreSQL Exporter Custom Queries
+# =============================================================================
+# This file defines custom queries for postgres-exporter to collect detailed
+# database metrics beyond the default set.
+#
+# Usage:
+#   Mount this file in docker-compose.monitoring.yml:
+#     volumes:
+#       - ./postgres-exporter-queries.yml:/etc/postgres-exporter/queries.yml:ro
+#
+#   Set environment variable:
+#     PG_EXPORTER_EXTEND_QUERY_PATH: "/etc/postgres-exporter/queries.yml"
+#
+# Metrics will be available in Prometheus as:
+#   pg_<query_name>_<column_name>
+# =============================================================================
+
+# Query Statistics from pg_stat_statements
+pg_stat_statements:
+  query: |
+    SELECT
+      LEFT(query, 100) AS query_short,
+      calls,
+      total_exec_time,
+      mean_exec_time,
+      max_exec_time,
+      stddev_exec_time,
+      rows,
+      shared_blks_hit,
+      shared_blks_read,
+      shared_blks_dirtied,
+      shared_blks_written,
+      temp_blks_read,
+      temp_blks_written
+    FROM pg_stat_statements
+    WHERE query NOT LIKE '%pg_stat_statements%'
+    ORDER BY total_exec_time DESC
+    LIMIT 50;
+  metrics:
+    - query_short:
+        usage: "LABEL"
+        description: "Shortened query text"
+    - calls:
+        usage: "COUNTER"
+        description: "Number of times executed"
+    - total_exec_time:
+        usage: "COUNTER"
+        description: "Total time spent executing query (ms)"
+    - mean_exec_time:
+        usage: "GAUGE"
+        description: "Mean execution time (ms)"
+    - max_exec_time:
+        usage: "GAUGE"
+        description: "Maximum execution time (ms)"
+    - stddev_exec_time:
+        usage: "GAUGE"
+        description: "Standard deviation of execution time (ms)"
+    - rows:
+        usage: "COUNTER"
+        description: "Total rows retrieved or affected"
+    - shared_blks_hit:
+        usage: "COUNTER"
+        description: "Shared block cache hits"
+    - shared_blks_read:
+        usage: "COUNTER"
+        description: "Shared blocks read from disk"
+    - shared_blks_dirtied:
+        usage: "COUNTER"
+        description: "Shared blocks dirtied"
+    - shared_blks_written:
+        usage: "COUNTER"
+        description: "Shared blocks written"
+    - temp_blks_read:
+        usage: "COUNTER"
+        description: "Temp blocks read"
+    - temp_blks_written:
+        usage: "COUNTER"
+        description: "Temp blocks written"
+
+# Slow Queries (mean_exec_time > 100ms)
+pg_slow_queries:
+  query: |
+    SELECT
+      COUNT(*) FILTER (WHERE mean_exec_time > 100) AS slow_query_count,
+      COUNT(*) FILTER (WHERE mean_exec_time > 500) AS very_slow_query_count,
+      COUNT(*) FILTER (WHERE mean_exec_time > 1000) AS critical_slow_query_count,
+      MAX(mean_exec_time) AS max_mean_exec_time,
+      AVG(mean_exec_time) AS avg_mean_exec_time
+    FROM pg_stat_statements
+    WHERE query NOT LIKE '%pg_stat_statements%';
+  metrics:
+    - slow_query_count:
+        usage: "GAUGE"
+        description: "Number of queries with mean exec time > 100ms"
+    - very_slow_query_count:
+        usage: "GAUGE"
+        description: "Number of queries with mean exec time > 500ms"
+    - critical_slow_query_count:
+        usage: "GAUGE"
+        description: "Number of queries with mean exec time > 1000ms"
+    - max_mean_exec_time:
+        usage: "GAUGE"
+        description: "Maximum mean execution time across all queries (ms)"
+    - avg_mean_exec_time:
+        usage: "GAUGE"
+        description: "Average mean execution time across all queries (ms)"
+
+# Database Size Metrics
+pg_database_size:
+  query: |
+    SELECT
+      pg_database_size(current_database()) AS size_bytes,
+      pg_database_size(current_database()) / (1024 * 1024) AS size_mb,
+      (SELECT COUNT(*) FROM pg_tables WHERE schemaname = 'public') AS table_count,
+      (SELECT COUNT(*) FROM pg_indexes WHERE schemaname = 'public') AS index_count;
+  metrics:
+    - size_bytes:
+        usage: "GAUGE"
+        description: "Database size in bytes"
+    - size_mb:
+        usage: "GAUGE"
+        description: "Database size in megabytes"
+    - table_count:
+        usage: "GAUGE"
+        description: "Number of tables in public schema"
+    - index_count:
+        usage: "GAUGE"
+        description: "Number of indexes in public schema"
+
+# Table Sizes
+pg_table_sizes:
+  query: |
+    SELECT
+      schemaname || '.' || tablename AS table_name,
+      pg_total_relation_size(schemaname || '.' || tablename) AS total_size_bytes,
+      pg_table_size(schemaname || '.' || tablename) AS table_size_bytes,
+      pg_indexes_size(schemaname || '.' || tablename) AS indexes_size_bytes,
+      (SELECT COUNT(*) FROM pg_indexes WHERE schemaname = t.schemaname AND tablename = t.tablename) AS index_count
+    FROM pg_tables t
+    WHERE schemaname = 'public'
+    ORDER BY pg_total_relation_size(schemaname || '.' || tablename) DESC
+    LIMIT 20;
+  metrics:
+    - table_name:
+        usage: "LABEL"
+        description: "Table name (schema.table)"
+    - total_size_bytes:
+        usage: "GAUGE"
+        description: "Total size including indexes (bytes)"
+    - table_size_bytes:
+        usage: "GAUGE"
+        description: "Table size excluding indexes (bytes)"
+    - indexes_size_bytes:
+        usage: "GAUGE"
+        description: "Total indexes size (bytes)"
+    - index_count:
+        usage: "GAUGE"
+        description: "Number of indexes on table"
+
+# Connection Pool Statistics
+pg_connection_stats:
+  query: |
+    SELECT
+      state,
+      COUNT(*) AS count,
+      MAX(EXTRACT(EPOCH FROM (NOW() - state_change))) AS max_duration_seconds
+    FROM pg_stat_activity
+    WHERE datname = current_database()
+    GROUP BY state;
+  metrics:
+    - state:
+        usage: "LABEL"
+        description: "Connection state (active, idle, etc.)"
+    - count:
+        usage: "GAUGE"
+        description: "Number of connections in this state"
+    - max_duration_seconds:
+        usage: "GAUGE"
+        description: "Maximum duration a connection has been in this state (seconds)"
+
+# Long Running Queries
+pg_long_running_queries:
+  query: |
+    SELECT
+      COUNT(*) FILTER (WHERE NOW() - query_start > interval '1 second') AS running_1s,
+      COUNT(*) FILTER (WHERE NOW() - query_start > interval '5 seconds') AS running_5s,
+      COUNT(*) FILTER (WHERE NOW() - query_start > interval '30 seconds') AS running_30s,
+      COUNT(*) FILTER (WHERE NOW() - query_start > interval '1 minute') AS running_1m,
+      COUNT(*) FILTER (WHERE NOW() - query_start > interval '5 minutes') AS running_5m,
+      MAX(EXTRACT(EPOCH FROM (NOW() - query_start))) AS max_query_duration_seconds
+    FROM pg_stat_activity
+    WHERE state = 'active'
+      AND datname = current_database()
+      AND query NOT LIKE '%pg_stat_activity%';
+  metrics:
+    - running_1s:
+        usage: "GAUGE"
+        description: "Queries running > 1 second"
+    - running_5s:
+        usage: "GAUGE"
+        description: "Queries running > 5 seconds"
+    - running_30s:
+        usage: "GAUGE"
+        description: "Queries running > 30 seconds"
+    - running_1m:
+        usage: "GAUGE"
+        description: "Queries running > 1 minute"
+    - running_5m:
+        usage: "GAUGE"
+        description: "Queries running > 5 minutes"
+    - max_query_duration_seconds:
+        usage: "GAUGE"
+        description: "Maximum query duration (seconds)"
+
+# Cache Hit Ratio
+pg_cache_hit_ratio:
+  query: |
+    SELECT
+      'cache' AS type,
+      SUM(heap_blks_hit) AS hits,
+      SUM(heap_blks_read) AS reads,
+      CASE
+        WHEN SUM(heap_blks_hit) + SUM(heap_blks_read) = 0 THEN 100
+        ELSE ROUND(100.0 * SUM(heap_blks_hit) / NULLIF(SUM(heap_blks_hit) + SUM(heap_blks_read), 0), 2)
+      END AS hit_ratio
+    FROM pg_statio_user_tables
+    UNION ALL
+    SELECT
+      'index' AS type,
+      SUM(idx_blks_hit) AS hits,
+      SUM(idx_blks_read) AS reads,
+      CASE
+        WHEN SUM(idx_blks_hit) + SUM(idx_blks_read) = 0 THEN 100
+        ELSE ROUND(100.0 * SUM(idx_blks_hit) / NULLIF(SUM(idx_blks_hit) + SUM(idx_blks_read), 0), 2)
+      END AS hit_ratio
+    FROM pg_statio_user_indexes;
+  metrics:
+    - type:
+        usage: "LABEL"
+        description: "Cache type (cache or index)"
+    - hits:
+        usage: "COUNTER"
+        description: "Number of cache hits"
+    - reads:
+        usage: "COUNTER"
+        description: "Number of disk reads"
+    - hit_ratio:
+        usage: "GAUGE"
+        description: "Cache hit ratio percentage"
+
+# Vacuum and Analyze Statistics
+pg_vacuum_stats:
+  query: |
+    SELECT
+      schemaname || '.' || relname AS table_name,
+      last_vacuum,
+      last_autovacuum,
+      last_analyze,
+      last_autoanalyze,
+      vacuum_count,
+      autovacuum_count,
+      analyze_count,
+      autoanalyze_count,
+      n_tup_ins AS inserts,
+      n_tup_upd AS updates,
+      n_tup_del AS deletes,
+      n_live_tup AS live_tuples,
+      n_dead_tup AS dead_tuples,
+      CASE
+        WHEN n_live_tup = 0 THEN 0
+        ELSE ROUND(100.0 * n_dead_tup / NULLIF(n_live_tup, 0), 2)
+      END AS dead_tuple_ratio
+    FROM pg_stat_user_tables
+    WHERE schemaname = 'public'
+    ORDER BY n_dead_tup DESC
+    LIMIT 20;
+  metrics:
+    - table_name:
+        usage: "LABEL"
+        description: "Table name (schema.table)"
+    - vacuum_count:
+        usage: "COUNTER"
+        description: "Number of manual vacuums"
+    - autovacuum_count:
+        usage: "COUNTER"
+        description: "Number of autovacuums"
+    - analyze_count:
+        usage: "COUNTER"
+        description: "Number of manual analyzes"
+    - autoanalyze_count:
+        usage: "COUNTER"
+        description: "Number of auto analyzes"
+    - inserts:
+        usage: "COUNTER"
+        description: "Number of rows inserted"
+    - updates:
+        usage: "COUNTER"
+        description: "Number of rows updated"
+    - deletes:
+        usage: "COUNTER"
+        description: "Number of rows deleted"
+    - live_tuples:
+        usage: "GAUGE"
+        description: "Number of live tuples"
+    - dead_tuples:
+        usage: "GAUGE"
+        description: "Number of dead tuples"
+    - dead_tuple_ratio:
+        usage: "GAUGE"
+        description: "Ratio of dead to live tuples (percentage)"
+
+# Index Usage Statistics
+pg_index_usage:
+  query: |
+    SELECT
+      schemaname || '.' || tablename AS table_name,
+      indexrelname AS index_name,
+      idx_scan AS scans,
+      idx_tup_read AS tuples_read,
+      idx_tup_fetch AS tuples_fetched,
+      pg_relation_size(indexrelid) AS size_bytes,
+      CASE
+        WHEN idx_scan = 0 THEN 0
+        ELSE ROUND(100.0 * idx_tup_fetch / NULLIF(idx_tup_read, 0), 2)
+      END AS fetch_ratio
+    FROM pg_stat_user_indexes
+    WHERE schemaname = 'public'
+    ORDER BY idx_scan
+    LIMIT 30;
+  metrics:
+    - table_name:
+        usage: "LABEL"
+        description: "Table name"
+    - index_name:
+        usage: "LABEL"
+        description: "Index name"
+    - scans:
+        usage: "COUNTER"
+        description: "Number of index scans"
+    - tuples_read:
+        usage: "COUNTER"
+        description: "Number of tuples read"
+    - tuples_fetched:
+        usage: "COUNTER"
+        description: "Number of tuples fetched"
+    - size_bytes:
+        usage: "GAUGE"
+        description: "Index size (bytes)"
+    - fetch_ratio:
+        usage: "GAUGE"
+        description: "Ratio of tuples fetched to read (percentage)"
+
+# Unused Indexes (never or rarely used)
+pg_unused_indexes:
+  query: |
+    SELECT
+      COUNT(*) FILTER (WHERE idx_scan = 0) AS never_used,
+      COUNT(*) FILTER (WHERE idx_scan < 10) AS rarely_used,
+      COUNT(*) FILTER (WHERE idx_scan < 100) AS occasionally_used,
+      SUM(pg_relation_size(indexrelid)) FILTER (WHERE idx_scan = 0) AS never_used_size_bytes,
+      SUM(pg_relation_size(indexrelid)) FILTER (WHERE idx_scan < 10) AS rarely_used_size_bytes
+    FROM pg_stat_user_indexes
+    WHERE schemaname = 'public';
+  metrics:
+    - never_used:
+        usage: "GAUGE"
+        description: "Number of indexes never used"
+    - rarely_used:
+        usage: "GAUGE"
+        description: "Number of indexes used < 10 times"
+    - occasionally_used:
+        usage: "GAUGE"
+        description: "Number of indexes used < 100 times"
+    - never_used_size_bytes:
+        usage: "GAUGE"
+        description: "Total size of never-used indexes (bytes)"
+    - rarely_used_size_bytes:
+        usage: "GAUGE"
+        description: "Total size of rarely-used indexes (bytes)"
+
+# Locks and Blocking
+pg_locks:
+  query: |
+    SELECT
+      mode,
+      COUNT(*) AS count
+    FROM pg_locks
+    WHERE database = (SELECT oid FROM pg_database WHERE datname = current_database())
+    GROUP BY mode;
+  metrics:
+    - mode:
+        usage: "LABEL"
+        description: "Lock mode"
+    - count:
+        usage: "GAUGE"
+        description: "Number of locks in this mode"
+
+# Replication Lag (if applicable)
+pg_replication_lag:
+  query: |
+    SELECT
+      COALESCE(EXTRACT(EPOCH FROM (NOW() - pg_last_xact_replay_timestamp())), 0) AS lag_seconds
+    FROM pg_stat_replication
+    LIMIT 1;
+  metrics:
+    - lag_seconds:
+        usage: "GAUGE"
+        description: "Replication lag in seconds"
+
+# Transaction Statistics
+pg_transaction_stats:
+  query: |
+    SELECT
+      xact_commit AS commits,
+      xact_rollback AS rollbacks,
+      CASE
+        WHEN xact_commit + xact_rollback = 0 THEN 100
+        ELSE ROUND(100.0 * xact_commit / NULLIF(xact_commit + xact_rollback, 0), 2)
+      END AS commit_ratio,
+      conflicts,
+      deadlocks,
+      temp_files,
+      temp_bytes
+    FROM pg_stat_database
+    WHERE datname = current_database();
+  metrics:
+    - commits:
+        usage: "COUNTER"
+        description: "Number of committed transactions"
+    - rollbacks:
+        usage: "COUNTER"
+        description: "Number of rolled back transactions"
+    - commit_ratio:
+        usage: "GAUGE"
+        description: "Commit ratio percentage"
+    - conflicts:
+        usage: "COUNTER"
+        description: "Number of conflicts"
+    - deadlocks:
+        usage: "COUNTER"
+        description: "Number of deadlocks"
+    - temp_files:
+        usage: "COUNTER"
+        description: "Number of temporary files created"
+    - temp_bytes:
+        usage: "COUNTER"
+        description: "Total bytes written to temp files"

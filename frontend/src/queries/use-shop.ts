@@ -94,10 +94,6 @@ export function useAddToCart(memberId?: UUID) {
   return useMutation({
     mutationFn: (data: AddToCartRequest & { memberId?: UUID }) => {
       const { memberId: dataMemberId, ...cartData } = data;
-      console.log("[useAddToCart] hook memberId:", memberId);
-      console.log("[useAddToCart] data received:", data);
-      console.log("[useAddToCart] dataMemberId extracted:", dataMemberId);
-      console.log("[useAddToCart] final memberId:", dataMemberId ?? memberId);
       return shopApi.addToCart(cartData, dataMemberId ?? memberId);
     },
     onSuccess: (updatedCart, variables) => {

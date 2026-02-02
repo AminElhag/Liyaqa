@@ -20,13 +20,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useAuthStore } from "@/stores/auth-store";
+import { PasswordStrengthIndicator } from "@/components/auth/password-strength-indicator";
+import { passwordSchema } from "@/lib/validations/password-schema";
 
 const registerSchema = z
   .object({
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
     email: z.string().email("Invalid email address"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
+    password: passwordSchema,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -47,10 +49,14 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
   });
+
+  // Watch password field for strength indicator
+  const password = watch("password", "");
 
   const onSubmit = async (data: RegisterFormData) => {
     clearError();
@@ -149,6 +155,14 @@ export default function RegisterPage() {
             </div>
             {errors.password && (
               <p className="text-sm text-danger">{errors.password.message}</p>
+            )}
+            {/* Password Strength Indicator */}
+            {password && (
+              <PasswordStrengthIndicator
+                password={password}
+                isPlatformUser={false}
+                locale={locale as "en" | "ar"}
+              />
             )}
           </div>
 

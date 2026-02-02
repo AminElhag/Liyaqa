@@ -28,6 +28,8 @@ interface SpringDataInvoiceRepository : JpaRepository<Invoice, UUID> {
 
     fun findByStatus(status: InvoiceStatus, pageable: Pageable): Page<Invoice>
 
+    fun findByStatusIn(statuses: List<InvoiceStatus>): List<Invoice>
+
     @Query("SELECT i FROM Invoice i WHERE i.status = 'OVERDUE'")
     fun findOverdueInvoices(pageable: Pageable): Page<Invoice>
 
@@ -137,6 +139,9 @@ class JpaInvoiceRepository(
 
     override fun findByStatus(status: InvoiceStatus, pageable: Pageable): Page<Invoice> =
         springDataRepository.findByStatus(status, pageable)
+
+    override fun findByStatusIn(statuses: List<InvoiceStatus>): List<Invoice> =
+        springDataRepository.findByStatusIn(statuses)
 
     override fun findOverdueInvoices(pageable: Pageable): Page<Invoice> =
         springDataRepository.findOverdueInvoices(pageable)

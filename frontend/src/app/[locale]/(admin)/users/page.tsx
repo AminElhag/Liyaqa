@@ -61,6 +61,7 @@ const ROLE_CONFIG: Record<UserRole, { icon: typeof Shield; color: string }> = {
   CLUB_ADMIN: { icon: Shield, color: "text-primary" },
   STAFF: { icon: UserIcon, color: "text-warning" },
   MEMBER: { icon: Users, color: "text-neutral-500" },
+  TRAINER: { icon: UserIcon, color: "text-teal-600" },
 };
 
 const ROLE_LABELS: Record<UserRole, { en: string; ar: string }> = {
@@ -68,6 +69,7 @@ const ROLE_LABELS: Record<UserRole, { en: string; ar: string }> = {
   PLATFORM_ADMIN: { en: "Platform Admin", ar: "مدير المنصة" },
   SALES_REP: { en: "Sales Rep", ar: "مندوب المبيعات" },
   MARKETING: { en: "Marketing", ar: "التسويق" },
+  TRAINER: { en: "Trainer", ar: "مدرب" },
   SUPPORT: { en: "Support", ar: "الدعم" },
   // Client roles
   SUPER_ADMIN: { en: "Super Admin", ar: "مدير النظام" },

@@ -1,0 +1,181 @@
+# Email Service Configuration Examples
+# Copy the relevant section to your application.yml or application-prod.yml
+
+# =====================================================================
+# SendGrid Configuration (Recommended for Production)
+# =====================================================================
+# Pros: Easy setup, excellent deliverability, detailed analytics
+# Pricing: Free tier (100 emails/day), Paid plans from $14.95/month
+# Docs: https://docs.sendgrid.com/
+
+email:
+  provider: sendgrid
+  from-address: noreply@liyaqa.com
+  from-name: Liyaqa
+  sendgrid:
+    api-key: ${SENDGRID_API_KEY}  # Get from SendGrid dashboard
+
+# =====================================================================
+# AWS SES Configuration (Recommended for High Volume)
+# =====================================================================
+# Pros: Cost-effective at scale, integrates with AWS ecosystem
+# Pricing: $0.10 per 1,000 emails
+# Docs: https://docs.aws.amazon.com/ses/
+
+email:
+  provider: aws-ses
+  from-address: noreply@liyaqa.com
+  from-name: Liyaqa
+  aws:
+    region: us-east-1  # or me-south-1 for Middle East
+
+# Note: AWS credentials should be configured via:
+# - Environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+# - IAM role (recommended for EC2/ECS)
+# - ~/.aws/credentials file
+
+# =====================================================================
+# SMTP Configuration (Development/Testing)
+# =====================================================================
+# Pros: Works with any SMTP server, easy for local testing
+# Cons: Lower deliverability, requires SMTP server maintenance
+
+email:
+  provider: smtp  # or omit provider (SMTP is default)
+  from-address: noreply@liyaqa.com
+  from-name: Liyaqa
+
+spring:
+  mail:
+    host: smtp.gmail.com  # or your SMTP server
+    port: 587
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+# =====================================================================
+# Gmail SMTP Example (for testing only, not recommended for production)
+# =====================================================================
+
+email:
+  provider: smtp
+  from-address: your-email@gmail.com
+  from-name: Liyaqa
+
+spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: your-email@gmail.com
+    password: your-app-password  # Use App Password, not regular password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+# To get Gmail App Password:
+# 1. Enable 2-Step Verification on your Google Account
+# 2. Go to https://myaccount.google.com/apppasswords
+# 3. Generate an app password for "Mail"
+# 4. Use that 16-character password in the configuration
+
+# =====================================================================
+# Mailtrap SMTP Example (for testing email flow without sending)
+# =====================================================================
+
+email:
+  provider: smtp
+  from-address: test@liyaqa.com
+  from-name: Liyaqa Test
+
+spring:
+  mail:
+    host: smtp.mailtrap.io
+    port: 2525
+    username: ${MAILTRAP_USERNAME}
+    password: ${MAILTRAP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+
+# Get credentials from https://mailtrap.io/
+
+# =====================================================================
+# Production Recommendations
+# =====================================================================
+
+# For Saudi Arabia deployments:
+# 1. First choice: SendGrid
+#    - Easy setup, great deliverability
+#    - Middle East data centers available
+#    - Excellent support and documentation
+#
+# 2. Second choice: AWS SES with me-south-1 (Bahrain) region
+#    - Cost-effective at scale
+#    - Low latency for Middle East
+#    - Requires domain verification
+#
+# 3. Avoid: Generic SMTP servers
+#    - Often flagged as spam
+#    - Poor deliverability
+#    - Requires more maintenance
+
+# =====================================================================
+# Domain Verification (Required for Production)
+# =====================================================================
+
+# For SendGrid:
+# 1. Add domain authentication records to DNS
+# 2. Verify domain in SendGrid dashboard
+# 3. Configure sender authentication
+# Docs: https://docs.sendgrid.com/ui/account-and-settings/how-to-set-up-domain-authentication
+
+# For AWS SES:
+# 1. Verify email address or domain
+# 2. Add DKIM records to DNS
+# 3. Request production access (move out of sandbox)
+# Docs: https://docs.aws.amazon.com/ses/latest/dg/verify-addresses-and-domains.html
+
+# =====================================================================
+# Testing Email Configuration
+# =====================================================================
+
+# To test your email configuration:
+# 1. Start the application
+# 2. Send a test email via API:
+#    POST /api/admin/test/email
+#    {
+#      "to": "your-email@example.com",
+#      "subject": "Test Email",
+#      "body": "This is a test email from Liyaqa"
+#    }
+# 3. Check application logs for success/error messages
+# 4. Check recipient inbox (and spam folder)
+
+# =====================================================================
+# Environment Variables for Production
+# =====================================================================
+
+# For SendGrid:
+# export SENDGRID_API_KEY=SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# For AWS SES (if not using IAM role):
+# export AWS_ACCESS_KEY_ID=AKIAxxxxxxxxxxxxxxxx
+# export AWS_SECRET_ACCESS_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# export AWS_REGION=us-east-1
+
+# For SMTP:
+# export SMTP_USERNAME=your-username
+# export SMTP_PASSWORD=your-password

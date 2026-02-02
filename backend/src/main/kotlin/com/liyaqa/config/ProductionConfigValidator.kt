@@ -33,7 +33,10 @@ class ProductionConfigValidator(
 
             // Security
             ConfigVariable("JWT_SECRET", "JWT signing secret (min 32 characters)"),
-            ConfigVariable("CORS_ALLOWED_ORIGINS", "Allowed CORS origins for frontend")
+            ConfigVariable("CORS_ALLOWED_ORIGINS", "Allowed CORS origins for frontend"),
+
+            // Storage
+            ConfigVariable("STORAGE_TYPE", "File storage type (s3, minio, or local)")
         )
 
         /**
@@ -130,10 +133,39 @@ class ProductionConfigValidator(
             }
         }
 
-        // Validate JWT_SECRET length
+        // Validate JWT_SECRET length and content
         val jwtSecret = getEnvValue("JWT_SECRET")
-        if (!jwtSecret.isNullOrBlank() && jwtSecret.length < 32) {
-            errors.add("JWT_SECRET must be at least 32 characters long (current: ${jwtSecret.length})")
+        if (!jwtSecret.isNullOrBlank()) {
+            if (jwtSecret.length < 32) {
+                errors.add("JWT_SECRET must be at least 32 characters long (current: ${jwtSecret.length})")
+            }
+            if (jwtSecret.contains("dev", ignoreCase = true) ||
+                jwtSecret.contains("test", ignoreCase = true) ||
+                jwtSecret.contains("change", ignoreCase = true) ||
+                jwtSecret == "your-secret-key-here") {
+                errors.add("JWT_SECRET appears to be a default/development value - must use production secret")
+            }
+        }
+
+        // Validate database password is not default
+        val dbPassword = getEnvValue("DATABASE_PASSWORD")
+        if (!dbPassword.isNullOrBlank()) {
+            if (dbPassword == "postgres" || dbPassword == "password" || dbPassword == "admin") {
+                errors.add("DATABASE_PASSWORD must not be a default value (current: $dbPassword)")
+            }
+        }
+
+        // Validate storage type in production
+        val storageType = getEnvValue("STORAGE_TYPE")
+        if (!storageType.isNullOrBlank()) {
+            if (storageType == "local") {
+                errors.add("STORAGE_TYPE must be 's3' or 'minio' in production (local storage blocks horizontal scaling)")
+            }
+            if (storageType == "s3") {
+                checkS3Config(errors)
+            } else if (storageType == "minio") {
+                checkMinioConfig(errors)
+            }
         }
 
         // Check conditional variables based on feature flags
@@ -264,6 +296,42 @@ class ProductionConfigValidator(
         if (fromNumber.isNullOrBlank()) {
             errors.add("TWILIO_FROM_NUMBER: Required when SMS_ENABLED=true")
         }
+    }
+
+    private fun checkS3Config(errors: MutableList<String>) {
+        val bucketName = getEnvValue("S3_BUCKET_NAME")
+        val region = getEnvValue("AWS_REGION")
+
+        if (bucketName.isNullOrBlank()) {
+            errors.add("S3_BUCKET_NAME: Required when STORAGE_TYPE=s3")
+        }
+        if (region.isNullOrBlank()) {
+            errors.add("AWS_REGION: Required when STORAGE_TYPE=s3")
+        }
+
+        logger.info("  [OK] S3 storage configured")
+    }
+
+    private fun checkMinioConfig(errors: MutableList<String>) {
+        val endpoint = getEnvValue("MINIO_ENDPOINT")
+        val accessKey = getEnvValue("MINIO_ACCESS_KEY")
+        val secretKey = getEnvValue("MINIO_SECRET_KEY")
+        val bucket = getEnvValue("MINIO_BUCKET")
+
+        if (endpoint.isNullOrBlank()) {
+            errors.add("MINIO_ENDPOINT: Required when STORAGE_TYPE=minio")
+        }
+        if (accessKey.isNullOrBlank()) {
+            errors.add("MINIO_ACCESS_KEY: Required when STORAGE_TYPE=minio")
+        }
+        if (secretKey.isNullOrBlank()) {
+            errors.add("MINIO_SECRET_KEY: Required when STORAGE_TYPE=minio")
+        }
+        if (bucket.isNullOrBlank()) {
+            errors.add("MINIO_BUCKET: Required when STORAGE_TYPE=minio")
+        }
+
+        logger.info("  [OK] MinIO storage configured")
     }
 
     /**

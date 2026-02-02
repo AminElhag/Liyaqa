@@ -1,106 +1,32 @@
-import { apiClient } from './client';
+import { api } from "./client";
+import type { SecurityAlertResponse, AlertCountResponse } from "@/types/security";
 
 /**
- * Security alert from backend
+ * Fetches security alerts for the authenticated user
+ * @param unreadOnly - If true, only returns unread alerts
  */
-export interface SecurityAlert {
-  id: string;
-  alertType: string;
-  severity: string;
-  description: string;
-  details: string | null;
-  ipAddress: string | null;
-  deviceInfo: string | null;
-  location: string | null;
-  resolved: boolean;
-  acknowledgedAt: string | null;
-  createdAt: string;
+export async function fetchSecurityAlerts(unreadOnly?: boolean): Promise<SecurityAlertResponse[]> {
+  const params = new URLSearchParams();
+  if (unreadOnly) {
+    params.append("unreadOnly", "true");
+  }
+
+  const url = params.toString() ? `api/security/alerts?${params}` : "api/security/alerts";
+  return api.get(url).json<SecurityAlertResponse[]>();
 }
 
 /**
- * Paginated response for security alerts
+ * Fetches the count of unread security alerts
  */
-export interface SecurityAlertPageResponse {
-  content: SecurityAlert[];
-  totalElements: number;
-  totalPages: number;
-  currentPage: number;
-  pageSize: number;
+export async function fetchUnreadAlertCount(): Promise<number> {
+  const response = await api.get("api/security/alerts/count").json<AlertCountResponse>();
+  return response.count;
 }
 
 /**
- * Response for list of alerts
+ * Acknowledges a security alert (marks it as read/resolved)
+ * @param alertId - The ID of the alert to acknowledge
  */
-export interface SecurityAlertsResponse {
-  alerts: SecurityAlert[];
-  count: number;
+export async function acknowledgeSecurityAlert(alertId: string): Promise<void> {
+  await api.post(`api/security/alerts/${alertId}/acknowledge`);
 }
-
-/**
- * Response for unread count
- */
-export interface UnreadCountResponse {
-  count: number;
-}
-
-/**
- * Security Alerts API functions
- */
-export const securityAlertsApi = {
-  /**
-   * Get all security alerts (paginated)
-   */
-  async getAlerts(page: number = 0, size: number = 20, resolved?: boolean): Promise<SecurityAlertPageResponse> {
-    const params = new URLSearchParams();
-    params.set('page', page.toString());
-    params.set('size', size.toString());
-    if (resolved !== undefined) {
-      params.set('resolved', resolved.toString());
-    }
-
-    return apiClient.get(
-      `/security/alerts?${params.toString()}`
-    ).json<SecurityAlertPageResponse>();
-  },
-
-  /**
-   * Get unread security alerts
-   */
-  async getUnreadAlerts(): Promise<SecurityAlert[]> {
-    const response = await apiClient.get('/security/alerts/unread').json<SecurityAlertsResponse>();
-    return response.alerts;
-  },
-
-  /**
-   * Get count of unread alerts
-   */
-  async getUnreadCount(): Promise<number> {
-    const response = await apiClient.get('/security/alerts/unread/count').json<UnreadCountResponse>();
-    return response.count;
-  },
-
-  /**
-   * Acknowledge a specific alert
-   */
-  async acknowledgeAlert(alertId: string): Promise<{ message: string }> {
-    return apiClient.post(
-      `/security/alerts/${alertId}/acknowledge`
-    ).json<{ message: string }>();
-  },
-
-  /**
-   * Dismiss a specific alert
-   */
-  async dismissAlert(alertId: string): Promise<{ message: string }> {
-    return apiClient.post(
-      `/security/alerts/${alertId}/dismiss`
-    ).json<{ message: string }>();
-  },
-
-  /**
-   * Acknowledge all unread alerts
-   */
-  async acknowledgeAllAlerts(): Promise<{ message: string }> {
-    return apiClient.post('/security/alerts/acknowledge-all').json<{ message: string }>();
-  },
-};

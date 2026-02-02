@@ -65,6 +65,21 @@ interface SpringDataSubscriptionRepository : JpaRepository<Subscription, UUID> {
         GROUP BY s.planId
     """)
     fun getChurnStatsByPlan(@Param("startDate") startDate: LocalDate, @Param("endDate") endDate: LocalDate): List<Array<Any>>
+
+    /**
+     * Find active subscriptions due for billing within the date range.
+     * Checks currentBillingPeriodEnd falling within the range.
+     */
+    @Query("""
+        SELECT s FROM Subscription s
+        WHERE s.status = 'ACTIVE'
+        AND s.currentBillingPeriodEnd BETWEEN :fromDate AND :toDate
+        ORDER BY s.currentBillingPeriodEnd ASC
+    """)
+    fun findDueForBilling(
+        @Param("fromDate") fromDate: LocalDate,
+        @Param("toDate") toDate: LocalDate
+    ): List<Subscription>
 }
 
 @Repository
@@ -144,4 +159,7 @@ class JpaSubscriptionRepository(
             )
         }
     }
+
+    override fun findDueForBilling(fromDate: LocalDate, toDate: LocalDate): List<Subscription> =
+        springDataRepository.findDueForBilling(fromDate, toDate)
 }

@@ -452,8 +452,7 @@ class AuthService(
                 userId = user.id,
                 accessToken = accessToken,
                 deviceInfo = deviceInfo,
-                ipAddress = ipAddress,
-                request = null // Will be enhanced when HttpServletRequest is available in controller
+                ipAddress = ipAddress
             )
             logger.debug("Session created for user: ${user.id}")
         } catch (e: Exception) {
