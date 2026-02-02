@@ -2,19 +2,16 @@ package com.liyaqa.auth.infrastructure.persistence
 
 import com.liyaqa.auth.domain.model.UserSession
 import com.liyaqa.auth.domain.ports.UserSessionRepository
-import org.springframework.context.annotation.Primary
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
-import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import java.util.UUID
 
-@Repository
-interface JpaUserSessionRepository : JpaRepository<UserSession, UUID> {
+interface SpringDataUserSessionRepository : JpaRepository<UserSession, UUID> {
 
     fun findBySessionId(sessionId: UUID): UserSession?
 
@@ -53,35 +50,34 @@ interface JpaUserSessionRepository : JpaRepository<UserSession, UUID> {
     fun deleteExpiredSessions(@Param("before") before: Instant): Int
 }
 
-@Component
-@Primary
-class UserSessionRepositoryAdapter(
-    private val jpaRepository: JpaUserSessionRepository
+@Repository
+class JpaUserSessionRepository(
+    private val springDataRepository: SpringDataUserSessionRepository
 ) : UserSessionRepository {
 
     override fun save(session: UserSession): UserSession =
-        jpaRepository.save(session)
+        springDataRepository.save(session)
 
     override fun findBySessionId(sessionId: UUID): UserSession? =
-        jpaRepository.findBySessionId(sessionId)
+        springDataRepository.findBySessionId(sessionId)
 
     override fun findActiveSessionsByUserId(userId: UUID): List<UserSession> =
-        jpaRepository.findActiveSessionsByUserId(userId)
+        springDataRepository.findActiveSessionsByUserId(userId)
 
     override fun findAllByUserId(userId: UUID): List<UserSession> =
-        jpaRepository.findAllByUserId(userId)
+        springDataRepository.findAllByUserId(userId)
 
     override fun countActiveSessionsByUserId(userId: UUID): Long =
-        jpaRepository.countActiveSessionsByUserId(userId)
+        springDataRepository.countActiveSessionsByUserId(userId)
 
     override fun revokeAllExcept(userId: UUID, exceptSessionId: UUID?) {
-        jpaRepository.revokeAllExceptQuery(userId, exceptSessionId, Instant.now())
+        springDataRepository.revokeAllExceptQuery(userId, exceptSessionId, Instant.now())
     }
 
     override fun revokeAllByUserId(userId: UUID) {
-        jpaRepository.revokeAllByUserIdQuery(userId, Instant.now())
+        springDataRepository.revokeAllByUserIdQuery(userId, Instant.now())
     }
 
     override fun deleteExpiredSessions(before: Instant): Int =
-        jpaRepository.deleteExpiredSessions(before)
+        springDataRepository.deleteExpiredSessions(before)
 }
