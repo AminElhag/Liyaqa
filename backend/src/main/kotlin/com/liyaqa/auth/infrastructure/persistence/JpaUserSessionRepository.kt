@@ -12,18 +12,18 @@ import java.time.Instant
 import java.util.UUID
 
 @Repository
-interface JpaUserSessionRepository : JpaRepository<UserSession, UUID>, UserSessionRepository {
+interface JpaUserSessionRepository : JpaRepository<UserSession, UUID> {
 
-    override fun findBySessionId(sessionId: UUID): UserSession?
+    fun findBySessionId(sessionId: UUID): UserSession?
 
     @Query("SELECT s FROM UserSession s WHERE s.userId = :userId AND s.isActive = true ORDER BY s.lastActiveAt DESC")
-    override fun findActiveSessionsByUserId(@Param("userId") userId: UUID): List<UserSession>
+    fun findActiveSessionsByUserId(@Param("userId") userId: UUID): List<UserSession>
 
     @Query("SELECT s FROM UserSession s WHERE s.userId = :userId ORDER BY s.lastActiveAt DESC")
-    override fun findAllByUserId(@Param("userId") userId: UUID): List<UserSession>
+    fun findAllByUserId(@Param("userId") userId: UUID): List<UserSession>
 
     @Query("SELECT COUNT(s) FROM UserSession s WHERE s.userId = :userId AND s.isActive = true")
-    override fun countActiveSessionsByUserId(@Param("userId") userId: UUID): Long
+    fun countActiveSessionsByUserId(@Param("userId") userId: UUID): Long
 
     @Modifying
     @Transactional
@@ -40,21 +40,45 @@ interface JpaUserSessionRepository : JpaRepository<UserSession, UUID>, UserSessi
         @Param("now") now: Instant
     ): Int
 
-    override fun revokeAllExcept(userId: UUID, exceptSessionId: UUID?) {
-        revokeAllExceptQuery(userId, exceptSessionId, Instant.now())
-    }
-
     @Modifying
     @Transactional
     @Query("UPDATE UserSession s SET s.isActive = false, s.revokedAt = :now WHERE s.userId = :userId AND s.isActive = true")
     fun revokeAllByUserIdQuery(@Param("userId") userId: UUID, @Param("now") now: Instant): Int
 
-    override fun revokeAllByUserId(userId: UUID) {
-        revokeAllByUserIdQuery(userId, Instant.now())
-    }
-
     @Modifying
     @Transactional
     @Query("DELETE FROM UserSession s WHERE s.expiresAt < :before")
-    override fun deleteExpiredSessions(@Param("before") before: Instant): Int
+    fun deleteExpiredSessions(@Param("before") before: Instant): Int
+}
+
+@org.springframework.stereotype.Component
+class UserSessionRepositoryAdapter(
+    private val jpaRepository: JpaUserSessionRepository
+) : UserSessionRepository {
+
+    override fun save(session: UserSession): UserSession =
+        jpaRepository.save(session)
+
+    override fun findBySessionId(sessionId: UUID): UserSession? =
+        jpaRepository.findBySessionId(sessionId)
+
+    override fun findActiveSessionsByUserId(userId: UUID): List<UserSession> =
+        jpaRepository.findActiveSessionsByUserId(userId)
+
+    override fun findAllByUserId(userId: UUID): List<UserSession> =
+        jpaRepository.findAllByUserId(userId)
+
+    override fun countActiveSessionsByUserId(userId: UUID): Long =
+        jpaRepository.countActiveSessionsByUserId(userId)
+
+    override fun revokeAllExcept(userId: UUID, exceptSessionId: UUID?) {
+        jpaRepository.revokeAllExceptQuery(userId, exceptSessionId, Instant.now())
+    }
+
+    override fun revokeAllByUserId(userId: UUID) {
+        jpaRepository.revokeAllByUserIdQuery(userId, Instant.now())
+    }
+
+    override fun deleteExpiredSessions(before: Instant): Int =
+        jpaRepository.deleteExpiredSessions(before)
 }
