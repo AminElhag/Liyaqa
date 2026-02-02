@@ -42,13 +42,12 @@ class LeadActivityServiceTest {
         val userId = UUID.randomUUID()
 
         val lead = Lead(
+            id = leadId,
             name = "John Doe",
             email = "john@example.com",
             phone = "+966501234567",
             source = LeadSource.WALK_IN
-        ).apply {
-            id = leadId
-        }
+        )
 
         val command = LogLeadActivityCommand(
             leadId = leadId,
@@ -149,13 +148,12 @@ class LeadActivityServiceTest {
         // Given
         val leadId = UUID.randomUUID()
         val lead = Lead(
+            id = leadId,
             name = "John Doe",
             email = "john@example.com",
             phone = "+966501234567",
             source = LeadSource.WALK_IN
-        ).apply {
-            id = leadId
-        }
+        )
 
         val command = LogLeadActivityCommand(
             leadId = leadId,
@@ -192,13 +190,12 @@ class LeadActivityServiceTest {
         val followUpDate = LocalDate.now().plusDays(7)
 
         val lead = Lead(
+            id = leadId,
             name = "John Doe",
             email = "john@example.com",
             phone = "+966501234567",
             source = LeadSource.WALK_IN
-        ).apply {
-            id = leadId
-        }
+        )
 
         val command = LogLeadActivityCommand(
             leadId = leadId,
@@ -325,13 +322,12 @@ class LeadActivityServiceTest {
         // Given
         val leadId = UUID.randomUUID()
         val lead = Lead(
+            id = leadId,
             name = "John Doe",
             email = "john@example.com",
             phone = "+966501234567",
             source = LeadSource.WALK_IN
-        ).apply {
-            id = leadId
-        }
+        )
 
         given(leadRepository.findById(leadId)).willReturn(Optional.of(lead))
         given(leadActivityRepository.save(any<LeadActivity>())).willAnswer {
@@ -343,7 +339,7 @@ class LeadActivityServiceTest {
             LeadActivityType.EMAIL,
             LeadActivityType.SMS,
             LeadActivityType.TOUR,
-            LeadActivityType.FOLLOW_UP,
+            LeadActivityType.FOLLOW_UP_SCHEDULED,
             LeadActivityType.MEETING,
             LeadActivityType.NOTE
         )

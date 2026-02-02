@@ -122,7 +122,9 @@ class AuthenticationSecurityIntegrationTest {
             tenantId = testTenantId
         )
 
-        val result = authService.login(command)
+        val loginResult = authService.login(command)
+        assertTrue(loginResult is com.liyaqa.auth.application.services.LoginResult.Success)
+        val result = (loginResult as com.liyaqa.auth.application.services.LoginResult.Success).authResult
 
         assertNotNull(result.accessToken)
         assertNotNull(result.refreshToken)
@@ -151,7 +153,9 @@ class AuthenticationSecurityIntegrationTest {
             tenantId = testTenantId
         )
 
-        val result = authService.login(command)
+        val loginResult = authService.login(command)
+        assertTrue(loginResult is com.liyaqa.auth.application.services.LoginResult.Success)
+        val result = (loginResult as com.liyaqa.auth.application.services.LoginResult.Success).authResult
 
         // Validate token can be parsed
         assertTrue(jwtTokenProvider.validateToken(result.accessToken))
@@ -201,9 +205,11 @@ class AuthenticationSecurityIntegrationTest {
             tenantId = testTenantId
         )
         val loginResult = authService.login(loginCommand)
+        assertTrue(loginResult is com.liyaqa.auth.application.services.LoginResult.Success)
+        val authResult = (loginResult as com.liyaqa.auth.application.services.LoginResult.Success).authResult
 
         // Step 2: Validate the token
-        val accessToken = loginResult.accessToken
+        val accessToken = authResult.accessToken
         assertTrue(jwtTokenProvider.validateToken(accessToken))
 
         // Step 3: Extract user ID from token
@@ -260,7 +266,9 @@ class AuthenticationSecurityIntegrationTest {
             tenantId = tenant2Id
         )
 
-        val result = authService.login(command)
+        val loginResult = authService.login(command)
+        assertTrue(loginResult is com.liyaqa.auth.application.services.LoginResult.Success)
+        val result = (loginResult as com.liyaqa.auth.application.services.LoginResult.Success).authResult
         assertNotNull(result.accessToken)
         assertEquals(user2.email, result.user.email)
     }

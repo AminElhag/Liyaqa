@@ -59,6 +59,18 @@ class AuthServiceTest {
     @Mock
     private lateinit var permissionService: PermissionService
 
+    @Mock
+    private lateinit var passwordPolicyService: PasswordPolicyService
+
+    @Mock
+    private lateinit var auditService: com.liyaqa.shared.application.services.AuditService
+
+    @Mock
+    private lateinit var securityEmailService: com.liyaqa.notification.application.services.SecurityEmailService
+
+    @Mock
+    private lateinit var sessionService: SessionService
+
     private lateinit var authService: AuthService
 
     private val testTenantId = UUID.randomUUID()
@@ -74,7 +86,11 @@ class AuthServiceTest {
             jwtTokenProvider,
             passwordEncoder,
             emailService,
-            permissionService
+            permissionService,
+            passwordPolicyService,
+            auditService,
+            securityEmailService,
+            sessionService
         )
 
         // Common mocks
@@ -102,10 +118,12 @@ class AuthServiceTest {
         whenever(refreshTokenRepository.save(any<RefreshToken>())).thenAnswer { it.getArgument(0) }
 
         // When
-        val result = authService.login(command)
+        val loginResult = authService.login(command)
 
         // Then
-        assertNotNull(result)
+        assertNotNull(loginResult)
+        assert(loginResult is LoginResult.Success)
+        val result = (loginResult as LoginResult.Success).authResult
         assertNotNull(result.accessToken)
         assertNotNull(result.refreshToken)
         assertEquals(testUser.email, result.user.email)

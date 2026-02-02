@@ -54,15 +54,14 @@ class LeadServiceTest {
         )
 
         val expectedLead = Lead(
+            id = UUID.randomUUID(),
             name = command.name,
             email = command.email,
             phone = command.phone,
             source = command.source,
             priority = command.priority,
             notes = command.notes
-        ).apply {
-            id = UUID.randomUUID()
-        }
+        )
 
         given(leadRepository.existsByEmail(command.email)).willReturn(false)
         given(leadRepository.save(any<Lead>())).willReturn(expectedLead)
@@ -321,7 +320,7 @@ class LeadServiceTest {
             name = "John Doe",
             email = "john@example.com",
             phone = "+966501234567",
-            source = LeadSource.ONLINE,
+            source = LeadSource.WEBSITE,
             campaignSource = "google",
             campaignMedium = "cpc",
             campaignName = "summer_2026"

@@ -124,12 +124,13 @@ class MemberJourneyIntegrationTest {
         // Step 4: Lead Converted to Member
         // ===================================================================
         val createMemberCommand = CreateMemberCommand(
-            name = lead.name,
+            firstName = LocalizedText(en = lead.name.split(" ").first(), ar = lead.name.split(" ").first()),
+            lastName = LocalizedText(en = lead.name.split(" ").last(), ar = lead.name.split(" ").last()),
             email = lead.email,
             phone = lead.phone,
             dateOfBirth = LocalDate.of(1990, 5, 15),
-            gender = "FEMALE",
-            address = "123 King Fahd Road, Riyadh",
+            gender = Gender.FEMALE,
+            address = LocalizedText(en = "123 King Fahd Road, Riyadh", ar = "123 طريق الملك فهد، الرياض"),
             emergencyContactName = "Ahmed Hassan",
             emergencyContactPhone = "+966507654321",
             notes = "Converted from lead ${lead.id}"
@@ -138,7 +139,7 @@ class MemberJourneyIntegrationTest {
         val member = memberService.createMember(createMemberCommand)
 
         assertThat(member).isNotNull
-        assertThat(member.name).isEqualTo("Sarah Ahmed")
+        assertThat(member.firstName.en).isEqualTo("Sarah")
         assertThat(member.email).isEqualTo("sarah.ahmed@example.com")
         assertThat(member.status).isEqualTo(MemberStatus.PENDING) // Awaiting subscription
 
@@ -146,7 +147,7 @@ class MemberJourneyIntegrationTest {
         leadActivityService.logActivity(
             LogLeadActivityCommand(
                 leadId = lead.id,
-                type = LeadActivityType.CONVERSION,
+                type = LeadActivityType.STATUS_CHANGE,
                 notes = "Successfully converted to member ${member.id}",
                 outcome = "Converted"
             )
@@ -173,7 +174,7 @@ class MemberJourneyIntegrationTest {
         // assertThat(subscription.status).isEqualTo(SubscriptionStatus.ACTIVE)
 
         // For this test, we'll simulate member becoming active
-        val activeMember = memberService.updateStatus(member.id, MemberStatus.ACTIVE)
+        val activeMember = memberService.activateMember(member.id)
         assertThat(activeMember.status).isEqualTo(MemberStatus.ACTIVE)
 
         // ===================================================================
@@ -216,7 +217,7 @@ class MemberJourneyIntegrationTest {
         // assertThat(finalLead.status).isEqualTo(LeadStatus.WON)
 
         // Verify member is active
-        val finalMember = memberService.findById(member.id)
+        val finalMember = memberService.getMember(member.id)
         assertThat(finalMember.status).isEqualTo(MemberStatus.ACTIVE)
 
         // Verify member details are correct
@@ -254,7 +255,7 @@ class MemberJourneyIntegrationTest {
             ),
             LogLeadActivityCommand(
                 leadId = lead.id,
-                type = LeadActivityType.FOLLOW_UP,
+                type = LeadActivityType.FOLLOW_UP_COMPLETED,
                 notes = "Follow-up call after 3 days"
             ),
             LogLeadActivityCommand(
@@ -271,7 +272,7 @@ class MemberJourneyIntegrationTest {
         assertThat(createdActivities.map { it.type }).containsExactly(
             LeadActivityType.CALL,
             LeadActivityType.EMAIL,
-            LeadActivityType.FOLLOW_UP,
+            LeadActivityType.FOLLOW_UP_COMPLETED,
             LeadActivityType.TOUR
         )
 
@@ -286,11 +287,12 @@ class MemberJourneyIntegrationTest {
         // Given: Existing member (referrer)
         val existingMember = memberService.createMember(
             CreateMemberCommand(
-                name = "Ali Hassan",
+                firstName = LocalizedText(en = "Ali", ar = "علي"),
+                lastName = LocalizedText(en = "Hassan", ar = "حسن"),
                 email = "ali@example.com",
                 phone = "+966501111111",
                 dateOfBirth = LocalDate.of(1988, 3, 10),
-                gender = "MALE"
+                gender = Gender.MALE
             )
         )
 
@@ -315,11 +317,12 @@ class MemberJourneyIntegrationTest {
         // When: Referred lead converts to member
         val newMember = memberService.createMember(
             CreateMemberCommand(
-                name = referredLead.name,
+                firstName = LocalizedText(en = referredLead.name.split(" ").first(), ar = referredLead.name.split(" ").first()),
+                lastName = LocalizedText(en = referredLead.name.split(" ").last(), ar = referredLead.name.split(" ").last()),
                 email = referredLead.email,
                 phone = referredLead.phone,
                 dateOfBirth = LocalDate.of(1992, 7, 20),
-                gender = "FEMALE",
+                gender = Gender.FEMALE,
                 notes = "Converted from referral lead ${referredLead.id}"
             )
         )
@@ -327,9 +330,10 @@ class MemberJourneyIntegrationTest {
         // Then: Both members should exist in the system
         assertThat(newMember).isNotNull
         assertThat(newMember.email).isEqualTo("fatima@example.com")
+        assertThat(allMembers.content.size >= 2).isTrue()
 
-        val allMembers = memberService.findAll()
-        assertThat(allMembers).hasSizeGreaterThanOrEqualTo(2)
+        val allMembers = memberService.getAllMembers(org.springframework.data.domain.PageRequest.of(0, 100))
+        assertThat(allMembers.content.size).isGreaterThanOrEqualTo(2)
 
         // Note: In a complete implementation, you would also:
         // - Award referral bonus to the referrer

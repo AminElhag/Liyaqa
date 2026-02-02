@@ -118,7 +118,9 @@ class AuthControllerIntegrationTest {
             tenantId = testTenantId
         )
 
-        val result = authService.login(command)
+        val loginResult = authService.login(command)
+        assertTrue(loginResult is com.liyaqa.auth.application.services.LoginResult.Success)
+        val result = (loginResult as com.liyaqa.auth.application.services.LoginResult.Success).authResult
 
         assertNotNull(result.accessToken)
         assertNotNull(result.refreshToken)
