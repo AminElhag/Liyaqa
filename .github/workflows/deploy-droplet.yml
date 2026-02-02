@@ -144,7 +144,6 @@ jobs:
     needs: build-images
     environment:
       name: production
-      url: http://${{ secrets.PROD_HOST }}
 
     steps:
       - name: Deploy to Droplet
@@ -282,7 +281,8 @@ jobs:
           exit 1
 
       - name: Notify Slack on Success
-        if: success() && secrets.SLACK_WEBHOOK != ''
+        if: success()
+        continue-on-error: true
         uses: slackapi/slack-github-action@v1.26.0
         with:
           payload: |
@@ -302,7 +302,8 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
       - name: Notify Slack on Failure
-        if: failure() && secrets.SLACK_WEBHOOK != ''
+        if: failure()
+        continue-on-error: true
         uses: slackapi/slack-github-action@v1.26.0
         with:
           payload: |
