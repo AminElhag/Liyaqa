@@ -132,6 +132,12 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-reflect")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    // Testcontainers for PostgreSQL integration tests
+    testImplementation("org.springframework.boot:spring-boot-testcontainers")
+    testImplementation("org.testcontainers:testcontainers:1.19.3")
+    testImplementation("org.testcontainers:junit-jupiter:1.19.3")
+    testImplementation("org.testcontainers:postgresql:1.19.3")
 }
 
 tasks.withType<Test> {

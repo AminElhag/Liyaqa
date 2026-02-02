@@ -157,7 +157,7 @@ class ContractNumberSequence(
     @jakarta.persistence.Column(name = "tenant_id")
     val tenantId: UUID,
 
-    @jakarta.persistence.Column(name = "year", nullable = false)
+    @jakarta.persistence.Column(name = "\"year\"", nullable = false)
     val year: Int,
 
     @jakarta.persistence.Column(name = "last_number", nullable = false)

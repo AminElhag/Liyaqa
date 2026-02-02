@@ -23,9 +23,11 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
+import com.liyaqa.config.TestContainersConfiguration
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -39,6 +41,7 @@ import kotlin.test.assertTrue
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
+@Import(TestContainersConfiguration::class)
 class AuthenticationSecurityIntegrationTest {
 
     @Autowired

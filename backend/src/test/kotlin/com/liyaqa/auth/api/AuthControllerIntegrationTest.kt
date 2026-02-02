@@ -7,6 +7,7 @@ import com.liyaqa.auth.domain.model.Role
 import com.liyaqa.auth.domain.model.User
 import com.liyaqa.auth.domain.model.UserStatus
 import com.liyaqa.auth.domain.ports.UserRepository
+import com.liyaqa.config.TestContainersConfiguration
 import com.liyaqa.organization.domain.model.Club
 import com.liyaqa.organization.domain.model.ClubStatus
 import com.liyaqa.organization.domain.model.Organization
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
@@ -38,6 +40,7 @@ import kotlin.test.assertTrue
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
+@Import(TestContainersConfiguration::class)
 class AuthControllerIntegrationTest {
 
     @Autowired

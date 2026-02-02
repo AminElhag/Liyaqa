@@ -1,5 +1,6 @@
 package com.liyaqa.trainer.infrastructure.persistence
 
+import com.liyaqa.config.TestContainersConfiguration
 import com.liyaqa.trainer.domain.model.TrainerClient
 import com.liyaqa.trainer.domain.model.TrainerClientStatus
 import com.liyaqa.trainer.domain.ports.TrainerClientRepository
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.data.domain.PageRequest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
@@ -26,6 +28,7 @@ import kotlin.test.assertTrue
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
+@Import(TestContainersConfiguration::class)
 class JpaTrainerClientRepositoryTest {
 
     @Autowired
