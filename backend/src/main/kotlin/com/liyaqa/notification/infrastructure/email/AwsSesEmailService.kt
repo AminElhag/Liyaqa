@@ -6,6 +6,7 @@ import com.liyaqa.notification.domain.ports.EmailService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.regions.Region
@@ -30,6 +31,7 @@ import jakarta.mail.internet.MimeMultipart
  * - email.from-name=<sender-name>
  */
 @Service
+@Profile("!local")
 @ConditionalOnProperty(
     prefix = "email",
     name = ["provider"],

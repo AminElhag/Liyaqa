@@ -7,6 +7,7 @@ import jakarta.mail.internet.MimeMessage
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.context.annotation.Profile
 import org.springframework.core.io.ByteArrayResource
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
@@ -27,11 +28,11 @@ import org.springframework.stereotype.Service
  * Best for: Development, testing, or when SendGrid/SES are not available
  */
 @Service
+@Profile("!local")
 @ConditionalOnProperty(
     prefix = "email",
-    name = ["provider"],
-    havingValue = "smtp",
-    matchIfMissing = true  // Default to SMTP if no provider specified
+    name = ["enabled"],
+    havingValue = "true"
 )
 class SmtpEmailService(
     private val mailSender: JavaMailSender,

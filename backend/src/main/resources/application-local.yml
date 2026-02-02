@@ -1,0 +1,63 @@
+# Local development profile - minimal configuration
+spring:
+  # Disable mail sender and Redis for local development
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.session.data.redis.config.annotation.web.http.RedisHttpSessionConfiguration
+
+  # Use PostgreSQL from Docker
+  datasource:
+    url: jdbc:postgresql://localhost:5434/liyaqa
+    username: liyaqa
+    password: liyaqa
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+  # Session management without Redis
+  session:
+    store-type: none
+
+# Disable external services for local development
+liyaqa:
+  cache:
+    redis:
+      enabled: false
+  firebase:
+    enabled: false
+  sms:
+    enabled: false
+
+email:
+  enabled: false
+
+whatsapp:
+  enabled: false
+
+zatca:
+  enabled: false
+
+# Use local file storage
+storage:
+  type: local
+  local:
+    upload-dir: ./uploads
+
+# Disable AWS secrets
+aws:
+  secrets:
+    enabled: false
+
+# Server configuration
+server:
+  port: 8080
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.liyaqa: DEBUG
