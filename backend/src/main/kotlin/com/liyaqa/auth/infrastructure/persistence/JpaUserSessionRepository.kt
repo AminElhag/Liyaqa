@@ -2,10 +2,12 @@ package com.liyaqa.auth.infrastructure.persistence
 
 import com.liyaqa.auth.domain.model.UserSession
 import com.liyaqa.auth.domain.ports.UserSessionRepository
+import org.springframework.context.annotation.Primary
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -51,7 +53,8 @@ interface JpaUserSessionRepository : JpaRepository<UserSession, UUID> {
     fun deleteExpiredSessions(@Param("before") before: Instant): Int
 }
 
-@org.springframework.stereotype.Component
+@Component
+@Primary
 class UserSessionRepositoryAdapter(
     private val jpaRepository: JpaUserSessionRepository
 ) : UserSessionRepository {

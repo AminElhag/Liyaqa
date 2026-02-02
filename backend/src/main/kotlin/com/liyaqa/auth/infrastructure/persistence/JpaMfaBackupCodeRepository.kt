@@ -2,7 +2,9 @@ package com.liyaqa.auth.infrastructure.persistence
 
 import com.liyaqa.auth.domain.model.MfaBackupCode
 import com.liyaqa.auth.domain.ports.MfaBackupCodeRepository
+import org.springframework.context.annotation.Primary
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import java.util.UUID
 
@@ -14,7 +16,8 @@ interface JpaMfaBackupCodeRepository : JpaRepository<MfaBackupCode, UUID> {
     fun countByUserIdAndUsed(userId: UUID, used: Boolean): Long
 }
 
-@org.springframework.stereotype.Component
+@Component
+@Primary
 class MfaBackupCodeRepositoryAdapter(
     private val jpaRepository: JpaMfaBackupCodeRepository
 ) : MfaBackupCodeRepository {

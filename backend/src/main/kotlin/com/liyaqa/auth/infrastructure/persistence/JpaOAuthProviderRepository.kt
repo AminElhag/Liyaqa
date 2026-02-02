@@ -3,9 +3,11 @@ package com.liyaqa.auth.infrastructure.persistence
 import com.liyaqa.auth.domain.model.oauth.OAuthProvider
 import com.liyaqa.auth.domain.model.oauth.ProviderType
 import com.liyaqa.auth.domain.ports.OAuthProviderRepository
+import org.springframework.context.annotation.Primary
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import java.util.UUID
 
@@ -34,7 +36,8 @@ interface JpaOAuthProviderRepository : JpaRepository<OAuthProvider, UUID> {
     ): OAuthProvider?
 }
 
-@org.springframework.stereotype.Component
+@Component
+@Primary
 class OAuthProviderRepositoryAdapter(
     private val jpaRepository: JpaOAuthProviderRepository
 ) : OAuthProviderRepository {
