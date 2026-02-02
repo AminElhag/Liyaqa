@@ -17,6 +17,10 @@ spring:
     host: localhost
     port: 25
 
+email:
+  from-address: test@liyaqa.com
+  from-name: Liyaqa Test
+
 jwt:
   secret: test-secret-key-that-is-at-least-32-characters-long
   access-token-expiration: 900000

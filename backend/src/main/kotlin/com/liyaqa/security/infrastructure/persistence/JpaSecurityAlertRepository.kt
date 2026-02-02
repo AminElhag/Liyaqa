@@ -14,32 +14,29 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import java.util.UUID
 
-@Repository
-interface JpaSecurityAlertRepository : JpaRepository<SecurityAlert, UUID>, SecurityAlertRepository {
-
-    override fun findByIdOrNull(id: UUID): SecurityAlert? {
-        return findById(id).orElse(null)
-    }
-
-    override fun findByUserId(userId: UUID, pageable: Pageable): Page<SecurityAlert>
+/**
+ * Internal JPA repository - do not inject directly
+ */
+interface SecurityAlertJpaRepository : JpaRepository<SecurityAlert, UUID> {
+    fun findByUserId(userId: UUID, pageable: Pageable): Page<SecurityAlert>
 
     @Query("SELECT a FROM SecurityAlert a WHERE a.userId = :userId AND a.resolved = false ORDER BY a.createdAt DESC")
-    override fun findUnresolvedByUserId(@Param("userId") userId: UUID): List<SecurityAlert>
+    fun findUnresolvedByUserId(@Param("userId") userId: UUID): List<SecurityAlert>
 
     @Query("SELECT a FROM SecurityAlert a WHERE a.userId = :userId AND a.acknowledgedAt IS NULL AND a.resolved = false ORDER BY a.createdAt DESC")
-    override fun findUnreadByUserId(@Param("userId") userId: UUID): List<SecurityAlert>
+    fun findUnreadByUserId(@Param("userId") userId: UUID): List<SecurityAlert>
 
     @Query("SELECT COUNT(a) FROM SecurityAlert a WHERE a.userId = :userId AND a.acknowledgedAt IS NULL AND a.resolved = false")
-    override fun countUnreadByUserId(@Param("userId") userId: UUID): Long
+    fun countUnreadByUserId(@Param("userId") userId: UUID): Long
 
     @Query("SELECT a FROM SecurityAlert a WHERE a.userId = :userId AND a.alertType = :alertType ORDER BY a.createdAt DESC")
-    override fun findByUserIdAndAlertType(
+    fun findByUserIdAndAlertType(
         @Param("userId") userId: UUID,
         @Param("alertType") alertType: AlertType
     ): List<SecurityAlert>
 
     @Query("SELECT a FROM SecurityAlert a WHERE a.userId = :userId AND a.createdAt >= :since ORDER BY a.createdAt DESC")
-    override fun findRecentByUserId(
+    fun findRecentByUserId(
         @Param("userId") userId: UUID,
         @Param("since") since: Instant
     ): List<SecurityAlert>
@@ -47,5 +44,47 @@ interface JpaSecurityAlertRepository : JpaRepository<SecurityAlert, UUID>, Secur
     @Modifying
     @Transactional
     @Query("DELETE FROM SecurityAlert a WHERE a.resolved = true AND a.createdAt < :before")
-    override fun deleteResolvedBefore(@Param("before") before: Instant): Int
+    fun deleteResolvedBefore(@Param("before") before: Instant): Int
+}
+
+/**
+ * Implementation of SecurityAlertRepository that wraps the JPA repository
+ */
+@Repository
+class JpaSecurityAlertRepositoryImpl(
+    private val jpaRepository: SecurityAlertJpaRepository
+) : SecurityAlertRepository {
+
+    override fun save(alert: SecurityAlert): SecurityAlert =
+        jpaRepository.save(alert)
+
+    override fun saveAll(alerts: List<SecurityAlert>): List<SecurityAlert> =
+        jpaRepository.saveAll(alerts)
+
+    override fun findById(id: UUID): java.util.Optional<SecurityAlert> =
+        jpaRepository.findById(id)
+
+    override fun findByIdOrNull(id: UUID): SecurityAlert? =
+        jpaRepository.findById(id).orElse(null)
+
+    override fun findByUserId(userId: UUID, pageable: Pageable): Page<SecurityAlert> =
+        jpaRepository.findByUserId(userId, pageable)
+
+    override fun findUnresolvedByUserId(userId: UUID): List<SecurityAlert> =
+        jpaRepository.findUnresolvedByUserId(userId)
+
+    override fun findUnreadByUserId(userId: UUID): List<SecurityAlert> =
+        jpaRepository.findUnreadByUserId(userId)
+
+    override fun countUnreadByUserId(userId: UUID): Long =
+        jpaRepository.countUnreadByUserId(userId)
+
+    override fun findByUserIdAndAlertType(userId: UUID, alertType: AlertType): List<SecurityAlert> =
+        jpaRepository.findByUserIdAndAlertType(userId, alertType)
+
+    override fun findRecentByUserId(userId: UUID, since: Instant): List<SecurityAlert> =
+        jpaRepository.findRecentByUserId(userId, since)
+
+    override fun deleteResolvedBefore(before: Instant): Int =
+        jpaRepository.deleteResolvedBefore(before)
 }

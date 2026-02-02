@@ -1,6 +1,7 @@
 package com.liyaqa.config
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.cache.caffeine.CaffeineCacheManager
@@ -12,9 +13,16 @@ import java.time.Duration
 /**
  * Cache configuration for the application.
  * Uses Caffeine as the caching provider for high-performance in-memory caching.
+ * Only active when Redis is disabled (single-instance deployment).
  */
 @Configuration
 @EnableCaching
+@ConditionalOnProperty(
+    prefix = "liyaqa.cache.redis",
+    name = ["enabled"],
+    havingValue = "false",
+    matchIfMissing = false
+)
 class CacheConfig {
 
     /**
