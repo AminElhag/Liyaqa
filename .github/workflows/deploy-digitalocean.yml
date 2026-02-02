@@ -1,0 +1,93 @@
+# ===========================================
+# Liyaqa DigitalOcean Deployment
+# ===========================================
+# Simple deployment to DigitalOcean droplet
+# Auto-deploys on push to main branch
+
+name: Deploy to DigitalOcean
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: aminelhag/liyaqa/liyaqa-backend
+  SERVER_IP: 167.71.233.43
+
+jobs:
+  deploy:
+    name: Deploy to DO Droplet
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ env.SERVER_IP }}
+          username: root
+          key: ${{ secrets.DO_SSH_KEY }}
+          script: |
+            # Login to GitHub Container Registry
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # Pull latest image
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }} || \
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+            # Stop and remove existing container
+            docker stop liyaqa-backend 2>/dev/null || true
+            docker rm liyaqa-backend 2>/dev/null || true
+
+            # Start new container
+            docker run -d \
+              --name liyaqa-backend \
+              --restart unless-stopped \
+              -p 8080:8080 \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              -e DATABASE_URL="jdbc:postgresql://localhost:5432/liyaqa" \
+              -e DATABASE_USERNAME="liyaqa" \
+              -e DATABASE_PASSWORD="liyaqa_prod_password" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e CORS_ALLOWED_ORIGINS="*" \
+              -e EMAIL_ENABLED=false \
+              -e SMS_ENABLED=false \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+            # Wait for startup
+            echo "Waiting for application to start..."
+            sleep 30
+
+            # Check health
+            if curl -sf http://localhost:8080/actuator/health; then
+              echo "✅ Deployment successful!"
+            else
+              echo "❌ Health check failed"
+              exit 1
+            fi
+
+      - name: Verify deployment
+        run: |
+          echo "Checking backend health at http://${{ env.SERVER_IP }}:8080"
+          for i in {1..10}; do
+            if curl -sf "http://${{ env.SERVER_IP }}:8080/actuator/health"; then
+              echo "✅ Backend is healthy!"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          echo "❌ Health check failed after 10 attempts"
+          exit 1
