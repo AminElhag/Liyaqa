@@ -1,5 +1,8 @@
 "use client";
 
+// Force this page to be dynamic (not statically generated)
+export const dynamic = 'force-dynamic';
+
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import Link from "next/link";

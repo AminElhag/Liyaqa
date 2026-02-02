@@ -1,5 +1,8 @@
 "use client";
 
+// Force this page to be dynamic (not statically generated)
+export const dynamic = 'force-dynamic';
+
 import { useState } from "react";
 import { useLocale } from "next-intl";
 import { useForm } from "react-hook-form";
