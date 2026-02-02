@@ -52,7 +52,7 @@ class AsyncConfig : AsyncConfigurer {
      * Use for: General async operations, audit logging, cache updates
      */
     @Bean(name = ["taskExecutor", "defaultExecutor"])
-    fun defaultExecutor(): Executor {
+    fun defaultExecutor(): ThreadPoolTaskExecutor {
         logger.info("Configuring default async executor")
 
         val executor = ThreadPoolTaskExecutor()
@@ -94,7 +94,7 @@ class AsyncConfig : AsyncConfigurer {
      * Isolated from other tasks to prevent email delays when system is busy
      */
     @Bean(name = ["notificationExecutor"])
-    fun notificationExecutor(): Executor {
+    fun notificationExecutor(): ThreadPoolTaskExecutor {
         logger.info("Configuring notification async executor")
 
         val executor = ThreadPoolTaskExecutor()
@@ -136,7 +136,7 @@ class AsyncConfig : AsyncConfigurer {
      * Limited pool size to prevent resource exhaustion from heavy operations
      */
     @Bean(name = ["backgroundExecutor"])
-    fun backgroundExecutor(): Executor {
+    fun backgroundExecutor(): ThreadPoolTaskExecutor {
         logger.info("Configuring background job executor")
 
         val executor = ThreadPoolTaskExecutor()
@@ -178,7 +178,7 @@ class AsyncConfig : AsyncConfigurer {
      * High concurrency for operations that must complete quickly
      */
     @Bean(name = ["quickExecutor"])
-    fun quickExecutor(): Executor {
+    fun quickExecutor(): ThreadPoolTaskExecutor {
         logger.info("Configuring quick task executor")
 
         val executor = ThreadPoolTaskExecutor()
