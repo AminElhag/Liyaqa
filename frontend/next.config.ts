@@ -5,19 +5,10 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   // Enable React strict mode
-  reactStrictMode: true,
+  reactStrictMode: false,  // Disable to avoid double-rendering issues
 
   // Enable standalone output for Docker deployment
   output: "standalone",
-
-  // Disable static page generation to prevent build errors
-  // All pages will be rendered on-demand
-  experimental: {
-    dynamicIO: true,
-  },
-
-  // Skip trailing slash redirect
-  skipTrailingSlashRedirect: true,
 
   // Exclude prototype directory from builds
   webpack: (config) => {

@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useLocale } from "next-intl";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { getQueryClient } from "@/lib/query-client";
@@ -16,9 +15,11 @@ interface QueryProviderProps {
 export function QueryProvider({ children }: QueryProviderProps) {
   const queryClient = getQueryClient();
   const router = useRouter();
-  const locale = useLocale();
   const pathname = usePathname();
   const logout = useAuthStore((state) => state.logout);
+
+  // Extract locale from pathname (e.g., /en/login -> en)
+  const locale = pathname.split('/')[1] || 'en';
 
   // Set up global error handler for SessionExpiredError
   React.useEffect(() => {

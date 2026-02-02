@@ -36,21 +36,25 @@ export default async function LocaleLayout({
   const direction = localeDirections[locale as Locale];
 
   return (
-    <QueryProvider>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <NextIntlClientProvider messages={messages}>
-          <LocaleProvider locale={locale} direction={direction}>
-            {children}
-            <Toaster />
-            <SonnerToaster richColors position="top-center" />
-          </LocaleProvider>
-        </NextIntlClientProvider>
-      </ThemeProvider>
-    </QueryProvider>
+    <html lang={locale} dir={direction} suppressHydrationWarning>
+      <body suppressHydrationWarning>
+        <QueryProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <NextIntlClientProvider messages={messages}>
+              <LocaleProvider locale={locale} direction={direction}>
+                {children}
+                <Toaster />
+                <SonnerToaster richColors position="top-center" />
+              </LocaleProvider>
+            </NextIntlClientProvider>
+          </ThemeProvider>
+        </QueryProvider>
+      </body>
+    </html>
   );
 }
