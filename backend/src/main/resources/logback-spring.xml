@@ -94,6 +94,12 @@
                 <customFields>{"service":"${APP_NAME}","environment":"${ENVIRONMENT:-unknown}"}</customFields>
             </encoder>
         </appender>
+
+        <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+            <queueSize>512</queueSize>
+            <discardingThreshold>0</discardingThreshold>
+            <appender-ref ref="FILE"/>
+        </appender>
     </springProfile>
 
     <!--
@@ -109,49 +115,19 @@
         <appender-ref ref="JSON_CONSOLE"/>
     </appender>
 
-    <springProfile name="dev,test,local">
-        <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
-            <queueSize>512</queueSize>
-            <discardingThreshold>0</discardingThreshold>
-            <appender-ref ref="FILE"/>
-        </appender>
-    </springProfile>
-
     <!--
     ════════════════════════════════════════════════════════════════════════════
-     LOGGER CONFIGURATIONS
+     LOGGER CONFIGURATIONS - COMMON (All profiles)
     ════════════════════════════════════════════════════════════════════════════
     -->
-
-    <!-- Liyaqa application logging -->
-    <logger name="com.liyaqa" level="DEBUG" additivity="false">
-        <!-- Console logging for all profiles -->
-        <springProfile name="prod,staging">
-            <appender-ref ref="ASYNC_JSON_CONSOLE"/>
-        </springProfile>
-        <springProfile name="dev,test,local">
-            <appender-ref ref="HUMAN_CONSOLE"/>
-            <appender-ref ref="ASYNC_FILE"/>
-        </springProfile>
-    </logger>
 
     <!-- Spring Framework (less verbose) -->
     <logger name="org.springframework" level="INFO"/>
     <logger name="org.springframework.web" level="INFO"/>
     <logger name="org.springframework.security" level="INFO"/>
 
-    <!-- Hibernate/JPA (show SQL in debug, but not in production) -->
+    <!-- Hibernate/JPA (base level) -->
     <logger name="org.hibernate" level="WARN"/>
-    <logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
-        <springProfile name="dev,test">
-            <appender-ref ref="HUMAN_CONSOLE"/>
-        </springProfile>
-    </logger>
-    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" additivity="false">
-        <springProfile name="dev,test">
-            <appender-ref ref="HUMAN_CONSOLE"/>
-        </springProfile>
-    </logger>
 
     <!-- Database connection pool -->
     <logger name="com.zaxxer.hikari" level="INFO"/>
@@ -166,25 +142,64 @@
 
     <!--
     ════════════════════════════════════════════════════════════════════════════
-     ROOT LOGGER
+     PRODUCTION PROFILE (prod, staging)
     ════════════════════════════════════════════════════════════════════════════
     -->
-    <root level="${LOG_LEVEL}">
-        <!-- Development profile: Human-readable console + file -->
-        <springProfile name="dev,test">
+    <springProfile name="prod,staging">
+        <!-- Liyaqa application logging -->
+        <logger name="com.liyaqa" level="DEBUG" additivity="false">
+            <appender-ref ref="ASYNC_JSON_CONSOLE"/>
+        </logger>
+
+        <!-- Root logger -->
+        <root level="${LOG_LEVEL}">
+            <appender-ref ref="ASYNC_JSON_CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!--
+    ════════════════════════════════════════════════════════════════════════════
+     DEVELOPMENT PROFILE (dev, test, local)
+    ════════════════════════════════════════════════════════════════════════════
+    -->
+    <springProfile name="dev,test,local">
+        <!-- Liyaqa application logging -->
+        <logger name="com.liyaqa" level="DEBUG" additivity="false">
             <appender-ref ref="HUMAN_CONSOLE"/>
             <appender-ref ref="ASYNC_FILE"/>
-        </springProfile>
+        </logger>
 
-        <!-- Production profile: JSON console only (Docker captures stdout) -->
-        <springProfile name="prod,staging">
-            <appender-ref ref="ASYNC_JSON_CONSOLE"/>
-        </springProfile>
-
-        <!-- Default (no profile): Human-readable console -->
-        <springProfile name="default">
+        <!-- Hibernate SQL logging -->
+        <logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
             <appender-ref ref="HUMAN_CONSOLE"/>
-        </springProfile>
-    </root>
+        </logger>
+
+        <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" additivity="false">
+            <appender-ref ref="HUMAN_CONSOLE"/>
+        </logger>
+
+        <!-- Root logger -->
+        <root level="${LOG_LEVEL}">
+            <appender-ref ref="HUMAN_CONSOLE"/>
+            <appender-ref ref="ASYNC_FILE"/>
+        </root>
+    </springProfile>
+
+    <!--
+    ════════════════════════════════════════════════════════════════════════════
+     DEFAULT PROFILE (no profile active)
+    ════════════════════════════════════════════════════════════════════════════
+    -->
+    <springProfile name="default">
+        <!-- Liyaqa application logging -->
+        <logger name="com.liyaqa" level="DEBUG" additivity="false">
+            <appender-ref ref="HUMAN_CONSOLE"/>
+        </logger>
+
+        <!-- Root logger -->
+        <root level="${LOG_LEVEL}">
+            <appender-ref ref="HUMAN_CONSOLE"/>
+        </root>
+    </springProfile>
 
 </configuration>
