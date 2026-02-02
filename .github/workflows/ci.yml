@@ -21,7 +21,7 @@ on:
 env:
   JAVA_VERSION: '21'
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/liyaqa-backend
+  IMAGE_NAME: aminelhag/liyaqa/liyaqa-backend
 
 jobs:
   # ====================
