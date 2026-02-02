@@ -174,8 +174,9 @@ export default function ClassDetailPage() {
 
   // Data fetching
   const { data: gymClass, isLoading, error } = useClass(id);
-  const { data: sessions = [], isLoading: isLoadingSessions } =
+  const { data: sessionsData, isLoading: isLoadingSessions } =
     useUpcomingSessionsByClass(id);
+  const sessions = sessionsData?.content ?? [];
 
   // Mutations
   const addSchedule = useAddSchedule();
@@ -321,9 +322,9 @@ export default function ClassDetailPage() {
   );
 
   const handleCancelSession = useCallback(
-    async (sessionId: string) => {
+    async (sessionId: string, reason?: string) => {
       try {
-        await cancelSession.mutateAsync(sessionId);
+        await cancelSession.mutateAsync({ id: sessionId, reason });
         toast({ title: t.sessionCancelled });
         setIsAttendeePanelOpen(false);
         setSelectedSession(null);

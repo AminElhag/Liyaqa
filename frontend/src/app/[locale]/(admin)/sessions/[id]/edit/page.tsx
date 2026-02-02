@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LocalizedText } from "@/components/ui/localized-text";
-import { useSession, useUpdateSession } from "@/queries/use-sessions";
+import { useSession, useUpdateSession } from "@/queries/use-classes";
 import { useToast } from "@/hooks/use-toast";
 
 interface EditSessionPageProps {

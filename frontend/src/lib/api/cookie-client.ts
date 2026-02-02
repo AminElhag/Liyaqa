@@ -30,7 +30,7 @@ function getApiBaseUrl(): string {
     return "http://localhost:8080";
   }
 
-  const portPart = port && port \!== "80" && port \!== "443" ? `:${port}` : "";
+  const portPart = port && port !== "80" && port !== "443" ? `:${port}` : "";
   return `${protocol}//${hostname}${portPart}`;
 }
 
@@ -53,13 +53,13 @@ function createCookieApiClient(): KyInstance {
           }
 
           const { tenantId, organizationId, isSuperTenant } = getTenantContext();
-          if (\!getPlatformMode()) {
+          if (!getPlatformMode()) {
             if (tenantId) request.headers.set("X-Tenant-ID", tenantId);
             if (organizationId) request.headers.set("X-Organization-ID", organizationId);
             if (isSuperTenant) request.headers.set("X-Super-Tenant", "true");
           }
 
-          if (\!request.headers.has("Content-Type")) {
+          if (!request.headers.has("Content-Type")) {
             request.headers.set("Content-Type", "application/json");
           }
         },

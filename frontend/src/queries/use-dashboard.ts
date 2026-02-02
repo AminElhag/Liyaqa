@@ -11,8 +11,6 @@ import {
   type ExpiringSubscription,
   type PendingInvoice,
 } from "@/lib/api/dashboard";
-import { getSessionsByDate } from "@/lib/api/sessions";
-import type { ClassSession } from "@/types/scheduling";
 
 // Query keys
 export const dashboardKeys = {
@@ -22,8 +20,6 @@ export const dashboardKeys = {
   expiringSubscriptions: (days: number) =>
     [...dashboardKeys.all, "expiring", days] as const,
   pendingInvoices: () => [...dashboardKeys.all, "pending-invoices"] as const,
-  todaySessions: (date: string) =>
-    [...dashboardKeys.all, "today-sessions", date] as const,
 };
 
 /**
@@ -81,23 +77,6 @@ export function usePendingInvoices(
     queryKey: dashboardKeys.pendingInvoices(),
     queryFn: () => getPendingInvoices(),
     staleTime: 60 * 1000, // 1 minute
-    ...options,
-  });
-}
-
-/**
- * Hook to fetch today's sessions for dashboard
- */
-export function useTodaySessions(
-  options?: Omit<UseQueryOptions<ClassSession[]>, "queryKey" | "queryFn">
-) {
-  const today = new Date().toISOString().split("T")[0];
-
-  return useQuery({
-    queryKey: dashboardKeys.todaySessions(today),
-    queryFn: () => getSessionsByDate(today),
-    staleTime: 60 * 1000, // 1 minute - sessions change more frequently
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
     ...options,
   });
 }

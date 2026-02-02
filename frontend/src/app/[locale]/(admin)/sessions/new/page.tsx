@@ -24,8 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Loading } from "@/components/ui/spinner";
 import { LocalizedText } from "@/components/ui/localized-text";
-import { useCreateSession } from "@/queries/use-sessions";
-import { useClasses } from "@/queries/use-classes";
+import { useCreateSession, useClasses } from "@/queries/use-classes";
 import { useToast } from "@/hooks/use-toast";
 
 export default function NewSessionPage() {

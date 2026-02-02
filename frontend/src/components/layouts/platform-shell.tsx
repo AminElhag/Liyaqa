@@ -119,6 +119,7 @@ export function PlatformShell({ children }: PlatformShellProps) {
   const t = useTranslations("platform.nav");
   const tCommon = useTranslations("common");
   const locale = useLocale();
+  const isRtl = locale === "ar";
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();

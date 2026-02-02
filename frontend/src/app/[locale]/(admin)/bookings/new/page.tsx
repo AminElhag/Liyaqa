@@ -26,7 +26,7 @@ import { Loading } from "@/components/ui/spinner";
 import { LocalizedText } from "@/components/ui/localized-text";
 import { Badge } from "@/components/ui/badge";
 import { useCreateBooking } from "@/queries/use-bookings";
-import { useSessions } from "@/queries/use-sessions";
+import { useClassSessions } from "@/queries/use-classes";
 import { useMembers } from "@/queries/use-members";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
@@ -53,7 +53,7 @@ export default function NewBookingPage() {
     .split("T")[0];
 
   // Fetch data
-  const { data: sessionsData, isLoading: sessionsLoading } = useSessions({
+  const { data: sessionsData, isLoading: sessionsLoading } = useClassSessions({
     dateFrom: today,
     dateTo: nextMonth,
     status: "SCHEDULED",

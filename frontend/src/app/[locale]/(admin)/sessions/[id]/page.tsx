@@ -124,9 +124,9 @@ export default function SessionDetailPage() {
     }
   };
 
-  const handleCancelSession = async () => {
+  const handleCancelSession = async (reason?: string) => {
     try {
-      await cancelSession.mutateAsync(id);
+      await cancelSession.mutateAsync({ id, reason });
       toast({
         title: texts.sessionCancelled,
       });
@@ -200,7 +200,7 @@ export default function SessionDetailPage() {
               </Button>
               <Button
                 variant="outline"
-                onClick={handleCancelSession}
+                onClick={() => handleCancelSession()}
                 disabled={cancelSession.isPending}
                 className="text-destructive hover:text-destructive"
               >

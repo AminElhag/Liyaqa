@@ -7,7 +7,6 @@ import {
   useDashboardSummary,
   useExpiringSubscriptions,
   useTodayAttendance,
-  useTodaySessions,
 } from "@/queries/use-dashboard";
 import { useRevenueReport, useAttendanceReport } from "@/queries/use-reports";
 import {
@@ -78,7 +77,8 @@ export default function DashboardPage() {
       ...last7Days,
       groupBy: "day",
     });
-  const { data: todaySessions, isLoading: isLoadingSessions } = useTodaySessions();
+  // TODO: Implement useTodaySessions hook when backend endpoint is available
+  // const { data: todaySessions, isLoading: isLoadingSessions } = useTodaySessions();
 
   // Combine loading states for different sections
   const isLoadingStats = isLoadingSummary;

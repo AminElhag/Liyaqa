@@ -15,6 +15,7 @@ import {
   markNoShow,
   getMemberBookings,
   getMemberUpcomingBookings,
+  getSessionBookings,
   bulkCreateBookings,
   bulkCancelBookings,
   bulkCheckInBookings,
@@ -25,7 +26,7 @@ import type {
   BookingQueryParams,
   CreateBookingRequest,
 } from "@/types/scheduling";
-import { sessionKeys } from "./use-sessions";
+import { classSessionKeys } from "./use-classes";
 import { memberKeys } from "./use-members";
 
 // Query keys
@@ -107,6 +108,21 @@ export function useMemberUpcomingBookings(
 }
 
 /**
+ * Hook to fetch bookings for a session
+ */
+export function useSessionBookings(
+  sessionId: UUID,
+  options?: Omit<UseQueryOptions<Booking[]>, "queryKey" | "queryFn">
+) {
+  return useQuery({
+    queryKey: [...bookingKeys.all, "session", sessionId],
+    queryFn: () => getSessionBookings(sessionId),
+    enabled: !!sessionId,
+    ...options,
+  });
+}
+
+/**
  * Hook to create a booking
  */
 export function useCreateBooking() {
@@ -120,13 +136,13 @@ export function useCreateBooking() {
         queryKey: bookingKeys.member(booking.memberId),
       });
       queryClient.invalidateQueries({
-        queryKey: sessionKeys.detail(booking.sessionId),
+        queryKey: classSessionKeys.detail(booking.sessionId),
       });
       queryClient.invalidateQueries({
-        queryKey: sessionKeys.bookings(booking.sessionId),
+        queryKey: bookingKeys.all,
       });
       // Invalidate session lists to update booked count
-      queryClient.invalidateQueries({ queryKey: sessionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: classSessionKeys.lists() });
     },
   });
 }
@@ -146,12 +162,12 @@ export function useCancelBooking() {
         queryKey: bookingKeys.member(booking.memberId),
       });
       queryClient.invalidateQueries({
-        queryKey: sessionKeys.detail(booking.sessionId),
+        queryKey: classSessionKeys.detail(booking.sessionId),
       });
       queryClient.invalidateQueries({
-        queryKey: sessionKeys.bookings(booking.sessionId),
+        queryKey: bookingKeys.all,
       });
-      queryClient.invalidateQueries({ queryKey: sessionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: classSessionKeys.lists() });
     },
   });
 }
@@ -171,7 +187,7 @@ export function useCheckInBooking() {
         queryKey: bookingKeys.member(booking.memberId),
       });
       queryClient.invalidateQueries({
-        queryKey: sessionKeys.bookings(booking.sessionId),
+        queryKey: bookingKeys.all,
       });
       // Also invalidate member details (subscription classes might change)
       queryClient.invalidateQueries({
@@ -196,7 +212,7 @@ export function useMarkNoShow() {
         queryKey: bookingKeys.member(booking.memberId),
       });
       queryClient.invalidateQueries({
-        queryKey: sessionKeys.bookings(booking.sessionId),
+        queryKey: bookingKeys.all,
       });
     },
   });
@@ -213,7 +229,7 @@ export function useBulkCreateBookings() {
       bulkCreateBookings(bookings),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
-      queryClient.invalidateQueries({ queryKey: sessionKeys.all });
+      queryClient.invalidateQueries({ queryKey: classSessionKeys.all });
     },
   });
 }
@@ -228,7 +244,7 @@ export function useBulkCancelBookings() {
     mutationFn: (ids: UUID[]) => bulkCancelBookings(ids),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
-      queryClient.invalidateQueries({ queryKey: sessionKeys.all });
+      queryClient.invalidateQueries({ queryKey: classSessionKeys.all });
     },
   });
 }
@@ -243,7 +259,7 @@ export function useBulkCheckInBookings() {
     mutationFn: (ids: UUID[]) => bulkCheckInBookings(ids),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
-      queryClient.invalidateQueries({ queryKey: sessionKeys.all });
+      queryClient.invalidateQueries({ queryKey: classSessionKeys.all });
       queryClient.invalidateQueries({ queryKey: memberKeys.all });
     },
   });

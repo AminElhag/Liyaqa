@@ -965,7 +965,7 @@ a:focus-visible {
 
 /* Button accessibility - ensure visible focus */
 button:focus-visible {
-  @apply shadow-outline;
+  @apply ring-2 ring-primary ring-offset-2;
 }
 
 /* Landmark regions */

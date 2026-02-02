@@ -95,6 +95,13 @@ export async function getMemberUpcomingBookings(
 }
 
 /**
+ * Get bookings for a session
+ */
+export async function getSessionBookings(sessionId: UUID): Promise<Booking[]> {
+  return api.get(`api/bookings/session/${sessionId}`).json();
+}
+
+/**
  * Bulk create bookings
  */
 export async function bulkCreateBookings(

@@ -38,7 +38,7 @@ import { LocalizedText } from "@/components/ui/localized-text";
 import { Loading } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import {
-  useSessions,
+  useClassSessions,
   useCancelSession,
   useStartSession,
   useCompleteSession,
@@ -66,7 +66,7 @@ export default function SessionsPage() {
   const [pageSize, setPageSize] = useState(10);
 
   // Fetch sessions
-  const { data, isLoading, error } = useSessions({
+  const { data, isLoading, error } = useClassSessions({
     dateFrom,
     dateTo,
     status: statusFilter !== "ALL" ? statusFilter : undefined,
@@ -208,7 +208,7 @@ export default function SessionsPage() {
                               : "Are you sure you want to cancel this session?"
                           )
                         ) {
-                          cancelSession.mutate(session.id);
+                          cancelSession.mutate({ id: session.id });
                         }
                       }}
                     >
