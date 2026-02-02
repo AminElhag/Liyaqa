@@ -63,35 +63,38 @@
 
     <!--
     ════════════════════════════════════════════════════════════════════════════
-     FILE APPENDER - ROLLING FILES (Development & Staging)
+     FILE APPENDER - ROLLING FILES (Development Only)
     ════════════════════════════════════════════════════════════════════════════
     Creates daily log files with automatic rotation and compression
+    Only loaded in dev/test/local profiles to prevent production errors
     -->
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_FILE}</file>
+    <springProfile name="dev,test,local">
+        <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>${LOG_FILE}</file>
 
-        <!-- Rolling policy: daily rotation -->
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- Daily rollover with automatic compression -->
-            <fileNamePattern>logs/liyaqa.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+            <!-- Rolling policy: daily rotation -->
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                <!-- Daily rollover with automatic compression -->
+                <fileNamePattern>logs/liyaqa.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
 
-            <!-- Keep 30 days of history -->
-            <maxHistory>30</maxHistory>
+                <!-- Keep 30 days of history -->
+                <maxHistory>30</maxHistory>
 
-            <!-- Total size cap for all log files -->
-            <totalSizeCap>10GB</totalSizeCap>
-        </rollingPolicy>
+                <!-- Total size cap for all log files -->
+                <totalSizeCap>10GB</totalSizeCap>
+            </rollingPolicy>
 
-        <!-- Use JSON format for file logs too (easier to process) -->
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <includeMdcKeyName>traceId</includeMdcKeyName>
-            <includeMdcKeyName>spanId</includeMdcKeyName>
-            <includeMdcKeyName>userId</includeMdcKeyName>
-            <includeMdcKeyName>tenantId</includeMdcKeyName>
-            <includeMdcKeyName>requestId</includeMdcKeyName>
-            <customFields>{"service":"${APP_NAME}","environment":"${ENVIRONMENT:-unknown}"}</customFields>
-        </encoder>
-    </appender>
+            <!-- Use JSON format for file logs too (easier to process) -->
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <includeMdcKeyName>traceId</includeMdcKeyName>
+                <includeMdcKeyName>spanId</includeMdcKeyName>
+                <includeMdcKeyName>userId</includeMdcKeyName>
+                <includeMdcKeyName>tenantId</includeMdcKeyName>
+                <includeMdcKeyName>requestId</includeMdcKeyName>
+                <customFields>{"service":"${APP_NAME}","environment":"${ENVIRONMENT:-unknown}"}</customFields>
+            </encoder>
+        </appender>
+    </springProfile>
 
     <!--
     ════════════════════════════════════════════════════════════════════════════
@@ -106,11 +109,13 @@
         <appender-ref ref="JSON_CONSOLE"/>
     </appender>
 
-    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
-        <queueSize>512</queueSize>
-        <discardingThreshold>0</discardingThreshold>
-        <appender-ref ref="FILE"/>
-    </appender>
+    <springProfile name="dev,test,local">
+        <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+            <queueSize>512</queueSize>
+            <discardingThreshold>0</discardingThreshold>
+            <appender-ref ref="FILE"/>
+        </appender>
+    </springProfile>
 
     <!--
     ════════════════════════════════════════════════════════════════════════════
