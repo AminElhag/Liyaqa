@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Loader2, ArrowRight, Globe, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, Loader2, ArrowRight, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -80,9 +80,9 @@ export default function PlatformLoginPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-neutral-950 to-neutral-950" />
 
         {/* Animated orbs */}
-        <div className="absolute top-[-20%] start-[-10%] w-[500px] h-[500px] bg-primary/30 rounded-full blur-[150px] animate-pulse" />
-        <div className="absolute bottom-[-20%] end-[-10%] w-[400px] h-[400px] bg-sky-500/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-[40%] end-[20%] w-[300px] h-[300px] bg-cyan-400/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[-20%] start-[-10%] w-[500px] h-[500px] bg-primary/40 rounded-full blur-[150px] animate-pulse" />
+        <div className="absolute bottom-[-20%] end-[-10%] w-[400px] h-[400px] bg-[#E85D3A]/30 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-[40%] end-[20%] w-[300px] h-[300px] bg-[#FF9A82]/20 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
 
         {/* Grid pattern */}
         <div
@@ -95,6 +95,30 @@ export default function PlatformLoginPage() {
             backgroundSize: '80px 80px'
           }}
         />
+
+        {/* Geometric Octagon Pattern - Top Right */}
+        <div className="absolute top-20 end-20 w-[300px] h-[300px] opacity-[0.03] pointer-events-none">
+          <Image
+            src="/assets/logo-liyaqa-icon.svg"
+            alt=""
+            width={300}
+            height={300}
+            className="animate-spin-slow"
+            aria-hidden="true"
+          />
+        </div>
+
+        {/* Geometric Octagon Pattern - Bottom Left */}
+        <div className="absolute bottom-20 start-20 w-[250px] h-[250px] opacity-[0.02] pointer-events-none">
+          <Image
+            src="/assets/logo-liyaqa-icon.svg"
+            alt=""
+            width={250}
+            height={250}
+            className="animate-spin-slow rotate-45"
+            aria-hidden="true"
+          />
+        </div>
 
         {/* Radial vignette */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_rgba(0,0,0,0.4)_100%)]" />
@@ -130,14 +154,27 @@ export default function PlatformLoginPage() {
               mounted ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-12"
             )}
           >
+            {/* New Octagon Icon */}
+            <div className="mb-8 relative inline-block">
+              <div className="absolute -inset-4 bg-gradient-to-r from-primary/30 to-[#E85D3A]/30 rounded-full blur-2xl animate-pulse" />
+              <Image
+                src="/assets/logo-liyaqa-icon.svg"
+                alt="Liyaqa Icon"
+                width={80}
+                height={80}
+                className="relative drop-shadow-2xl"
+                priority
+              />
+            </div>
+
             {/* Logo with glow effect */}
             <div className="relative inline-block">
               {/* Outer glow */}
-              <div className="absolute -inset-8 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+              <div className="absolute -inset-8 bg-gradient-to-r from-primary/25 via-[#E85D3A]/20 to-primary/25 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '3s' }} />
 
               {/* Logo */}
               <Image
-                src="/assets/logo-white.svg"
+                src="/assets/logo-liyaqa-white.svg"
                 alt="لياقة - Liyaqa"
                 width={320}
                 height={120}
@@ -157,8 +194,14 @@ export default function PlatformLoginPage() {
               )}
             >
               <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-sky-500">
-                  <ShieldCheck className="h-5 w-5 text-white" />
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-[#E85D3A]">
+                  <Image
+                    src="/assets/favicon.svg"
+                    alt=""
+                    width={20}
+                    height={20}
+                    className="brightness-0 invert"
+                  />
                 </div>
                 <div className="text-start">
                   <p className="text-white font-semibold">{texts.platformAccess}</p>
@@ -188,7 +231,7 @@ export default function PlatformLoginPage() {
                 <div className="relative">
                   <div className="absolute -inset-4 bg-primary/20 rounded-full blur-2xl" />
                   <Image
-                    src="/assets/logo-white.svg"
+                    src="/assets/logo-liyaqa-white.svg"
                     alt="لياقة - Liyaqa"
                     width={240}
                     height={90}
@@ -209,7 +252,7 @@ export default function PlatformLoginPage() {
               <div className="relative">
                 {/* Card glow */}
                 <div className="absolute -inset-px bg-gradient-to-b from-white/20 via-white/5 to-transparent rounded-3xl" />
-                <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-transparent to-sky-500/20 rounded-3xl blur-xl opacity-50" />
+                <div className="absolute -inset-1 bg-gradient-to-r from-primary/30 via-transparent to-[#E85D3A]/30 rounded-3xl blur-xl opacity-50" />
 
                 {/* Card */}
                 <div className="relative bg-neutral-900/80 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 shadow-2xl">
@@ -303,8 +346,8 @@ export default function PlatformLoginPage() {
                       disabled={isLoading}
                       className={cn(
                         "w-full h-12 rounded-xl font-semibold text-base mt-2",
-                        "bg-gradient-to-r from-primary to-sky-500",
-                        "hover:from-primary hover:to-sky-400",
+                        "bg-gradient-to-r from-primary to-[#E85D3A]",
+                        "hover:from-[#FF9A82] hover:to-[#E85D3A]",
                         "shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40",
                         "transition-all duration-300 hover:translate-y-[-2px]",
                         "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none"

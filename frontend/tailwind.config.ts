@@ -10,20 +10,27 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Primary (Sky blue from design tokens)
+        // Primary (Sunset Coral from new design system)
         primary: {
-          50: "#f0f9ff",
-          100: "#e0f2fe",
-          200: "#bae6fd",
-          300: "#7dd3fc",
-          400: "#38bdf8",
-          500: "#0ea5e9",
-          600: "#0284c7",
-          700: "#0369a1",
-          800: "#075985",
-          900: "#0c4a6e",
-          DEFAULT: "#0ea5e9",
+          50: "#fff4f1",
+          100: "#ffe5e0",
+          200: "#ffccc2",
+          300: "#ffb3a3",
+          400: "#ff9a82",
+          500: "#FF6B4A",
+          600: "#E85D3A",
+          700: "#d14f2d",
+          800: "#a33e23",
+          900: "#7a2e19",
+          DEFAULT: "#FF6B4A",
           foreground: "#ffffff",
+        },
+        // Brand colors (Coral palette)
+        brand: {
+          primary: "#FF6B4A",      // Sunset Coral
+          secondary: "#E85D3A",    // Terracotta
+          tint: "#FF9A82",         // Light Coral
+          "bg-tint": "#FFE5E0",    // Background Tint
         },
         // Neutral (Slate)
         neutral: {
@@ -161,6 +168,7 @@ const config: Config = {
         "md3-slide-up": "md3-slide-up 0.3s cubic-bezier(0.2, 0, 0, 1)",
         "md3-slide-down": "md3-slide-down 0.3s cubic-bezier(0.2, 0, 0, 1)",
         "md3-expand": "md3-expand 0.3s cubic-bezier(0.2, 0, 0, 1)",
+        "spin-slow": "spin 30s linear infinite",
       },
     },
   },
