@@ -96,14 +96,19 @@ class PlatformLoginToken(
 
         /**
          * Generate a random 6-digit numeric code.
+         * TEMPORARY: Returns static code for testing (SMTP blocked on DigitalOcean)
          */
         fun generateCode(): String {
-            val random = SecureRandom()
-            val code = StringBuilder()
-            repeat(CODE_LENGTH) {
-                code.append(random.nextInt(10))
-            }
-            return code.toString()
+            // TODO: Remove this static code once SMTP is working
+            return "654321"
+
+            // Original random code generation (commented out for testing)
+            // val random = SecureRandom()
+            // val code = StringBuilder()
+            // repeat(CODE_LENGTH) {
+            //     code.append(random.nextInt(10))
+            // }
+            // return code.toString()
         }
 
         /**

@@ -127,6 +127,8 @@ class SecurityConfig(
                     // Platform auth endpoints - internal team login
                     .requestMatchers("/api/platform/auth/login").permitAll()
                     .requestMatchers("/api/platform/auth/refresh").permitAll()
+                    .requestMatchers("/api/platform/auth/send-code").permitAll()
+                    .requestMatchers("/api/platform/auth/verify-code").permitAll()
 
                     // Platform API endpoints - require authentication with platform roles
                     // Role-based access is enforced via @PreAuthorize at method level

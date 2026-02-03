@@ -50,36 +50,60 @@ services:
   # Liyaqa Backend API
   # ===================
   backend:
-    image: amegung/liyaqa-backend:latest
+    image: liyaqa-backend:static-otp
     container_name: liyaqa-backend
     restart: always
+    user: root
     depends_on:
       postgres:
         condition: service_healthy
+    volumes:
+      - backend_uploads:/app/uploads
     environment:
       # Spring Profile
-      SPRING_PROFILES_ACTIVE: prod
+      SPRING_PROFILES_ACTIVE: default
       SERVER_PORT: 8080
+
+      # JPA Configuration (override default validate with update for Docker)
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
 
       # JVM Memory Settings (adjust for small droplets)
       JAVA_OPTS: "-Xms256m -Xmx512m -XX:+UseContainerSupport"
+
+      # Disable Redis health check (Redis is optional for this deployment)
+      MANAGEMENT_HEALTH_REDIS_ENABLED: false
 
       # Database
       DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-liyaqa}
       DATABASE_USERNAME: ${POSTGRES_USER:-liyaqa}
       DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-liyaqa}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-liyaqa}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
 
       # Security
       JWT_SECRET: ${JWT_SECRET:?JWT secret is required (min 32 chars)}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost}
 
+      # Storage
+      STORAGE_TYPE: ${STORAGE_TYPE:-local}
+
       # Email (Optional)
       EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
       EMAIL_FROM: ${EMAIL_FROM:-noreply@liyaqa.com}
+      EMAIL_FROM_ADDRESS: ${EMAIL_FROM:-noreply@liyaqa.com}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USERNAME: ${SMTP_USERNAME:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      # Spring Mail properties
+      SPRING_MAIL_HOST: ${SMTP_HOST:-}
+      SPRING_MAIL_PORT: ${SMTP_PORT:-587}
+      SPRING_MAIL_USERNAME: ${SMTP_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${SMTP_PASSWORD:-}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: true
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: true
 
       # SMS (Optional)
       SMS_ENABLED: ${SMS_ENABLED:-false}
@@ -168,6 +192,8 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  backend_uploads:
     driver: local
 
 networks:
