@@ -189,3 +189,38 @@ export function isMfaRequired(
 ): response is MfaRequiredResponse {
   return "mfaRequired" in response && response.mfaRequired === true;
 }
+
+/**
+ * Send passwordless login code request
+ */
+export interface SendCodeRequest {
+  email: string;
+}
+
+/**
+ * Send passwordless login code response
+ */
+export interface SendCodeResponse {
+  email: string;
+  expiresIn: number; // seconds
+  message: string;
+}
+
+/**
+ * Verify passwordless login code request
+ */
+export interface VerifyCodeRequest {
+  email: string;
+  code: string;
+  deviceInfo?: string;
+}
+
+/**
+ * Platform auth response (matches LoginResponse but for platform users)
+ */
+export interface PlatformAuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+  user: User;
+}

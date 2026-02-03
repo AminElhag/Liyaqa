@@ -5,6 +5,8 @@ import com.liyaqa.auth.domain.model.RefreshToken
 import com.liyaqa.auth.domain.ports.RefreshTokenRepository
 import com.liyaqa.auth.infrastructure.security.JwtTokenProvider
 import com.liyaqa.auth.infrastructure.security.JwtUserPrincipal
+import com.liyaqa.platform.application.services.PlatformPasswordlessAuthService
+import com.liyaqa.platform.application.services.SendCodeResponse
 import com.liyaqa.platform.domain.model.PlatformUser
 import com.liyaqa.platform.domain.model.PlatformUserStatus
 import com.liyaqa.platform.domain.ports.PlatformUserRepository
@@ -16,6 +18,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Pattern
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -44,6 +47,30 @@ data class PlatformLoginRequest(
 )
 
 /**
+ * Send login code request (passwordless flow).
+ */
+data class SendCodeRequest(
+    @field:NotBlank(message = "Email is required")
+    @field:Email(message = "Email must be valid")
+    val email: String
+)
+
+/**
+ * Verify login code request (passwordless flow).
+ */
+data class VerifyCodeRequest(
+    @field:NotBlank(message = "Email is required")
+    @field:Email(message = "Email must be valid")
+    val email: String,
+
+    @field:NotBlank(message = "Code is required")
+    @field:Pattern(regexp = "^\\d{6}$", message = "Code must be 6 digits")
+    val code: String,
+
+    val deviceInfo: String? = null
+)
+
+/**
  * Authentication controller for platform (internal team) users.
  * Platform users don't belong to a tenant - they manage the platform itself.
  */
@@ -55,7 +82,8 @@ class PlatformAuthController(
     private val platformUserRepository: PlatformUserRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val jwtTokenProvider: JwtTokenProvider,
-    private val passwordEncoder: PasswordEncoder
+    private val passwordEncoder: PasswordEncoder,
+    private val passwordlessAuthService: PlatformPasswordlessAuthService
 ) {
     private val logger = LoggerFactory.getLogger(PlatformAuthController::class.java)
 
@@ -172,6 +200,40 @@ class PlatformAuthController(
                 user = PlatformUserResponse.from(user)
             )
         )
+    }
+
+    @Operation(
+        summary = "Send Login Code (Passwordless)",
+        description = "Sends a 6-digit OTP code to the user's email for passwordless login. Rate limited to 3 requests per 15 minutes."
+    )
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Code sent successfully"),
+        ApiResponse(responseCode = "400", description = "Invalid email or rate limit exceeded"),
+        ApiResponse(responseCode = "403", description = "Account is inactive")
+    ])
+    @PostMapping("/send-code")
+    fun sendCode(@Valid @RequestBody request: SendCodeRequest): ResponseEntity<SendCodeResponse> {
+        val response = passwordlessAuthService.sendLoginCode(request.email)
+        return ResponseEntity.ok(response)
+    }
+
+    @Operation(
+        summary = "Verify Login Code (Passwordless)",
+        description = "Verifies a 6-digit OTP code and issues JWT tokens. Code is valid for 10 minutes and can only be used once."
+    )
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Login successful"),
+        ApiResponse(responseCode = "400", description = "Invalid or expired code"),
+        ApiResponse(responseCode = "403", description = "Account is inactive")
+    ])
+    @PostMapping("/verify-code")
+    fun verifyCode(@Valid @RequestBody request: VerifyCodeRequest): ResponseEntity<PlatformAuthResponse> {
+        val response = passwordlessAuthService.verifyLoginCode(
+            email = request.email,
+            code = request.code,
+            deviceInfo = request.deviceInfo
+        )
+        return ResponseEntity.ok(response)
     }
 
     @Operation(

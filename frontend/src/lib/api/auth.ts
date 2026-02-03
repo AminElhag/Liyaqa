@@ -11,6 +11,10 @@ import type {
   PlatformLoginRequest,
   TenantInfoResponse,
   User,
+  SendCodeRequest,
+  SendCodeResponse,
+  VerifyCodeRequest,
+  PlatformAuthResponse,
 } from "@/types/auth";
 
 /**
@@ -109,5 +113,27 @@ export const authApi = {
    */
   getTenantInfo: async (): Promise<TenantInfoResponse> => {
     return api.get("api/auth/tenant-info").json<TenantInfoResponse>();
+  },
+
+  /**
+   * Send passwordless login code (platform users only)
+   */
+  sendPlatformLoginCode: async (
+    data: SendCodeRequest
+  ): Promise<SendCodeResponse> => {
+    return api
+      .post("api/platform/auth/send-code", { json: data })
+      .json<SendCodeResponse>();
+  },
+
+  /**
+   * Verify passwordless login code (platform users only)
+   */
+  verifyPlatformLoginCode: async (
+    data: VerifyCodeRequest
+  ): Promise<PlatformAuthResponse> => {
+    return api
+      .post("api/platform/auth/verify-code", { json: data })
+      .json<PlatformAuthResponse>();
   },
 };

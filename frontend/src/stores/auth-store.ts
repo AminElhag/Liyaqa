@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { User, LoginRequest, RegisterRequest, PlatformLoginRequest } from "@/types/auth";
+import type { User, LoginRequest, RegisterRequest, PlatformLoginRequest, SendCodeRequest, VerifyCodeRequest } from "@/types/auth";
 import { isPlatformRole, isMfaRequired } from "@/types/auth";
 import { authApi } from "@/lib/api/auth";
 import { mfaApi } from "@/lib/api/mfa";
@@ -29,6 +29,10 @@ interface AuthState {
   mfaPendingUserId: string | null;
   mfaEmail: string | null;
 
+  // Passwordless state
+  passwordlessEmail: string | null;
+  codeExpiresAt: number | null; // timestamp in milliseconds
+
   // Actions
   login: (credentials: LoginRequest) => Promise<void>;
   platformLogin: (credentials: PlatformLoginRequest) => Promise<void>;
@@ -45,6 +49,9 @@ interface AuthState {
   hasAllPermissions: (permissionCodes: string[]) => boolean;
   setHasHydrated: (state: boolean) => void;
   clearMfaState: () => void;
+  sendPlatformLoginCode: (email: string) => Promise<void>;
+  verifyPlatformLoginCode: (email: string, code: string, deviceInfo?: string) => Promise<void>;
+  clearPasswordlessState: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -58,6 +65,8 @@ export const useAuthStore = create<AuthState>()(
       mfaRequired: false,
       mfaPendingUserId: null,
       mfaEmail: null,
+      passwordlessEmail: null,
+      codeExpiresAt: null,
 
       setHasHydrated: (state: boolean) => {
         set({ _hasHydrated: state });
@@ -267,6 +276,8 @@ export const useAuthStore = create<AuthState>()(
           mfaRequired: false,
           mfaPendingUserId: null,
           mfaEmail: null,
+          passwordlessEmail: null,
+          codeExpiresAt: null,
         });
       },
 
@@ -408,6 +419,71 @@ export const useAuthStore = create<AuthState>()(
         } catch {
           set({ isAuthenticated: false, user: null, isLoading: false });
         }
+      },
+
+      sendPlatformLoginCode: async (email: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await authApi.sendPlatformLoginCode({ email });
+
+          // Store email and expiration time
+          const expiresAt = Date.now() + response.expiresIn * 1000;
+          set({
+            passwordlessEmail: email,
+            codeExpiresAt: expiresAt,
+            isLoading: false,
+          });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Failed to send login code";
+          set({
+            isLoading: false,
+            error: errorMessage,
+          });
+          throw error;
+        }
+      },
+
+      verifyPlatformLoginCode: async (email: string, code: string, deviceInfo?: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await authApi.verifyPlatformLoginCode({
+            email,
+            code,
+            deviceInfo,
+          });
+
+          // Store tokens
+          setAccessToken(response.accessToken);
+          setRefreshToken(response.refreshToken);
+
+          // Enable platform mode
+          setPlatformMode(true);
+
+          // Clear tenant context for platform users
+          setTenantContext(null);
+
+          set({
+            user: { ...response.user, isPlatformUser: true },
+            isAuthenticated: true,
+            isLoading: false,
+            passwordlessEmail: null,
+            codeExpiresAt: null,
+          });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Invalid or expired code";
+          set({
+            isLoading: false,
+            error: errorMessage,
+          });
+          throw error;
+        }
+      },
+
+      clearPasswordlessState: () => {
+        set({
+          passwordlessEmail: null,
+          codeExpiresAt: null,
+        });
       },
 
       isPlatformUser: () => {

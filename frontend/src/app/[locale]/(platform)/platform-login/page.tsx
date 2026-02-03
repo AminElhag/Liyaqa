@@ -3,32 +3,51 @@
 import * as React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Loader2, ArrowRight, Globe } from "lucide-react";
+import { Loader2, ArrowRight, Globe, ArrowLeft, Mail, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
 
-const platformLoginSchema = z.object({
+// Email step schema
+const emailSchema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
 });
 
-type PlatformLoginFormData = z.infer<typeof platformLoginSchema>;
+// Code verification step schema
+const codeSchema = z.object({
+  code: z.string().length(6, "Code must be 6 digits").regex(/^\d+$/, "Code must contain only numbers"),
+});
+
+type EmailFormData = z.infer<typeof emailSchema>;
+type CodeFormData = z.infer<typeof codeSchema>;
+
+type Step = "email" | "code";
 
 export default function PlatformLoginPage() {
-  const t = useTranslations("platform.auth");
   const locale = useLocale();
   const router = useRouter();
-  const { platformLogin, isLoading, error, clearError, isAuthenticated, isPlatformUser } =
-    useAuthStore();
-  const [showPassword, setShowPassword] = React.useState(false);
+  const {
+    sendPlatformLoginCode,
+    verifyPlatformLoginCode,
+    isLoading,
+    error,
+    clearError,
+    isAuthenticated,
+    isPlatformUser,
+    passwordlessEmail,
+    codeExpiresAt,
+    clearPasswordlessState,
+  } = useAuthStore();
+
+  const [step, setStep] = React.useState<Step>("email");
   const [mounted, setMounted] = React.useState(false);
+  const [timeRemaining, setTimeRemaining] = React.useState<number>(0);
 
   // Animation mount effect
   React.useEffect(() => {
@@ -42,34 +61,110 @@ export default function PlatformLoginPage() {
     }
   }, [isAuthenticated, isPlatformUser, router, locale]);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<PlatformLoginFormData>({
-    resolver: zodResolver(platformLoginSchema),
+  // Countdown timer for code expiration
+  React.useEffect(() => {
+    if (step === "code" && codeExpiresAt) {
+      const interval = setInterval(() => {
+        const remaining = Math.max(0, Math.floor((codeExpiresAt - Date.now()) / 1000));
+        setTimeRemaining(remaining);
+
+        if (remaining === 0) {
+          clearInterval(interval);
+        }
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [step, codeExpiresAt]);
+
+  // Email form
+  const emailForm = useForm<EmailFormData>({
+    resolver: zodResolver(emailSchema),
+    defaultValues: {
+      email: passwordlessEmail || "",
+    },
   });
 
-  const onSubmit = async (data: PlatformLoginFormData) => {
+  // Code form
+  const codeForm = useForm<CodeFormData>({
+    resolver: zodResolver(codeSchema),
+  });
+
+  const onEmailSubmit = async (data: EmailFormData) => {
     clearError();
     try {
-      await platformLogin(data);
+      await sendPlatformLoginCode(data.email);
+      setStep("code");
+      // Auto-focus on code input after step change
+      setTimeout(() => {
+        document.getElementById("code")?.focus();
+      }, 100);
+    } catch {
+      // Error is handled in store
+    }
+  };
+
+  const onCodeSubmit = async (data: CodeFormData) => {
+    clearError();
+    try {
+      const deviceInfo = navigator.userAgent;
+      await verifyPlatformLoginCode(passwordlessEmail!, data.code, deviceInfo);
       router.push(`/${locale}/platform-dashboard`);
     } catch {
       // Error is handled in store
     }
   };
 
+  const handleResendCode = async () => {
+    if (passwordlessEmail) {
+      clearError();
+      codeForm.reset();
+      try {
+        await sendPlatformLoginCode(passwordlessEmail);
+      } catch {
+        // Error is handled in store
+      }
+    }
+  };
+
+  const handleBackToEmail = () => {
+    setStep("email");
+    clearPasswordlessState();
+    clearError();
+    codeForm.reset();
+  };
+
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs.toString().padStart(2, "0")}`;
+  };
+
   const texts = {
+    // Common
     platformAccess: locale === "ar" ? "دخول المنصة" : "Platform Access",
-    email: locale === "ar" ? "البريد الإلكتروني" : "Email",
-    emailPlaceholder: "you@liyaqa.com",
-    password: locale === "ar" ? "كلمة المرور" : "Password",
-    signIn: locale === "ar" ? "تسجيل الدخول" : "Sign in",
-    signingIn: locale === "ar" ? "جاري الدخول..." : "Signing in...",
-    errorMessage: locale === "ar" ? "بيانات الدخول غير صحيحة" : "Invalid email or password",
-    restricted: locale === "ar" ? "وصول مخصص لفريق لياقة فقط" : "Restricted to Liyaqa team members",
     secureAccess: locale === "ar" ? "اتصال آمن ومشفر" : "Secure encrypted connection",
+    restricted: locale === "ar" ? "وصول مخصص لفريق لياقة فقط" : "Restricted to Liyaqa team members",
+
+    // Email step
+    welcomeBack: locale === "ar" ? "مرحباً بعودتك" : "Welcome back",
+    enterEmail: locale === "ar" ? "أدخل بريدك الإلكتروني" : "Enter your email",
+    emailLabel: locale === "ar" ? "البريد الإلكتروني" : "Email",
+    emailPlaceholder: "you@liyaqa.com",
+    continue: locale === "ar" ? "متابعة" : "Continue",
+    continuing: locale === "ar" ? "جاري الإرسال..." : "Sending...",
+
+    // Code step
+    verifyCode: locale === "ar" ? "تحقق من الرمز" : "Verify Code",
+    codeSent: locale === "ar" ? "تم إرسال رمز مكون من 6 أرقام إلى" : "A 6-digit code was sent to",
+    codeLabel: locale === "ar" ? "رمز التحقق" : "Verification Code",
+    codePlaceholder: "123456",
+    verify: locale === "ar" ? "تحقق" : "Verify",
+    verifying: locale === "ar" ? "جاري التحقق..." : "Verifying...",
+    resendCode: locale === "ar" ? "إعادة إرسال الرمز" : "Resend code",
+    goBack: locale === "ar" ? "رجوع" : "Go back",
+    expiresIn: locale === "ar" ? "ينتهي خلال" : "Expires in",
+    expired: locale === "ar" ? "انتهت صلاحية الرمز" : "Code expired",
   };
 
   return (
@@ -256,116 +351,208 @@ export default function PlatformLoginPage() {
 
                 {/* Card */}
                 <div className="relative bg-neutral-900/80 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 shadow-2xl">
-                  {/* Card header */}
-                  <div className="text-center mb-8 lg:text-start">
-                    <h2 className="text-2xl font-bold text-white">
-                      {locale === "ar" ? "مرحباً بعودتك" : "Welcome back"}
-                    </h2>
-                    <p className="text-neutral-400 mt-1">
-                      {locale === "ar" ? "سجّل دخولك للمتابعة" : "Sign in to continue"}
-                    </p>
-                  </div>
-
-                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                    {/* Error message */}
-                    {error && (
-                      <div className="p-4 text-sm text-red-300 bg-red-500/10 rounded-xl border border-red-500/20 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="h-2 w-2 rounded-full bg-red-400 animate-pulse flex-shrink-0" />
-                        {texts.errorMessage}
+                  {/* Step 1: Email Input */}
+                  {step === "email" && (
+                    <>
+                      {/* Card header */}
+                      <div className="text-center mb-8 lg:text-start">
+                        <h2 className="text-2xl font-bold text-white">
+                          {texts.welcomeBack}
+                        </h2>
+                        <p className="text-neutral-400 mt-1">
+                          {texts.enterEmail}
+                        </p>
                       </div>
-                    )}
 
-                    {/* Email field */}
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-neutral-300 text-sm font-medium">
-                        {texts.email}
-                      </Label>
-                      <div className="relative group">
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder={texts.emailPlaceholder}
-                          autoComplete="email"
-                          className={cn(
-                            "h-12 bg-white/5 border-white/10 text-white placeholder:text-neutral-500",
-                            "focus:bg-white/10 focus:border-primary/50 focus:ring-2 focus:ring-primary/20",
-                            "transition-all duration-200 rounded-xl",
-                            errors.email && "border-red-500/50 focus:border-red-500/50 focus:ring-red-500/20"
-                          )}
-                          {...register("email")}
-                        />
-                        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                      </div>
-                      {errors.email && (
-                        <p className="text-sm text-red-400">{errors.email.message}</p>
-                      )}
-                    </div>
+                      <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-5">
+                        {/* Error message */}
+                        {error && (
+                          <div className="p-4 text-sm text-red-300 bg-red-500/10 rounded-xl border border-red-500/20 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="h-2 w-2 rounded-full bg-red-400 animate-pulse flex-shrink-0" />
+                            {error}
+                          </div>
+                        )}
 
-                    {/* Password field */}
-                    <div className="space-y-2">
-                      <Label htmlFor="password" className="text-neutral-300 text-sm font-medium">
-                        {texts.password}
-                      </Label>
-                      <div className="relative group">
-                        <Input
-                          id="password"
-                          type={showPassword ? "text" : "password"}
-                          autoComplete="current-password"
-                          className={cn(
-                            "h-12 bg-white/5 border-white/10 text-white placeholder:text-neutral-500 pe-12",
-                            "focus:bg-white/10 focus:border-primary/50 focus:ring-2 focus:ring-primary/20",
-                            "transition-all duration-200 rounded-xl",
-                            errors.password && "border-red-500/50 focus:border-red-500/50 focus:ring-red-500/20"
+                        {/* Email field */}
+                        <div className="space-y-2">
+                          <Label htmlFor="email" className="text-neutral-300 text-sm font-medium">
+                            {texts.emailLabel}
+                          </Label>
+                          <div className="relative group">
+                            <Input
+                              id="email"
+                              type="email"
+                              placeholder={texts.emailPlaceholder}
+                              autoComplete="email"
+                              autoFocus
+                              className={cn(
+                                "h-12 bg-white/5 border-white/10 text-white placeholder:text-neutral-500",
+                                "focus:bg-white/10 focus:border-primary/50 focus:ring-2 focus:ring-primary/20",
+                                "transition-all duration-200 rounded-xl",
+                                emailForm.formState.errors.email && "border-red-500/50 focus:border-red-500/50 focus:ring-red-500/20"
+                              )}
+                              {...emailForm.register("email")}
+                            />
+                            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                          </div>
+                          {emailForm.formState.errors.email && (
+                            <p className="text-sm text-red-400">{emailForm.formState.errors.email.message}</p>
                           )}
-                          {...register("password")}
-                        />
+                        </div>
+
+                        {/* Submit button */}
                         <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute end-1 top-1/2 -translate-y-1/2 h-10 w-10 text-neutral-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                          onClick={() => setShowPassword(!showPassword)}
-                          aria-label={showPassword ? "Hide password" : "Show password"}
+                          type="submit"
+                          disabled={isLoading}
+                          className={cn(
+                            "w-full h-12 rounded-xl font-semibold text-base mt-2",
+                            "bg-gradient-to-r from-primary to-[#E85D3A]",
+                            "hover:from-[#FF9A82] hover:to-[#E85D3A]",
+                            "shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40",
+                            "transition-all duration-300 hover:translate-y-[-2px]",
+                            "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none"
+                          )}
                         >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
+                          {isLoading ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <Loader2 className="h-5 w-5 animate-spin" />
+                              {texts.continuing}
+                            </span>
                           ) : (
-                            <Eye className="h-4 w-4" />
+                            <span className="flex items-center justify-center gap-2">
+                              {texts.continue}
+                              <ArrowRight className="h-5 w-5 rtl:rotate-180" />
+                            </span>
                           )}
                         </Button>
-                        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                      </div>
-                      {errors.password && (
-                        <p className="text-sm text-red-400">{errors.password.message}</p>
-                      )}
-                    </div>
+                      </form>
+                    </>
+                  )}
 
-                    {/* Submit button */}
-                    <Button
-                      type="submit"
-                      disabled={isLoading}
-                      className={cn(
-                        "w-full h-12 rounded-xl font-semibold text-base mt-2",
-                        "bg-gradient-to-r from-primary to-[#E85D3A]",
-                        "hover:from-[#FF9A82] hover:to-[#E85D3A]",
-                        "shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40",
-                        "transition-all duration-300 hover:translate-y-[-2px]",
-                        "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none"
-                      )}
-                    >
-                      {isLoading ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                          {texts.signingIn}
-                        </span>
-                      ) : (
-                        <span className="flex items-center justify-center gap-2">
-                          {texts.signIn}
-                          <ArrowRight className="h-5 w-5 rtl:rotate-180 transition-transform group-hover:translate-x-1" />
-                        </span>
-                      )}
-                    </Button>
-                  </form>
+                  {/* Step 2: Code Verification */}
+                  {step === "code" && (
+                    <>
+                      {/* Card header */}
+                      <div className="text-center mb-8 lg:text-start">
+                        <h2 className="text-2xl font-bold text-white flex items-center gap-3 justify-center lg:justify-start">
+                          <Mail className="h-6 w-6 text-primary" />
+                          {texts.verifyCode}
+                        </h2>
+                        <p className="text-neutral-400 mt-2">
+                          {texts.codeSent}
+                        </p>
+                        <p className="text-white font-medium mt-1">
+                          {passwordlessEmail}
+                        </p>
+                      </div>
+
+                      <form onSubmit={codeForm.handleSubmit(onCodeSubmit)} className="space-y-5">
+                        {/* Error message */}
+                        {error && (
+                          <div className="p-4 text-sm text-red-300 bg-red-500/10 rounded-xl border border-red-500/20 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="h-2 w-2 rounded-full bg-red-400 animate-pulse flex-shrink-0" />
+                            {error}
+                          </div>
+                        )}
+
+                        {/* Code field */}
+                        <div className="space-y-2">
+                          <Label htmlFor="code" className="text-neutral-300 text-sm font-medium">
+                            {texts.codeLabel}
+                          </Label>
+                          <div className="relative group">
+                            <Input
+                              id="code"
+                              type="text"
+                              inputMode="numeric"
+                              pattern="\d*"
+                              maxLength={6}
+                              placeholder={texts.codePlaceholder}
+                              autoComplete="one-time-code"
+                              autoFocus
+                              className={cn(
+                                "h-14 bg-white/5 border-white/10 text-white placeholder:text-neutral-500 text-center text-2xl tracking-[0.5em] font-mono",
+                                "focus:bg-white/10 focus:border-primary/50 focus:ring-2 focus:ring-primary/20",
+                                "transition-all duration-200 rounded-xl",
+                                codeForm.formState.errors.code && "border-red-500/50 focus:border-red-500/50 focus:ring-red-500/20"
+                              )}
+                              {...codeForm.register("code")}
+                            />
+                            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                          </div>
+                          {codeForm.formState.errors.code && (
+                            <p className="text-sm text-red-400">{codeForm.formState.errors.code.message}</p>
+                          )}
+                        </div>
+
+                        {/* Timer */}
+                        <div className="flex items-center justify-center gap-2 text-sm">
+                          <Clock className="h-4 w-4 text-neutral-400" />
+                          <span className={cn(
+                            "font-medium",
+                            timeRemaining > 0 ? "text-neutral-400" : "text-red-400"
+                          )}>
+                            {timeRemaining > 0 ? (
+                              <>{texts.expiresIn} {formatTime(timeRemaining)}</>
+                            ) : (
+                              texts.expired
+                            )}
+                          </span>
+                        </div>
+
+                        {/* Submit button */}
+                        <Button
+                          type="submit"
+                          disabled={isLoading || timeRemaining === 0}
+                          className={cn(
+                            "w-full h-12 rounded-xl font-semibold text-base",
+                            "bg-gradient-to-r from-primary to-[#E85D3A]",
+                            "hover:from-[#FF9A82] hover:to-[#E85D3A]",
+                            "shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40",
+                            "transition-all duration-300 hover:translate-y-[-2px]",
+                            "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none"
+                          )}
+                        >
+                          {isLoading ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <Loader2 className="h-5 w-5 animate-spin" />
+                              {texts.verifying}
+                            </span>
+                          ) : (
+                            <span className="flex items-center justify-center gap-2">
+                              {texts.verify}
+                              <ArrowRight className="h-5 w-5 rtl:rotate-180" />
+                            </span>
+                          )}
+                        </Button>
+
+                        {/* Actions */}
+                        <div className="flex items-center justify-between pt-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleBackToEmail}
+                            className="text-neutral-400 hover:text-white"
+                          >
+                            <ArrowLeft className="h-4 w-4 me-1 rtl:rotate-180" />
+                            {texts.goBack}
+                          </Button>
+
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleResendCode}
+                            disabled={isLoading}
+                            className="text-primary hover:text-primary/80"
+                          >
+                            {texts.resendCode}
+                          </Button>
+                        </div>
+                      </form>
+                    </>
+                  )}
 
                   {/* Restricted access notice */}
                   <div className="mt-6 pt-6 border-t border-white/10">
