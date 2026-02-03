@@ -18,7 +18,7 @@ import { useTenantStore } from "@/stores/tenant-store";
 import { isPlatformRole } from "@/types/auth";
 import { toast } from "sonner";
 
-export default function OAuthCallbackPage() {
+function OAuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const locale = useLocale();
@@ -171,5 +171,26 @@ export default function OAuthCallbackPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function OAuthCallbackPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              </div>
+              <CardTitle className="text-2xl">Loading...</CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
+      }
+    >
+      <OAuthCallbackContent />
+    </React.Suspense>
   );
 }
