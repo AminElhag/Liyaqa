@@ -28,11 +28,11 @@ import { Button } from "@liyaqa/shared/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@liyaqa/shared/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@liyaqa/shared/components/ui/tabs";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
-import { ClientStatusBadge } from "@/components/platform/client-status-badge";
-import { ClientHealthCard } from "@/components/platform/client-health-card";
-import { ClientActivityTab } from "@/components/platform/client-activity-tab";
-import { ClientSupportTab } from "@/components/platform/client-support-tab";
-import { ClientNotesTab } from "@/components/platform/client-notes-tab";
+import { ClientStatusBadge } from "@liyaqa/shared/components/platform/client-status-badge";
+import { ClientHealthCard } from "@liyaqa/shared/components/platform/client-health-card";
+import { ClientActivityTab } from "@liyaqa/shared/components/platform/client-activity-tab";
+import { ClientSupportTab } from "@liyaqa/shared/components/platform/client-support-tab";
+import { ClientNotesTab } from "@liyaqa/shared/components/platform/client-notes-tab";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import {
   usePlatformClient,

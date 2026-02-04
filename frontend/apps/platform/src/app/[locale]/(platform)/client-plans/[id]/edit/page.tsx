@@ -8,7 +8,7 @@ import { Button } from "@liyaqa/shared/components/ui/button";
 import { Card, CardContent } from "@liyaqa/shared/components/ui/card";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
 import { getLocalizedText } from "@liyaqa/shared/utils";
-import { PlanForm, type PlanFormValues } from "@/components/platform/plan-form";
+import { PlanForm, type PlanFormValues } from "@liyaqa/shared/components/platform/plan-form";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import {
   useClientPlan,

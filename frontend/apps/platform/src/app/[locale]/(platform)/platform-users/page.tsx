@@ -25,7 +25,7 @@ import {
 } from "@liyaqa/shared/components/ui/select";
 import { DataTable } from "@liyaqa/shared/components/ui/data-table";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
-import { getPlatformUserColumns } from "@/components/platform/platform-user-columns";
+import { getPlatformUserColumns } from "@liyaqa/shared/components/platform/platform-user-columns";
 import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import {

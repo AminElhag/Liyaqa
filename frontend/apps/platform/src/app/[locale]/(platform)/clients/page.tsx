@@ -18,9 +18,9 @@ import {
 import { DataTable } from "@liyaqa/shared/components/ui/data-table";
 import { ErrorBoundary, ErrorFallback } from "@liyaqa/shared/components/ui/error-boundary";
 import { LoadingOverlay } from "@liyaqa/shared/components/ui/loading-overlay";
-import { StatCardSkeleton } from "@/components/platform/shared/stat-card-skeleton";
-import { TableSkeleton } from "@/components/platform/shared/table-skeleton";
-import { getClientColumns } from "@/components/platform/client-columns";
+import { StatCardSkeleton } from "@liyaqa/shared/components/platform/shared/stat-card-skeleton";
+import { TableSkeleton } from "@liyaqa/shared/components/platform/shared/table-skeleton";
+import { getClientColumns } from "@liyaqa/shared/components/platform/client-columns";
 import { useDebouncedValue } from "@liyaqa/shared/hooks/use-debounced-value";
 import {
   usePlatformClients,

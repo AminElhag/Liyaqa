@@ -4,7 +4,7 @@ import { useLocale } from "next-intl";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@liyaqa/shared/components/ui/button";
-import { InvoiceForm } from "@/components/platform/invoice-form";
+import { InvoiceForm } from "@liyaqa/shared/components/platform/invoice-form";
 
 export default function NewClientInvoicePage() {
   const locale = useLocale();

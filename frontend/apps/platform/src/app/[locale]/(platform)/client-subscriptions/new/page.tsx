@@ -8,7 +8,7 @@ import { Button } from "@liyaqa/shared/components/ui/button";
 import {
   SubscriptionForm,
   type SubscriptionFormValues,
-} from "@/components/platform/subscription-form";
+} from "@liyaqa/shared/components/platform/subscription-form";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import { useCreateClientSubscription } from "@liyaqa/shared/queries/platform/use-client-subscriptions";
 import type { CreateClientSubscriptionRequest } from "@liyaqa/shared/types/platform/client-subscription";

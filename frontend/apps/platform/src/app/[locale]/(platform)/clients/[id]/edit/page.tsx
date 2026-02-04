@@ -9,7 +9,7 @@ import { Button } from "@liyaqa/shared/components/ui/button";
 import { Card, CardContent } from "@liyaqa/shared/components/ui/card";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
-import { ClientEditForm, type EditClientFormValues } from "@/components/platform/client-edit-form";
+import { ClientEditForm, type EditClientFormValues } from "@liyaqa/shared/components/platform/client-edit-form";
 import { usePlatformClient, platformClientKeys } from "@liyaqa/shared/queries/platform/use-platform-clients";
 import { updateOrganization } from "@liyaqa/shared/lib/api/organizations";
 import { useMutation, useQueryClient } from "@tanstack/react-query";

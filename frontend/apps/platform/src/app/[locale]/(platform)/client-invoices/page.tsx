@@ -24,7 +24,7 @@ import {
 } from "@liyaqa/shared/components/ui/select";
 import { DataTable } from "@liyaqa/shared/components/ui/data-table";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
-import { getInvoiceColumns } from "@/components/platform/invoice-columns";
+import { getInvoiceColumns } from "@liyaqa/shared/components/platform/invoice-columns";
 import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import {

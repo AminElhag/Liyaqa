@@ -25,9 +25,9 @@ import {
 } from "@liyaqa/shared/components/ui/select";
 import { DataTable } from "@liyaqa/shared/components/ui/data-table";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
-import { getTicketColumns } from "@/components/platform/ticket-columns";
-import { AssignTicketDialog } from "@/components/platform/assign-ticket-dialog";
-import { ChangeStatusDialog } from "@/components/platform/change-status-dialog";
+import { getTicketColumns } from "@liyaqa/shared/components/platform/ticket-columns";
+import { AssignTicketDialog } from "@liyaqa/shared/components/platform/assign-ticket-dialog";
+import { ChangeStatusDialog } from "@liyaqa/shared/components/platform/change-status-dialog";
 import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import { useImpersonationStore } from "@liyaqa/shared/stores/impersonation-store";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";

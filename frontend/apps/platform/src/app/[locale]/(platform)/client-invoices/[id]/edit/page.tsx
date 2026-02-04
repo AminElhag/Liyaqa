@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Card, CardContent } from "@liyaqa/shared/components/ui/card";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
-import { InvoiceForm } from "@/components/platform/invoice-form";
+import { InvoiceForm } from "@liyaqa/shared/components/platform/invoice-form";
 import { useClientInvoice } from "@liyaqa/shared/queries/platform/use-client-invoices";
 
 export default function EditClientInvoicePage() {

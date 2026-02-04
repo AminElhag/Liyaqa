@@ -32,7 +32,7 @@ import {
 import { Checkbox } from "@liyaqa/shared/components/ui/checkbox";
 import { ScrollArea } from "@liyaqa/shared/components/ui/scroll-area";
 import { cn } from "@liyaqa/shared/utils";
-import { AlertPlaybookDialog } from "@/components/platform/alert-playbook-dialog";
+import { AlertPlaybookDialog } from "@liyaqa/shared/components/platform/alert-playbook-dialog";
 import {
   usePlatformAlerts,
   useAlertStatistics,

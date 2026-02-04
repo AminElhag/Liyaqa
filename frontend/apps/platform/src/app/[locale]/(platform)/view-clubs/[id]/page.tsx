@@ -41,13 +41,13 @@ import {
 } from "@liyaqa/shared/components/ui/select";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
-import { ResetPasswordDialog } from "@/components/platform/reset-password-dialog";
+import { ResetPasswordDialog } from "@liyaqa/shared/components/platform/reset-password-dialog";
 import {
   ClubLocationsTab,
   ClubMembershipPlansTab,
   ClubEditDialog,
   ClubAgreementsTab,
-} from "@/components/platform/club-detail";
+} from "@liyaqa/shared/components/platform/club-detail";
 
 import {
   useClubDetail,

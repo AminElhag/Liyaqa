@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useLocale } from "next-intl";
-import { PlatformShell } from "@/components/layouts/platform-shell";
+import { PlatformShell } from "@liyaqa/shared/components/layouts/platform-shell";
 import { useAuthStore, useHasHydrated } from "@liyaqa/shared/stores/auth-store";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
 import { isPlatformRole } from "@liyaqa/shared/types/auth";

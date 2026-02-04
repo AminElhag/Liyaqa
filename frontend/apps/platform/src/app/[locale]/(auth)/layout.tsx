@@ -1,4 +1,4 @@
-import { AuthLayout } from "@/components/layouts/auth-layout";
+import { AuthLayout } from "@liyaqa/shared/components/layouts/auth-layout";
 
 export default function AuthGroupLayout({
   children,

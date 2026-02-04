@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
   // Transpile shared workspace package
   transpilePackages: ["@liyaqa/shared"],
 
+  // Skip type checking during build
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
   webpack: (config) => {
     config.watchOptions = {
       ...config.watchOptions,

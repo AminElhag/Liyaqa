@@ -19,8 +19,8 @@ import {
   AdminDashboard,
   SalesDashboard,
   SupportDashboard,
-} from "@/components/platform/role-dashboards";
-import { DateRangePicker, type DateRange } from "@/components/platform/date-range-picker";
+} from "@liyaqa/shared/components/platform/role-dashboards";
+import { DateRangePicker, type DateRange } from "@liyaqa/shared/components/platform/date-range-picker";
 import type { DateRangeParams } from "@liyaqa/shared/lib/api/platform/dashboard";
 import type { UserRole } from "@liyaqa/shared/types/auth";
 

@@ -10,7 +10,7 @@ import { Loading } from "@liyaqa/shared/components/ui/spinner";
 import {
   PlatformUserForm,
   type PlatformUserFormValues,
-} from "@/components/platform/platform-user-form";
+} from "@liyaqa/shared/components/platform/platform-user-form";
 import {
   usePlatformUser,
   useUpdatePlatformUser,

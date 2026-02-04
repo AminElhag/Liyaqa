@@ -32,8 +32,8 @@ import {
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Badge } from "@liyaqa/shared/components/ui/badge";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
-import { DealStatusBadge } from "@/components/platform/deal-status-badge";
-import { LoseDealDialog } from "@/components/platform/lose-deal-dialog";
+import { DealStatusBadge } from "@liyaqa/shared/components/platform/deal-status-badge";
+import { LoseDealDialog } from "@liyaqa/shared/components/platform/lose-deal-dialog";
 import {
   useDeal,
   useAdvanceDeal,

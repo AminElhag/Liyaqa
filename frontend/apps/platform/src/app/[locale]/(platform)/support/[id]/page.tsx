@@ -24,11 +24,11 @@ import {
   CardTitle,
 } from "@liyaqa/shared/components/ui/card";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
-import { TicketStatusBadge } from "@/components/platform/ticket-status-badge";
-import { TicketPriorityBadge } from "@/components/platform/ticket-priority-badge";
-import { TicketMessages } from "@/components/platform/ticket-messages";
-import { AssignTicketDialog } from "@/components/platform/assign-ticket-dialog";
-import { ChangeStatusDialog } from "@/components/platform/change-status-dialog";
+import { TicketStatusBadge } from "@liyaqa/shared/components/platform/ticket-status-badge";
+import { TicketPriorityBadge } from "@liyaqa/shared/components/platform/ticket-priority-badge";
+import { TicketMessages } from "@liyaqa/shared/components/platform/ticket-messages";
+import { AssignTicketDialog } from "@liyaqa/shared/components/platform/assign-ticket-dialog";
+import { ChangeStatusDialog } from "@liyaqa/shared/components/platform/change-status-dialog";
 import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import {

@@ -18,9 +18,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@liyaqa/shared/components/ui/tabs";
 import { DataTable } from "@liyaqa/shared/components/ui/data-table";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
-import { KanbanBoard } from "@/components/platform/kanban-board";
-import { LoseDealDialog } from "@/components/platform/lose-deal-dialog";
-import { getDealColumns, SOURCE_LABELS } from "@/components/platform/deal-columns";
+import { KanbanBoard } from "@liyaqa/shared/components/platform/kanban-board";
+import { LoseDealDialog } from "@liyaqa/shared/components/platform/lose-deal-dialog";
+import { getDealColumns, SOURCE_LABELS } from "@liyaqa/shared/components/platform/deal-columns";
 import {
   useDeals,
   useAdvanceDeal,

@@ -5,7 +5,7 @@ import { useLocale } from "next-intl";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@liyaqa/shared/components/ui/button";
-import { TicketForm, type TicketFormValues } from "@/components/platform/ticket-form";
+import { TicketForm, type TicketFormValues } from "@liyaqa/shared/components/platform/ticket-form";
 import { useCreateTicket } from "@liyaqa/shared/queries/platform/use-support-tickets";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import type { CreateTicketRequest } from "@liyaqa/shared/types/platform/support-ticket";

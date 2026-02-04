@@ -8,7 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Card, CardContent } from "@liyaqa/shared/components/ui/card";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
-import { DealForm, type DealFormData } from "@/components/forms/deal-form";
+import { DealForm, type DealFormData } from "@liyaqa/shared/components/forms/deal-form";
 import { useDeal, useUpdateDeal } from "@liyaqa/shared/queries/platform/use-deals";
 import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import { getLocalizedText } from "@liyaqa/shared/utils";

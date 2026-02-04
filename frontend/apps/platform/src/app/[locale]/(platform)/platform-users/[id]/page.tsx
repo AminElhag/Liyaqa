@@ -26,9 +26,9 @@ import {
   CardTitle,
 } from "@liyaqa/shared/components/ui/card";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
-import { PlatformUserStatusBadge } from "@/components/platform/platform-user-status-badge";
-import { PlatformUserRoleBadge } from "@/components/platform/platform-user-role-badge";
-import { ResetPasswordDialog } from "@/components/platform/reset-password-dialog";
+import { PlatformUserStatusBadge } from "@liyaqa/shared/components/platform/platform-user-status-badge";
+import { PlatformUserRoleBadge } from "@liyaqa/shared/components/platform/platform-user-role-badge";
+import { ResetPasswordDialog } from "@liyaqa/shared/components/platform/reset-password-dialog";
 import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import {

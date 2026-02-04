@@ -23,8 +23,8 @@ import { Button } from "@liyaqa/shared/components/ui/button";
 import { Badge } from "@liyaqa/shared/components/ui/badge";
 import { Progress } from "@liyaqa/shared/components/ui/progress";
 import { cn } from "@liyaqa/shared/utils";
-import { HealthTrendChart } from "@/components/platform/health-trend-chart";
-import { QuickActionMenu } from "@/components/platform/quick-action-menu";
+import { HealthTrendChart } from "@liyaqa/shared/components/platform/health-trend-chart";
+import { QuickActionMenu } from "@liyaqa/shared/components/platform/quick-action-menu";
 import {
   useClientHealthDetail,
   useClientHealthHistory,

@@ -8,7 +8,7 @@ import { Button } from "@liyaqa/shared/components/ui/button";
 import {
   PlatformUserForm,
   type PlatformUserFormValues,
-} from "@/components/platform/platform-user-form";
+} from "@liyaqa/shared/components/platform/platform-user-form";
 import { useCreatePlatformUser } from "@liyaqa/shared/queries/platform/use-platform-users";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import type { CreatePlatformUserRequest } from "@liyaqa/shared/types/platform/platform-user";

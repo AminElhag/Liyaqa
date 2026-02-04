@@ -34,7 +34,7 @@ import { Button } from "@liyaqa/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@liyaqa/shared/components/ui/card";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
 import { getLocalizedText } from "@liyaqa/shared/utils";
-import { PlanStatusBadge } from "@/components/platform/plan-status-badge";
+import { PlanStatusBadge } from "@liyaqa/shared/components/platform/plan-status-badge";
 import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import {

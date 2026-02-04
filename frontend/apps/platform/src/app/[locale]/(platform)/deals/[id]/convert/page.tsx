@@ -8,7 +8,7 @@ import { ArrowLeft, CheckCircle } from "lucide-react";
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Card, CardContent } from "@liyaqa/shared/components/ui/card";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
-import { ConvertDealWizard } from "@/components/platform/convert-deal-wizard";
+import { ConvertDealWizard } from "@liyaqa/shared/components/platform/convert-deal-wizard";
 import { useDeal, useConvertDeal } from "@liyaqa/shared/queries/platform/use-deals";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import { getLocalizedText } from "@liyaqa/shared/utils";

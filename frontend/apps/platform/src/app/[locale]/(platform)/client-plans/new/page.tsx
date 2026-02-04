@@ -5,7 +5,7 @@ import { useLocale } from "next-intl";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@liyaqa/shared/components/ui/button";
-import { PlanForm, type PlanFormValues } from "@/components/platform/plan-form";
+import { PlanForm, type PlanFormValues } from "@liyaqa/shared/components/platform/plan-form";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import { useCreateClientPlan } from "@liyaqa/shared/queries/platform/use-client-plans";
 import type { CreateClientPlanRequest } from "@liyaqa/shared/types/platform/client-plan";

@@ -19,8 +19,8 @@ import {
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@liyaqa/shared/components/ui/card";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
-import { InvoiceStatusBadge } from "@/components/platform/invoice-status-badge";
-import { RecordPaymentDialog } from "@/components/platform/record-payment-dialog";
+import { InvoiceStatusBadge } from "@liyaqa/shared/components/platform/invoice-status-badge";
+import { RecordPaymentDialog } from "@liyaqa/shared/components/platform/record-payment-dialog";
 import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import {

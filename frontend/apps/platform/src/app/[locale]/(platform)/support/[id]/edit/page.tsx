@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Card, CardContent } from "@liyaqa/shared/components/ui/card";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
-import { TicketForm, type TicketFormValues } from "@/components/platform/ticket-form";
+import { TicketForm, type TicketFormValues } from "@liyaqa/shared/components/platform/ticket-form";
 import {
   useSupportTicket,
   useUpdateTicket,

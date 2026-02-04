@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@liyaqa/shared/components/ui/button";
-import { DealForm, type DealFormData } from "@/components/forms/deal-form";
+import { DealForm, type DealFormData } from "@liyaqa/shared/components/forms/deal-form";
 import { useCreateDeal } from "@liyaqa/shared/queries/platform/use-deals";
 import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 

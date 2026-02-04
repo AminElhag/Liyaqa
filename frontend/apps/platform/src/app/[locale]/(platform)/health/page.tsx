@@ -39,8 +39,8 @@ import {
 import { Checkbox } from "@liyaqa/shared/components/ui/checkbox";
 import { Progress } from "@liyaqa/shared/components/ui/progress";
 import { cn } from "@liyaqa/shared/utils";
-import { HealthOverview } from "@/components/platform/health-overview";
-import { QuickActionMenu } from "@/components/platform/quick-action-menu";
+import { HealthOverview } from "@liyaqa/shared/components/platform/health-overview";
+import { QuickActionMenu } from "@liyaqa/shared/components/platform/quick-action-menu";
 import {
   usePlatformHealthOverview,
   useAtRiskClients,

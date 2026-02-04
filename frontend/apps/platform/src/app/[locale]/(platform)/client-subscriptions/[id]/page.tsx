@@ -24,9 +24,9 @@ import {
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@liyaqa/shared/components/ui/card";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
-import { SubscriptionStatusBadge } from "@/components/platform/subscription-status-badge";
-import { RenewSubscriptionDialog } from "@/components/platform/renew-subscription-dialog";
-import { ChangePlanDialog } from "@/components/platform/change-plan-dialog";
+import { SubscriptionStatusBadge } from "@liyaqa/shared/components/platform/subscription-status-badge";
+import { RenewSubscriptionDialog } from "@liyaqa/shared/components/platform/renew-subscription-dialog";
+import { ChangePlanDialog } from "@liyaqa/shared/components/platform/change-plan-dialog";
 import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import {
