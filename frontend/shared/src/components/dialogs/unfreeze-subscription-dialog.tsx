@@ -1,0 +1,206 @@
+"use client";
+
+import { useState } from "react";
+import { useLocale } from "next-intl";
+import { Sun, Loader2, Calendar, AlertTriangle } from "lucide-react";
+import { Button } from "../ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { useToast } from "../hooks/use-toast";
+import {
+  useUnfreezeSubscriptionWithTracking,
+  useActiveFreeze,
+} from "../queries/use-freeze-packages";
+import type { UUID } from "../../types/api";
+
+interface UnfreezeSubscriptionDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  subscriptionId: UUID;
+  onSuccess?: () => void;
+}
+
+export function UnfreezeSubscriptionDialog({
+  open,
+  onOpenChange,
+  subscriptionId,
+  onSuccess,
+}: UnfreezeSubscriptionDialogProps) {
+  const locale = useLocale();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const unfreezeSubscription = useUnfreezeSubscriptionWithTracking();
+  const { data: activeFreeze, isLoading } = useActiveFreeze(subscriptionId);
+
+  const texts = {
+    title: locale === "ar" ? "إلغاء تجميد الاشتراك" : "Unfreeze Subscription",
+    description:
+      locale === "ar"
+        ? "سيتم استئناف العضوية من حيث توقفت"
+        : "The membership will resume from where it was paused",
+    freezeInfo: locale === "ar" ? "معلومات التجميد الحالي" : "Current Freeze Info",
+    startDate: locale === "ar" ? "تاريخ البدء" : "Start Date",
+    freezeDays: locale === "ar" ? "أيام التجميد" : "Freeze Days",
+    freezeType: locale === "ar" ? "نوع التجميد" : "Freeze Type",
+    reason: locale === "ar" ? "السبب" : "Reason",
+    days: locale === "ar" ? "يوم" : "days",
+    cancel: locale === "ar" ? "إلغاء" : "Cancel",
+    unfreeze: locale === "ar" ? "إلغاء التجميد" : "Unfreeze",
+    unfreezing: locale === "ar" ? "جاري إلغاء التجميد..." : "Unfreezing...",
+    successTitle:
+      locale === "ar" ? "تم إلغاء التجميد بنجاح" : "Subscription Unfrozen",
+    successDescription:
+      locale === "ar"
+        ? "تم استئناف الاشتراك بنجاح"
+        : "The subscription has been resumed successfully",
+    errorTitle: locale === "ar" ? "خطأ في إلغاء التجميد" : "Unfreeze Error",
+    noActiveFreeze:
+      locale === "ar"
+        ? "لا يوجد تجميد نشط لهذا الاشتراك"
+        : "No active freeze found for this subscription",
+    loading: locale === "ar" ? "جاري التحميل..." : "Loading...",
+    freezeTypes: {
+      MEDICAL: locale === "ar" ? "طبي" : "Medical",
+      TRAVEL: locale === "ar" ? "سفر" : "Travel",
+      PERSONAL: locale === "ar" ? "شخصي" : "Personal",
+      MILITARY: locale === "ar" ? "عسكري" : "Military",
+      OTHER: locale === "ar" ? "أخرى" : "Other",
+    },
+    warning: locale === "ar" ? "تحذير" : "Warning",
+    warningDescription:
+      locale === "ar"
+        ? "بعد إلغاء التجميد، سيتم تحديث تاريخ انتهاء الاشتراك بناءً على الأيام المستخدمة"
+        : "After unfreezing, the subscription end date will be updated based on the days used",
+  };
+
+  const handleUnfreeze = async () => {
+    setIsSubmitting(true);
+    try {
+      await unfreezeSubscription.mutateAsync(subscriptionId);
+
+      toast({
+        title: texts.successTitle,
+        description: texts.successDescription,
+      });
+
+      onOpenChange(false);
+      onSuccess?.();
+    } catch (error) {
+      toast({
+        title: texts.errorTitle,
+        description:
+          error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[450px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Sun className="h-5 w-5 text-yellow-500" />
+            {texts.title}
+          </DialogTitle>
+          <DialogDescription>{texts.description}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <span className="ml-2 text-muted-foreground">{texts.loading}</span>
+            </div>
+          ) : !activeFreeze ? (
+            <div className="text-center py-4 text-muted-foreground">
+              {texts.noActiveFreeze}
+            </div>
+          ) : (
+            <>
+              {/* Active Freeze Info */}
+              <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950 space-y-2">
+                <h3 className="font-semibold text-blue-900 dark:text-blue-100">
+                  {texts.freezeInfo}
+                </h3>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-blue-600" />
+                    <span className="text-muted-foreground">{texts.startDate}:</span>
+                  </div>
+                  <span className="font-medium">
+                    {new Date(activeFreeze.freezeStartDate).toLocaleDateString(
+                      locale === "ar" ? "ar-SA" : "en-US"
+                    )}
+                  </span>
+
+                  <span className="text-muted-foreground">{texts.freezeDays}:</span>
+                  <span className="font-medium">
+                    {activeFreeze.freezeDays} {texts.days}
+                  </span>
+
+                  <span className="text-muted-foreground">{texts.freezeType}:</span>
+                  <span className="font-medium">
+                    {texts.freezeTypes[activeFreeze.freezeType as keyof typeof texts.freezeTypes]}
+                  </span>
+
+                  {activeFreeze.reason && (
+                    <>
+                      <span className="text-muted-foreground">{texts.reason}:</span>
+                      <span className="font-medium">{activeFreeze.reason}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Warning */}
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>{texts.warning}</AlertTitle>
+                <AlertDescription>{texts.warningDescription}</AlertDescription>
+              </Alert>
+            </>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+          >
+            {texts.cancel}
+          </Button>
+          <Button
+            type="button"
+            onClick={handleUnfreeze}
+            disabled={!activeFreeze || isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {texts.unfreezing}
+              </>
+            ) : (
+              <>
+                <Sun className="h-4 w-4 mr-2" />
+                {texts.unfreeze}
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

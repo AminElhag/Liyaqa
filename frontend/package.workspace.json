@@ -1,0 +1,27 @@
+{
+  "name": "liyaqa-frontend-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/platform",
+    "apps/club",
+    "shared"
+  ],
+  "scripts": {
+    "dev:platform": "npm run dev --workspace=apps/platform",
+    "dev:club": "npm run dev --workspace=apps/club",
+    "dev": "npm run dev:club",
+    "build:platform": "npm run build --workspace=apps/platform",
+    "build:club": "npm run build --workspace=apps/club",
+    "build": "npm run build:club && npm run build:platform",
+    "start:platform": "npm run start --workspace=apps/platform",
+    "start:club": "npm run start --workspace=apps/club",
+    "lint": "npm run lint --workspaces",
+    "type-check": "npm run type-check --workspaces",
+    "test": "npm run test --workspaces",
+    "test:e2e": "npm run test:e2e --workspace=apps/club"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

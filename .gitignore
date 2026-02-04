@@ -209,3 +209,6 @@ DerivedData/
 *.perspectivev3
 !default.perspectivev3
 .ralphy/progress.txt
+*.secrets*.txt
+.env.secrets*
+frontend/monolith-backup-*.tar.gz

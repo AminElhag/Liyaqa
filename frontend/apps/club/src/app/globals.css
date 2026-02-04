@@ -1,0 +1,998 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Cairo:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 11 100% 64%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 11 100% 64%;
+    --radius: 0.5rem;
+
+    /* Brand colors */
+    --brand-coral: 11 100% 64%;
+    --brand-terracotta: 11 84% 58%;
+    --brand-tint: 11 100% 71%;
+
+    /* MD3 Shape Corners */
+    --md3-shape-corner-xs: 4px;
+    --md3-shape-corner-sm: 8px;
+    --md3-shape-corner-md: 12px;
+    --md3-shape-corner-lg: 16px;
+    --md3-shape-corner-xl: 28px;
+
+    /* MD3 Surface Colors with Elevation */
+    --md3-surface: 0 0% 98%;
+    --md3-surface-dim: 0 0% 94%;
+    --md3-surface-bright: 0 0% 100%;
+    --md3-surface-container-lowest: 0 0% 100%;
+    --md3-surface-container-low: 0 0% 97%;
+    --md3-surface-container: 0 0% 95%;
+    --md3-surface-container-high: 0 0% 93%;
+    --md3-surface-container-highest: 0 0% 91%;
+
+    /* MD3 Surface Tint (primary color with opacity for elevation) */
+    --md3-surface-tint: 11 100% 64%;
+
+    /* MD3 Outline Colors */
+    --md3-outline: 220 13% 46%;
+    --md3-outline-variant: 220 13% 78%;
+
+    /* MD3 On-Surface Colors */
+    --md3-on-surface: 220 15% 10%;
+    --md3-on-surface-variant: 220 10% 35%;
+
+    /* MD3 State Layer Opacity */
+    --md3-state-hover: 0.08;
+    --md3-state-focus: 0.12;
+    --md3-state-pressed: 0.12;
+    --md3-state-dragged: 0.16;
+
+    /* MD3 Touch Target */
+    --md3-touch-target: 48px;
+
+    /* Dashboard gradient accents */
+    --gradient-primary: linear-gradient(135deg, #FF6B4A 0%, #E85D3A 100%);
+    --gradient-success: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    --gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    --gradient-info: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    --gradient-purple: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+
+    /* Platform Admin B2B gradients */
+    --gradient-platform: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    --gradient-platform-light: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
+    --gradient-platform-muted: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(124, 58, 237, 0.1) 100%);
+
+    /* Platform metric accent colors */
+    --platform-clients: 217 91% 60%;
+    --platform-revenue: 160 84% 39%;
+    --platform-deals: 38 92% 50%;
+    --platform-health: 263 70% 50%;
+    --platform-subscriptions: 189 94% 43%;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+    --card: 224 71% 6%;
+    --card-foreground: 210 40% 98%;
+    --popover: 224 71% 6%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 11 100% 64%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 224 30% 15%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 224 30% 15%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 224 30% 15%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 224 30% 15%;
+    --input: 224 30% 15%;
+    --ring: 11 100% 64%;
+
+    /* MD3 Dark Mode Surface Colors */
+    --md3-surface: 224 71% 6%;
+    --md3-surface-dim: 224 71% 4%;
+    --md3-surface-bright: 224 30% 14%;
+    --md3-surface-container-lowest: 224 71% 3%;
+    --md3-surface-container-low: 224 71% 5%;
+    --md3-surface-container: 224 71% 7%;
+    --md3-surface-container-high: 224 71% 9%;
+    --md3-surface-container-highest: 224 71% 11%;
+
+    /* MD3 Dark Mode Outline Colors */
+    --md3-outline: 220 10% 55%;
+    --md3-outline-variant: 220 13% 28%;
+
+    /* MD3 Dark Mode On-Surface Colors */
+    --md3-on-surface: 220 10% 92%;
+    --md3-on-surface-variant: 220 10% 70%;
+
+    /* Dark mode platform gradients */
+    --gradient-platform: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+    --gradient-platform-light: linear-gradient(135deg, rgba(167, 139, 250, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+
+    /* Dark mode metric colors - adjusted for better visibility */
+    --platform-clients: 217 91% 65%;
+    --platform-revenue: 160 84% 45%;
+    --platform-deals: 38 92% 55%;
+    --platform-health: 263 70% 55%;
+    --platform-subscriptions: 189 94% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* RTL support */
+[dir="rtl"] {
+  font-family: "Cairo", "Tajawal", sans-serif;
+}
+
+[dir="ltr"] {
+  font-family: "Plus Jakarta Sans", "Cairo", sans-serif;
+}
+
+/* Custom scrollbar - Light mode */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-neutral-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-neutral-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-neutral-400;
+}
+
+/* Custom scrollbar - Dark mode */
+.dark ::-webkit-scrollbar-track {
+  background: hsl(224 30% 10%);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(224 30% 25%);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(224 30% 35%);
+}
+
+/* Theme transition - smooth color changes */
+* {
+  transition-property: background-color, border-color, color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Disable transitions on page load to prevent flash */
+.no-transitions * {
+  transition: none !important;
+}
+
+/* Loading overlay for async operations */
+.loading-overlay {
+  @apply absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50;
+}
+
+.dark .loading-overlay {
+  @apply bg-background/90;
+}
+
+/* Staggered fade-in animation for page elements */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+.animation-delay-100 { animation-delay: 0.1s; }
+.animation-delay-200 { animation-delay: 0.2s; }
+.animation-delay-300 { animation-delay: 0.3s; }
+.animation-delay-400 { animation-delay: 0.4s; }
+
+/* Display font for dashboard stats */
+.font-display {
+  font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
+}
+
+[dir="rtl"] .font-display {
+  font-family: "Cairo", "Space Grotesk", sans-serif;
+}
+
+/* Shimmer effect for loading states */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--muted) / 0.5) 50%,
+    hsl(var(--muted)) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Pulse ring animation for loading indicators */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.5);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px hsl(var(--primary) / 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Slide animations for modals/dialogs */
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in-bottom {
+  animation: slideInFromBottom 0.2s ease-out forwards;
+}
+
+/* Platform-specific utility classes */
+.platform-stat-card {
+  @apply relative overflow-hidden;
+}
+
+.platform-stat-card::before {
+  content: "";
+  @apply absolute top-0 right-0 w-20 h-20 opacity-10 rounded-full -translate-y-1/2 translate-x-1/2;
+  background: var(--gradient-platform);
+}
+
+/* Success state styling */
+.success-highlight {
+  @apply bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800/50;
+}
+
+/* Warning state styling */
+.warning-highlight {
+  @apply bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50;
+}
+
+/* Error state styling */
+.error-highlight {
+  @apply bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800/50;
+}
+
+/* Info state styling */
+.info-highlight {
+  @apply bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800/50;
+}
+
+/* =========================
+   MD3 Component Styles
+   ========================= */
+
+/* MD3 Card - Elevated */
+.md3-card {
+  border-radius: 16px;
+  background-color: hsl(var(--md3-surface-container-low));
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+}
+
+.md3-card:hover {
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* MD3 Card - Filled */
+.md3-card-filled {
+  border-radius: 16px;
+  background-color: hsl(var(--md3-surface-container-highest));
+}
+
+/* MD3 Card - Outlined */
+.md3-card-outlined {
+  border-radius: 16px;
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--md3-outline-variant));
+}
+
+/* MD3 Surface containers */
+.md3-surface {
+  background-color: hsl(var(--md3-surface));
+}
+
+.md3-surface-container {
+  background-color: hsl(var(--md3-surface-container));
+}
+
+.md3-surface-container-high {
+  background-color: hsl(var(--md3-surface-container-high));
+}
+
+.md3-surface-container-highest {
+  background-color: hsl(var(--md3-surface-container-highest));
+}
+
+/* MD3 Interactive state layers */
+.md3-state-layer {
+  @apply relative overflow-hidden;
+}
+
+.md3-state-layer::before {
+  content: "";
+  @apply absolute inset-0 opacity-0 transition-opacity duration-200;
+  background-color: currentColor;
+}
+
+.md3-state-layer:hover::before {
+  opacity: var(--md3-state-hover);
+}
+
+.md3-state-layer:focus-visible::before {
+  opacity: var(--md3-state-focus);
+}
+
+.md3-state-layer:active::before {
+  opacity: var(--md3-state-pressed);
+}
+
+/* MD3 Touch target - minimum 48x48 */
+.md3-touch-target {
+  @apply min-h-[48px] min-w-[48px];
+}
+
+/* MD3 Filled Button */
+.md3-btn-filled {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.625rem 1.5rem;
+  font-weight: 500;
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  transition: all 200ms;
+  min-height: var(--md3-touch-target);
+}
+
+.md3-btn-filled:hover {
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+}
+
+.md3-btn-filled:active {
+  box-shadow: none;
+}
+
+/* MD3 Tonal Button */
+.md3-btn-tonal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.625rem 1.5rem;
+  font-weight: 500;
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  transition: all 200ms;
+  min-height: var(--md3-touch-target);
+}
+
+/* MD3 Outlined Button */
+.md3-btn-outlined {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.625rem 1.5rem;
+  font-weight: 500;
+  border: 1px solid hsl(var(--md3-outline));
+  color: hsl(var(--primary));
+  background-color: transparent;
+  transition: all 200ms;
+  min-height: var(--md3-touch-target);
+}
+
+/* MD3 Text Button */
+.md3-btn-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.625rem 0.75rem;
+  font-weight: 500;
+  color: hsl(var(--primary));
+  background-color: transparent;
+  transition: all 200ms;
+  min-height: var(--md3-touch-target);
+}
+
+/* MD3 FAB (Floating Action Button) */
+.md3-fab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.3), 0px 4px 8px 3px rgba(0, 0, 0, 0.15);
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  transition: all 200ms;
+}
+
+.md3-fab:hover {
+  box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.3), 0px 6px 10px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* MD3 Icon Button */
+.md3-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding: 0.5rem;
+  transition: all 200ms;
+  min-height: var(--md3-touch-target);
+  min-width: var(--md3-touch-target);
+}
+
+/* MD3 Chip */
+.md3-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 8px;
+  padding: 0.375rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid hsl(var(--md3-outline));
+  transition: all 200ms;
+  min-height: 32px;
+}
+
+.md3-chip-filled {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 8px;
+  padding: 0.375rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: hsl(var(--md3-surface-container-high));
+  transition: all 200ms;
+  min-height: 32px;
+}
+
+/* MD3 Divider */
+.md3-divider {
+  height: 1px;
+  width: 100%;
+  background-color: hsl(var(--md3-outline-variant));
+}
+
+/* MD3 Typography scales */
+.md3-display-large {
+  @apply text-6xl font-normal tracking-tight;
+  line-height: 1.12;
+}
+
+.md3-display-medium {
+  @apply text-5xl font-normal tracking-tight;
+  line-height: 1.16;
+}
+
+.md3-display-small {
+  @apply text-4xl font-normal tracking-tight;
+  line-height: 1.22;
+}
+
+.md3-headline-large {
+  @apply text-3xl font-normal;
+  line-height: 1.25;
+}
+
+.md3-headline-medium {
+  @apply text-2xl font-normal;
+  line-height: 1.29;
+}
+
+.md3-headline-small {
+  @apply text-xl font-normal;
+  line-height: 1.33;
+}
+
+.md3-title-large {
+  @apply text-xl font-medium;
+  line-height: 1.4;
+}
+
+.md3-title-medium {
+  @apply text-base font-medium tracking-wide;
+  line-height: 1.5;
+}
+
+.md3-title-small {
+  @apply text-sm font-medium tracking-wide;
+  line-height: 1.43;
+}
+
+.md3-body-large {
+  @apply text-base font-normal;
+  line-height: 1.5;
+}
+
+.md3-body-medium {
+  @apply text-sm font-normal;
+  line-height: 1.43;
+}
+
+.md3-body-small {
+  @apply text-xs font-normal;
+  line-height: 1.33;
+}
+
+.md3-label-large {
+  @apply text-sm font-medium tracking-wide;
+  line-height: 1.43;
+}
+
+.md3-label-medium {
+  @apply text-xs font-medium tracking-wide;
+  line-height: 1.33;
+}
+
+.md3-label-small {
+  @apply text-[11px] font-medium tracking-wide;
+  line-height: 1.45;
+}
+
+/* Command Palette Specific Styles */
+.command-palette-backdrop {
+  @apply fixed inset-0 z-50 bg-black/50 backdrop-blur-sm;
+  animation: md3-fade-in 0.15s ease-out;
+}
+
+.command-palette-container {
+  @apply fixed top-[20%] left-1/2 -translate-x-1/2 z-50 w-full max-w-2xl;
+  animation: md3-slide-down 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.command-palette-input {
+  @apply w-full px-4 py-3 text-base bg-transparent border-0 outline-none;
+  @apply placeholder:text-muted-foreground;
+}
+
+.command-palette-group {
+  @apply px-2 py-1.5 text-xs font-medium uppercase tracking-wider;
+  color: hsl(var(--md3-on-surface-variant));
+}
+
+.command-palette-item {
+  @apply flex items-center gap-3 px-4 py-3 rounded-md3-sm cursor-pointer;
+  @apply transition-colors duration-150;
+}
+
+.command-palette-item:hover,
+.command-palette-item[data-selected="true"] {
+  background-color: hsl(var(--md3-surface-container-high));
+}
+
+.command-palette-item[data-selected="true"] {
+  @apply ring-2 ring-primary/20;
+}
+
+.command-palette-kbd {
+  @apply px-1.5 py-0.5 text-xs rounded-md3-xs font-mono;
+  background-color: hsl(var(--md3-surface-container-highest));
+  color: hsl(var(--md3-on-surface-variant));
+}
+
+/* =========================
+   Mobile & PWA Styles
+   ========================= */
+
+/* Safe area insets for iOS devices (notch, home indicator) */
+.safe-area-inset-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-area-inset-left {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
+.safe-area-inset-right {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* Mobile bottom navigation safe area */
+.mobile-bottom-nav {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+}
+
+/* Touch manipulation for mobile - removes 300ms delay */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Prevent text selection on interactive elements for mobile */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Pull to refresh indicator animation */
+@keyframes pull-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(180deg);
+  }
+}
+
+.animate-pull-rotate {
+  animation: pull-rotate 0.3s ease-out forwards;
+}
+
+/* Swipe action reveal animation */
+@keyframes swipe-reveal {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-swipe-reveal {
+  animation: swipe-reveal 0.15s ease-out forwards;
+}
+
+/* Mobile card press effect */
+.mobile-press-effect {
+  @apply transition-transform duration-150;
+}
+
+.mobile-press-effect:active {
+  transform: scale(0.98);
+}
+
+/* PWA standalone mode adjustments */
+@media (display-mode: standalone) {
+  .pwa-header {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .pwa-content {
+    min-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* =========================
+   Accessibility (WCAG AA)
+   ========================= */
+
+/* Focus indicators for keyboard navigation */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary;
+  outline-style: solid;
+}
+
+/* Enhanced focus for interactive elements */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[role="link"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary ring-2 ring-primary/20;
+}
+
+/* Focus within for form groups */
+.form-group:focus-within {
+  @apply ring-2 ring-primary/20 rounded-md;
+}
+
+/* Skip link - for keyboard navigation */
+.skip-link {
+  @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[9999];
+  @apply bg-primary text-primary-foreground px-4 py-2 rounded-md;
+  @apply outline-2 outline-offset-2 outline-primary;
+  @apply font-medium text-sm;
+  @apply transition-all duration-200;
+}
+
+.skip-link:focus-visible {
+  @apply shadow-lg;
+}
+
+/* Screen reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only-focusable:focus,
+.sr-only-focusable:active {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Not screen reader only - visible but skip in navigation */
+.not-sr-only {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: initial;
+  margin: initial;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Disable transitions */
+  * {
+    transition: none !important;
+  }
+
+  /* Disable scroll behavior */
+  html {
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  * {
+    @apply border-current;
+  }
+
+  button,
+  a,
+  [role="button"],
+  [role="link"] {
+    @apply border-2 border-current;
+  }
+
+  input,
+  textarea,
+  select {
+    @apply border-2 border-current;
+  }
+}
+
+/* Focus visible ring for dark mode */
+.dark *:focus-visible {
+  @apply outline-primary-foreground ring-primary-foreground/30;
+}
+
+/* Disabled state - ensure proper contrast */
+[disabled],
+[aria-disabled="true"] {
+  @apply opacity-50 cursor-not-allowed;
+  pointer-events: none;
+}
+
+/* Invalid/error state */
+[aria-invalid="true"],
+.error-state {
+  @apply border-destructive focus:ring-destructive/20;
+}
+
+[aria-invalid="true"]:focus-visible {
+  @apply outline-destructive ring-destructive/20;
+}
+
+/* Required field indicator */
+[aria-required="true"]::before,
+.required::before {
+  content: "*";
+  @apply text-destructive mr-1;
+}
+
+/* Live region announcements */
+[aria-live="polite"],
+[aria-live="assertive"] {
+  @apply sr-only;
+}
+
+/* Tooltip accessibility */
+[role="tooltip"] {
+  @apply z-50;
+  pointer-events: none;
+}
+
+/* Dialog/Modal accessibility */
+[role="dialog"],
+[role="alertdialog"] {
+  @apply focus:outline-none;
+}
+
+/* Ensure modals trap focus */
+.modal-open {
+  @apply overflow-hidden;
+}
+
+/* Alert accessibility */
+[role="alert"] {
+  @apply font-medium;
+}
+
+/* Status messages */
+[role="status"] {
+  @apply font-normal;
+}
+
+/* Progress indicator */
+[role="progressbar"] {
+  @apply relative overflow-hidden;
+}
+
+/* Tab accessibility */
+[role="tab"][aria-selected="true"] {
+  @apply font-semibold;
+}
+
+[role="tab"]:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary;
+}
+
+/* Menu accessibility */
+[role="menu"],
+[role="menubar"] {
+  @apply focus:outline-none;
+}
+
+[role="menuitem"]:focus-visible,
+[role="menuitemcheckbox"]:focus-visible,
+[role="menuitemradio"]:focus-visible {
+  @apply bg-primary/10;
+}
+
+/* Table accessibility */
+table[role="table"] caption {
+  @apply sr-only;
+}
+
+th[scope="col"],
+th[scope="row"] {
+  @apply font-semibold;
+}
+
+/* Link accessibility - ensure underline on focus */
+a:focus-visible {
+  @apply underline decoration-2 underline-offset-4;
+}
+
+/* Button accessibility - ensure visible focus */
+button:focus-visible {
+  @apply ring-2 ring-primary ring-offset-2;
+}
+
+/* Landmark regions */
+[role="banner"],
+[role="navigation"],
+[role="main"],
+[role="complementary"],
+[role="contentinfo"] {
+  @apply focus:outline-none;
+}
+
+/* Loading states accessibility */
+[aria-busy="true"] {
+  @apply relative;
+}
+
+[aria-busy="true"]::after {
+  content: "";
+  @apply absolute inset-0 bg-background/50 cursor-wait;
+}
+
+/* Visually hidden but accessible headings */
+.visually-hidden {
+  @apply sr-only;
+}
+
+/* Ensure images have alt text indicator in dev mode */
+img:not([alt]) {
+  @apply outline-2 outline-dashed outline-destructive;
+}

@@ -1,0 +1,272 @@
+"use client";
+
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useLocale } from "next-intl";
+import { Settings, Loader2, AlertTriangle } from "lucide-react";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
+import { Alert, AlertDescription } from "../ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { useToast } from "../hooks/use-toast";
+import { useAdjustBalance } from "../queries/use-wallet";
+import type { UUID } from "../../types/api";
+
+const adjustBalanceSchema = z.object({
+  amount: z.number().refine((val) => val !== 0, "Amount cannot be zero"),
+  currency: z.string().default("SAR"),
+  description: z.string().min(1, "Description is required for adjustments"),
+});
+
+type AdjustBalanceFormData = z.infer<typeof adjustBalanceSchema>;
+
+interface AdjustBalanceDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  memberId: UUID;
+  currentBalance?: number;
+  onSuccess?: () => void;
+}
+
+export function AdjustBalanceDialog({
+  open,
+  onOpenChange,
+  memberId,
+  currentBalance = 0,
+  onSuccess,
+}: AdjustBalanceDialogProps) {
+  const locale = useLocale();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const adjustBalance = useAdjustBalance();
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<AdjustBalanceFormData>({
+    resolver: zodResolver(adjustBalanceSchema),
+    defaultValues: {
+      amount: 0,
+      currency: "SAR",
+      description: "",
+    },
+  });
+
+  const watchAmount = watch("amount");
+  const isNegativeAdjustment = watchAmount < 0;
+
+  const texts = {
+    title: locale === "ar" ? "تعديل الرصيد" : "Adjust Balance",
+    description:
+      locale === "ar"
+        ? "قم بتعديل رصيد المحفظة. استخدم قيمة موجبة للإضافة وسالبة للخصم."
+        : "Adjust the wallet balance. Use positive values to add, negative to deduct.",
+    amount: locale === "ar" ? "المبلغ" : "Amount",
+    currency: locale === "ar" ? "العملة" : "Currency",
+    descriptionLabel: locale === "ar" ? "الوصف (مطلوب)" : "Description (Required)",
+    cancel: locale === "ar" ? "إلغاء" : "Cancel",
+    adjust: locale === "ar" ? "تعديل" : "Adjust",
+    adjusting: locale === "ar" ? "جاري التعديل..." : "Adjusting...",
+    successTitle: locale === "ar" ? "تم تعديل الرصيد" : "Balance Adjusted",
+    successDescription:
+      locale === "ar"
+        ? "تم تعديل رصيد المحفظة بنجاح"
+        : "Wallet balance has been successfully adjusted",
+    errorTitle: locale === "ar" ? "خطأ في التعديل" : "Adjustment Error",
+    warningNegative:
+      locale === "ar"
+        ? "أنت على وشك خصم رصيد من محفظة العضو. تأكد من صحة هذا الإجراء."
+        : "You are about to deduct from the member's wallet. Please confirm this action.",
+    amountPlaceholder:
+      locale === "ar" ? "أدخل المبلغ (موجب أو سالب)" : "Enter amount (positive or negative)",
+    descriptionPlaceholder:
+      locale === "ar"
+        ? "أدخل سبب التعديل (مطلوب)..."
+        : "Enter reason for adjustment (required)...",
+    currentBalance: locale === "ar" ? "الرصيد الحالي" : "Current Balance",
+    newBalance: locale === "ar" ? "الرصيد الجديد" : "New Balance",
+  };
+
+  const newBalance = currentBalance + (watchAmount || 0);
+
+  const onSubmit = async (data: AdjustBalanceFormData) => {
+    setIsSubmitting(true);
+    try {
+      await adjustBalance.mutateAsync({
+        memberId,
+        data: {
+          amount: data.amount,
+          currency: data.currency,
+          description: data.description,
+        },
+      });
+
+      toast({
+        title: texts.successTitle,
+        description: texts.successDescription,
+      });
+
+      reset();
+      onOpenChange(false);
+      onSuccess?.();
+    } catch (error) {
+      toast({
+        title: texts.errorTitle,
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const formatMoney = (amount: number) =>
+    new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-US", {
+      style: "currency",
+      currency: watch("currency") || "SAR",
+    }).format(amount);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[450px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5 text-purple-500" />
+            {texts.title}
+          </DialogTitle>
+          <DialogDescription>{texts.description}</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Balance Preview */}
+          <div className="grid grid-cols-2 gap-4 p-3 rounded-lg bg-muted/50">
+            <div>
+              <p className="text-xs text-muted-foreground">{texts.currentBalance}</p>
+              <p
+                className={`font-semibold ${
+                  currentBalance >= 0 ? "text-emerald-600" : "text-red-600"
+                }`}
+              >
+                {formatMoney(currentBalance)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">{texts.newBalance}</p>
+              <p
+                className={`font-semibold ${
+                  newBalance >= 0 ? "text-emerald-600" : "text-red-600"
+                }`}
+              >
+                {formatMoney(newBalance)}
+              </p>
+            </div>
+          </div>
+
+          {/* Warning for negative adjustment */}
+          {isNegativeAdjustment && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>{texts.warningNegative}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Amount */}
+          <div className="space-y-2">
+            <Label htmlFor="amount">{texts.amount}</Label>
+            <div className="flex gap-2">
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                placeholder={texts.amountPlaceholder}
+                className="flex-1"
+                {...register("amount", { valueAsNumber: true })}
+              />
+              <Select
+                value={watch("currency")}
+                onValueChange={(value) => setValue("currency", value)}
+              >
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SAR">SAR</SelectItem>
+                  <SelectItem value="USD">USD</SelectItem>
+                  <SelectItem value="EUR">EUR</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {errors.amount && (
+              <p className="text-sm text-destructive">{errors.amount.message}</p>
+            )}
+          </div>
+
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description">{texts.descriptionLabel}</Label>
+            <Textarea
+              id="description"
+              {...register("description")}
+              placeholder={texts.descriptionPlaceholder}
+              rows={2}
+            />
+            {errors.description && (
+              <p className="text-sm text-destructive">{errors.description.message}</p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              {texts.cancel}
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              variant={isNegativeAdjustment ? "destructive" : "default"}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                  {texts.adjusting}
+                </>
+              ) : (
+                <>
+                  <Settings className="h-4 w-4 me-2" />
+                  {texts.adjust}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

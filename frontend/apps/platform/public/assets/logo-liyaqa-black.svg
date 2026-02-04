@@ -1,0 +1,44 @@
+<svg width="280" height="80" viewBox="0 0 280 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Liyaqa Black Logo - for light backgrounds -->
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@700&amp;display=swap');
+    </style>
+  </defs>
+
+  <!-- Main Arabic text "لياقة" (Liyaqa - Fitness) -->
+  <text
+    x="140"
+    y="52"
+    font-family="Amiri, serif"
+    font-size="48"
+    font-weight="700"
+    fill="#1C1917"
+    text-anchor="middle"
+    direction="rtl"
+    dominant-baseline="middle"
+  >لياقة</text>
+
+  <!-- Subtle stroke outline for depth -->
+  <text
+    x="140"
+    y="52"
+    font-family="Amiri, serif"
+    font-size="48"
+    font-weight="700"
+    fill="none"
+    stroke="#292524"
+    stroke-width="0.5"
+    text-anchor="middle"
+    direction="rtl"
+    dominant-baseline="middle"
+    opacity="0.4"
+  >لياقة</text>
+
+  <!-- Decorative accent underline -->
+  <path d="M 70 62 Q 140 60, 210 62"
+        stroke="#1C1917"
+        stroke-width="1"
+        fill="none"
+        opacity="0.3"/>
+</svg>

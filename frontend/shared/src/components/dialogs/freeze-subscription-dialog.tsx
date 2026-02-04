@@ -1,0 +1,287 @@
+"use client";
+
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useLocale } from "next-intl";
+import { Snowflake, Loader2, Calendar, FileText } from "lucide-react";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { useToast } from "../hooks/use-toast";
+import {
+  useFreezeSubscriptionWithTracking,
+  useSubscriptionFreezeBalance,
+} from "../queries/use-freeze-packages";
+import type { UUID } from "../../types/api";
+import type { FreezeType } from "../../types/freeze";
+
+const freezeSchema = z.object({
+  freezeDays: z.number().min(1, "At least 1 day required").max(365, "Maximum 365 days"),
+  freezeType: z.enum(["MEDICAL", "TRAVEL", "PERSONAL", "MILITARY", "OTHER"]),
+  reason: z.string().optional(),
+  documentPath: z.string().optional(),
+});
+
+type FreezeFormData = z.infer<typeof freezeSchema>;
+
+interface FreezeSubscriptionDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  subscriptionId: UUID;
+  memberId: UUID;
+  onSuccess?: () => void;
+}
+
+export function FreezeSubscriptionDialog({
+  open,
+  onOpenChange,
+  subscriptionId,
+  memberId,
+  onSuccess,
+}: FreezeSubscriptionDialogProps) {
+  const locale = useLocale();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const freezeSubscription = useFreezeSubscriptionWithTracking();
+  const { data: balance } = useSubscriptionFreezeBalance(subscriptionId);
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<FreezeFormData>({
+    resolver: zodResolver(freezeSchema),
+    defaultValues: {
+      freezeDays: 7,
+      freezeType: "PERSONAL",
+      reason: "",
+    },
+  });
+
+  const watchFreezeType = watch("freezeType");
+  const watchFreezeDays = watch("freezeDays");
+
+  const texts = {
+    title: locale === "ar" ? "تجميد الاشتراك" : "Freeze Subscription",
+    description:
+      locale === "ar"
+        ? "تجميد الاشتراك سيوقف العضوية مؤقتًا ويمدد تاريخ الانتهاء"
+        : "Freezing the subscription will pause the membership and extend the end date",
+    freezeDays: locale === "ar" ? "عدد أيام التجميد" : "Freeze Days",
+    freezeType: locale === "ar" ? "نوع التجميد" : "Freeze Type",
+    reason: locale === "ar" ? "السبب (اختياري)" : "Reason (Optional)",
+    documentPath: locale === "ar" ? "مسار المستند" : "Document Path",
+    availableBalance:
+      locale === "ar" ? "الرصيد المتاح" : "Available Balance",
+    days: locale === "ar" ? "يوم" : "days",
+    cancel: locale === "ar" ? "إلغاء" : "Cancel",
+    freeze: locale === "ar" ? "تجميد" : "Freeze",
+    freezing: locale === "ar" ? "جاري التجميد..." : "Freezing...",
+    successTitle: locale === "ar" ? "تم التجميد بنجاح" : "Subscription Frozen",
+    successDescription:
+      locale === "ar"
+        ? "تم تجميد الاشتراك بنجاح"
+        : "The subscription has been frozen successfully",
+    errorTitle: locale === "ar" ? "خطأ في التجميد" : "Freeze Error",
+    freezeTypes: {
+      MEDICAL: locale === "ar" ? "طبي" : "Medical",
+      TRAVEL: locale === "ar" ? "سفر" : "Travel",
+      PERSONAL: locale === "ar" ? "شخصي" : "Personal",
+      MILITARY: locale === "ar" ? "عسكري" : "Military",
+      OTHER: locale === "ar" ? "أخرى" : "Other",
+    },
+    selectType: locale === "ar" ? "اختر النوع" : "Select type",
+    noBalance:
+      locale === "ar"
+        ? "لا يوجد رصيد تجميد متاح"
+        : "No freeze balance available",
+    willUseFromBalance:
+      locale === "ar"
+        ? "سيتم استخدام من الرصيد"
+        : "Will use from balance",
+  };
+
+  const onSubmit = async (data: FreezeFormData) => {
+    setIsSubmitting(true);
+    try {
+      await freezeSubscription.mutateAsync({
+        subscriptionId,
+        data: {
+          freezeDays: data.freezeDays,
+          freezeType: data.freezeType,
+          reason: data.reason,
+          documentPath: data.documentPath,
+        },
+      });
+
+      toast({
+        title: texts.successTitle,
+        description: texts.successDescription,
+      });
+
+      reset();
+      onOpenChange(false);
+      onSuccess?.();
+    } catch (error) {
+      toast({
+        title: texts.errorTitle,
+        description:
+          error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const availableDays = balance?.availableDays ?? 0;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Snowflake className="h-5 w-5 text-blue-500" />
+            {texts.title}
+          </DialogTitle>
+          <DialogDescription>{texts.description}</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Available Balance */}
+          {balance && (
+            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-blue-700 dark:text-blue-300">
+                  {texts.availableBalance}:
+                </span>
+                <span className="font-semibold text-blue-900 dark:text-blue-100">
+                  {availableDays} {texts.days}
+                </span>
+              </div>
+              {watchFreezeDays > 0 && availableDays > 0 && (
+                <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                  {texts.willUseFromBalance}: {Math.min(watchFreezeDays, availableDays)} {texts.days}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Freeze Days */}
+          <div className="space-y-2">
+            <Label htmlFor="freezeDays" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              {texts.freezeDays}
+            </Label>
+            <Input
+              id="freezeDays"
+              type="number"
+              min={1}
+              max={365}
+              {...register("freezeDays", { valueAsNumber: true })}
+            />
+            {errors.freezeDays && (
+              <p className="text-sm text-destructive">
+                {errors.freezeDays.message}
+              </p>
+            )}
+          </div>
+
+          {/* Freeze Type */}
+          <div className="space-y-2">
+            <Label>{texts.freezeType}</Label>
+            <Select
+              value={watchFreezeType}
+              onValueChange={(value) => setValue("freezeType", value as FreezeType)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={texts.selectType} />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(texts.freezeTypes).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Reason */}
+          <div className="space-y-2">
+            <Label htmlFor="reason">{texts.reason}</Label>
+            <Textarea
+              id="reason"
+              {...register("reason")}
+              placeholder={
+                locale === "ar"
+                  ? "أدخل سبب التجميد..."
+                  : "Enter freeze reason..."
+              }
+              rows={2}
+            />
+          </div>
+
+          {/* Document Path */}
+          <div className="space-y-2">
+            <Label htmlFor="documentPath" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              {texts.documentPath}
+            </Label>
+            <Input
+              id="documentPath"
+              {...register("documentPath")}
+              placeholder="/documents/medical-certificate.pdf"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              {texts.cancel}
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {texts.freezing}
+                </>
+              ) : (
+                <>
+                  <Snowflake className="h-4 w-4 mr-2" />
+                  {texts.freeze}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

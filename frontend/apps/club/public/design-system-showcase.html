@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liyaqa Design System - Complete Showcase</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --brand-primary: #FF6B4A;
+      --brand-secondary: #E85D3A;
+      --brand-tint: #FF9A82;
+      --brand-bg-tint: #FFE5E0;
+      --brand-white: #FAFAF9;
+      --brand-black: #1C1917;
+      --brand-gray: #78716C;
+    }
+
+    body {
+      font-family: 'Cairo', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      color: var(--brand-black);
+    }
+
+    .hero {
+      background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+      color: white;
+      padding: 80px 20px;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      font-family: 'Amiri', serif;
+    }
+
+    .hero .subtitle {
+      font-size: 1.5rem;
+      opacity: 0.95;
+      margin-bottom: 32px;
+    }
+
+    .hero .status {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      padding: 12px 32px;
+      border-radius: 24px;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .section {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      margin-bottom: 40px;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+
+    .section-title {
+      font-size: 2rem;
+      color: var(--brand-primary);
+      margin-bottom: 32px;
+      font-weight: 700;
+      border-bottom: 3px solid var(--brand-bg-tint);
+      padding-bottom: 16px;
+    }
+
+    .logo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 32px;
+      margin-top: 32px;
+    }
+
+    .logo-card {
+      background: #fafafa;
+      border: 2px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 32px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .logo-card:hover {
+      border-color: var(--brand-primary);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(255, 107, 74, 0.2);
+    }
+
+    .logo-card-title {
+      font-weight: 700;
+      color: var(--brand-black);
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+    }
+
+    .logo-card-desc {
+      color: var(--brand-gray);
+      font-size: 0.875rem;
+      margin-bottom: 24px;
+    }
+
+    .logo-display {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-display.dark {
+      background: var(--brand-black);
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .color-card {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+
+    .color-swatch {
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+
+    .color-info {
+      background: white;
+      padding: 16px;
+    }
+
+    .color-name {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .color-code {
+      font-family: 'Monaco', monospace;
+      font-size: 0.875rem;
+      color: var(--brand-gray);
+    }
+
+    .font-showcase {
+      margin-top: 32px;
+    }
+
+    .font-sample {
+      padding: 32px;
+      background: #fafafa;
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+
+    .font-name {
+      font-weight: 700;
+      color: var(--brand-primary);
+      margin-bottom: 8px;
+    }
+
+    .font-usage {
+      color: var(--brand-gray);
+      font-size: 0.875rem;
+      margin-bottom: 16px;
+    }
+
+    .size-tests {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      padding: 32px;
+      background: white;
+      border-radius: 12px;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .feature-card {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      border: 2px solid #86efac;
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 12px;
+    }
+
+    .feature-title {
+      font-weight: 700;
+      color: #16a34a;
+      margin-bottom: 8px;
+    }
+
+    .feature-desc {
+      color: #166534;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero Section -->
+  <div class="hero">
+    <h1>نظام التصميم لياقة</h1>
+    <div class="subtitle">Liyaqa Design System</div>
+    <div class="status">✅ Production Ready</div>
+  </div>
+
+  <div class="container">
+
+    <!-- Logo System -->
+    <div class="section">
+      <h2 class="section-title">📋 Logo System</h2>
+      <div class="logo-grid">
+
+        <!-- Primary Logo -->
+        <div class="logo-card">
+          <div class="logo-card-title">Primary Horizontal</div>
+          <div class="logo-card-desc">logo-liyaqa-primary.svg | 280×80</div>
+          <div class="logo-display">
+            <img src="assets/logo-liyaqa-primary.svg" width="280" height="80" alt="Primary Logo">
+          </div>
+        </div>
+
+        <!-- Vertical Logo -->
+        <div class="logo-card">
+          <div class="logo-card-title">Vertical Logo</div>
+          <div class="logo-card-desc">logo-liyaqa-vertical.svg | 160×160</div>
+          <div class="logo-display">
+            <img src="assets/logo-liyaqa-vertical.svg" width="160" height="160" alt="Vertical Logo">
+          </div>
+        </div>
+
+        <!-- Icon -->
+        <div class="logo-card">
+          <div class="logo-card-title">Circular Icon</div>
+          <div class="logo-card-desc">logo-liyaqa-icon.svg | 64×64</div>
+          <div class="logo-display">
+            <img src="assets/logo-liyaqa-icon.svg" width="128" height="128" alt="Icon">
+          </div>
+        </div>
+
+        <!-- Favicon -->
+        <div class="logo-card">
+          <div class="logo-card-title">Favicon</div>
+          <div class="logo-card-desc">favicon.svg | 32×32</div>
+          <div class="logo-display">
+            <img src="assets/favicon.svg" width="64" height="64" alt="Favicon">
+          </div>
+        </div>
+
+        <!-- Black Logo -->
+        <div class="logo-card">
+          <div class="logo-card-title">Black (Light Backgrounds)</div>
+          <div class="logo-card-desc">logo-liyaqa-black.svg | 280×80</div>
+          <div class="logo-display">
+            <img src="assets/logo-liyaqa-black.svg" width="280" height="80" alt="Black Logo">
+          </div>
+        </div>
+
+        <!-- White Logo -->
+        <div class="logo-card">
+          <div class="logo-card-title">White (Dark Backgrounds)</div>
+          <div class="logo-card-desc">logo-liyaqa-white.svg | 280×80</div>
+          <div class="logo-display dark">
+            <img src="assets/logo-liyaqa-white.svg" width="280" height="80" alt="White Logo">
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Icon Sizes -->
+    <div class="section">
+      <h2 class="section-title">📏 Icon Scalability</h2>
+      <div class="size-tests">
+        <div style="text-align: center;">
+          <img src="assets/logo-liyaqa-icon.svg" width="256" height="256" alt="256px">
+          <div style="margin-top: 8px; color: var(--brand-gray); font-size: 0.875rem;">256×256</div>
+        </div>
+        <div style="text-align: center;">
+          <img src="assets/logo-liyaqa-icon.svg" width="128" height="128" alt="128px">
+          <div style="margin-top: 8px; color: var(--brand-gray); font-size: 0.875rem;">128×128</div>
+        </div>
+        <div style="text-align: center;">
+          <img src="assets/logo-liyaqa-icon.svg" width="64" height="64" alt="64px">
+          <div style="margin-top: 8px; color: var(--brand-gray); font-size: 0.875rem;">64×64</div>
+        </div>
+        <div style="text-align: center;">
+          <img src="assets/favicon.svg" width="32" height="32" alt="32px">
+          <div style="margin-top: 8px; color: var(--brand-gray); font-size: 0.875rem;">32×32</div>
+        </div>
+        <div style="text-align: center;">
+          <img src="assets/favicon.svg" width="16" height="16" alt="16px">
+          <div style="margin-top: 8px; color: var(--brand-gray); font-size: 0.875rem;">16×16</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Color Palette -->
+    <div class="section">
+      <h2 class="section-title">🎨 Color Palette</h2>
+      <div class="color-grid">
+
+        <div class="color-card">
+          <div class="color-swatch" style="background: #FF6B4A; color: white;">Aa</div>
+          <div class="color-info">
+            <div class="color-name">Sunset Coral</div>
+            <div class="color-code">#FF6B4A</div>
+          </div>
+        </div>
+
+        <div class="color-card">
+          <div class="color-swatch" style="background: #E85D3A; color: white;">Aa</div>
+          <div class="color-info">
+            <div class="color-name">Terracotta</div>
+            <div class="color-code">#E85D3A</div>
+          </div>
+        </div>
+
+        <div class="color-card">
+          <div class="color-swatch" style="background: #FF9A82; color: white;">Aa</div>
+          <div class="color-info">
+            <div class="color-name">Light Coral</div>
+            <div class="color-code">#FF9A82</div>
+          </div>
+        </div>
+
+        <div class="color-card">
+          <div class="color-swatch" style="background: #FFE5E0; color: #1C1917;">Aa</div>
+          <div class="color-info">
+            <div class="color-name">Background Tint</div>
+            <div class="color-code">#FFE5E0</div>
+          </div>
+        </div>
+
+        <div class="color-card">
+          <div class="color-swatch" style="background: #FAFAF9; color: #1C1917;">Aa</div>
+          <div class="color-info">
+            <div class="color-name">Brand White</div>
+            <div class="color-code">#FAFAF9</div>
+          </div>
+        </div>
+
+        <div class="color-card">
+          <div class="color-swatch" style="background: #78716C; color: white;">Aa</div>
+          <div class="color-info">
+            <div class="color-name">Brand Gray</div>
+            <div class="color-code">#78716C</div>
+          </div>
+        </div>
+
+        <div class="color-card">
+          <div class="color-swatch" style="background: #1C1917; color: white;">Aa</div>
+          <div class="color-info">
+            <div class="color-name">Brand Black</div>
+            <div class="color-code">#1C1917</div>
+          </div>
+        </div>
+
+        <div class="color-card">
+          <div class="color-swatch" style="background: linear-gradient(135deg, #FF6B4A 0%, #E85D3A 100%); color: white;">Aa</div>
+          <div class="color-info">
+            <div class="color-name">Primary Gradient</div>
+            <div class="color-code">Coral → Terracotta</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Typography -->
+    <div class="section">
+      <h2 class="section-title">✍️ Typography</h2>
+      <div class="font-showcase">
+
+        <div class="font-sample">
+          <div class="font-name">Amiri (Primary Arabic)</div>
+          <div class="font-usage">Used for: Logos, headings, main brand text</div>
+          <div style="font-family: 'Amiri', serif; font-size: 3rem; font-weight: 700; color: var(--brand-primary);">
+            لياقة - ادير ناديك بأناقة
+          </div>
+        </div>
+
+        <div class="font-sample">
+          <div class="font-name">Cairo (UI & Body)</div>
+          <div class="font-usage">Used for: Interface text, buttons, forms, body copy</div>
+          <div style="font-family: 'Cairo', sans-serif; font-size: 2rem; font-weight: 600;">
+            نظام إدارة الأندية الرياضية
+          </div>
+          <div style="font-family: 'Cairo', sans-serif; font-size: 1rem; margin-top: 8px; color: var(--brand-gray);">
+            Modern gym management platform with authentic Arabic design
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Key Features -->
+    <div class="section">
+      <h2 class="section-title">✨ Key Features</h2>
+      <div class="feature-grid">
+
+        <div class="feature-card">
+          <div class="feature-icon">⭕</div>
+          <div class="feature-title">Circular Icon Design</div>
+          <div class="feature-desc">Perfect circle shape optimized for app icons, social media profiles, and avatars</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">✍️</div>
+          <div class="feature-title">Authentic Arabic Text</div>
+          <div class="feature-desc">Full "لياقة" brand name using professional calligraphy fonts</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🎨</div>
+          <div class="feature-title">High Contrast Design</div>
+          <div class="feature-desc">White text on gradient ensures excellent visibility on all backgrounds</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📏</div>
+          <div class="feature-title">Perfectly Scalable</div>
+          <div class="feature-desc">Works beautifully from 16px favicon to 256px+ display sizes</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🌈</div>
+          <div class="feature-title">Coral Gradient</div>
+          <div class="feature-desc">Desert sunset palette: Coral (#FF6B4A) to Terracotta (#E85D3A)</div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <div class="feature-title">Platform Ready</div>
+          <div class="feature-desc">Optimized for web, iOS, Android, and all social media platforms</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Implementation Status -->
+    <div class="section" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 3px solid #86efac;">
+      <h2 class="section-title" style="color: #16a34a; border-color: #86efac;">🎉 Implementation Complete</h2>
+      <div style="color: #166534; line-height: 1.8; font-size: 1.1rem;">
+        <p style="margin-bottom: 16px;">
+          <strong>Status: Production Ready ✅</strong>
+        </p>
+        <p style="margin-bottom: 16px;">
+          The Liyaqa design system is complete with 6 logo variations, comprehensive color palette,
+          typography system, and full documentation. All assets are optimized and ready for deployment
+          across web, mobile, and print applications.
+        </p>
+        <p>
+          <strong>Files Updated:</strong> 6 SVG logos |
+          <strong>Documentation:</strong> 4 comprehensive guides |
+          <strong>Previews:</strong> 3 interactive showcases
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="background: var(--brand-black); color: white; padding: 40px; text-align: center;">
+    <div style="font-family: 'Amiri', serif; font-size: 2rem; margin-bottom: 8px;">لياقة</div>
+    <div style="color: var(--brand-gray); font-size: 0.875rem;">
+      Design System v1.0 | Created January 31, 2026
+    </div>
+  </div>
+
+</body>
+</html>

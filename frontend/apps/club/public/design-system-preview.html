@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liyaqa Design System - Before & After</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 40px;
+      background: #f8fafc;
+      color: #1e293b;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #0f172a;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 40px 0 20px;
+      color: #334155;
+    }
+
+    .subtitle {
+      color: #64748b;
+      margin-bottom: 40px;
+      font-size: 16px;
+    }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    .section {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-title {
+      font-weight: 600;
+      margin-bottom: 20px;
+      font-size: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .before .section-title { color: #0ea5e9; }
+    .after .section-title { color: #FF6B4A; }
+
+    .color-swatch {
+      margin-bottom: 20px;
+    }
+
+    .color-box {
+      height: 80px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .color-info {
+      font-size: 14px;
+      color: #64748b;
+    }
+
+    .gradient-box {
+      height: 120px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 18px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .stat-card {
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      opacity: 0.7;
+    }
+
+    .button {
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      margin-bottom: 12px;
+      width: 100%;
+      color: white;
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Before colors (Sky Blue) */
+    .before-primary { background: #0ea5e9; }
+    .before-gradient { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
+    .before-client-card { background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%); }
+    .before-subscription-card { background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(6, 182, 212, 0.05) 100%); }
+    .before-icon { background: rgba(59, 130, 246, 0.2); color: #2563eb; }
+
+    /* After colors (Coral) */
+    .after-primary { background: #FF6B4A; }
+    .after-secondary { background: #E85D3A; }
+    .after-tint { background: #FF9A82; }
+    .after-bg-tint { background: #FFE5E0; color: #FF6B4A; }
+    .after-gradient { background: linear-gradient(135deg, #FF6B4A 0%, #E85D3A 100%); }
+    .after-client-card { background: linear-gradient(135deg, rgba(255, 107, 74, 0.15) 0%, rgba(232, 93, 58, 0.05) 100%); }
+    .after-subscription-card { background: linear-gradient(135deg, rgba(255, 154, 130, 0.15) 0%, rgba(255, 154, 130, 0.05) 100%); }
+    .after-icon { background: rgba(255, 107, 74, 0.2); color: #FF6B4A; }
+
+    .chart-preview {
+      height: 120px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart-area {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 70%;
+      clip-path: polygon(0% 100%, 0% 40%, 15% 35%, 30% 50%, 45% 30%, 60% 45%, 75% 25%, 90% 35%, 100% 20%, 100% 100%);
+    }
+
+    .chart-line {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 70%;
+      border-top: 3px solid;
+      clip-path: polygon(0% 40%, 15% 35%, 30% 50%, 45% 30%, 60% 45%, 75% 25%, 90% 35%, 100% 20%);
+    }
+
+    .legend {
+      margin-top: 30px;
+      padding: 20px;
+      background: #f1f5f9;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #475569;
+    }
+
+    .legend strong {
+      color: #1e293b;
+    }
+
+    @media (max-width: 768px) {
+      .comparison {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>🎨 Liyaqa Design System Update</h1>
+  <p class="subtitle">Platform Dashboard Color Scheme: Sky Blue → Sunset Coral</p>
+
+  <h2>Primary Colors</h2>
+  <div class="comparison">
+    <div class="section before">
+      <div class="section-title">Before (Sky Blue)</div>
+      <div class="color-swatch">
+        <div class="color-box before-primary">Sky Blue</div>
+        <div class="color-info">Hex: #0ea5e9 | RGB: 14, 165, 233</div>
+      </div>
+    </div>
+    <div class="section after">
+      <div class="section-title">After (Sunset Coral)</div>
+      <div class="color-swatch">
+        <div class="color-box after-primary">Sunset Coral</div>
+        <div class="color-info">Hex: #FF6B4A | RGB: 255, 107, 74</div>
+      </div>
+      <div class="color-swatch">
+        <div class="color-box after-secondary">Terracotta</div>
+        <div class="color-info">Hex: #E85D3A | RGB: 232, 93, 58</div>
+      </div>
+      <div class="color-swatch">
+        <div class="color-box after-tint">Light Coral</div>
+        <div class="color-info">Hex: #FF9A82 | RGB: 255, 154, 130</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Gradients</h2>
+  <div class="comparison">
+    <div class="section before">
+      <div class="section-title">Before</div>
+      <div class="gradient-box before-gradient">
+        Sky Blue Gradient
+      </div>
+      <div class="color-info">linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)</div>
+    </div>
+    <div class="section after">
+      <div class="section-title">After</div>
+      <div class="gradient-box after-gradient">
+        Coral Gradient
+      </div>
+      <div class="color-info">linear-gradient(135deg, #FF6B4A 0%, #E85D3A 100%)</div>
+    </div>
+  </div>
+
+  <h2>Stat Cards</h2>
+  <div class="comparison">
+    <div class="section before">
+      <div class="section-title">Before (Client Card)</div>
+      <div class="stat-card before-client-card">
+        <div class="stat-card-header">
+          <div class="stat-icon before-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            </svg>
+          </div>
+          <span class="stat-label">Total Clients</span>
+        </div>
+        <div class="stat-value" style="color: #2563eb;">1,234</div>
+      </div>
+    </div>
+    <div class="section after">
+      <div class="section-title">After (Client Card)</div>
+      <div class="stat-card after-client-card">
+        <div class="stat-card-header">
+          <div class="stat-icon after-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            </svg>
+          </div>
+          <span class="stat-label">Total Clients</span>
+        </div>
+        <div class="stat-value" style="color: #FF6B4A;">1,234</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Buttons</h2>
+  <div class="comparison">
+    <div class="section before">
+      <div class="section-title">Before</div>
+      <button class="button before-gradient">Sign In</button>
+    </div>
+    <div class="section after">
+      <div class="section-title">After</div>
+      <button class="button after-gradient">Sign In</button>
+    </div>
+  </div>
+
+  <h2>Chart Gradients</h2>
+  <div class="comparison">
+    <div class="section before">
+      <div class="section-title">Before (Blue/Emerald)</div>
+      <div class="chart-preview" style="background: linear-gradient(to bottom, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0) 100%);">
+        <div class="chart-area" style="background: linear-gradient(to bottom, rgba(16, 185, 129, 0.3) 0%, rgba(16, 185, 129, 0) 100%);"></div>
+        <div class="chart-line" style="border-color: #10b981;"></div>
+      </div>
+      <div class="color-info">Emerald gradient fill</div>
+    </div>
+    <div class="section after">
+      <div class="section-title">After (Coral)</div>
+      <div class="chart-preview" style="background: linear-gradient(to bottom, rgba(255, 107, 74, 0.1) 0%, rgba(232, 93, 58, 0) 100%);">
+        <div class="chart-area" style="background: linear-gradient(to bottom, rgba(255, 107, 74, 0.3) 0%, rgba(232, 93, 58, 0.05) 100%);"></div>
+        <div class="chart-line" style="border-color: #FF6B4A;"></div>
+      </div>
+      <div class="color-info">Coral gradient fill</div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <strong>Design Notes:</strong><br>
+    • Semantic colors (green for revenue, amber for warnings, red for errors) are preserved<br>
+    • Coral theme applied to client metrics, subscriptions, and primary actions<br>
+    • Both light and dark modes maintain proper contrast ratios (WCAG AA)<br>
+    • Gradients create depth and visual hierarchy<br>
+    • Warm coral palette aligns better with Arabic/Middle Eastern aesthetic
+  </div>
+</body>
+</html>

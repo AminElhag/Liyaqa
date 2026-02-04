@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liyaqa Infinity Loop Icon - Preview</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #fafaf9 0%, #f5f5f4 100%);
+      padding: 40px 20px;
+      color: #1c1917;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #FF6B4A;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #78716c;
+      font-size: 1.1rem;
+      margin-bottom: 3rem;
+    }
+
+    .section {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      font-size: 1.75rem;
+      color: #1c1917;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #FF6B4A;
+    }
+
+    .icon-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 32px;
+      margin-top: 32px;
+    }
+
+    .icon-sample {
+      text-align: center;
+      padding: 24px;
+      background: #fafaf9;
+      border-radius: 12px;
+      border: 2px solid #e7e5e4;
+      transition: all 0.3s ease;
+    }
+
+    .icon-sample:hover {
+      border-color: #FF6B4A;
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px -4px rgba(255, 107, 74, 0.2);
+    }
+
+    .icon-sample img {
+      display: block;
+      margin: 0 auto 16px;
+    }
+
+    .icon-sample .label {
+      font-weight: 600;
+      color: #1c1917;
+      margin-bottom: 4px;
+    }
+
+    .icon-sample .description {
+      font-size: 0.875rem;
+      color: #78716c;
+    }
+
+    .background-demos {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .bg-demo {
+      padding: 32px;
+      border-radius: 12px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 160px;
+    }
+
+    .bg-demo.white {
+      background: white;
+      border: 2px solid #e7e5e4;
+    }
+
+    .bg-demo.light {
+      background: #fafaf9;
+      border: 2px solid #e7e5e4;
+    }
+
+    .bg-demo.dark {
+      background: #1c1917;
+    }
+
+    .bg-demo.coral {
+      background: linear-gradient(135deg, #FF6B4A, #E85D3A);
+    }
+
+    .bg-demo .label {
+      margin-top: 16px;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .bg-demo.white .label,
+    .bg-demo.light .label {
+      color: #1c1917;
+    }
+
+    .bg-demo.dark .label,
+    .bg-demo.coral .label {
+      color: white;
+    }
+
+    .design-principles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .principle {
+      padding: 24px;
+      background: linear-gradient(135deg, #fff5f3, #fafaf9);
+      border-radius: 12px;
+      border-left: 4px solid #FF6B4A;
+    }
+
+    .principle h3 {
+      color: #FF6B4A;
+      font-size: 1.25rem;
+      margin-bottom: 12px;
+    }
+
+    .principle p {
+      color: #57534e;
+      line-height: 1.6;
+    }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-top: 32px;
+    }
+
+    .comparison-item {
+      padding: 32px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .comparison-item.old {
+      background: #fef2f2;
+      border: 2px solid #fecaca;
+    }
+
+    .comparison-item.new {
+      background: #f0fdf4;
+      border: 2px solid #bbf7d0;
+    }
+
+    .comparison-item h3 {
+      font-size: 1.25rem;
+      margin-bottom: 8px;
+    }
+
+    .comparison-item.old h3 {
+      color: #dc2626;
+    }
+
+    .comparison-item.new h3 {
+      color: #16a34a;
+    }
+
+    .comparison-item .status {
+      font-size: 0.875rem;
+      margin-bottom: 24px;
+      opacity: 0.8;
+    }
+
+    .comparison-item img {
+      margin: 24px auto;
+    }
+
+    .comparison-item ul {
+      text-align: left;
+      margin-top: 16px;
+      padding-left: 24px;
+    }
+
+    .comparison-item li {
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .comparison-item.old li {
+      color: #7f1d1d;
+    }
+
+    .comparison-item.new li {
+      color: #14532d;
+    }
+
+    .symbolism {
+      background: linear-gradient(135deg, #fff5f3, #fef2f2);
+      padding: 32px;
+      border-radius: 12px;
+      margin-top: 32px;
+      border: 2px solid #FF6B4A;
+    }
+
+    .symbolism h3 {
+      color: #FF6B4A;
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .symbolism-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    .symbolism-item {
+      display: flex;
+      align-items: start;
+      gap: 12px;
+    }
+
+    .symbolism-item .icon-symbol {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .symbolism-item .text {
+      flex: 1;
+    }
+
+    .symbolism-item .text strong {
+      display: block;
+      color: #1c1917;
+      margin-bottom: 4px;
+    }
+
+    .symbolism-item .text span {
+      color: #57534e;
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 768px) {
+      .comparison {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔄 Liyaqa Infinity Loop Icon</h1>
+    <p class="subtitle">Movement • Energy • Wellness Journey</p>
+
+    <!-- Before/After Comparison -->
+    <div class="section">
+      <h2>📊 Before & After Comparison</h2>
+      <div class="comparison">
+        <div class="comparison-item old">
+          <h3>❌ Previous: Octagon</h3>
+          <p class="status">Static geometric shape</p>
+          <img src="data:image/svg+xml,%3Csvg width='64' height='64' viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='coralGradient' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23FF6B4A'/%3E%3Cstop offset='100%25' stop-color='%23E85D3A'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg transform='translate(32, 32)'%3E%3Cpath d='M 8.28 -19.13 L 19.13 -8.28 L 19.13 8.28 L 8.28 19.13 L -8.28 19.13 L -19.13 8.28 L -19.13 -8.28 L -8.28 -19.13 Z' fill='url(%23coralGradient)' stroke='none'/%3E%3Cg stroke='%23FAFAF9' stroke-width='2' stroke-linecap='round'%3E%3Cline x1='0' y1='0' x2='12' y2='0'/%3E%3Cline x1='0' y1='0' x2='0' y2='-12'/%3E%3Cline x1='0' y1='0' x2='-12' y2='0'/%3E%3Cline x1='0' y1='0' x2='0' y2='12'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E" alt="Old octagon icon" width="64" height="64">
+          <ul>
+            <li>Too simple and boring</li>
+            <li>Static, no movement or energy</li>
+            <li>Lacked personality</li>
+            <li>No fitness/wellness connection</li>
+            <li>Generic geometric shape</li>
+          </ul>
+        </div>
+
+        <div class="comparison-item new">
+          <h3>✅ New: Infinity Loop</h3>
+          <p class="status">Dynamic flowing shape</p>
+          <img src="/assets/logo-liyaqa-icon.svg" alt="New infinity loop icon" width="64" height="64">
+          <ul>
+            <li>Dynamic and energetic</li>
+            <li>Conveys continuous movement</li>
+            <li>Represents wellness journey</li>
+            <li>Premium and sophisticated</li>
+            <li>Distinctive and memorable</li>
+            <li>Subtle Islamic reference (figure 8)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Icon Sizes -->
+    <div class="section">
+      <h2>📐 Icon at Different Sizes</h2>
+      <div class="icon-grid">
+        <div class="icon-sample">
+          <img src="/assets/logo-liyaqa-icon.svg" width="16" height="16" alt="16x16">
+          <div class="label">16×16</div>
+          <div class="description">Browser favicon</div>
+        </div>
+
+        <div class="icon-sample">
+          <img src="/assets/logo-liyaqa-icon.svg" width="32" height="32" alt="32x32">
+          <div class="label">32×32</div>
+          <div class="description">Small UI elements</div>
+        </div>
+
+        <div class="icon-sample">
+          <img src="/assets/logo-liyaqa-icon.svg" width="64" height="64" alt="64x64">
+          <div class="label">64×64</div>
+          <div class="description">Standard icon size</div>
+        </div>
+
+        <div class="icon-sample">
+          <img src="/assets/logo-liyaqa-icon.svg" width="128" height="128" alt="128x128">
+          <div class="label">128×128</div>
+          <div class="description">Large display</div>
+        </div>
+
+        <div class="icon-sample">
+          <img src="/assets/logo-liyaqa-icon.svg" width="256" height="256" alt="256x256">
+          <div class="label">256×256</div>
+          <div class="description">Extra large</div>
+        </div>
+
+        <div class="icon-sample">
+          <img src="/assets/favicon.svg" width="64" height="64" alt="Simplified favicon">
+          <div class="label">Favicon (Simplified)</div>
+          <div class="description">Optimized for 16×16</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Background Variations -->
+    <div class="section">
+      <h2>🎨 Background Variations</h2>
+      <div class="background-demos">
+        <div class="bg-demo white">
+          <img src="/assets/logo-liyaqa-icon.svg" width="64" height="64" alt="On white">
+          <div class="label">White Background</div>
+        </div>
+
+        <div class="bg-demo light">
+          <img src="/assets/logo-liyaqa-icon.svg" width="64" height="64" alt="On light">
+          <div class="label">Light Background</div>
+        </div>
+
+        <div class="bg-demo dark">
+          <img src="/assets/logo-liyaqa-icon.svg" width="64" height="64" alt="On dark" style="filter: brightness(1.2);">
+          <div class="label">Dark Background</div>
+        </div>
+
+        <div class="bg-demo coral">
+          <img src="/assets/logo-liyaqa-icon.svg" width="64" height="64" alt="On coral" style="filter: brightness(1.3) contrast(0.9);">
+          <div class="label">Coral Background</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vertical Logo with Wordmark -->
+    <div class="section">
+      <h2>📝 Vertical Logo (Icon + Wordmark)</h2>
+      <div style="text-align: center; padding: 40px;">
+        <img src="/assets/logo-liyaqa-vertical.svg" width="160" height="160" alt="Vertical logo">
+        <p style="margin-top: 24px; color: #78716c;">Infinity loop icon with لياقة wordmark</p>
+      </div>
+    </div>
+
+    <!-- Symbolism & Meaning -->
+    <div class="section">
+      <h2>✨ Design Symbolism & Meaning</h2>
+      <div class="symbolism">
+        <h3>∞ The Infinity Loop Represents</h3>
+        <div class="symbolism-grid">
+          <div class="symbolism-item">
+            <div class="icon-symbol">🔄</div>
+            <div class="text">
+              <strong>Continuous Journey</strong>
+              <span>The endless cycle of wellness, fitness, and personal growth. No beginning, no end—just ongoing progress.</span>
+            </div>
+          </div>
+
+          <div class="symbolism-item">
+            <div class="icon-symbol">⚡</div>
+            <div class="text">
+              <strong>Movement & Energy</strong>
+              <span>Flowing curves convey dynamic motion, vitality, and the energy of an active lifestyle.</span>
+            </div>
+          </div>
+
+          <div class="symbolism-item">
+            <div class="icon-symbol">🎯</div>
+            <div class="text">
+              <strong>Fitness Evolution</strong>
+              <span>Each loop represents improvement—today's workout leads to tomorrow's strength.</span>
+            </div>
+          </div>
+
+          <div class="symbolism-item">
+            <div class="icon-symbol">☪️</div>
+            <div class="text">
+              <strong>Islamic Sacred Number</strong>
+              <span>Figure 8 is sacred in Islamic numerology. Two circles in perfect harmony represent balance and unity.</span>
+            </div>
+          </div>
+
+          <div class="symbolism-item">
+            <div class="icon-symbol">💎</div>
+            <div class="text">
+              <strong>Premium & Luxurious</strong>
+              <span>Infinity symbol evokes luxury (infinity pools, high-end brands) and timeless elegance.</span>
+            </div>
+          </div>
+
+          <div class="symbolism-item">
+            <div class="icon-symbol">🌊</div>
+            <div class="text">
+              <strong>Flow State</strong>
+              <span>Organic curves represent the flow state athletes achieve—effortless, continuous, graceful movement.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Design Principles -->
+    <div class="section">
+      <h2>🎨 Design Principles</h2>
+      <div class="design-principles">
+        <div class="principle">
+          <h3>Movement & Energy</h3>
+          <p>Flowing curves create sense of continuous motion and dynamic energy. Not static—alive with movement.</p>
+        </div>
+
+        <div class="principle">
+          <h3>Premium Execution</h3>
+          <p>Sophisticated stroke weight (5.5px), smooth gradient, and refined curves convey luxury and quality.</p>
+        </div>
+
+        <div class="principle">
+          <h3>Wellness Journey</h3>
+          <p>Infinity loop represents the ongoing fitness journey—continuous improvement, no destination, just progress.</p>
+        </div>
+
+        <div class="principle">
+          <h3>Islamic Geometry</h3>
+          <p>Figure 8 sacred number, two circles in harmony, subtle cultural reference without literal symbols.</p>
+        </div>
+
+        <div class="principle">
+          <h3>Scalability</h3>
+          <p>Simple flowing shape remains clear and recognizable from 16px favicon to 256px display size.</p>
+        </div>
+
+        <div class="principle">
+          <h3>Distinctiveness</h3>
+          <p>Organic curves and unique execution avoid generic infinity symbol look. Memorable and ownable.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Technical Details -->
+    <div class="section">
+      <h2>⚙️ Technical Specifications</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 24px;">
+        <div style="padding: 20px; background: #fafaf9; border-radius: 8px; border-left: 4px solid #FF6B4A;">
+          <h4 style="color: #1c1917; margin-bottom: 12px;">Icon Dimensions</h4>
+          <ul style="color: #57534e; line-height: 1.8; padding-left: 20px;">
+            <li>Main icon: 64×64px</li>
+            <li>Favicon: 32×32px (simplified)</li>
+            <li>Vertical logo: 160×160px</li>
+          </ul>
+        </div>
+
+        <div style="padding: 20px; background: #fafaf9; border-radius: 8px; border-left: 4px solid #E85D3A;">
+          <h4 style="color: #1c1917; margin-bottom: 12px;">Color Palette</h4>
+          <ul style="color: #57534e; line-height: 1.8; padding-left: 20px;">
+            <li>Sunset Coral: #FF6B4A</li>
+            <li>Terracotta: #E85D3A</li>
+            <li>Gradient: Coral → Terracotta → Coral</li>
+          </ul>
+        </div>
+
+        <div style="padding: 20px; background: #fafaf9; border-radius: 8px; border-left: 4px solid #FF6B4A;">
+          <h4 style="color: #1c1917; margin-bottom: 12px;">Style Details</h4>
+          <ul style="color: #57534e; line-height: 1.8; padding-left: 20px;">
+            <li>Stroke-based infinity loop</li>
+            <li>Premium stroke width: 5.5px</li>
+            <li>Organic Bezier curves</li>
+            <li>Rounded line caps & joins</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

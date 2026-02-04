@@ -1,0 +1,215 @@
+"use client";
+
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useLocale } from "next-intl";
+import { Gift, Loader2, Calendar } from "lucide-react";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { useToast } from "../hooks/use-toast";
+import { useGrantFreezeDays } from "../queries/use-freeze-packages";
+import type { UUID } from "../../types/api";
+import type { FreezeSource } from "../../types/freeze";
+
+const grantSchema = z.object({
+  days: z.number().min(1, "At least 1 day required").max(365, "Maximum 365 days"),
+  source: z.enum(["PROMOTIONAL", "COMPENSATION", "PURCHASED", "PLAN_INCLUDED"]),
+});
+
+type GrantFormData = z.infer<typeof grantSchema>;
+
+interface GrantFreezeDaysDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  subscriptionId: UUID;
+  memberId: UUID;
+  onSuccess?: () => void;
+}
+
+export function GrantFreezeDaysDialog({
+  open,
+  onOpenChange,
+  subscriptionId,
+  memberId,
+  onSuccess,
+}: GrantFreezeDaysDialogProps) {
+  const locale = useLocale();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const grantFreezeDays = useGrantFreezeDays();
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<GrantFormData>({
+    resolver: zodResolver(grantSchema),
+    defaultValues: {
+      days: 7,
+      source: "PROMOTIONAL",
+    },
+  });
+
+  const watchSource = watch("source");
+
+  const texts = {
+    title: locale === "ar" ? "منح أيام تجميد" : "Grant Freeze Days",
+    description:
+      locale === "ar"
+        ? "منح أيام تجميد مجانية للعضو (ترويجية، تعويضية، إلخ)"
+        : "Grant free freeze days to the member (promotional, compensation, etc.)",
+    days: locale === "ar" ? "عدد الأيام" : "Number of Days",
+    daysPlaceholder: locale === "ar" ? "أدخل عدد الأيام" : "Enter number of days",
+    source: locale === "ar" ? "المصدر" : "Source",
+    selectSource: locale === "ar" ? "اختر المصدر" : "Select source",
+    cancel: locale === "ar" ? "إلغاء" : "Cancel",
+    grant: locale === "ar" ? "منح" : "Grant",
+    granting: locale === "ar" ? "جاري المنح..." : "Granting...",
+    successTitle: locale === "ar" ? "تم المنح بنجاح" : "Days Granted",
+    successDescription:
+      locale === "ar"
+        ? "تم منح أيام التجميد بنجاح"
+        : "Freeze days have been granted successfully",
+    errorTitle: locale === "ar" ? "خطأ في المنح" : "Grant Error",
+    sources: {
+      PROMOTIONAL: locale === "ar" ? "ترويجي" : "Promotional",
+      COMPENSATION: locale === "ar" ? "تعويض" : "Compensation",
+      PURCHASED: locale === "ar" ? "مشتراة" : "Purchased",
+      PLAN_INCLUDED: locale === "ar" ? "مضمنة في الباقة" : "Included in Plan",
+    },
+  };
+
+  const onSubmit = async (data: GrantFormData) => {
+    setIsSubmitting(true);
+    try {
+      await grantFreezeDays.mutateAsync({
+        subscriptionId,
+        memberId,
+        data: {
+          days: data.days,
+          source: data.source as FreezeSource,
+        },
+      });
+
+      toast({
+        title: texts.successTitle,
+        description: texts.successDescription,
+      });
+
+      reset();
+      onOpenChange(false);
+      onSuccess?.();
+    } catch (error) {
+      toast({
+        title: texts.errorTitle,
+        description:
+          error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Gift className="h-5 w-5 text-green-500" />
+            {texts.title}
+          </DialogTitle>
+          <DialogDescription>{texts.description}</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Days */}
+          <div className="space-y-2">
+            <Label htmlFor="days" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              {texts.days}
+            </Label>
+            <Input
+              id="days"
+              type="number"
+              min={1}
+              max={365}
+              {...register("days", { valueAsNumber: true })}
+            />
+            {errors.days && (
+              <p className="text-sm text-destructive">{errors.days.message}</p>
+            )}
+          </div>
+
+          {/* Source */}
+          <div className="space-y-2">
+            <Label>{texts.source}</Label>
+            <Select
+              value={watchSource}
+              onValueChange={(value) =>
+                setValue("source", value as GrantFormData["source"])
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={texts.selectSource} />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(texts.sources).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              {texts.cancel}
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {texts.granting}
+                </>
+              ) : (
+                <>
+                  <Gift className="h-4 w-4 mr-2" />
+                  {texts.grant}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
