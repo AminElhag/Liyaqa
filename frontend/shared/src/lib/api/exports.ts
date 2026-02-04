@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { ExportRequest } from "../types/report";
+import type { ExportRequest } from "../../types/report";
 
 const EXPORTS_ENDPOINT = "api/exports";
 

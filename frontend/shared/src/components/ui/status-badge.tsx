@@ -1,5 +1,5 @@
 import { Badge } from "./badge";
-import { cn } from "../lib/utils";
+import { cn } from "../../lib/utils";
 
 // Status type mapping to badge variants and display text
 const statusConfig: Record<

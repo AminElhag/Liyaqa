@@ -3,7 +3,7 @@
  * Client-side utilities for Hijri date handling
  */
 
-import { HIJRI_MONTHS_AR, HIJRI_MONTHS_EN } from "../types/islamic-calendar";
+import { HIJRI_MONTHS_AR, HIJRI_MONTHS_EN } from "../../types/islamic-calendar";
 
 // Arabic numerals
 const ARABIC_NUMERALS = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];

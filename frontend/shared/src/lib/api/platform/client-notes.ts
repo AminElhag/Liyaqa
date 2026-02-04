@@ -1,11 +1,11 @@
 import { api } from "../client";
-import type { PageResponse } from "../types/api";
+import type { PageResponse } from "../../../types/api";
 import type {
   ClientNote,
   CreateClientNoteRequest,
   UpdateClientNoteRequest,
   ClientNoteQueryParams,
-} from "../types/platform/client-note";
+} from "../../../types/platform/client-note";
 
 /**
  * Get notes for a client organization

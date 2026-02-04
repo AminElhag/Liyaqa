@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { UUID } from "../types/api";
+import type { UUID } from "../../types/api";
 import type {
   Facility,
   FacilitySlot,
@@ -14,7 +14,7 @@ import type {
   BookingQueryParams,
   PaginatedFacilities,
   PaginatedBookings,
-} from "../types/facility";
+} from "../../types/facility";
 
 const FACILITIES_ENDPOINT = "api/facilities";
 

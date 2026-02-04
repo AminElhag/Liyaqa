@@ -3,7 +3,7 @@
 import { useLocale } from "next-intl";
 import { CalendarDays, Sparkles } from "lucide-react";
 import { cn } from "../../lib/utils";
-import { useAuthStore } from "../stores/auth-store";
+import { useAuthStore } from "../../stores/auth-store";
 import { ClubHealthScore } from "./club-health-score";
 
 interface WelcomeBannerProps {

@@ -1,10 +1,10 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   Notification,
   SendNotificationRequest,
   NotificationQueryParams,
-} from "../types/notification-admin";
+} from "../../types/notification-admin";
 
 const BASE_URL = "api/notifications";
 

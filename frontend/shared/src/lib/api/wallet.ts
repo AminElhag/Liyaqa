@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { UUID } from "../types/api";
+import type { UUID } from "../../types/api";
 import type {
   WalletBalance,
   WalletTransaction,
@@ -8,7 +8,7 @@ import type {
   AddCreditRequest,
   AdjustBalanceRequest,
   AutoPayResponse,
-} from "../types/wallet";
+} from "../../types/wallet";
 
 /**
  * Build query string for wallet transactions

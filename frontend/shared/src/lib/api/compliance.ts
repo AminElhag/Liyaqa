@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   ComplianceFramework,
   ComplianceRequirement,
@@ -16,7 +16,7 @@ import type {
   UpdateControlStatusRequest,
   UploadEvidenceRequest,
   GenerateReportRequest,
-} from "../types/compliance";
+} from "../../types/compliance";
 
 const BASE_URL = "api/compliance";
 

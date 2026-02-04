@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale } from "next-intl";
-import type { LocalizedText as LocalizedTextType } from "../types/api";
+import type { LocalizedText as LocalizedTextType } from "../../types/api";
 
 interface LocalizedTextProps {
   text: LocalizedTextType | string | null | undefined;

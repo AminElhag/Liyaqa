@@ -1,5 +1,5 @@
 import { api } from "../client";
-import type { PageResponse } from "../types/api";
+import type { PageResponse } from "../../../types/api";
 import type {
   SupportTicket,
   SupportTicketSummary,
@@ -11,7 +11,7 @@ import type {
   ChangeTicketStatusRequest,
   AssignTicketRequest,
   TicketQueryParams,
-} from "../types/platform/support-ticket";
+} from "../../../types/platform/support-ticket";
 
 const BASE_URL = "api/platform/support-tickets";
 

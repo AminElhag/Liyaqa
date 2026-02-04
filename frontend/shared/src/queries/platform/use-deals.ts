@@ -26,9 +26,9 @@ import {
   reassignDeal,
   getDealStats,
   getMyDealStats,
-} from "../lib/api/platform/deals";
-import { useToast } from "../hooks/use-toast";
-import type { PageResponse, UUID } from "../types/api";
+} from "../../lib/api/platform/deals";
+import { useToast } from "../../hooks/use-toast";
+import type { PageResponse, UUID } from "../../types/api";
 import type {
   Deal,
   DealSummary,
@@ -42,7 +42,7 @@ import type {
   ReassignDealRequest,
   DealQueryParams,
   DealStatus,
-} from "../types/platform";
+} from "../../types/platform";
 
 // Query keys
 export const dealKeys = {

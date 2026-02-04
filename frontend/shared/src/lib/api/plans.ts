@@ -1,14 +1,14 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID, LocalizedText, Money } from "../types/api";
-import type { MembershipPlan, TaxableFeeRequest, BillingPeriod, SubscriptionType } from "../types/member";
-import type { ContractType, ContractTerm, TerminationFeeType } from "../types/contract";
+import type { PaginatedResponse, UUID, LocalizedText, Money } from "../../types/api";
+import type { MembershipPlan, TaxableFeeRequest, BillingPeriod, SubscriptionType } from "../../types/member";
+import type { ContractType, ContractTerm, TerminationFeeType } from "../../types/contract";
 
 const PLANS_ENDPOINT = "api/membership-plans";
 
 /**
  * Re-export BillingPeriod for convenience
  */
-export type { BillingPeriod } from "../types/member";
+export type { BillingPeriod } from "../../types/member";
 
 /**
  * Create plan request

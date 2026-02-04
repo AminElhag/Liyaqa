@@ -1,10 +1,10 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   Booking,
   BookingQueryParams,
   CreateBookingRequest,
-} from "../types/scheduling";
+} from "../../types/scheduling";
 
 /**
  * Get paginated bookings

@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   Agreement,
   MemberAgreement,
@@ -8,7 +8,7 @@ import type {
   UpdateAgreementRequest,
   SignAgreementRequest,
   AgreementQueryParams,
-} from "../types/agreement";
+} from "../../types/agreement";
 
 const AGREEMENTS_ENDPOINT = "api/agreements";
 

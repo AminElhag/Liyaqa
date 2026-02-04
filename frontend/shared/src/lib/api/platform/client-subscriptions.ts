@@ -1,5 +1,5 @@
 import { api } from "../client";
-import type { PageResponse } from "../types/api";
+import type { PageResponse } from "../../../types/api";
 import type {
   ClientSubscription,
   ClientSubscriptionSummary,
@@ -9,7 +9,7 @@ import type {
   ChangeSubscriptionPlanRequest,
   RenewSubscriptionRequest,
   ClientSubscriptionQueryParams,
-} from "../types/platform";
+} from "../../../types/platform";
 
 const BASE_URL = "api/platform/subscriptions";
 

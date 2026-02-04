@@ -2,7 +2,7 @@ import { api } from "./client";
 import type {
   BrandingConfig,
   UpdateBrandingRequest,
-} from "../types/branding";
+} from "../../types/branding";
 
 /**
  * Get branding configuration for the current tenant.

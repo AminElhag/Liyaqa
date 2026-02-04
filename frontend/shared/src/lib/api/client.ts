@@ -1,5 +1,5 @@
 import ky, { type Options, type KyInstance, HTTPError } from "ky";
-import type { ApiError } from "../types/api";
+import type { ApiError } from "../../types/api";
 
 // Storage keys
 const ACCESS_TOKEN_KEY = "accessToken";

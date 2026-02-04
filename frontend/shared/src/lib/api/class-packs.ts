@@ -1,12 +1,12 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   ClassPack,
   MemberClassPackBalance,
   CreateClassPackRequest,
   UpdateClassPackRequest,
   ClassPackStatus,
-} from "../types/scheduling";
+} from "../../types/scheduling";
 
 /**
  * Get paginated class packs

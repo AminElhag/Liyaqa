@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   GymClass,
   ClassSession,
@@ -7,7 +7,7 @@ import type {
   BookingOptionsResponse,
   BookingPaymentSource,
   MemberClassPackBalance,
-} from "../types/scheduling";
+} from "../../types/scheduling";
 
 /**
  * Get active classes available for members

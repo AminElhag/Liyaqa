@@ -6,7 +6,7 @@ import type {
   AlertSeverity,
   AlertStatus,
   AlertType,
-} from "../types/platform/alerts";
+} from "../../../types/platform/alerts";
 
 const BASE_URL = "api/platform/alerts";
 

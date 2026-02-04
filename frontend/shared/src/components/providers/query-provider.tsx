@@ -6,7 +6,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { getQueryClient } from "../../lib/query-client";
 import { SessionExpiredError } from "../../lib/api/client";
-import { useAuthStore } from "../stores/auth-store";
+import { useAuthStore } from "../../stores/auth-store";
 
 interface QueryProviderProps {
   children: React.ReactNode;

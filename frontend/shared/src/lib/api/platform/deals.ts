@@ -1,5 +1,5 @@
 import { api } from "../client";
-import type { PageResponse } from "../types/api";
+import type { PageResponse } from "../../../types/api";
 import type {
   Deal,
   DealSummary,
@@ -14,7 +14,7 @@ import type {
   DealQueryParams,
   DealStatus,
   DealSource,
-} from "../types/platform";
+} from "../../../types/platform";
 
 const BASE_URL = "api/platform/deals";
 

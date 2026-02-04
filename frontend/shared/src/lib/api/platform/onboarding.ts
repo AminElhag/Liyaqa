@@ -3,7 +3,7 @@ import type {
   ClientOnboarding,
   OnboardingOverview,
   OnboardingSummary,
-} from "../types/platform/onboarding";
+} from "../../../types/platform/onboarding";
 
 const BASE_URL = "api/platform/onboarding";
 

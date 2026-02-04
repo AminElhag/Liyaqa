@@ -1,2 +1,2 @@
-export { QueryProvider } from "../ui/query-provider";
-export { LocaleProvider } from "../ui/locale-provider";
+export { QueryProvider } from "./query-provider";
+export { LocaleProvider } from "./locale-provider";

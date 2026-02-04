@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { LocalizedText } from "../types/api";
+import type { LocalizedText } from "../../types/api";
 
 /**
  * Dashboard summary response

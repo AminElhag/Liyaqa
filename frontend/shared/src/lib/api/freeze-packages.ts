@@ -1,6 +1,6 @@
 import { api } from "./client";
 import { HTTPError } from "ky";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   FreezePackage,
   FreezeBalance,
@@ -13,7 +13,7 @@ import type {
   GrantFreezeDaysRequest,
   FreezePackageQueryParams,
   FreezeHistoryQueryParams,
-} from "../types/freeze";
+} from "../../types/freeze";
 
 const FREEZE_PACKAGES_ENDPOINT = "api/freeze-packages";
 

@@ -21,7 +21,7 @@ import {
   getAlertsByType,
   getAlertsBySeverity,
   type PaginatedAlerts,
-} from "../lib/api/platform/alerts";
+} from "../../lib/api/platform/alerts";
 import type {
   PlatformAlert,
   AlertStatistics,
@@ -29,7 +29,7 @@ import type {
   AlertSeverity,
   AlertStatus,
   AlertType,
-} from "../types/platform/alerts";
+} from "../../types/platform/alerts";
 
 // Query keys
 export const alertKeys = {

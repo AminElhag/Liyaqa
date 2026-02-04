@@ -16,8 +16,8 @@ import {
   assignTicket,
   getTicketMessages,
   addTicketMessage,
-} from "../lib/api/platform/support-tickets";
-import type { PageResponse, UUID } from "../types/api";
+} from "../../lib/api/platform/support-tickets";
+import type { PageResponse, UUID } from "../../types/api";
 import type {
   SupportTicket,
   SupportTicketSummary,
@@ -29,7 +29,7 @@ import type {
   ChangeTicketStatusRequest,
   AssignTicketRequest,
   TicketQueryParams,
-} from "../types/platform/support-ticket";
+} from "../../types/platform/support-ticket";
 
 // Query keys
 export const supportTicketKeys = {

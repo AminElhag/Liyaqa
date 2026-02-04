@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   ReferralConfig,
   ReferralCode,
@@ -12,7 +12,7 @@ import type {
   RewardStatus,
   ReferralCodeValidation,
   ReferralTrackResponse,
-} from "../types/referral";
+} from "../../types/referral";
 
 export interface ReferralQueryParams {
   page?: number;

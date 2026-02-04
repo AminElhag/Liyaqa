@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   Department,
   DepartmentTreeNode,
@@ -8,7 +8,7 @@ import type {
   SetManagerRequest,
   DepartmentQueryParams,
   DepartmentStats,
-} from "../types/employee";
+} from "../../types/employee";
 
 const BASE_URL = "api/departments";
 

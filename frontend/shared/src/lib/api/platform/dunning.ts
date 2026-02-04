@@ -4,7 +4,7 @@ import type {
   DunningStatistics,
   DunningFilters,
   DunningSequenceStatus,
-} from "../types/platform/dunning";
+} from "../../../types/platform/dunning";
 
 const BASE_URL = "api/platform/dunning";
 

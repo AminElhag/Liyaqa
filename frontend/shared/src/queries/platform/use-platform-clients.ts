@@ -17,10 +17,10 @@ import {
   setupAdmin,
   getClientClubs,
   createClientClub,
-} from "../lib/api/platform/clients";
-import { useToast } from "../hooks/use-toast";
-import type { ClientHealth } from "../types/platform/client-health";
-import type { PageResponse, UUID } from "../types/api";
+} from "../../lib/api/platform/clients";
+import { useToast } from "../../hooks/use-toast";
+import type { ClientHealth } from "../../types/platform/client-health";
+import type { PageResponse, UUID } from "../../types/api";
 import type {
   Client,
   ClientClub,
@@ -31,7 +31,7 @@ import type {
   SetupAdminRequest,
   CreateClientClubRequest,
   ClientQueryParams,
-} from "../types/platform";
+} from "../../types/platform";
 
 // Query keys
 export const platformClientKeys = {

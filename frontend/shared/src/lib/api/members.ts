@@ -1,11 +1,11 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   Member,
   CreateMemberRequest,
   UpdateMemberRequest,
   MemberQueryParams,
-} from "../types/member";
+} from "../../types/member";
 
 const MEMBERS_ENDPOINT = "api/members";
 

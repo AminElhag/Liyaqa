@@ -14,7 +14,7 @@ import {
   getPlatformHealth,
   getSupportStats,
   type DateRangeParams,
-} from "../lib/api/platform/dashboard";
+} from "../../lib/api/platform/dashboard";
 import type {
   PlatformDashboard,
   PlatformSummary,
@@ -27,7 +27,7 @@ import type {
   RecentActivity,
   PlatformHealth,
   SupportTicketStats,
-} from "../types/platform";
+} from "../../types/platform";
 
 // Query keys
 export const platformDashboardKeys = {

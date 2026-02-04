@@ -1,10 +1,10 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID, ListQueryParams } from "../types/api";
+import type { PaginatedResponse, UUID, ListQueryParams } from "../../types/api";
 import type {
   Subscription,
   SubscriptionStatus,
   CreateSubscriptionRequest,
-} from "../types/member";
+} from "../../types/member";
 
 const SUBSCRIPTIONS_ENDPOINT = "api/subscriptions";
 

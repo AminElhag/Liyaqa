@@ -63,7 +63,7 @@ import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import { useUIStore } from "@liyaqa/shared/stores/ui-store";
 import { getInitials } from "@liyaqa/shared/utils";
 import { NavGroup, type NavGroupConfig, type NavItem } from "./nav-group";
-import { useCommandPaletteSafe } from "@liyaqa/shared/components/command-palette";
+import { useCommandPaletteSafe } from "@/components/command-palette";
 import { BottomNav } from "@/components/mobile";
 
 // Admin navigation organized into groups (MD3 Redesign)

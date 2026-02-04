@@ -1,11 +1,11 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   Organization,
   OrganizationQueryParams,
   CreateOrganizationRequest,
   UpdateOrganizationRequest,
-} from "../types/organization";
+} from "../../types/organization";
 
 /**
  * Get paginated organizations

@@ -24,13 +24,13 @@ import {
   getDunningByStatus,
   getRevenueAtRisk,
   type PaginatedDunning,
-} from "../lib/api/platform/dunning";
+} from "../../lib/api/platform/dunning";
 import type {
   DunningSequence,
   DunningStatistics,
   DunningFilters,
   DunningSequenceStatus,
-} from "../types/platform/dunning";
+} from "../../types/platform/dunning";
 
 // Query keys
 export const dunningKeys = {

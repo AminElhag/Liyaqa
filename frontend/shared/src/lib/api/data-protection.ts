@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   DataProcessingActivity,
   ConsentRecord,
@@ -23,7 +23,7 @@ import type {
   ResolveBreachRequest,
   ResponseMethod,
   VerificationMethod,
-} from "../types/data-protection";
+} from "../../types/data-protection";
 
 const BASE_URL = "api/data-protection";
 

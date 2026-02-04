@@ -1,5 +1,5 @@
 import { api } from "../client";
-import type { PageResponse } from "../types/api";
+import type { PageResponse } from "../../../types/api";
 import type {
   ClientInvoice,
   ClientInvoiceSummary,
@@ -10,7 +10,7 @@ import type {
   RecordClientPaymentRequest,
   UpdateClientInvoiceRequest,
   ClientInvoiceQueryParams,
-} from "../types/platform";
+} from "../../../types/platform";
 
 const BASE_URL = "api/platform/invoices";
 

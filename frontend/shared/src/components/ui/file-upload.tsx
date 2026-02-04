@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useCallback, useRef, useState } from "react";
 import { Upload, X, FileIcon } from "lucide-react";
-import { cn } from "../lib/utils";
+import { cn } from "../../lib/utils";
 import { Button } from "./button";
 
 interface FileUploadProps {

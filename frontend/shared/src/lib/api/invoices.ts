@@ -1,13 +1,13 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   Invoice,
   InvoiceQueryParams,
   CreateInvoiceRequest,
   UpdateInvoiceRequest,
   PayInvoiceRequest,
-} from "../types/billing";
-import type { BulkOperationResult } from "../types/attendance";
+} from "../../types/billing";
+import type { BulkOperationResult } from "../../types/attendance";
 
 /**
  * Get paginated invoices

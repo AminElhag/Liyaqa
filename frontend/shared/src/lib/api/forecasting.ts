@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { UUID, PaginatedResponse } from "../types/api";
+import type { UUID, PaginatedResponse } from "../../types/api";
 import type {
   ForecastModel,
   Forecast,
@@ -22,7 +22,7 @@ import type {
   ScenarioQueryParams,
   PatternType,
   MetricType,
-} from "../types/forecasting";
+} from "../../types/forecasting";
 
 const ENDPOINT = "api/forecasting";
 

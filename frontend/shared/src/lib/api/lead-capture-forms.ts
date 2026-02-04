@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse } from "../types/api";
+import type { PaginatedResponse } from "../../types/api";
 import type {
   LeadCaptureForm,
   PublicForm,
@@ -9,7 +9,7 @@ import type {
   FormSubmissionResponse,
   EmbedCodeResponse,
   LeadCaptureFormQueryParams,
-} from "../types/lead-capture-form";
+} from "../../types/lead-capture-form";
 
 const ENDPOINT = "api/lead-capture-forms";
 const PUBLIC_ENDPOINT = "api/public/forms";

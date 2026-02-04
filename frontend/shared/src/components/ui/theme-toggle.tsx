@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./dropdown-menu";
-import { cn } from "../lib/utils";
+import { cn } from "../../lib/utils";
 
 interface ThemeToggleProps {
   className?: string;

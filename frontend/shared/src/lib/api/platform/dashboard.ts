@@ -11,7 +11,7 @@ import type {
   RecentActivity,
   PlatformHealth,
   SupportTicketStats,
-} from "../types/platform";
+} from "../../../types/platform";
 
 const BASE_URL = "api/platform/dashboard";
 

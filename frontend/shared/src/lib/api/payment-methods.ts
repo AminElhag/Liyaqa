@@ -3,7 +3,7 @@ import type {
   PaymentMethod,
   AddPaymentMethodRequest,
   UpdatePaymentMethodRequest,
-} from "../types/payment-method";
+} from "../../types/payment-method";
 
 const ENDPOINT = "api/me/payment-methods";
 

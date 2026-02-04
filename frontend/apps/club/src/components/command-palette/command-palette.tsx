@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import { Search, Command as CommandIcon, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@liyaqa/shared/utils";
 import { useCommandPalette } from "./command-palette-provider";
 import { CommandItem, CommandGroup } from "./command-item";
 import {

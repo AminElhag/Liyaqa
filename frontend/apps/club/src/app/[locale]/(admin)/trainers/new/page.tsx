@@ -8,7 +8,7 @@ import { Button } from "@liyaqa/shared/components/ui/button";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import { TrainerForm, type TrainerFormData } from "@/components/forms/trainer-form";
 import { useCreateTrainer } from "@liyaqa/shared/queries/use-trainers";
-import { useTenantStore } from "@/stores";
+import { useTenantStore } from "@liyaqa/shared/stores";
 import type { CreateTrainerRequest } from "@liyaqa/shared/types/trainer";
 
 export default function NewTrainerPage() {

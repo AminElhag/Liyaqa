@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   TrainerClientResponse,
   TrainerEarningsResponse,
@@ -21,7 +21,7 @@ import type {
   TrainerNotificationsQueryParams,
   UpcomingSessionsQueryParams,
   UpcomingSessionResponse,
-} from "../types/trainer-portal";
+} from "../../types/trainer-portal";
 
 const TRAINER_PORTAL_ENDPOINT = "api/trainer-portal";
 

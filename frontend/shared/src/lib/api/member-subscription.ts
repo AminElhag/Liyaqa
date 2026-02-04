@@ -12,9 +12,9 @@ import {
   ExitSurvey,
   SignContractRequest,
   ScheduledChange,
-} from "../types/contract";
-import { Subscription, MembershipPlan } from "../types/member";
-import { UUID } from "../types/api";
+} from "../../types/contract";
+import { Subscription, MembershipPlan } from "../../types/member";
+import { UUID } from "../../types/api";
 
 // ==========================================
 // MEMBER SUBSCRIPTION SELF-SERVICE API

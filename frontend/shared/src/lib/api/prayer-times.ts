@@ -7,7 +7,7 @@ import type {
   SupportedCitiesResponse,
   CalculationMethodInfo,
   UpdatePrayerSettingsRequest,
-} from "../types/prayer-time";
+} from "../../types/prayer-time";
 
 const BASE_URL = "api/prayer-times";
 

@@ -1,5 +1,5 @@
 import * as z from "zod";
-import type { LeadSource, LeadPriority, LeadActivityType } from "../types/lead";
+import type { LeadSource, LeadPriority, LeadActivityType } from "../../types/lead";
 
 export const createLeadSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(100),

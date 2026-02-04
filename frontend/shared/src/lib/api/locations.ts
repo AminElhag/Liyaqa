@@ -1,11 +1,11 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   Location,
   LocationQueryParams,
   CreateLocationRequest,
   UpdateLocationRequest,
-} from "../types/organization";
+} from "../../types/organization";
 
 /**
  * Get paginated locations

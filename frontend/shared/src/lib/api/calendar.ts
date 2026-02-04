@@ -12,7 +12,7 @@ import type {
   HijriMonthInfoResponse,
   RamadanInfoResponse,
   HijriMonthName,
-} from "../types/islamic-calendar";
+} from "../../types/islamic-calendar";
 
 const BASE_URL = "api/calendar";
 

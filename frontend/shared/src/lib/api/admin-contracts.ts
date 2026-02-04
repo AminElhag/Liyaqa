@@ -14,8 +14,8 @@ import {
   CreatePricingTierRequest,
   CreateContractRequest,
   AdminContractsFilter,
-} from "../types/contract";
-import { UUID, PaginatedResponse as Page } from "../types/api";
+} from "../../types/contract";
+import { UUID, PaginatedResponse as Page } from "../../types/api";
 
 // ==========================================
 // CONTRACT MANAGEMENT

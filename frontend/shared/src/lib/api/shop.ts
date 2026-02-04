@@ -1,6 +1,6 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
-import type { Product, ProductCategory } from "../types/product";
+import type { PaginatedResponse, UUID } from "../../types/api";
+import type { Product, ProductCategory } from "../../types/product";
 import type {
   Cart,
   Order,
@@ -9,7 +9,7 @@ import type {
   UpdateCartItemRequest,
   CheckoutRequest,
   OrderQueryParams,
-} from "../types/shop";
+} from "../../types/shop";
 
 const SHOP_ENDPOINT = "api/shop";
 

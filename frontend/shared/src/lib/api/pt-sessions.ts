@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   PTSession,
   PTSessionSummary,
@@ -9,7 +9,7 @@ import type {
   CompletePTSessionRequest,
   PTSessionQueryParams,
   AvailableSlot,
-} from "../types/pt-session";
+} from "../../types/pt-session";
 
 const PT_SESSIONS_ENDPOINT = "api/pt-sessions";
 

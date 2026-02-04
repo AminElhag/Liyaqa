@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   Lead,
   LeadActivity,
@@ -16,7 +16,7 @@ import type {
   PipelineStats,
   SourceStats,
   ActivityStats,
-} from "../types/lead";
+} from "../../types/lead";
 
 export interface LeadQueryParams {
   page?: number;

@@ -13,14 +13,14 @@ import {
   updateClientNote,
   deleteClientNote,
   toggleClientNotePin,
-} from "../lib/api/platform/client-notes";
-import type { PageResponse, UUID } from "../types/api";
+} from "../../lib/api/platform/client-notes";
+import type { PageResponse, UUID } from "../../types/api";
 import type {
   ClientNote,
   CreateClientNoteRequest,
   UpdateClientNoteRequest,
   ClientNoteQueryParams,
-} from "../types/platform/client-note";
+} from "../../types/platform/client-note";
 
 // Query keys
 export const clientNoteKeys = {

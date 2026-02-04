@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { UUID } from "../types/api";
+import type { UUID } from "../../types/api";
 import type {
   BulkOperationResponse,
   BulkMemberStatusRequest,
@@ -12,7 +12,7 @@ import type {
   BulkCheckOutRequest,
   BulkCreateBookingsRequest,
   BulkCancelBookingsRequest,
-} from "../types/bulk";
+} from "../../types/bulk";
 
 // Member bulk operations
 export async function bulkMemberStatus(

@@ -1,6 +1,6 @@
 import { api } from "./client";
-import type { UUID } from "../types/api";
-import type { FileMetadata, FileUploadResponse, FileCategory } from "../types/files";
+import type { UUID } from "../../types/api";
+import type { FileMetadata, FileUploadResponse, FileCategory } from "../../types/files";
 
 const BASE_URL = "api/files";
 

@@ -17,8 +17,8 @@ import {
   endImpersonation,
   getActiveSessions,
   forceEndSession,
-} from "../lib/api/platform/support";
-import type { PageResponse, UUID } from "../types/api";
+} from "../../lib/api/platform/support";
+import type { PageResponse, UUID } from "../../types/api";
 import type {
   ClientSupportOverview,
   ClientMemberSummary,
@@ -32,7 +32,7 @@ import type {
   SupportSubscriptionQueryParams,
   SupportInvoiceQueryParams,
   SupportUserQueryParams,
-} from "../types/platform";
+} from "../../types/platform";
 
 // Query keys
 export const platformSupportKeys = {

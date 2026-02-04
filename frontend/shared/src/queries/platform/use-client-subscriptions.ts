@@ -18,8 +18,8 @@ import {
   changeSubscriptionPlan,
   renewSubscription,
   getSubscriptionStats,
-} from "../lib/api/platform/client-subscriptions";
-import type { PageResponse, UUID } from "../types/api";
+} from "../../lib/api/platform/client-subscriptions";
+import type { PageResponse, UUID } from "../../types/api";
 import type {
   ClientSubscription,
   ClientSubscriptionSummary,
@@ -29,7 +29,7 @@ import type {
   ChangeSubscriptionPlanRequest,
   RenewSubscriptionRequest,
   ClientSubscriptionQueryParams,
-} from "../types/platform";
+} from "../../types/platform";
 
 // Query keys
 export const clientSubscriptionKeys = {

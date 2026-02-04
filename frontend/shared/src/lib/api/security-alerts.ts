@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { SecurityAlertResponse, AlertCountResponse } from "../types/security";
+import type { SecurityAlertResponse, AlertCountResponse } from "../../types/security";
 
 /**
  * Fetches security alerts for the authenticated user

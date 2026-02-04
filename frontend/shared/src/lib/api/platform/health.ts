@@ -1,5 +1,5 @@
 import { api } from "../client";
-import type { UUID } from "../types/api";
+import type { UUID } from "../../../types/api";
 
 const BASE_URL = "api/platform/health";
 

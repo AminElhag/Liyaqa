@@ -15,8 +15,8 @@ import type {
   MobilePageResponse,
   MessageResponse,
   AvailableSession,
-} from "../types/member-portal";
-import type { InvoiceStatus } from "../types/billing";
+} from "../../types/member-portal";
+import type { InvoiceStatus } from "../../types/billing";
 
 /**
  * Member Portal API client

@@ -1,12 +1,12 @@
 import { api } from "../client";
-import type { PageResponse } from "../types/api";
+import type { PageResponse } from "../../../types/api";
 import type {
   ClientPlan,
   ClientPlanSummary,
   CreateClientPlanRequest,
   UpdateClientPlanRequest,
   ClientPlanQueryParams,
-} from "../types/platform";
+} from "../../../types/platform";
 
 const BASE_URL = "api/platform/plans";
 

@@ -9,7 +9,7 @@ import type {
   CreateGenderScheduleRequest,
   UpdateGenderScheduleRequest,
   AccessGender,
-} from "../types/gender-policy";
+} from "../../types/gender-policy";
 
 const BASE_URL = "api/gender-policies";
 

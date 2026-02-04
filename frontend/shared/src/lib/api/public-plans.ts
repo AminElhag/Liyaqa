@@ -1,5 +1,5 @@
 import ky from "ky";
-import type { PublicClientPlan } from "../types/public-plans";
+import type { PublicClientPlan } from "../../types/public-plans";
 
 /**
  * Get the API base URL for public endpoints.

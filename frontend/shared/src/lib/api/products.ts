@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   Product,
   ProductCategory,
@@ -13,7 +13,7 @@ import type {
   AdjustStockRequest,
   ProductCategoryQueryParams,
   ProductQueryParams,
-} from "../types/product";
+} from "../../types/product";
 
 const PRODUCTS_ENDPOINT = "api/products";
 const CATEGORIES_ENDPOINT = "api/product-categories";

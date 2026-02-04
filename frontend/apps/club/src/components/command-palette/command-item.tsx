@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@liyaqa/shared/utils";
 import type { Command } from "@/lib/commands";
 
 interface CommandItemProps {

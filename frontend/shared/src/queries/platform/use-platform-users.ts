@@ -9,14 +9,14 @@ import {
   changePlatformUserStatus,
   resetPlatformUserPassword,
   deletePlatformUser,
-} from "../lib/api/platform/platform-users";
+} from "../../lib/api/platform/platform-users";
 import type {
   PlatformUserQueryParams,
   CreatePlatformUserRequest,
   UpdatePlatformUserRequest,
   ChangeUserStatusRequest,
   ResetUserPasswordRequest,
-} from "../types/platform/platform-user";
+} from "../../types/platform/platform-user";
 
 /**
  * Query keys for platform users.

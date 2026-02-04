@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   SecurityEvent,
   SecurityStats,
@@ -7,7 +7,7 @@ import type {
   InvestigateEventRequest,
   SecurityEventType,
   SecuritySeverity,
-} from "../types/security-event";
+} from "../../types/security-event";
 
 const BASE_URL = "api/security-events";
 

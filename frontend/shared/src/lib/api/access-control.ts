@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { UUID, PaginatedResponse } from "../types/api";
+import type { UUID, PaginatedResponse } from "../../types/api";
 import type {
   AccessZone,
   AccessDevice,
@@ -18,7 +18,7 @@ import type {
   UpdateCardRequest,
   EnrollBiometricRequest,
   ProcessAccessRequest,
-} from "../types/access-control";
+} from "../../types/access-control";
 
 const ENDPOINT = "api/access-control";
 

@@ -21,7 +21,7 @@ import {
   type HealthHistoryPoint,
   type RiskLevel,
   type HealthTrend,
-} from "../lib/api/platform/health";
+} from "../../lib/api/platform/health";
 
 // Query keys
 export const healthKeys = {

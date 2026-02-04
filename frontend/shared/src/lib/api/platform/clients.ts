@@ -1,5 +1,5 @@
 import { api } from "../client";
-import type { PageResponse } from "../types/api";
+import type { PageResponse } from "../../../types/api";
 import type {
   Client,
   ClientClub,
@@ -10,8 +10,8 @@ import type {
   SetupAdminRequest,
   CreateClientClubRequest,
   ClientQueryParams,
-} from "../types/platform";
-import type { ClientHealth } from "../types/platform/client-health";
+} from "../../../types/platform";
+import type { ClientHealth } from "../../../types/platform/client-health";
 
 const BASE_URL = "api/platform/clients";
 

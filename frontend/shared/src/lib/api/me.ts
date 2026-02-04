@@ -1,9 +1,9 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
-import type { Member, Subscription, UpdateMemberRequest } from "../types/member";
-import type { Booking, ClassSession, BookingQueryParams } from "../types/scheduling";
-import type { Invoice, InvoiceQueryParams } from "../types/billing";
-import type { AttendanceRecord } from "../types/attendance";
+import type { PaginatedResponse, UUID } from "../../types/api";
+import type { Member, Subscription, UpdateMemberRequest } from "../../types/member";
+import type { Booking, ClassSession, BookingQueryParams } from "../../types/scheduling";
+import type { Invoice, InvoiceQueryParams } from "../../types/billing";
+import type { AttendanceRecord } from "../../types/attendance";
 
 /**
  * Member summary (from mobile home endpoint)

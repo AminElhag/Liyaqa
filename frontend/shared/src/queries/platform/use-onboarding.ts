@@ -16,12 +16,12 @@ import {
   skipOnboardingStep,
   resetOnboarding,
   sendOnboardingReminder,
-} from "../lib/api/platform/onboarding";
+} from "../../lib/api/platform/onboarding";
 import type {
   ClientOnboarding,
   OnboardingOverview,
   OnboardingSummary,
-} from "../types/platform/onboarding";
+} from "../../types/platform/onboarding";
 
 // Query keys
 export const onboardingKeys = {

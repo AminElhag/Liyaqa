@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   Trainer,
   TrainerSummary,
@@ -12,7 +12,7 @@ import type {
   TrainerQueryParams,
   Availability,
   AvailableTimeSlot,
-} from "../types/trainer";
+} from "../../types/trainer";
 
 const TRAINERS_ENDPOINT = "api/trainers";
 

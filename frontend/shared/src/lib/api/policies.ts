@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   SecurityPolicy,
   PolicyAcknowledgement,
@@ -8,7 +8,7 @@ import type {
   UpdatePolicyRequest,
   AcknowledgePolicyRequest,
   PolicyType,
-} from "../types/policy";
+} from "../../types/policy";
 
 const BASE_URL = "api/policies";
 

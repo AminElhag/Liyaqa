@@ -4,7 +4,7 @@ import type {
   OAuthLoginResponse,
   OAuthCallbackParams,
   LinkOAuthAccountRequest,
-} from "../types/oauth";
+} from "../../types/oauth";
 
 /**
  * OAuth API functions

@@ -22,8 +22,8 @@ import {
   updateClub,
   activateClub,
   suspendClub,
-} from "../lib/api/platform/club-detail";
-import type { PageResponse, UUID } from "../types/api";
+} from "../../lib/api/platform/club-detail";
+import type { PageResponse, UUID } from "../../types/api";
 import type {
   PlatformClubDetail,
   ClubUser,
@@ -39,7 +39,7 @@ import type {
   ClubLocation,
   ClubMembershipPlan,
   UpdateClubRequest,
-} from "../types/platform";
+} from "../../types/platform";
 
 // ============================================
 // Query Keys

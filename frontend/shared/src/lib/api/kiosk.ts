@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { UUID, PaginatedResponse } from "../types/api";
+import type { UUID, PaginatedResponse } from "../../types/api";
 import type {
   KioskDevice,
   KioskSession,
@@ -15,7 +15,7 @@ import type {
   FailTransactionRequest,
   CreateSignatureRequest,
   CheckInRequest,
-} from "../types/kiosk";
+} from "../../types/kiosk";
 
 const ENDPOINT = "api/kiosk";
 

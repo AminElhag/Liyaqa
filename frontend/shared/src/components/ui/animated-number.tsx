@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { motion, useSpring, useTransform, type MotionValue } from "framer-motion";
-import { cn } from "../lib/utils";
+import { cn } from "../../lib/utils";
 
 interface AnimatedNumberProps {
   /** The target number to animate to */

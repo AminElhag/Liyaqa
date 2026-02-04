@@ -8,8 +8,8 @@ import {
   getClientAuditLogs,
   type AuditLog,
   type AuditLogQueryParams,
-} from "../lib/api/platform/client-audit";
-import type { PageResponse, UUID } from "../types/api";
+} from "../../lib/api/platform/client-audit";
+import type { PageResponse, UUID } from "../../types/api";
 
 // Query keys
 export const clientAuditKeys = {

@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { UUID, PaginatedResponse } from "../types/api";
+import type { UUID, PaginatedResponse } from "../../types/api";
 import type {
   EquipmentProvider,
   EquipmentProviderConfig,
@@ -17,7 +17,7 @@ import type {
   CreateWorkoutRequest,
   StartSyncRequest,
   EquipmentType,
-} from "../types/equipment";
+} from "../../types/equipment";
 
 const ENDPOINT = "api/equipment";
 

@@ -15,15 +15,15 @@ import {
   activateClientPlan,
   deactivateClientPlan,
   deleteClientPlan,
-} from "../lib/api/platform/client-plans";
-import type { PageResponse, UUID } from "../types/api";
+} from "../../lib/api/platform/client-plans";
+import type { PageResponse, UUID } from "../../types/api";
 import type {
   ClientPlan,
   ClientPlanSummary,
   CreateClientPlanRequest,
   UpdateClientPlanRequest,
   ClientPlanQueryParams,
-} from "../types/platform";
+} from "../../types/platform";
 
 // Query keys
 export const clientPlanKeys = {

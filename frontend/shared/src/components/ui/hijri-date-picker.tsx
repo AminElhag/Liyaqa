@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { useLocale } from "next-intl";
-import { cn } from "../lib/utils";
-import { useConvertToHijri } from "../queries/use-calendar";
+import { cn } from "../../lib/utils";
+import { useConvertToHijri } from "../../queries/use-calendar";
 
 const TEXTS = {
   en: {

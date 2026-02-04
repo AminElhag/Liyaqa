@@ -18,7 +18,7 @@ import type {
   TamaraOrderStatusResponse,
   TamaraAuthorizeResponse,
   TamaraCaptureResponse,
-} from "../types/saudi-payments";
+} from "../../types/saudi-payments";
 
 const STC_PAY_BASE = "api/payments/stcpay";
 const SADAD_BASE = "api/payments/sadad";

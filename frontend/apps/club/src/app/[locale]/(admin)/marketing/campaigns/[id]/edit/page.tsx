@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter, useParams } from 'next/navigation';
 import { useCampaign, useUpdateCampaign } from '@liyaqa/shared/queries/use-marketing';
 import { PageHeader } from '@liyaqa/shared/components/page-header';
-import { CampaignStepEditor } from '@liyaqa/shared/components/admin/campaign-step-editor';
+import { CampaignStepEditor } from '@/components/admin/campaign-step-editor';
 import { Button } from '@liyaqa/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@liyaqa/shared/components/ui/card';
 import { Input } from '@liyaqa/shared/components/ui/input';

@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   AttendanceRecord,
   AttendanceQueryParams,
@@ -8,7 +8,7 @@ import type {
   BulkCheckInRequest,
   BulkCheckOutRequest,
   BulkOperationResult,
-} from "../types/attendance";
+} from "../../types/attendance";
 
 /**
  * Get paginated attendance records

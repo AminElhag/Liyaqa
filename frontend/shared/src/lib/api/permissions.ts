@@ -6,7 +6,7 @@ import type {
   GrantPermissionsRequest,
   RevokePermissionsRequest,
   SetPermissionsRequest,
-} from "../types/permission";
+} from "../../types/permission";
 
 const BASE_URL = "api/permissions";
 

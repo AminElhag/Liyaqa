@@ -14,13 +14,13 @@ import {
   activateClubAgreement,
   deactivateClubAgreement,
   deleteClubAgreement,
-} from "../lib/api/platform/club-agreements";
-import type { PaginatedResponse, UUID } from "../types/api";
+} from "../../lib/api/platform/club-agreements";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   Agreement,
   CreateAgreementRequest,
   UpdateAgreementRequest,
-} from "../types/agreement";
+} from "../../types/agreement";
 
 // Query keys for platform club agreements
 export const clubAgreementKeys = {

@@ -1,7 +1,7 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID, LocalizedText } from "../types/api";
-import type { User, UserRole } from "../types/auth";
-import type { LocalizedTextInput } from "../types/member";
+import type { PaginatedResponse, UUID, LocalizedText } from "../../types/api";
+import type { User, UserRole } from "../../types/auth";
+import type { LocalizedTextInput } from "../../types/member";
 
 const USERS_ENDPOINT = "api/users";
 

@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   Voucher,
   VoucherUsage,
@@ -11,7 +11,7 @@ import type {
   RedeemGiftCardRequest,
   VoucherRedemptionResponse,
   VoucherCheckResponse,
-} from "../types/voucher";
+} from "../../types/voucher";
 
 export interface VoucherQueryParams {
   page?: number;

@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   GymClass,
   ClassQueryParams,
@@ -7,7 +7,7 @@ import type {
   UpdateClassRequest,
   GenerateSessionsRequest,
   ClassSession,
-} from "../types/scheduling";
+} from "../../types/scheduling";
 
 /**
  * Get paginated classes

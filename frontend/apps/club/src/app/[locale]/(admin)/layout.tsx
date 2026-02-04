@@ -10,7 +10,7 @@ import { useTheme } from "next-themes";
 import { AdminShell } from "@/components/layouts/admin-shell";
 import { useAuthStore, useHasHydrated } from "@liyaqa/shared/stores/auth-store";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
-import { CommandPaletteProvider, CommandPalette } from "@liyaqa/shared/components/command-palette";
+import { CommandPaletteProvider, CommandPalette } from "@/components/command-palette";
 import { ErrorBoundary } from "@liyaqa/shared/components/error-boundary";
 
 export default function AdminLayout({

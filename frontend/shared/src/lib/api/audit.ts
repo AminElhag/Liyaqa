@@ -1,6 +1,6 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
-import type { AuditLog, AuditLogQueryParams } from "../types/audit";
+import type { PaginatedResponse, UUID } from "../../types/api";
+import type { AuditLog, AuditLogQueryParams } from "../../types/audit";
 
 // Backend controller now exists at /api/audit
 const USE_MOCK = false;

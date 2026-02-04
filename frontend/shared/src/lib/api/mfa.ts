@@ -1,5 +1,5 @@
 import { apiClient } from "./client"
-import type { LoginResponse } from "../types/auth"
+import type { LoginResponse } from "../../types/auth"
 
 /**
  * MFA setup response containing secret, QR code, and backup codes

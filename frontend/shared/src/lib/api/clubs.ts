@@ -1,11 +1,11 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   Club,
   ClubQueryParams,
   CreateClubRequest,
   UpdateClubRequest,
-} from "../types/organization";
+} from "../../types/organization";
 
 /**
  * Get paginated clubs

@@ -1,5 +1,5 @@
 import ky, { type KyInstance, type Options, HTTPError } from "ky";
-import type { ApiError } from "../types/api";
+import type { ApiError } from "../../types/api";
 import { SessionExpiredError } from "./client";
 import { getTenantContext, getPlatformMode, setRefreshTokenFn } from "./client";
 

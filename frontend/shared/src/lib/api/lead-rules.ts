@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { UUID } from "../types/api";
+import type { UUID } from "../../types/api";
 import type {
   ScoringRule,
   CreateScoringRuleRequest,
@@ -10,7 +10,7 @@ import type {
   UpdateAssignmentRuleRequest,
   AssignmentStats,
   ScoringTriggerType,
-} from "../types/lead-rules";
+} from "../../types/lead-rules";
 
 // ===== Scoring Rules API =====
 

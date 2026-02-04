@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { UUID, PaginatedResponse } from "../types/api";
+import type { UUID, PaginatedResponse } from "../../types/api";
 import type {
   WearablePlatform,
   MemberWearableConnection,
@@ -14,7 +14,7 @@ import type {
   CreateDailyActivityRequest,
   CreateWearableWorkoutRequest,
   StartSyncRequest,
-} from "../types/wearable";
+} from "../../types/wearable";
 
 const ENDPOINT = "api/wearables";
 

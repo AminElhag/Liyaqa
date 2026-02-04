@@ -13,7 +13,7 @@ import type {
   PlatformUserQueryParams,
   PlatformUserRole,
   PlatformUserStatus,
-} from "../types/platform/platform-user";
+} from "../../../types/platform/platform-user";
 
 // Toggle mock data - set to false when backend is implemented
 const USE_MOCK = false;

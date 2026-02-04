@@ -1,6 +1,6 @@
 import { api } from "./client";
-import type { UUID } from "../types/api";
-import type { PaymentInitiation, PaymentVerification } from "../types/payment";
+import type { UUID } from "../../types/api";
+import type { PaymentInitiation, PaymentVerification } from "../../types/payment";
 
 /**
  * Initiate a payment for an invoice

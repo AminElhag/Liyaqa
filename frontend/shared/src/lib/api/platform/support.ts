@@ -1,5 +1,5 @@
 import { api } from "../client";
-import type { PageResponse } from "../types/api";
+import type { PageResponse } from "../../../types/api";
 import type {
   ClientSupportOverview,
   ClientMemberSummary,
@@ -13,7 +13,7 @@ import type {
   SupportSubscriptionQueryParams,
   SupportInvoiceQueryParams,
   SupportUserQueryParams,
-} from "../types/platform";
+} from "../../../types/platform";
 
 const BASE_URL = "api/platform/support";
 

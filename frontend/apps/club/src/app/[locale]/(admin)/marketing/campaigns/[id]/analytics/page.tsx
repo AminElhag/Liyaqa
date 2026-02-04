@@ -23,10 +23,10 @@ import {
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { CAMPAIGN_STATUS_LABELS } from '@liyaqa/shared/types/marketing';
-import { CampaignAnalyticsOverview } from '@liyaqa/shared/components/admin/campaign-analytics-overview';
-import { CampaignTimelineChart } from '@liyaqa/shared/components/admin/campaign-timeline-chart';
-import { CampaignChannelBreakdown } from '@liyaqa/shared/components/admin/campaign-channel-breakdown';
-import { AbTestResults } from '@liyaqa/shared/components/admin/ab-test-results';
+import { CampaignAnalyticsOverview } from '@/components/admin/campaign-analytics-overview';
+import { CampaignTimelineChart } from '@/components/admin/campaign-timeline-chart';
+import { CampaignChannelBreakdown } from '@/components/admin/campaign-channel-breakdown';
+import { AbTestResults } from '@/components/admin/ab-test-results';
 import type { CampaignAnalytics } from '@liyaqa/shared/types/marketing';
 
 export default function CampaignAnalyticsPage() {

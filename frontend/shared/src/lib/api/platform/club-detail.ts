@@ -1,5 +1,5 @@
 import { api } from "../client";
-import type { PageResponse } from "../types/api";
+import type { PageResponse } from "../../../types/api";
 import type {
   PlatformClubDetail,
   ClubUser,
@@ -15,7 +15,7 @@ import type {
   ClubLocation,
   ClubMembershipPlan,
   UpdateClubRequest,
-} from "../types/platform";
+} from "../../../types/platform";
 
 const BASE_URL = "api/platform/clubs";
 

@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   JobTitle,
   JobTitleSummary,
@@ -7,7 +7,7 @@ import type {
   UpdateJobTitleRequest,
   JobTitleQueryParams,
   JobTitleStats,
-} from "../types/employee";
+} from "../../types/employee";
 
 const BASE_URL = "api/job-titles";
 

@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   Webhook,
   WebhookWithSecret,
@@ -10,7 +10,7 @@ import type {
   UpdateWebhookRequest,
   TestWebhookRequest,
   EventTypesResponse,
-} from "../types/webhook";
+} from "../../types/webhook";
 
 export interface WebhookQueryParams {
   page?: number;

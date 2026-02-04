@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   RiskAssessment,
   IdentifiedRisk,
@@ -10,7 +10,7 @@ import type {
   AddRiskRequest,
   UpdateRiskRequest,
   CompleteTreatmentRequest,
-} from "../types/risk";
+} from "../../types/risk";
 
 const BASE_URL = "api/risks";
 

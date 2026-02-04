@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { UUID, PaginatedResponse } from "../types/api";
+import type { UUID, PaginatedResponse } from "../../types/api";
 import type {
   RevenueReport,
   AttendanceReport,
@@ -15,7 +15,7 @@ import type {
   GenerateLtvReportRequest,
   ScheduledReportQueryParams,
   ReportHistoryQueryParams,
-} from "../types/report";
+} from "../../types/report";
 
 const REPORTS_ENDPOINT = "api/reports";
 

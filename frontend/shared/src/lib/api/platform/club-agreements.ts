@@ -1,10 +1,10 @@
 import { api } from "../client";
-import type { PaginatedResponse, UUID } from "../types/api";
+import type { PaginatedResponse, UUID } from "../../../types/api";
 import type {
   Agreement,
   CreateAgreementRequest,
   UpdateAgreementRequest,
-} from "../types/agreement";
+} from "../../../types/agreement";
 
 /**
  * Build query string from params

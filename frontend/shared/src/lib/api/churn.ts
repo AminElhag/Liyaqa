@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { UUID, PaginatedResponse } from "../types/api";
+import type { UUID, PaginatedResponse } from "../../types/api";
 import type {
   ChurnModel,
   MemberChurnPrediction,
@@ -12,7 +12,7 @@ import type {
   RecordOutcomeRequest,
   RecordInterventionOutcomeRequest,
   CreateInterventionTemplateRequest,
-} from "../types/churn";
+} from "../../types/churn";
 
 const ENDPOINT = "api/churn";
 

@@ -15,7 +15,7 @@ import type {
   SendCodeResponse,
   VerifyCodeRequest,
   PlatformAuthResponse,
-} from "../types/auth";
+} from "../../types/auth";
 
 /**
  * Auth API endpoints

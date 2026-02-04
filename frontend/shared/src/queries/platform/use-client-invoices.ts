@@ -18,8 +18,8 @@ import {
   cancelClientInvoice,
   getClientInvoicePdf,
   getClientInvoiceStats,
-} from "../lib/api/platform/client-invoices";
-import type { PageResponse, UUID } from "../types/api";
+} from "../../lib/api/platform/client-invoices";
+import type { PageResponse, UUID } from "../../types/api";
 import type {
   ClientInvoice,
   ClientInvoiceSummary,
@@ -30,7 +30,7 @@ import type {
   RecordClientPaymentRequest,
   UpdateClientInvoiceRequest,
   ClientInvoiceQueryParams,
-} from "../types/platform";
+} from "../../types/platform";
 
 // Query keys
 export const clientInvoiceKeys = {

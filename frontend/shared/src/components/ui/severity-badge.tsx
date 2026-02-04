@@ -1,6 +1,6 @@
 import { Badge } from "./badge";
-import { cn } from "../lib/utils";
-import { AlertSeverity } from "../types/security";
+import { cn } from "../../lib/utils";
+import { AlertSeverity } from "../../types/security";
 
 interface SeverityBadgeProps {
   severity: AlertSeverity;

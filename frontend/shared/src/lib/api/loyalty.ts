@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { UUID } from "../types/api";
+import type { UUID } from "../../types/api";
 import type {
   MemberPoints,
   PointsTransaction,
@@ -14,7 +14,7 @@ import type {
   MembersByTierQueryParams,
   PaginatedPointsTransactions,
   PaginatedMemberPoints,
-} from "../types/loyalty";
+} from "../../types/loyalty";
 
 // ========== Configuration ==========
 

@@ -1,10 +1,10 @@
 import { api } from "./client";
-import type { UUID } from "../types/api";
+import type { UUID } from "../../types/api";
 import type {
   MemberHealth,
   CreateHealthRequest,
   UpdateHealthRequest,
-} from "../types/health";
+} from "../../types/health";
 
 // ==========================================
 // MEMBER HEALTH API
