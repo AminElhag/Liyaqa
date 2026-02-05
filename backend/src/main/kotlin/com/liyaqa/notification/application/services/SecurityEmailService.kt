@@ -1,6 +1,7 @@
 package com.liyaqa.notification.application.services
 
 import com.liyaqa.notification.domain.ports.EmailService
+import com.liyaqa.shared.utils.PiiMasker
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
@@ -58,10 +59,10 @@ class SecurityEmailService(
                 body = body, isHtml = true
             )
 
-            logger.info("Account locked notification sent to: $email")
+            logger.info("Account locked notification sent to: ${PiiMasker.maskEmail(email)}")
         } catch (e: Exception) {
             // Log error but don't fail the lockout process
-            logger.error("Failed to send account locked notification to $email", e)
+            logger.error("Failed to send account locked notification to ${PiiMasker.maskEmail(email)}", e)
         }
     }
 
@@ -107,9 +108,9 @@ class SecurityEmailService(
                 body = body, isHtml = true
             )
 
-            logger.info("Suspicious activity notification sent to: $email")
+            logger.info("Suspicious activity notification sent to: ${PiiMasker.maskEmail(email)}")
         } catch (e: Exception) {
-            logger.error("Failed to send suspicious activity notification to $email", e)
+            logger.error("Failed to send suspicious activity notification to ${PiiMasker.maskEmail(email)}", e)
         }
     }
 
@@ -152,9 +153,9 @@ class SecurityEmailService(
                 body = body, isHtml = true
             )
 
-            logger.info("New device notification sent to: $email")
+            logger.info("New device notification sent to: ${PiiMasker.maskEmail(email)}")
         } catch (e: Exception) {
-            logger.error("Failed to send new device notification to $email", e)
+            logger.error("Failed to send new device notification to ${PiiMasker.maskEmail(email)}", e)
         }
     }
 

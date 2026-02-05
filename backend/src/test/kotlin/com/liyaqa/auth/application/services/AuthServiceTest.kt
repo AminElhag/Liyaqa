@@ -90,7 +90,8 @@ class AuthServiceTest {
             passwordPolicyService,
             auditService,
             securityEmailService,
-            sessionService
+            sessionService,
+            "https://app.liyaqa.com"  // frontendBaseUrl
         )
 
         // Common mocks

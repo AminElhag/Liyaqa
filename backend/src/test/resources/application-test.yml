@@ -11,7 +11,21 @@ spring:
     host: localhost
     port: 25
 
+  # Disable Redis for tests (use in-memory cache instead)
+  data:
+    redis:
+      repositories:
+        enabled: false
+  cache:
+    type: caffeine
+
+management:
+  health:
+    redis:
+      enabled: false  # Disable Redis health check in tests
+
 email:
+  enabled: false  # Disable email for tests
   from-address: test@liyaqa.com
   from-name: Liyaqa Test
 

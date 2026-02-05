@@ -3,6 +3,7 @@ package com.liyaqa.notification.infrastructure.email
 import com.liyaqa.notification.domain.ports.EmailAttachment
 import com.liyaqa.notification.domain.ports.EmailSendException
 import com.liyaqa.notification.domain.ports.EmailService
+import com.liyaqa.shared.utils.PiiMasker
 import jakarta.mail.internet.MimeMessage
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -44,7 +45,7 @@ class SmtpEmailService(
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun sendEmail(to: String, subject: String, body: String, isHtml: Boolean) {
-        logger.info("Sending email via SMTP to: {}", to)
+        logger.info("Sending email via SMTP to: {}", PiiMasker.maskEmail(to))
 
         try {
             val message = createMimeMessage()
@@ -56,9 +57,9 @@ class SmtpEmailService(
             helper.setText(body, isHtml)
 
             mailSender.send(message)
-            logger.info("Email sent successfully via SMTP to: {}", to)
+            logger.info("Email sent successfully via SMTP to: {}", PiiMasker.maskEmail(to))
         } catch (e: Exception) {
-            logger.error("Failed to send email via SMTP to: {}", to, e)
+            logger.error("Failed to send email via SMTP to: {}", PiiMasker.maskEmail(to), e)
             throw EmailSendException("SMTP email failed: ${e.message}", e)
         }
     }
@@ -91,7 +92,7 @@ class SmtpEmailService(
         body: String,
         isHtml: Boolean
     ) {
-        logger.info("Sending email via SMTP to: {} with CC: {} and BCC: {}", to, cc?.size ?: 0, bcc?.size ?: 0)
+        logger.info("Sending email via SMTP to: {} with CC: {} and BCC: {}", PiiMasker.maskEmail(to), cc?.size ?: 0, bcc?.size ?: 0)
 
         try {
             val message = createMimeMessage()
@@ -105,9 +106,9 @@ class SmtpEmailService(
             helper.setText(body, isHtml)
 
             mailSender.send(message)
-            logger.info("Email sent successfully via SMTP to: {} with CC/BCC", to)
+            logger.info("Email sent successfully via SMTP to: {} with CC/BCC", PiiMasker.maskEmail(to))
         } catch (e: Exception) {
-            logger.error("Failed to send email via SMTP with CC/BCC to: {}", to, e)
+            logger.error("Failed to send email via SMTP with CC/BCC to: {}", PiiMasker.maskEmail(to), e)
             throw EmailSendException("SMTP email failed: ${e.message}", e)
         }
     }
@@ -119,7 +120,7 @@ class SmtpEmailService(
         attachments: List<EmailAttachment>,
         isHtml: Boolean
     ) {
-        logger.info("Sending email via SMTP to: {} with {} attachments", to, attachments.size)
+        logger.info("Sending email via SMTP to: {} with {} attachments", PiiMasker.maskEmail(to), attachments.size)
 
         try {
             val message = createMimeMessage()
@@ -140,9 +141,9 @@ class SmtpEmailService(
             }
 
             mailSender.send(message)
-            logger.info("Email with attachments sent successfully via SMTP to: {}", to)
+            logger.info("Email with attachments sent successfully via SMTP to: {}", PiiMasker.maskEmail(to))
         } catch (e: Exception) {
-            logger.error("Failed to send email via SMTP with attachments to: {}", to, e)
+            logger.error("Failed to send email via SMTP with attachments to: {}", PiiMasker.maskEmail(to), e)
             throw EmailSendException("SMTP email with attachments failed: ${e.message}", e)
         }
     }

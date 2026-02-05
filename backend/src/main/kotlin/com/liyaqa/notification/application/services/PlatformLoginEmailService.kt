@@ -1,6 +1,7 @@
 package com.liyaqa.notification.application.services
 
 import com.liyaqa.notification.domain.ports.EmailService
+import com.liyaqa.shared.utils.PiiMasker
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
@@ -38,9 +39,9 @@ class PlatformLoginEmailService(
                 isHtml = true
             )
 
-            logger.info("Login code sent to: $email")
+            logger.info("Login code sent to: ${PiiMasker.maskEmail(email)}")
         } catch (e: Exception) {
-            logger.error("Failed to send login code to $email", e)
+            logger.error("Failed to send login code to ${PiiMasker.maskEmail(email)}", e)
             throw e // Re-throw to let the caller know email failed
         }
     }

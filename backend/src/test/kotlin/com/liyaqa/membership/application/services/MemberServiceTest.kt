@@ -31,6 +31,9 @@ import org.mockito.quality.Strictness
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import com.liyaqa.shared.domain.LocalizedText
+import com.liyaqa.shared.domain.TenantContext
+import com.liyaqa.shared.domain.TenantId
+import org.junit.jupiter.api.AfterEach
 import java.time.LocalDate
 import java.util.Optional
 import java.util.UUID
@@ -100,6 +103,15 @@ class MemberServiceTest {
             phone = "+966500000000",
             status = MemberStatus.ACTIVE
         )
+
+        // Set up tenant context for tests
+        TenantContext.setCurrentTenant(TenantId(testMember.tenantId))
+    }
+
+    @AfterEach
+    fun tearDown() {
+        // Clear tenant context after each test
+        TenantContext.clear()
     }
 
     @Test

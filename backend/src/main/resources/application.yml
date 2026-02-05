@@ -292,6 +292,10 @@ liyaqa:
     service-account-path: ${FIREBASE_SERVICE_ACCOUNT_PATH:}
     service-account-json: ${FIREBASE_SERVICE_ACCOUNT_JSON}  # Required in production
 
+app:
+  frontend:
+    base-url: ${FRONTEND_BASE_URL:https://app.liyaqa.com}  # Frontend base URL for email links
+
 logging:
   level:
     root: WARN

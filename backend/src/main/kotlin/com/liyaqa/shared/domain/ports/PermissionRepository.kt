@@ -24,6 +24,11 @@ interface PermissionRepository {
     fun findByCode(code: String): Optional<Permission>
 
     /**
+     * Finds permissions by IDs (optimized - uses IN clause).
+     */
+    fun findByIds(ids: List<UUID>): List<Permission>
+
+    /**
      * Finds permissions by codes.
      */
     fun findByCodes(codes: List<String>): List<Permission>

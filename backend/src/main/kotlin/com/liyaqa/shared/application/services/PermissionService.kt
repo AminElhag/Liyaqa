@@ -60,7 +60,11 @@ class PermissionService(
     fun getUserPermissions(userId: UUID): List<Permission> {
         val userPermissions = userPermissionRepository.findByUserId(userId)
         val permissionIds = userPermissions.map { it.permissionId }
-        return permissionRepository.findAll().filter { it.id in permissionIds }
+
+        if (permissionIds.isEmpty()) return emptyList()
+
+        // Use optimized method instead of findAll().filter()
+        return permissionRepository.findByIds(permissionIds)
     }
 
     /**
@@ -146,7 +150,8 @@ class PermissionService(
             return
         }
 
-        val permissions = permissionRepository.findAll().filter { it.id in defaultPermissionIds }
+        // Use optimized method instead of findAll().filter()
+        val permissions = permissionRepository.findByIds(defaultPermissionIds)
         val newPermissions = permissions.map { permission ->
             UserPermission(
                 userId = userId,

@@ -23,10 +23,12 @@ import com.liyaqa.scheduling.domain.ports.ClassPackRepository
 import com.liyaqa.scheduling.domain.ports.ClassSessionRepository
 import com.liyaqa.scheduling.domain.ports.GymClassRepository
 import com.liyaqa.scheduling.domain.ports.MemberClassPackBalanceRepository
+import com.liyaqa.shared.application.services.PermissionService
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.Money
 import com.liyaqa.shared.domain.TenantContext
 import com.liyaqa.webhook.application.services.WebhookEventPublisher
+import org.springframework.security.access.AccessDeniedException
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -98,7 +100,8 @@ class BookingService(
     private val notificationService: NotificationService,
     private val webhookPublisher: WebhookEventPublisher,
     private val classPackRepository: ClassPackRepository,
-    private val balanceRepository: MemberClassPackBalanceRepository
+    private val balanceRepository: MemberClassPackBalanceRepository,
+    private val permissionService: PermissionService
 ) {
     private val logger = LoggerFactory.getLogger(BookingService::class.java)
     private val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
@@ -355,10 +358,30 @@ class BookingService(
 
     /**
      * Cancels a booking and promotes waitlist if applicable.
+     * @param command The cancellation command
+     * @param requestingUserId Optional user ID for authorization check. If provided, verifies the user owns the booking or has admin permission.
      */
-    fun cancelBooking(command: CancelBookingCommand): ClassBooking {
+    fun cancelBooking(command: CancelBookingCommand, requestingUserId: UUID? = null): ClassBooking {
         val booking = bookingRepository.findById(command.bookingId)
             .orElseThrow { NoSuchElementException("Booking not found: ${command.bookingId}") }
+
+        // Authorization check: Only booking owner or admin can cancel
+        if (requestingUserId != null) {
+            val member = memberRepository.findByUserId(requestingUserId).orElse(null)
+
+            if (member == null || booking.memberId != member.id) {
+                // Check if user has admin permission to cancel any booking
+                val hasAdminPermission = permissionService.hasPermission(
+                    requestingUserId,
+                    "bookings_cancel_any"
+                )
+
+                if (!hasAdminPermission) {
+                    logger.warn("Unauthorized booking cancellation attempt: user=$requestingUserId, booking=${command.bookingId}")
+                    throw AccessDeniedException("You can only cancel your own bookings")
+                }
+            }
+        }
 
         val wasConfirmed = booking.isConfirmed()
         val wasWaitlisted = booking.isWaitlisted()

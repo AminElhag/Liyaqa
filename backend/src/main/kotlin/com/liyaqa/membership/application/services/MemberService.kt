@@ -19,6 +19,7 @@ import com.liyaqa.referral.application.services.ReferralCodeService
 import com.liyaqa.referral.application.services.ReferralTrackingService
 import com.liyaqa.shared.application.services.PermissionService
 import com.liyaqa.shared.domain.LocalizedText
+import com.liyaqa.shared.domain.TenantContext
 import com.liyaqa.shared.exception.DuplicateField
 import com.liyaqa.shared.exception.DuplicateFieldException
 import com.liyaqa.webhook.application.services.WebhookEventPublisher
@@ -211,6 +212,12 @@ class MemberService(
 
     fun updateMember(id: UUID, command: UpdateMemberCommand): Member {
         val member = getMember(id)
+
+        // Defense-in-depth: Double-check tenant isolation
+        val currentTenantId = TenantContext.getCurrentTenant()?.value
+        require(member.tenantId == currentTenantId) {
+            "Security violation: Member belongs to different tenant"
+        }
 
         // Validate uniqueness for updated fields (excluding current member)
         validateUniquenessForUpdate(

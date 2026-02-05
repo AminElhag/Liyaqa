@@ -19,6 +19,7 @@ import com.liyaqa.shared.domain.TenantContext
 import com.liyaqa.shared.domain.TenantId
 import com.liyaqa.notification.domain.ports.EmailService
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -64,7 +65,9 @@ class AuthService(
     private val passwordPolicyService: PasswordPolicyService,
     private val auditService: com.liyaqa.shared.application.services.AuthAuditService,
     private val securityEmailService: com.liyaqa.notification.application.services.SecurityEmailService,
-    private val sessionService: SessionService
+    private val sessionService: SessionService,
+    @Value("\${app.frontend.base-url:https://app.liyaqa.com}")
+    private val frontendBaseUrl: String
 ) {
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
     /**
@@ -357,7 +360,7 @@ class AuthService(
 
         // Send password reset email (or log if email service is disabled)
         try {
-            val resetLink = "https://app.liyaqa.com/reset-password?token=$rawToken" // TODO: Make configurable
+            val resetLink = "$frontendBaseUrl/reset-password?token=$rawToken"
             val subject = if (locale == "ar") "إعادة تعيين كلمة المرور" else "Reset Your Password"
             val body = """
                 <html>
@@ -366,7 +369,7 @@ class AuthService(
                     <p>${if (locale == "ar") "تلقينا طلبًا لإعادة تعيين كلمة المرور الخاصة بك." else "We received a request to reset your password."}</p>
                     <p><a href="$resetLink">${if (locale == "ar") "إعادة تعيين كلمة المرور" else "Reset Password"}</a></p>
                     <p>${if (locale == "ar") "أو انسخ هذا الرابط:" else "Or copy this link:"} $resetLink</p>
-                    <p>${if (locale == "ar") "هذا الرابط صالح لمدة 24 ساعة." else "This link is valid for 24 hours."}</p>
+                    <p>${if (locale == "ar") "هذا الرابط صالح لمدة ساعة واحدة." else "This link is valid for 1 hour."}</p>
                 </body>
                 </html>
             """.trimIndent()
@@ -392,6 +395,11 @@ class AuthService(
             throw IllegalArgumentException("Reset token has expired or already been used")
         }
 
+        // Mark token as used IMMEDIATELY to prevent race condition
+        // This must happen before any other operations that could fail
+        resetToken.markUsed()
+        passwordResetTokenRepository.save(resetToken)
+
         val user = userRepository.findById(resetToken.userId)
             .orElseThrow { IllegalArgumentException("User not found") }
 
@@ -414,10 +422,6 @@ class AuthService(
 
         // Record new password in history
         passwordPolicyService.recordPasswordInHistory(user.id, newPasswordHash, policyConfig)
-
-        // Mark token as used
-        resetToken.markUsed()
-        passwordResetTokenRepository.save(resetToken)
 
         // Revoke all refresh tokens for security
         refreshTokenRepository.revokeAllByUserId(user.id)

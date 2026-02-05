@@ -13,6 +13,7 @@ import java.util.UUID
  */
 interface SpringDataPermissionRepository : JpaRepository<Permission, UUID> {
     fun findByCode(code: String): Optional<Permission>
+    fun findByIdIn(ids: List<UUID>): List<Permission>
     fun findByCodeIn(codes: List<String>): List<Permission>
     fun findByModule(module: String): List<Permission>
     fun existsByCode(code: String): Boolean
@@ -36,6 +37,11 @@ class JpaPermissionRepository(
 
     override fun findByCode(code: String): Optional<Permission> {
         return springDataRepository.findByCode(code)
+    }
+
+    override fun findByIds(ids: List<UUID>): List<Permission> {
+        if (ids.isEmpty()) return emptyList()
+        return springDataRepository.findByIdIn(ids)
     }
 
     override fun findByCodes(codes: List<String>): List<Permission> {

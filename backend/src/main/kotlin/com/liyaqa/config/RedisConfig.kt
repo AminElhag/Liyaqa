@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.EnableCaching
@@ -13,6 +14,8 @@ import org.springframework.context.annotation.Profile
 import org.springframework.data.redis.cache.RedisCacheConfiguration
 import org.springframework.data.redis.cache.RedisCacheManager
 import org.springframework.data.redis.connection.RedisConnectionFactory
+import org.springframework.data.redis.connection.RedisPassword
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer
@@ -61,10 +64,21 @@ class RedisConfig {
 
     /**
      * Redis connection factory using Lettuce (async, connection pooling).
+     * Reads configuration from environment variables via Spring Boot properties.
      */
     @Bean
-    fun redisConnectionFactory(): RedisConnectionFactory {
-        return LettuceConnectionFactory()
+    fun redisConnectionFactory(
+        @Value("\${spring.data.redis.host:localhost}") host: String,
+        @Value("\${spring.data.redis.port:6379}") port: Int,
+        @Value("\${spring.data.redis.password:}") password: String,
+        @Value("\${spring.data.redis.database:0}") database: Int
+    ): RedisConnectionFactory {
+        val config = RedisStandaloneConfiguration(host, port)
+        config.database = database
+        if (password.isNotBlank()) {
+            config.password = RedisPassword.of(password)
+        }
+        return LettuceConnectionFactory(config)
     }
 
     /**
