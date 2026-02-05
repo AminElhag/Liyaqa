@@ -67,6 +67,9 @@ class TrainerPortalControllerTest {
     @MockBean
     private lateinit var trainerSecurityService: com.liyaqa.trainer.application.services.TrainerSecurityService
 
+    @MockBean
+    private lateinit var csrfTokenProvider: com.liyaqa.config.CsrfTokenProvider
+
     private lateinit var trainerId: UUID
     private lateinit var userId: UUID
     private lateinit var trainer: Trainer
@@ -417,7 +420,7 @@ class TrainerPortalControllerTest {
         val activeClient2 = TrainerClient(
             trainerId = trainerId,
             memberId = UUID.randomUUID(),
-            startDate = LocalDate.now().minusDays(10), // New this month
+            startDate = LocalDate.now().minusDays(3), // New this month
             status = TrainerClientStatus.ACTIVE
         )
 

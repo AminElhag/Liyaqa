@@ -50,6 +50,9 @@ class TrainerNotificationControllerTest {
     @MockBean
     private lateinit var trainerSecurityService: com.liyaqa.trainer.application.services.TrainerSecurityService
 
+    @MockBean
+    private lateinit var csrfTokenProvider: com.liyaqa.config.CsrfTokenProvider
+
     private lateinit var trainerId: UUID
     private lateinit var notificationId: UUID
     private lateinit var notification: TrainerNotification

@@ -65,8 +65,8 @@ class LeadServiceTest {
 
         given(leadRepository.existsByEmail(command.email)).willReturn(false)
         given(leadRepository.save(any<Lead>())).willReturn(expectedLead)
-        doNothing().whenever(scoringService).applySourceScoring(any())
-        given(assignmentService.autoAssign(any())).willReturn(UUID.randomUUID())
+        given(scoringService.applySourceScoring(any())).willReturn(10)
+        given(assignmentService.autoAssign(any(), anyOrNull())).willReturn(UUID.randomUUID())
 
         // When
         val result = leadService.createLead(command)
@@ -80,7 +80,7 @@ class LeadServiceTest {
         verify(leadRepository).existsByEmail(command.email)
         verify(leadRepository).save(any<Lead>())
         verify(scoringService).applySourceScoring(any())
-        verify(assignmentService).autoAssign(any())
+        verify(assignmentService).autoAssign(any(), anyOrNull())
         verify(webhookPublisher).publishLeadCreated(
             leadId = any(),
             tenantId = any(),
@@ -168,13 +168,14 @@ class LeadServiceTest {
 
         given(leadRepository.existsByEmail(any())).willReturn(false)
         given(leadRepository.save(any<Lead>())).willReturn(savedLead)
-        given(assignmentService.autoAssign(any())).willReturn(autoAssignedUserId)
+        given(scoringService.applySourceScoring(any())).willReturn(10)
+        given(assignmentService.autoAssign(any(), anyOrNull())).willReturn(autoAssignedUserId)
 
         // When
         val result = leadService.createLead(command)
 
         // Then
-        verify(assignmentService).autoAssign(any())
+        verify(assignmentService).autoAssign(any(), anyOrNull())
         assertThat(result.assignedToUserId).isEqualTo(autoAssignedUserId)
     }
 
@@ -201,12 +202,13 @@ class LeadServiceTest {
 
         given(leadRepository.existsByEmail(any())).willReturn(false)
         given(leadRepository.save(any<Lead>())).willReturn(savedLead)
+        given(scoringService.applySourceScoring(any())).willReturn(10)
 
         // When
         leadService.createLead(command)
 
         // Then
-        verify(assignmentService, never()).autoAssign(any())
+        verify(assignmentService, never()).autoAssign(any(), anyOrNull())
     }
 
     @Test
@@ -299,7 +301,8 @@ class LeadServiceTest {
 
         given(leadRepository.existsByEmail(any())).willReturn(false)
         given(leadRepository.save(any<Lead>())).willReturn(savedLead)
-        given(assignmentService.autoAssign(any())).willThrow(RuntimeException("No available assignees"))
+        given(scoringService.applySourceScoring(any())).willReturn(10)
+        given(assignmentService.autoAssign(any(), anyOrNull())).willThrow(RuntimeException("No available assignees"))
 
         // When
         val result = leadService.createLead(command)

@@ -137,7 +137,7 @@ class MemberServiceTest {
         assertEquals(command.firstName.en, result.firstName.en)
         assertEquals(command.lastName.en, result.lastName.en)
         assertEquals(command.email, result.email)
-        assertEquals(MemberStatus.ACTIVE, result.status)
+        assertEquals(MemberStatus.PENDING, result.status)
         verify(memberRepository).save(any<Member>())
     }
 

@@ -51,6 +51,9 @@ class TrainerCertificationControllerTest {
     @MockBean
     private lateinit var trainerSecurityService: com.liyaqa.trainer.application.services.TrainerSecurityService
 
+    @MockBean
+    private lateinit var csrfTokenProvider: com.liyaqa.config.CsrfTokenProvider
+
     private lateinit var trainerId: UUID
     private lateinit var certId: UUID
     private lateinit var certification: TrainerCertification
