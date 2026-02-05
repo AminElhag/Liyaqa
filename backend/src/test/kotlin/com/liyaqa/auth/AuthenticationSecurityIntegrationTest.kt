@@ -172,7 +172,7 @@ class AuthenticationSecurityIntegrationTest {
     fun `register creates new user and returns tokens`() {
         val command = RegisterCommand(
             email = "register.test.${UUID.randomUUID()}@example.com",
-            password = "password123",
+            password = "SecureP@ss123",
             displayName = LocalizedText(en = "New User", ar = "مستخدم جديد"),
             tenantId = testTenantId
         )
@@ -189,7 +189,7 @@ class AuthenticationSecurityIntegrationTest {
     fun `register with existing email throws exception`() {
         val command = RegisterCommand(
             email = testUser.email,  // Already exists
-            password = "password123",
+            password = "SecureP@ss123",
             displayName = LocalizedText(en = "Another User", ar = "مستخدم آخر"),
             tenantId = testTenantId
         )

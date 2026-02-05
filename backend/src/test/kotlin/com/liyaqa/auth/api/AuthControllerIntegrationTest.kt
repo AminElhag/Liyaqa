@@ -89,7 +89,7 @@ class AuthControllerIntegrationTest {
         testUser = User(
             id = UUID.randomUUID(),
             email = "test.auth.${UUID.randomUUID()}@example.com",
-            passwordHash = passwordEncoder.encode("password123")!!,
+            passwordHash = passwordEncoder.encode("SecureP@ss123")!!,
             displayName = LocalizedText(en = "Test User", ar = "مستخدم اختبار"),
             role = Role.STAFF,
             status = UserStatus.ACTIVE
@@ -117,7 +117,7 @@ class AuthControllerIntegrationTest {
     fun `login with valid credentials returns tokens`() {
         val command = LoginCommand(
             email = testUser.email,
-            password = "password123",
+            password = "SecureP@ss123",
             tenantId = testTenantId
         )
 
@@ -148,7 +148,7 @@ class AuthControllerIntegrationTest {
     fun `register with valid data creates user and returns tokens`() {
         val command = RegisterCommand(
             email = "newuser.${UUID.randomUUID()}@example.com",
-            password = "password123",
+            password = "SecureP@ss123",
             displayName = LocalizedText(en = "New User", ar = "مستخدم جديد"),
             tenantId = testTenantId
         )
@@ -165,7 +165,7 @@ class AuthControllerIntegrationTest {
     fun `register with existing email throws exception`() {
         val command = RegisterCommand(
             email = testUser.email,  // Already exists
-            password = "password123",
+            password = "SecureP@ss123",
             displayName = LocalizedText(en = "Another User", ar = "مستخدم آخر"),
             tenantId = testTenantId
         )
@@ -179,7 +179,7 @@ class AuthControllerIntegrationTest {
     fun `login with non-existent user throws exception`() {
         val command = LoginCommand(
             email = "nonexistent@example.com",
-            password = "password123",
+            password = "SecureP@ss123",
             tenantId = testTenantId
         )
 
