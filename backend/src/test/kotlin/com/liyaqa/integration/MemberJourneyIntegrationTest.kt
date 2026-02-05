@@ -1,5 +1,6 @@
 package com.liyaqa.integration
 
+import com.liyaqa.config.TestContainersConfiguration
 import com.liyaqa.crm.application.commands.CreateLeadCommand
 import com.liyaqa.crm.application.commands.LogLeadActivityCommand
 import com.liyaqa.crm.application.services.LeadActivityService
@@ -21,6 +22,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -41,6 +43,7 @@ import java.time.LocalDateTime
  */
 @SpringBootTest
 @ActiveProfiles("test")
+@Import(TestContainersConfiguration::class)
 @Transactional
 class MemberJourneyIntegrationTest {
 

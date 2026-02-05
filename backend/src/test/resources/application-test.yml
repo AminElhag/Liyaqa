@@ -11,6 +11,11 @@ spring:
     host: localhost
     port: 25
 
+  # Disable task scheduling in tests to prevent shutdown issues
+  task:
+    scheduling:
+      enabled: false
+
   # Disable Redis for tests (use in-memory cache instead)
   data:
     redis:

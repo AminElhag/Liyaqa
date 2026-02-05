@@ -1,5 +1,6 @@
 package com.liyaqa.membership.api
 
+import com.liyaqa.config.TestContainersConfiguration
 import com.liyaqa.membership.application.commands.CreateMemberCommand
 import com.liyaqa.membership.application.services.MemberService
 import com.liyaqa.membership.domain.model.Member
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.data.domain.PageRequest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
@@ -34,6 +36,7 @@ import kotlin.test.assertTrue
  */
 @SpringBootTest
 @ActiveProfiles("test")
+@Import(TestContainersConfiguration::class)
 @Transactional
 class MemberControllerIntegrationTest {
 

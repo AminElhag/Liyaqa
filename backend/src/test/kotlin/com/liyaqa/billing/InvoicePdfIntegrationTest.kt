@@ -1,5 +1,6 @@
 package com.liyaqa.billing
 
+import com.liyaqa.config.TestContainersConfiguration
 import com.liyaqa.billing.application.commands.RecordPaymentCommand
 import com.liyaqa.billing.application.services.InvoiceService
 import com.liyaqa.billing.domain.model.Invoice
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -43,6 +45,7 @@ import kotlin.test.assertTrue
  */
 @SpringBootTest
 @ActiveProfiles("test")
+@Import(TestContainersConfiguration::class)
 @Transactional
 class InvoicePdfIntegrationTest {
 

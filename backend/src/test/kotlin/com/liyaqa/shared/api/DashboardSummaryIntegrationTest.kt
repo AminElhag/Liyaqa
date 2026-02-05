@@ -1,5 +1,6 @@
 package com.liyaqa.shared.api
 
+import com.liyaqa.config.TestContainersConfiguration
 import com.liyaqa.billing.domain.model.Invoice
 import com.liyaqa.billing.domain.model.InvoiceLineItem
 import com.liyaqa.billing.domain.model.LineItemType
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.test.context.ActiveProfiles
@@ -47,6 +49,7 @@ import kotlin.test.assertTrue
  */
 @SpringBootTest
 @ActiveProfiles("test")
+@Import(TestContainersConfiguration::class)
 @Transactional
 class DashboardSummaryIntegrationTest {
 

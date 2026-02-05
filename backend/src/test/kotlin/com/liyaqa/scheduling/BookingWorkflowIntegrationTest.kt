@@ -40,8 +40,10 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
+import com.liyaqa.config.TestContainersConfiguration
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
@@ -58,6 +60,7 @@ import kotlin.test.assertTrue
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
+@Import(TestContainersConfiguration::class)
 class BookingWorkflowIntegrationTest {
 
     @Autowired
