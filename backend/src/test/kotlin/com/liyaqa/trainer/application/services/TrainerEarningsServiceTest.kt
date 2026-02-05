@@ -69,6 +69,7 @@ class TrainerEarningsServiceTest {
             durationMinutes = 60,
             price = BigDecimal("100.00")
         )
+        testPTSession.confirm()
         testPTSession.complete("Great session!")
 
         testEarning = TrainerEarnings(

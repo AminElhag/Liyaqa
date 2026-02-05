@@ -95,7 +95,7 @@ interface SpringDataTrainerCertificationRepository : JpaRepository<TrainerCertif
     /**
      * Update expired certifications (set status to EXPIRED).
      */
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("""
         UPDATE TrainerCertification tc
         SET tc.status = 'EXPIRED'

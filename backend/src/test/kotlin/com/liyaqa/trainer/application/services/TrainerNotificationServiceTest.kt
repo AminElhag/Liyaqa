@@ -106,9 +106,14 @@ class TrainerNotificationServiceTest {
 
     @Test
     fun `notifyEarningsApproved creates notification with correct details`() {
-        whenever(notificationRepository.save(any())).thenAnswer { it.arguments[0] as TrainerNotification }
+        var savedNotification: TrainerNotification? = null
+        whenever(notificationRepository.save(any())).thenAnswer {
+            val notification = it.arguments[0] as TrainerNotification
+            savedNotification = notification
+            notification
+        }
         whenever(notificationRepository.findById(any())).thenAnswer {
-            Optional.of(testNotification)
+            Optional.ofNullable(savedNotification)
         }
 
         val result = notificationService.notifyEarningsApproved(

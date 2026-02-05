@@ -182,7 +182,7 @@ class TrainerEarningsService(
             }
         }
 
-        return Money(amount, currency)
+        return Money(amount.setScale(2, java.math.RoundingMode.HALF_UP), currency)
     }
 
     /**
