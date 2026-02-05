@@ -69,7 +69,7 @@ class MemberService(
             emergencyContactName = command.emergencyContactName,
             emergencyContactPhone = command.emergencyContactPhone,
             notes = command.notes,
-            status = MemberStatus.ACTIVE,
+            status = MemberStatus.PENDING,
             // Enhanced registration fields
             gender = command.gender,
             nationality = command.nationality,

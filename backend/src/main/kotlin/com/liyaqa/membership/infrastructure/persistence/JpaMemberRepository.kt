@@ -52,18 +52,19 @@ interface SpringDataMemberRepository : JpaRepository<Member, UUID> {
     @Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM Member m WHERE m.nationalId = :nationalId AND m.id != :excludeId")
     fun existsByNationalIdAndIdNot(@Param("nationalId") nationalId: String, @Param("excludeId") excludeId: UUID): Boolean
 
-    @Query("""
-        SELECT m FROM Member m
+    @Query(value = """
+        SELECT * FROM members m
         WHERE (:search IS NULL OR (
-            LOWER(m.firstName) LIKE LOWER(CONCAT('%', :search, '%'))
-            OR LOWER(m.lastName) LIKE LOWER(CONCAT('%', :search, '%'))
-            OR LOWER(m.email) LIKE LOWER(CONCAT('%', :search, '%'))
-            OR LOWER(CONCAT(m.firstName, ' ', m.lastName)) LIKE LOWER(CONCAT('%', :search, '%'))
+            LOWER(m.first_name_en) LIKE LOWER(CONCAT('%', CAST(:search AS text), '%'))
+            OR LOWER(m.last_name_en) LIKE LOWER(CONCAT('%', CAST(:search AS text), '%'))
+            OR LOWER(m.first_name_ar) LIKE LOWER(CONCAT('%', CAST(:search AS text), '%'))
+            OR LOWER(m.last_name_ar) LIKE LOWER(CONCAT('%', CAST(:search AS text), '%'))
+            OR LOWER(m.email) LIKE LOWER(CONCAT('%', CAST(:search AS text), '%'))
         ))
-        AND (:status IS NULL OR m.status = :status)
-        AND (:joinedAfter IS NULL OR m.createdAt >= :joinedAfter)
-        AND (:joinedBefore IS NULL OR m.createdAt <= :joinedBefore)
-    """)
+        AND (CAST(:status AS text) IS NULL OR m.status = CAST(:status AS text))
+        AND (CAST(:joinedAfter AS timestamp) IS NULL OR m.created_at >= CAST(:joinedAfter AS timestamp))
+        AND (CAST(:joinedBefore AS timestamp) IS NULL OR m.created_at <= CAST(:joinedBefore AS timestamp))
+    """, nativeQuery = true)
     fun search(
         @Param("search") search: String?,
         @Param("status") status: MemberStatus?,

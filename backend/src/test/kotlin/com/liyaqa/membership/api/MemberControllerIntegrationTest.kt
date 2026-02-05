@@ -181,7 +181,7 @@ class MemberControllerIntegrationTest {
         assertNotNull(createdMember)
         assertEquals("New", createdMember.firstName.en)
         assertEquals("Member", createdMember.lastName.en)
-        assertEquals(MemberStatus.ACTIVE, createdMember.status)
+        assertEquals(MemberStatus.PENDING, createdMember.status)
     }
 
     @Test
