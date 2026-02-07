@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service
 
 @Service
 @ConditionalOnProperty(
-    prefix = "liyaqa.email",
+    prefix = "email",
     name = ["enabled"],
     havingValue = "false",
     matchIfMissing = false
@@ -18,7 +18,9 @@ class NoOpEmailService : EmailService {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun sendEmail(to: String, subject: String, body: String, isHtml: Boolean) {
-        logger.debug("Email disabled - skipping send to: {}", to)
+        logger.info("Email disabled - skipping send to: {}", to)
+        logger.info("Subject: {}", subject)
+        logger.info("Body: {}", body)
     }
 
     override fun sendEmail(to: List<String>, subject: String, body: String, isHtml: Boolean) {

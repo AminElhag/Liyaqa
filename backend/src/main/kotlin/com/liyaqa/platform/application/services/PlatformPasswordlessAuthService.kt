@@ -77,6 +77,9 @@ class PlatformPasswordlessAuthService(
         val code = PlatformLoginToken.generateCode()
         val token = PlatformLoginToken.create(normalizedEmail, code)
 
+        // Log code for development (remove in production)
+        logger.info("🔐 LOGIN CODE for $normalizedEmail: $code (valid for $CODE_VALIDITY_MINUTES minutes)")
+
         // Save token
         loginTokenRepository.save(token)
 
