@@ -13,6 +13,7 @@ import { Input } from "@liyaqa/shared/components/ui/input";
 import { Label } from "@liyaqa/shared/components/ui/label";
 import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import { cn } from "@liyaqa/shared/utils";
+import { getAccessToken, getRefreshToken } from "@liyaqa/shared/lib/api/client";
 
 // Email step schema
 const emailSchema = z.object({
@@ -39,7 +40,7 @@ export default function PlatformLoginPage() {
     error,
     clearError,
     isAuthenticated,
-    isPlatformUser,
+    user,
     passwordlessEmail,
     codeExpiresAt,
     clearPasswordlessState,
@@ -56,10 +57,37 @@ export default function PlatformLoginPage() {
 
   // Redirect if already authenticated as platform user
   React.useEffect(() => {
-    if (isAuthenticated && isPlatformUser()) {
-      router.push(`/${locale}/platform-dashboard`);
+    console.log('[Login] Navigation effect:', {
+      isAuthenticated,
+      isPlatformUser: user?.isPlatformUser,
+      hasAccessToken: !!getAccessToken(),
+      user,
+    });
+
+    // Only redirect if authenticated as platform user
+    if (isAuthenticated && user?.isPlatformUser) {
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirectTo = searchParams.get('redirect');
+      const expiredParam = searchParams.get('expired');
+
+      console.log('[Login] Redirect params:', { redirectTo, expiredParam });
+
+      // Don't redirect if user is coming from an expired session
+      // (let them see the login page and re-authenticate first)
+      if (expiredParam) {
+        console.log('[Login] Skipping - expired session');
+        return;
+      }
+
+      // Redirect to the intended destination or dashboard
+      const destination = (redirectTo && redirectTo.startsWith(`/${locale}/`))
+        ? redirectTo
+        : `/${locale}/platform-dashboard`;
+
+      console.log('[Login] Navigating to:', destination);
+      router.replace(destination);
     }
-  }, [isAuthenticated, isPlatformUser, router, locale]);
+  }, [isAuthenticated, user, router, locale]);
 
   // Countdown timer for code expiration
   React.useEffect(() => {
@@ -105,12 +133,23 @@ export default function PlatformLoginPage() {
   };
 
   const onCodeSubmit = async (data: CodeFormData) => {
+    console.log('[Login] Submitting code verification...');
     clearError();
     try {
       const deviceInfo = navigator.userAgent;
       await verifyPlatformLoginCode(passwordlessEmail!, data.code, deviceInfo);
-      router.push(`/${locale}/platform-dashboard`);
-    } catch {
+      console.log('[Login] Verification successful');
+      console.log('[Login] Tokens stored:', {
+        hasAccessToken: !!getAccessToken(),
+        hasRefreshToken: !!getRefreshToken(),
+      });
+
+      // Small delay to ensure localStorage write completes
+      // This prevents race conditions during navigation
+      await new Promise(resolve => setTimeout(resolve, 100));
+      console.log('[Login] Waiting for navigation effect...');
+    } catch (error) {
+      console.error('[Login] Verification failed:', error);
       // Error is handled in store
     }
   };
