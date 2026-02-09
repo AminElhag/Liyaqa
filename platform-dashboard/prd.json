@@ -99,8 +99,8 @@
         "All color references use CSS variables or Tailwind semantic classes",
         "npm run build passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Layout components already used CSS variable classes (bg-brand-accent, text-brand-accent etc.) which now resolve to coral via US-001 theme update. Replaced amber-500 in ImpersonationBar gradient with orange-400. No hardcoded amber/navy hex in layout files."
     },
     {
       "id": "US-007",

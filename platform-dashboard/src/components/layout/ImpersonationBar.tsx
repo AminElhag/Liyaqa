@@ -36,7 +36,7 @@ export function ImpersonationBar() {
   if (!active) return null
 
   return (
-    <div className="fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-4 bg-gradient-to-r from-brand-accent to-amber-500 px-4 py-2 text-sm font-medium text-bg-inverse">
+    <div className="fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-4 bg-gradient-to-r from-brand-accent to-orange-400 px-4 py-2 text-sm font-medium text-bg-inverse">
       <Eye className="h-4 w-4" />
       <span>
         Viewing as <span className="font-bold">{facilityName}</span>
