@@ -1,0 +1,754 @@
+{
+  "project": "Liyaqa Platform Dashboard Frontend",
+  "branchName": "ralph/platform-dashboard-frontend",
+  "description": "Build a world-class Platform Dashboard frontend for Liyaqa SaaS using React 18 + TypeScript + Vite + TailwindCSS v4 + Shadcn/UI + Framer Motion. Premium enterprise design with Arabic RTL support and dark mode.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Scaffold Vite + React + TypeScript project",
+      "description": "As a developer, I want a properly scaffolded project with all dependencies installed so that I have a working foundation to build on.",
+      "acceptanceCriteria": [
+        "Vite + React 18 + TypeScript project created at project root",
+        "All dependencies installed: tailwindcss @tailwindcss/vite, framer-motion, @tanstack/react-query, @tanstack/react-table, react-router-dom@6, zustand, recharts, react-hook-form, @hookform/resolvers, zod, i18next, react-i18next, lucide-react, date-fns, axios, clsx, tailwind-merge, @dnd-kit/core, @dnd-kit/sortable",
+        "Shadcn/UI initialized with new-york style, slate base color, CSS variables enabled",
+        "Path alias @ mapped to src/ in tsconfig and vite config",
+        "TailwindCSS v4 configured with @tailwindcss/vite plugin",
+        ".env file with VITE_API_BASE_URL=http://localhost:8080/api/v1/platform",
+        "npm run build completes without errors",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Scaffolded Vite + React 18.3.1 + TypeScript project. All dependencies installed. TailwindCSS v4 with @tailwindcss/vite plugin. Shadcn/UI initialized (new-york style, slate, CSS variables). Path alias @/ -> src/ configured in tsconfig + vite. .env with VITE_API_BASE_URL. typecheck, lint, and build all pass."
+    },
+    {
+      "id": "US-002",
+      "title": "Create project folder structure",
+      "description": "As a developer, I want a well-organized folder structure so that all feature modules have a clear home.",
+      "acceptanceCriteria": [
+        "src/ contains: api/ (client.ts, endpoints/, types/), assets/fonts/, components/ (ui/, layout/, data/, feedback/, forms/), features/ (auth/, deals/, tenants/, subscriptions/, tickets/, access/, monitoring/, communication/, analytics/, config/, content/, compliance/), hooks/, i18n/ (en/, ar/), lib/, stores/, styles/, types/",
+        "Each feature folder has sub-folders: pages/, components/, hooks/",
+        "Index barrel files created for components/ui, components/layout, components/data, components/feedback, components/forms",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "dependsOn": ["US-001"],
+      "passes": true,
+      "notes": "Full folder structure created: api/ (client.ts, endpoints/, types/), assets/fonts/, components/ (ui/, layout/, data/, feedback/, forms/ with barrel index files), features/ (12 modules each with pages/, components/, hooks/), hooks/, i18n/ (en/, ar/), lib/, stores/, styles/, types/. All quality checks pass."
+    },
+    {
+      "id": "US-003",
+      "title": "Design system — CSS variables, fonts, and theme",
+      "description": "As a developer, I want a comprehensive design token system with CSS variables so that all components use consistent colors, fonts, spacing, and shadows.",
+      "acceptanceCriteria": [
+        "src/styles/theme.css created with full CSS variable set for light mode: bg-primary #FAFBFC, bg-secondary #F1F3F5, bg-inverse #0A1628, text-primary #0A1628, text-accent #F59E0B, brand-accent #F59E0B, status colors, shadows, radius scale, spacing scale, transitions",
+        "Dark mode variables in [data-theme=dark] selector with dark navy palette",
+        "RTL selector [dir=rtl] sets font-family to Arabic font",
+        "Google Fonts loaded: Plus Jakarta Sans (400-700), IBM Plex Sans Arabic (400-700), JetBrains Mono (400,500)",
+        "Tailwind theme extended to reference CSS variables",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "dependsOn": ["US-002"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Theme provider with dark mode and direction support",
+      "description": "As a user, I want to toggle between dark/light mode and Arabic/English so that I can use the dashboard in my preferred language and appearance.",
+      "acceptanceCriteria": [
+        "ThemeProvider component wraps the app with dark/light mode toggle persisted to localStorage",
+        "DirectionProvider sets dir=rtl or dir=ltr on html element synced with i18n language",
+        "i18next configured with en and ar namespaces, language detection from localStorage",
+        "Basic translation files: src/i18n/en/common.json and src/i18n/ar/common.json with navigation and status label keys",
+        "useTheme() and useDirection() hooks exported",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "dependsOn": ["US-003"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Framer Motion animation presets",
+      "description": "As a developer, I want reusable animation presets so that all pages and components use consistent, direction-aware motion.",
+      "acceptanceCriteria": [
+        "src/lib/motion.ts created with Framer Motion variants: fadeIn, fadeInUp, fadeInDown, fadeInLeft, fadeInRight, scaleIn, slideIn, staggerContainer, staggerItem (50ms delay), pageTransition",
+        "All presets respect prefers-reduced-motion media query",
+        "Direction-aware: fadeInLeft mirrors to fadeInRight in RTL via dir parameter",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "dependsOn": ["US-002"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Axios API client with auth interceptors",
+      "description": "As a developer, I want a configured Axios instance with JWT interceptors so that all API calls are authenticated and errors handled consistently.",
+      "acceptanceCriteria": [
+        "src/api/client.ts exports configured Axios instance with base URL from VITE_API_BASE_URL",
+        "Request interceptor attaches Authorization: Bearer token from auth store",
+        "Response interceptor: 401 redirects to /login, 403 toasts permission denied, network error toasts connection lost",
+        "Accept-Language header set from i18n current language",
+        "src/stores/authStore.ts Zustand store with token, user, login(), logout(), isAuthenticated",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "dependsOn": ["US-002", "US-004"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "React Router setup with all routes and code splitting",
+      "description": "As a developer, I want all routes defined with lazy-loaded pages so that navigation works and bundles are code-split.",
+      "acceptanceCriteria": [
+        "App.tsx sets up React Router with nested routes inside AppShell layout",
+        "All routes defined with React.lazy + Suspense: /login, /dashboard, /deals, /tenants, /tenants/:id, /tenants/:id/onboarding, /subscriptions, /subscriptions/plans, /billing/invoices, /tickets, /tickets/:id, /monitoring/health, /monitoring/audit, /monitoring/system, /announcements, /notifications, /settings/team, /settings/api-keys, /settings/config, /settings/feature-flags, /settings/templates, /compliance, /knowledge-base, /analytics, /design-system",
+        "Each route renders a placeholder page component with the page title",
+        "Protected route wrapper redirects to /login if not authenticated",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "dependsOn": ["US-006"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Sidebar navigation component",
+      "description": "As a platform user, I want a collapsible sidebar with grouped navigation links so that I can navigate between all dashboard sections.",
+      "acceptanceCriteria": [
+        "Sidebar renders navigation grouped by sections (OVERVIEW, SALES, TENANTS, BILLING, SUPPORT, MONITORING, COMMUNICATION, SETTINGS) with Lucide icons",
+        "Active item: amber left border (right in RTL) + subtle amber bg tint",
+        "Collapse/expand toggle: 260px expanded, 72px collapsed with icons-only + tooltips, state persisted to localStorage",
+        "Smooth collapse/expand animation with Framer Motion 250ms",
+        "Bottom section: user avatar + name + role badge, theme toggle, language toggle",
+        "Mobile (<768px): sidebar hidden, slide-over drawer from hamburger button",
+        "Full RTL support: sidebar on right, borders flip",
+        "Typecheck passes",
+        "Verify in browser: navigation works, collapse animates, RTL flips correctly"
+      ],
+      "priority": 8,
+      "dependsOn": ["US-007", "US-005"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Header with breadcrumbs and global search trigger",
+      "description": "As a platform user, I want a header bar with breadcrumbs and quick access actions so that I know where I am and can quickly navigate.",
+      "acceptanceCriteria": [
+        "Header.tsx fixed at top of main content area",
+        "Breadcrumb trail auto-generated from React Router route with Arabic translations",
+        "Global search trigger button: Search... Cmd+K text",
+        "Notification bell icon with unread count badge (animated pulse)",
+        "User menu dropdown: profile, preferences, logout",
+        "Typecheck passes",
+        "Verify in browser: breadcrumbs update on navigation"
+      ],
+      "priority": 9,
+      "dependsOn": ["US-008"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Command Palette overlay (Cmd+K)",
+      "description": "As a power user, I want a command palette with fuzzy search so that I can quickly navigate to any page or action.",
+      "acceptanceCriteria": [
+        "CommandPalette.tsx opens on Cmd+K or Ctrl+K keyboard shortcut",
+        "Full-screen overlay with frosted glass backdrop and centered search modal",
+        "Fuzzy search across: navigation pages, recent tenants, recent tickets, quick actions",
+        "Results grouped by category with section headers and icons",
+        "Keyboard navigation: arrow keys, Enter to select, Esc to close",
+        "Framer Motion entrance: backdrop fade + modal scale-in 250ms",
+        "Selecting a result navigates and closes the palette",
+        "Typecheck passes",
+        "Verify in browser: Cmd+K opens, type to filter, arrow keys navigate, Enter selects"
+      ],
+      "priority": 10,
+      "dependsOn": ["US-009"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "AppShell layout with page transitions",
+      "description": "As a user, I want smooth page transitions when navigating so that the app feels polished.",
+      "acceptanceCriteria": [
+        "AppShell.tsx composes: Sidebar + main content area (Header + Outlet)",
+        "Outlet wrapped in Framer Motion AnimatePresence for page transitions",
+        "Page enter: 200ms fade-in from bottom (translateY 8px to 0)",
+        "Page exit: 100ms fade-out",
+        "document.title updates on route change",
+        "Typecheck passes",
+        "Verify in browser: sidebar + header visible, page transitions on navigation"
+      ],
+      "priority": 11,
+      "dependsOn": ["US-008", "US-009"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "StatCard and KPIGrid components",
+      "description": "As a user, I want metric cards that show KPIs with trend indicators so that I can quickly understand key numbers.",
+      "acceptanceCriteria": [
+        "StatCard.tsx with props: label, value, change (%), trend (up/down/neutral), icon, loading — large bold value 24px, small muted label 12px, colored trend arrow with %, hover lift shadow, loading skeleton pulse, fadeInUp entrance with stagger delay prop",
+        "KPIGrid.tsx with props: items[], loading, columns — responsive 4/2/1 columns, staggered entrance 50ms",
+        "Both support dark mode and RTL",
+        "Typecheck passes",
+        "Verify in browser: cards render with mock data, animation plays, skeleton on loading"
+      ],
+      "priority": 12,
+      "dependsOn": ["US-003", "US-005"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "DataTable component with TanStack Table",
+      "description": "As a user, I want a full-featured data table with sorting, search, pagination, and selection.",
+      "acceptanceCriteria": [
+        "DataTable.tsx wraps TanStack Table with: column sorting (click header, arrow), debounced search bar 300ms, row selection with checkboxes and bulk actions toolbar, pagination footer with page size selector",
+        "Loading state: shimmer skeleton rows matching columns",
+        "Empty state: centered icon + title + description + action button",
+        "Row hover: subtle bg change, sticky header on scroll",
+        "Custom cell renderers support for status badges, avatars, action menus",
+        "Mobile (<768px): horizontal scroll with frozen first column",
+        "RTL: text alignment respects direction",
+        "Typecheck passes",
+        "Verify in browser: render with mock data, sort, search, paginate, select rows"
+      ],
+      "priority": 13,
+      "dependsOn": ["US-003"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "StatusBadge, EmptyState, LoadingSkeleton, ConfirmDialog components",
+      "description": "As a developer, I want shared feedback components for consistent status display, empty states, loading, and confirmations.",
+      "acceptanceCriteria": [
+        "StatusBadge.tsx with dot/pill/outline variants and color map: ACTIVE=green, SUSPENDED=amber, DEACTIVATED=red, TRIAL=blue, PROVISIONING=purple with pulse, ARCHIVED=gray",
+        "EmptyState.tsx centered with 64px icon, title, description, optional CTA button, fade-in",
+        "LoadingSkeleton.tsx with text/card/table/chart variants and shimmer animation",
+        "ConfirmDialog.tsx with Framer Motion backdrop + scale-in, danger variant red button, focus trap + Esc",
+        "All support dark mode and RTL",
+        "Typecheck passes"
+      ],
+      "priority": 14,
+      "dependsOn": ["US-003", "US-005"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "Chart wrapper components with Recharts",
+      "description": "As a user, I want beautiful, themed chart components for data visualizations.",
+      "acceptanceCriteria": [
+        "Chart.tsx exports AreaChartCard (gradient fill, smooth curves), BarChartCard (rounded corners, hover highlight), PieChartCard (donut with center label, animated segments)",
+        "Custom tooltip component: frosted glass card with formatted values",
+        "All charts use theme CSS variable colors",
+        "Loading skeleton and responsive container auto-resize",
+        "Dark mode: chart colors adapt, grid lines muted, tooltip bg inverts",
+        "Typecheck passes",
+        "Verify in browser: render each chart type with sample data"
+      ],
+      "priority": 15,
+      "dependsOn": ["US-003"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-016",
+      "title": "Form components — SearchInput, DateRangePicker, FilterBar",
+      "description": "As a user, I want polished form components for filtering and searching data.",
+      "acceptanceCriteria": [
+        "SearchInput.tsx with debounce, search icon, clear button, loading spinner, RTL icon flip",
+        "DateRangePicker.tsx with calendar popup, range selection, presets (Today, Last 7/30 days, This month/quarter, Custom)",
+        "FilterBar.tsx with dropdown filters, active filter chips (removable), Clear all link, filter count badges",
+        "All support RTL and dark mode",
+        "Typecheck passes"
+      ],
+      "priority": 16,
+      "dependsOn": ["US-003"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-017",
+      "title": "Timeline component for activity logs",
+      "description": "As a user, I want a vertical timeline component for chronological activity display.",
+      "acceptanceCriteria": [
+        "Timeline.tsx with items[] prop containing timestamp, icon, title, description, type",
+        "Connecting vertical line between items, different icon colors per type (create=green, update=blue, delete=red, access=amber)",
+        "Stagger animation: fadeInUp 50ms delay each",
+        "RTL: text alignment flips, line stays vertical",
+        "Dark mode support",
+        "Typecheck passes"
+      ],
+      "priority": 17,
+      "dependsOn": ["US-003", "US-005"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-018",
+      "title": "Toast notification system",
+      "description": "As a user, I want toast notifications for action feedback.",
+      "acceptanceCriteria": [
+        "Toast system with Framer Motion + Zustand store, variants: success (green), error (red), warning (amber), info (blue)",
+        "Position: bottom-right (bottom-left in RTL), stack vertically, auto-dismiss 5s, hover pauses",
+        "Slide from right + spring animation (from left in RTL), max 5 visible",
+        "useToast() hook with toast.success(), toast.error(), toast.warning(), toast.info()",
+        "Typecheck passes",
+        "Verify in browser: trigger each type, verify auto-dismiss and stacking"
+      ],
+      "priority": 18,
+      "dependsOn": ["US-005"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-019",
+      "title": "Kanban deal pipeline page",
+      "description": "As an account manager, I want a drag-and-drop Kanban board for the deal pipeline.",
+      "acceptanceCriteria": [
+        "Page at /deals renders Kanban columns per stage: LEAD, CONTACTED, DEMO_SCHEDULED, DEMO_DONE, PROPOSAL_SENT, NEGOTIATION, WON, LOST",
+        "Column headers: stage name + deal count + total SAR value",
+        "Deal cards: facility name bold, contact name small, value amber, source badge, assigned avatar, days-in-stage",
+        "Drag-and-drop with @dnd-kit: card lifts with shadow + rotation, drop zone highlights with dashed border",
+        "Drop calls PUT /deals/{id}/stage with optimistic update, revert on error with shake",
+        "View toggle: Kanban / Table (DataTable), New Deal amber button opens right slide-over with form (React Hook Form + Zod)",
+        "4 StatCards above: Total Deals, Pipeline Value, Conversion Rate, Avg Cycle Time",
+        "Typecheck passes",
+        "Verify in browser: cards drag between columns, form submits, metrics display"
+      ],
+      "priority": 19,
+      "dependsOn": ["US-012", "US-013", "US-014", "US-018"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-020",
+      "title": "Tenant list page",
+      "description": "As a platform admin, I want a paginated, filterable list of all facilities.",
+      "acceptanceCriteria": [
+        "Page at /tenants: KPI row (Total, Active, Trial, Suspended), DataTable with columns: Facility Name (+ Arabic), Status badge, Plan pill, Members, Region, Onboarding Progress bar, Last Login relative time, Actions menu",
+        "FilterBar: status, plan, region; search by name; row click navigates to /tenants/:id",
+        "Empty state when no results",
+        "Typecheck passes",
+        "Verify in browser: table renders, filters work, row click navigates"
+      ],
+      "priority": 20,
+      "dependsOn": ["US-012", "US-013", "US-014", "US-016"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-021",
+      "title": "Tenant detail page with tabs",
+      "description": "As a platform admin, I want a detailed view of a single facility with organized tabs.",
+      "acceptanceCriteria": [
+        "Page at /tenants/:id: header with name + Arabic + status badge, quick stats row, action buttons (Impersonate, Edit, Suspend, Export)",
+        "6 horizontal pill-style tabs: OVERVIEW (info card + subscription card + Timeline), ONBOARDING (stepper checklist), BILLING (invoice DataTable), SUPPORT (ticket DataTable), ACTIVITY (audit Timeline), SETTINGS (feature toggles + API keys + danger zone)",
+        "Tab content transitions with 150ms fade",
+        "Typecheck passes",
+        "Verify in browser: all tabs render, switching animates"
+      ],
+      "priority": 21,
+      "dependsOn": ["US-020", "US-017"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-022",
+      "title": "Onboarding wizard for new facilities",
+      "description": "As an account manager, I want a guided step-by-step wizard to onboard new facilities.",
+      "acceptanceCriteria": [
+        "Page at /tenants/:id/onboarding: 5-step wizard with horizontal step indicator (numbered circles + lines)",
+        "Step 1 Facility Details, Step 2 Admin Account, Step 3 Subscription Plan (comparison cards), Step 4 Config, Step 5 Review + Launch",
+        "Completed=green check, current=amber pulse ring, clickable to go back, validation per step",
+        "Launch success: confetti animation 2 seconds + success overlay with View Facility and Back to Pipeline buttons",
+        "Typecheck passes",
+        "Verify in browser: complete all steps, confetti fires on launch"
+      ],
+      "priority": 22,
+      "dependsOn": ["US-021"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-023",
+      "title": "Subscription plan management page",
+      "description": "As a platform admin, I want to view and manage subscription plans with feature comparison.",
+      "acceptanceCriteria": [
+        "Page at /subscriptions/plans: 4 plan cards (FREE_TRIAL gray, STARTER white, PROFESSIONAL amber border + Recommended, ENTERPRISE dark navy)",
+        "Each card: name + Arabic, prices, limits, feature checklist, Edit button, tenant count",
+        "Feature comparison matrix below: feature names by category vs plans, sticky left column",
+        "Create Plan button opens slide-over form",
+        "Typecheck passes",
+        "Verify in browser: cards render, matrix scrolls correctly"
+      ],
+      "priority": 23,
+      "dependsOn": ["US-012", "US-013"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-024",
+      "title": "Subscription dashboard with revenue metrics",
+      "description": "As a platform admin, I want a subscription overview with revenue trends.",
+      "acceptanceCriteria": [
+        "Page at /subscriptions: KPIs (MRR, ARR, Avg Revenue, Active), revenue area chart, subscription pie chart, alert bars (expiring trials amber, overdue red, renewals blue)",
+        "DataTable: Tenant, Plan, Status, Billing Cycle, Next Billing, MRR, Actions",
+        "Change Plan modal with proration calculator and effective date selector",
+        "Typecheck passes",
+        "Verify in browser: charts render, alert bars display, change plan modal opens"
+      ],
+      "priority": 24,
+      "dependsOn": ["US-015", "US-023"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-025",
+      "title": "Invoice list page with mark-paid flow",
+      "description": "As a billing admin, I want to view all invoices and mark them as paid.",
+      "acceptanceCriteria": [
+        "Page at /billing/invoices: KPIs (Outstanding, Overdue, Paid This Month, ZATCA %), FilterBar, DataTable with monospace invoice #, amounts right-aligned, status badges, ZATCA status, overdue rows with red left border",
+        "Mark Paid sub-modal: payment method dropdown, reference number, date; confirm updates status with toast",
+        "Row click opens slide-over invoice detail: from/to, line items, VAT 15%, payment history, ZATCA hash",
+        "Typecheck passes",
+        "Verify in browser: table renders, filters work, mark-paid completes"
+      ],
+      "priority": 25,
+      "dependsOn": ["US-013", "US-014", "US-016"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-026",
+      "title": "Split-panel ticket management page",
+      "description": "As a support agent, I want a split-panel ticket view with message thread.",
+      "acceptanceCriteria": [
+        "Page at /tickets: left panel (40%) ticket list with search + filter presets, right panel (60%) ticket detail, resizable divider",
+        "Ticket cards: number monospace, subject bold, priority colored left border, status badge, SLA countdown in red if breaching",
+        "Detail: meta bar with inline-editable dropdowns, SLA indicator, message thread (customer left/agent right, internal notes amber border), reply area with rich text + Reply/Internal Note toggle + canned response dropdown + Cmd+Enter",
+        "Mobile (<1024px): full-width list, click opens separate detail page",
+        "Typecheck passes",
+        "Verify in browser: select ticket, messages render, reply sends, SLA shows"
+      ],
+      "priority": 26,
+      "dependsOn": ["US-013", "US-014", "US-016", "US-018"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-027",
+      "title": "Ticket analytics dashboard",
+      "description": "As a support lead, I want analytics on ticket performance.",
+      "acceptanceCriteria": [
+        "Sub-route under /tickets: agent performance DataTable, tickets by category donut chart, tickets over time area chart with SLA breach overlay, SLA compliance circular gauge (animated fill)",
+        "Typecheck passes",
+        "Verify in browser: all charts render with sample data"
+      ],
+      "priority": 27,
+      "dependsOn": ["US-026", "US-015"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-028",
+      "title": "Impersonation flow with safety bar",
+      "description": "As a support agent, I want to safely impersonate a facility admin in read-only mode.",
+      "acceptanceCriteria": [
+        "Impersonate button opens confirmation modal: facility name, required purpose textarea, read-only warning, Start/Cancel buttons",
+        "POST /access/impersonate on confirm with loading state",
+        "ImpersonationBar.tsx: FIXED at very top, amber gradient, 👁️ icon, facility name, Read-only text, live countdown timer, End Session button, high z-index 48px height",
+        "During impersonation all mutation buttons disabled with tooltip",
+        "End session: POST /access/impersonate/end, redirect back with success toast",
+        "Typecheck passes",
+        "Verify in browser: bar renders, countdown ticks, buttons disabled"
+      ],
+      "priority": 28,
+      "dependsOn": ["US-014", "US-018"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-029",
+      "title": "Team management and API key management pages",
+      "description": "As a platform admin, I want to manage team members and tenant API keys.",
+      "acceptanceCriteria": [
+        "Team page /settings/team: Invite button with modal, DataTable (Name, Email, Role badge, Status, Last Login, Actions), current user You badge",
+        "API Keys page /settings/api-keys: Generate Key flow (select tenant, show full key ONCE in monospace, Copy button with checkmark, I've saved this key checkbox required), DataTable with masked keys, Revoke with danger ConfirmDialog",
+        "Typecheck passes",
+        "Verify in browser: invite flow works, key shows once, copy works"
+      ],
+      "priority": 29,
+      "dependsOn": ["US-013", "US-014"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-030",
+      "title": "Audit log viewer page",
+      "description": "As a platform admin, I want a searchable, filterable audit log viewer.",
+      "acceptanceCriteria": [
+        "Page at /monitoring/audit: filters (Actor, Action Type, Resource Type, Tenant, Date Range), mini frequency bar chart at top",
+        "Timeline view: timestamp monospace, actor avatar, action colored badge, auto-description sentence, expand arrow for JSON details",
+        "Infinite scroll, Auto-refresh toggle with new entries sliding in from top",
+        "Table view toggle with export CSV button",
+        "Typecheck passes",
+        "Verify in browser: entries render, filters work, infinite scroll loads, expand shows details"
+      ],
+      "priority": 30,
+      "dependsOn": ["US-013", "US-017", "US-015", "US-016"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-031",
+      "title": "Facility health dashboard",
+      "description": "As a platform admin, I want to see health scores for all facilities to identify at-risk tenants.",
+      "acceptanceCriteria": [
+        "Page at /monitoring/health: health distribution pie chart, average score large colored number",
+        "Card grid (toggle to table): facility name + plan, health score 0-100 with circular progress ring colored by tier, mini sparklines, status indicators, hover shows breakdown",
+        "At Risk section (collapsible, expanded): facilities <40 score with risk factors and quick action buttons",
+        "Sort by score/members/activity, filter by tier/plan/region",
+        "Typecheck passes",
+        "Verify in browser: health rings animate, at-risk section shows flagged tenants"
+      ],
+      "priority": 31,
+      "dependsOn": ["US-012", "US-015"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-032",
+      "title": "System status page",
+      "description": "As a platform admin, I want to see system health at a glance.",
+      "acceptanceCriteria": [
+        "Page at /monitoring/system: health banner (All Systems Operational green or degraded), component cards (API Server, Database, Cache, Background Jobs, Storage) with green/amber/red status dots + metrics",
+        "Active maintenance banner if any window active",
+        "Typecheck passes",
+        "Verify in browser: status cards render with colored dots"
+      ],
+      "priority": 32,
+      "dependsOn": ["US-012", "US-014"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-033",
+      "title": "Announcements management page with editor",
+      "description": "As a communication manager, I want to create and publish announcements with a live preview editor.",
+      "acceptanceCriteria": [
+        "Page at /announcements: KPIs, card list with type icon + colored border + status + audience badges",
+        "Editor page: left 60% (title inputs EN/AR, rich text EN/AR, type selector, audience targeting multi-select, schedule toggle, pin/expiry), right 40% live preview (language toggle, desktop/mobile toggle, real-time updates)",
+        "Typecheck passes",
+        "Verify in browser: create announcement, live preview updates, publish"
+      ],
+      "priority": 33,
+      "dependsOn": ["US-012", "US-014", "US-016"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-034",
+      "title": "Main platform dashboard page",
+      "description": "As a platform admin, I want a comprehensive KPI dashboard as the landing page.",
+      "acceptanceCriteria": [
+        "Page at /dashboard: greeting + quick action cards (New Deal, Active Tickets, Expiring Trials, SLA Breaches with counts and navigation)",
+        "KPIGrid 4 columns with staggered fadeInUp, revenue area chart + tenant growth bar chart (2-column), distribution row (3 donut/bar charts), recent deals + tickets tables (2-column), health alert cards",
+        "Charts load with skeleton then animate, refresh button re-fetches all, responsive stacking on mobile",
+        "Typecheck passes",
+        "Verify in browser: all sections render, charts animate, quick actions navigate"
+      ],
+      "priority": 34,
+      "dependsOn": ["US-012", "US-013", "US-015"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-035",
+      "title": "Analytics deep dive page",
+      "description": "As a platform admin, I want detailed analytics on churn, feature adoption, and benchmarks.",
+      "acceptanceCriteria": [
+        "Page at /analytics: churn analysis (rate cards, at-risk list, churn by plan bar, reasons pie), feature adoption (horizontal bars, trend line), comparative benchmarks (stats cards), Export Report button",
+        "Typecheck passes",
+        "Verify in browser: all chart sections render with sample data"
+      ],
+      "priority": 35,
+      "dependsOn": ["US-015", "US-012"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-036",
+      "title": "Configuration page with inline editing",
+      "description": "As a platform admin, I want to view and edit global settings inline.",
+      "acceptanceCriteria": [
+        "Page at /settings/config: settings grouped by category in accordion sections, inline edit on click with type-specific editors (toggle/number/text/JSON), last updated hint, floating Save All for unsaved changes",
+        "Maintenance section: active maintenance amber banner, Schedule Maintenance modal (title AR/EN, description, datetime range), upcoming list with cancel",
+        "Typecheck passes",
+        "Verify in browser: inline edit saves, maintenance modal works"
+      ],
+      "priority": 36,
+      "dependsOn": ["US-014"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-037",
+      "title": "Feature flag matrix page",
+      "description": "As a platform admin, I want a visual matrix to toggle feature flags per tenant.",
+      "acceptanceCriteria": [
+        "Page at /settings/feature-flags: matrix with tenant rows (searchable) and feature columns (grouped by category), toggle switches, override highlighting (amber=enabled override, red=disabled override border), tooltip on hover",
+        "Sticky first column and header row, bulk actions (Enable for plan, Reset overrides), gradual rollout slider",
+        "Typecheck passes",
+        "Verify in browser: toggles work, overrides highlighted, sticky on scroll"
+      ],
+      "priority": 37,
+      "dependsOn": ["US-013", "US-014"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-038",
+      "title": "Knowledge base page with search",
+      "description": "As a platform admin, I want a searchable knowledge base with category filtering.",
+      "acceptanceCriteria": [
+        "Page at /knowledge-base: left sidebar categories with counts, article card list (title, preview, category badge, status, views, helpful ratio), instant search, sort options",
+        "New Article: full-page markdown editor with split view (edit/preview), EN/AR tabs, metadata sidebar, Preview as Facility Admin button",
+        "Typecheck passes",
+        "Verify in browser: search filters, category sidebar works, editor renders preview"
+      ],
+      "priority": 38,
+      "dependsOn": ["US-013", "US-016"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-039",
+      "title": "Compliance dashboard with ZATCA gauge",
+      "description": "As a compliance officer, I want contract tracking and ZATCA compliance monitoring.",
+      "acceptanceCriteria": [
+        "Page at /compliance with 3 tabs: Contracts (KPIs, DataTable with expiring row highlights), ZATCA (animated circular gauge, stats row, issues DataTable with Retry button, activity chart), Data Requests (pending list, approve/deny with confirmation)",
+        "Typecheck passes",
+        "Verify in browser: ZATCA gauge animates on load, tabs switch, highlighting works"
+      ],
+      "priority": 39,
+      "dependsOn": ["US-013", "US-014", "US-015"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-040",
+      "title": "Notification center dropdown",
+      "description": "As a platform user, I want a notification center accessible from the header.",
+      "acceptanceCriteria": [
+        "Bell click opens dropdown: notification list with icon, title, time, read/unread state, grouped by Today/Earlier/Older",
+        "Click navigates + marks read, Mark All Read button, empty state, badge count with spring bounce on new",
+        "Panel animates: scale + fade from top-right (top-left in RTL)",
+        "Typecheck passes",
+        "Verify in browser: opens, displays grouped, marking read works"
+      ],
+      "priority": 40,
+      "dependsOn": ["US-009", "US-018"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-041",
+      "title": "Responsive design pass for all pages",
+      "description": "As a mobile user, I want the dashboard fully usable on smaller screens.",
+      "acceptanceCriteria": [
+        "All pages tested at 1440px, 1024px, 768px, 375px with no overflow or cut-off",
+        "Sidebar: full/collapsed/drawer across breakpoints, KPI grids 4/2/1 columns",
+        "DataTables: card layout on mobile, split panels full-width on tablet",
+        "Charts stack vertically, forms single column, slide-overs full-screen on mobile",
+        "Typecheck passes",
+        "Verify in browser at each breakpoint"
+      ],
+      "priority": 41,
+      "dependsOn": ["US-034", "US-026", "US-019"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-042",
+      "title": "RTL polish pass for all pages",
+      "description": "As an Arabic user, I want perfect RTL layout on every page.",
+      "acceptanceCriteria": [
+        "Switch to Arabic and verify all pages: sidebar flips right, text alignment uses start/end, direction icons flip, charts render Arabic labels, numbers stay Western Arabic",
+        "Currency SAR prefix EN / ر.س suffix AR, tables action buttons left in RTL, breadcrumb separator flips, slide-overs from left, search icon flips, notifications from left",
+        "All Framer Motion animations mirror direction, no text overflow in Arabic, mixed AR/EN content renders correctly",
+        "Typecheck passes",
+        "Verify in browser: full walkthrough in Arabic mode"
+      ],
+      "priority": 42,
+      "dependsOn": ["US-041"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-043",
+      "title": "Accessibility and performance pass",
+      "description": "As a user with accessibility needs, I want the dashboard to be keyboard-navigable and screen-reader friendly.",
+      "acceptanceCriteria": [
+        "Keyboard: logical tab order, sidebar arrow keys, DataTable arrow keys, modal focus trap + Esc, focus returns on close",
+        "Focus ring: 2px amber outline, focus-visible only",
+        "Screen reader: aria-labels on icons/badges/charts, aria-live on loading states",
+        "Color contrast WCAG AA in both themes, status uses color AND icon/shape",
+        "All animations check prefers-reduced-motion",
+        "React.lazy on all routes, React Query staleTime configured, audit logs virtualized, search debounced, no chunks >250KB",
+        "Typecheck passes"
+      ],
+      "priority": 43,
+      "dependsOn": ["US-042"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-044",
+      "title": "Global error handling and loading states review",
+      "description": "As a user, I want consistent error handling and loading feedback.",
+      "acceptanceCriteria": [
+        "Every page has LoadingSkeleton matching content shape, no layout shift on load",
+        "API errors show localized toasts (AR/EN), 401 redirects to login, 403 shows permission toast",
+        "Network disconnect shows persistent top banner with retry countdown",
+        "Every list page has contextual EmptyState, every failed call has retry button",
+        "Typecheck passes",
+        "Verify in browser: disconnect network for banner, trigger errors for toasts"
+      ],
+      "priority": 44,
+      "dependsOn": ["US-018", "US-014"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-045",
+      "title": "Design system showcase page",
+      "description": "As a developer, I want a living design system page to reference all components.",
+      "acceptanceCriteria": [
+        "Page at /design-system: color palette swatches, typography samples EN/AR, spacing scale, all components with mock data and interactive demos",
+        "Components: StatCard, KPIGrid, DataTable, StatusBadge, EmptyState, LoadingSkeleton, ConfirmDialog, SearchInput, DateRangePicker, FilterBar, Timeline, Toast triggers, Charts",
+        "Hidden from sidebar in production, dev-only",
+        "Typecheck passes",
+        "Verify in browser: all components render, demos work"
+      ],
+      "priority": 45,
+      "dependsOn": ["US-012", "US-013", "US-014", "US-015", "US-016", "US-017", "US-018"],
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
