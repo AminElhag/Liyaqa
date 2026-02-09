@@ -191,8 +191,8 @@
       ],
       "priority": 11,
       "dependsOn": ["US-008", "US-009"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "AppShell composes Sidebar + Header + Outlet. AnimatePresence wraps page transitions: 200ms fade-in from bottom, fade-out on exit. document.title updates on route change with translated page name."
     },
     {
       "id": "US-012",
