@@ -35,8 +35,8 @@
         "All types exported via index.ts barrel file",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Ported 16 type files from frontend/src/types/platform/ plus created 5 dependency stubs (api.ts, auth.ts, organization.ts, member.ts, billing.ts). Fixed import paths from '../X' to './X'. Removed unused UUID import from client-health.ts. Renamed UserRole/UserStatus in club-detail.ts to ClubUserRole/ClubUserStatus to avoid barrel export conflicts with auth.ts. All types exported via index.ts barrel. Typecheck passes."
     },
     {
       "id": "US-003",
