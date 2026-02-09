@@ -115,8 +115,8 @@
       ],
       "priority": 7,
       "dependsOn": ["US-006"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "React Router with nested routes inside AppShell layout. All 25 routes defined with React.lazy + Suspense. ProtectedRoute wrapper redirects to /login when not authenticated. Each page is a separate code-split chunk. Placeholder pages render page titles."
     },
     {
       "id": "US-008",
