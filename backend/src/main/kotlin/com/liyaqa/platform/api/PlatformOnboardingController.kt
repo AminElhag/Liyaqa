@@ -7,10 +7,15 @@ import com.liyaqa.platform.domain.model.OnboardingPhase
 import com.liyaqa.platform.domain.model.OnboardingProgress
 import com.liyaqa.platform.domain.model.OnboardingStep
 import com.liyaqa.platform.domain.model.UnlockableFeature
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
+import com.liyaqa.platform.domain.model.PlatformUserRole
+import com.liyaqa.platform.infrastructure.security.PlatformSecured
 import org.springframework.web.bind.annotation.*
 import java.util.UUID
 
@@ -32,13 +37,16 @@ import java.util.UUID
  */
 @RestController
 @RequestMapping("/api/platform/onboarding")
-@PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP', 'SUPPORT_REP')")
+@PlatformSecured
+@Tag(name = "Onboarding", description = "Client onboarding workflow management")
 class PlatformOnboardingController(
     private val onboardingService: PlatformOnboardingProgressService
 ) {
     /**
      * Gets all incomplete onboarding records.
      */
+    @Operation(summary = "Get incomplete onboarding records", description = "Returns paginated list of all clients with incomplete onboarding")
+    @ApiResponse(responseCode = "200", description = "Incomplete onboarding records retrieved successfully")
     @GetMapping
     fun getIncomplete(pageable: Pageable): ResponseEntity<Page<OnboardingProgressResponse>> {
         val page = onboardingService.getIncomplete(pageable)
@@ -48,6 +56,8 @@ class PlatformOnboardingController(
     /**
      * Gets onboarding statistics.
      */
+    @Operation(summary = "Get onboarding statistics", description = "Returns aggregated onboarding statistics including completion rates and phase distribution")
+    @ApiResponse(responseCode = "200", description = "Onboarding statistics retrieved successfully")
     @GetMapping("/statistics")
     fun getStatistics(): ResponseEntity<OnboardingStatistics> {
         val stats = onboardingService.getStatistics()
@@ -58,6 +68,8 @@ class PlatformOnboardingController(
      * Gets all active onboarding clients (incomplete).
      * Alias for /api/platform/onboarding.
      */
+    @Operation(summary = "Get active onboarding clients", description = "Returns paginated list of clients actively in onboarding (alias for root endpoint)")
+    @ApiResponse(responseCode = "200", description = "Active onboarding clients retrieved successfully")
     @GetMapping("/active")
     fun getActive(pageable: Pageable): ResponseEntity<Page<OnboardingProgressResponse>> {
         return getIncomplete(pageable)
@@ -66,6 +78,8 @@ class PlatformOnboardingController(
     /**
      * Gets stalled onboarding clients (no progress in specified days).
      */
+    @Operation(summary = "Get stalled onboarding clients", description = "Returns paginated list of clients with no onboarding progress in the specified number of days")
+    @ApiResponse(responseCode = "200", description = "Stalled onboarding clients retrieved successfully")
     @GetMapping("/stalled")
     fun getStalled(
         @RequestParam(defaultValue = "7") stalledDays: Int,
@@ -78,6 +92,8 @@ class PlatformOnboardingController(
     /**
      * Gets onboarding by phase.
      */
+    @Operation(summary = "Get onboarding by phase", description = "Returns paginated list of clients in the specified onboarding phase")
+    @ApiResponse(responseCode = "200", description = "Onboarding records retrieved successfully")
     @GetMapping("/by-phase/{phase}")
     fun getByPhase(
         @PathVariable phase: OnboardingPhase,
@@ -90,6 +106,11 @@ class PlatformOnboardingController(
     /**
      * Gets onboarding for a specific organization.
      */
+    @Operation(summary = "Get onboarding by organization", description = "Returns the onboarding progress for a specific organization")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Onboarding progress retrieved successfully"),
+        ApiResponse(responseCode = "404", description = "Organization not found")
+    ])
     @GetMapping("/{organizationId}")
     fun getByOrganizationId(
         @PathVariable organizationId: UUID
@@ -101,6 +122,11 @@ class PlatformOnboardingController(
     /**
      * Gets onboarding summary for a specific organization.
      */
+    @Operation(summary = "Get onboarding summary", description = "Returns an onboarding summary including progress percentage and next steps for an organization")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Onboarding summary retrieved successfully"),
+        ApiResponse(responseCode = "404", description = "Organization not found")
+    ])
     @GetMapping("/{organizationId}/summary")
     fun getSummary(
         @PathVariable organizationId: UUID
@@ -112,8 +138,14 @@ class PlatformOnboardingController(
     /**
      * Completes a specific onboarding step for an organization.
      */
+    @Operation(summary = "Complete onboarding step", description = "Marks a specific onboarding step as completed for an organization")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Step completed successfully"),
+        ApiResponse(responseCode = "404", description = "Organization not found"),
+        ApiResponse(responseCode = "422", description = "Step cannot be completed in current state")
+    ])
     @PostMapping("/{organizationId}/steps/{step}/complete")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     fun completeStep(
         @PathVariable organizationId: UUID,
         @PathVariable step: OnboardingStep
@@ -125,8 +157,14 @@ class PlatformOnboardingController(
     /**
      * Uncompletes a specific onboarding step for an organization.
      */
+    @Operation(summary = "Uncomplete onboarding step", description = "Reverts a specific onboarding step to incomplete for an organization")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Step uncompleted successfully"),
+        ApiResponse(responseCode = "404", description = "Organization not found"),
+        ApiResponse(responseCode = "422", description = "Step cannot be uncompleted in current state")
+    ])
     @PostMapping("/{organizationId}/steps/{step}/uncomplete")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     fun uncompleteStep(
         @PathVariable organizationId: UUID,
         @PathVariable step: OnboardingStep
@@ -138,8 +176,14 @@ class PlatformOnboardingController(
     /**
      * Manually unlocks a feature for an organization.
      */
+    @Operation(summary = "Unlock feature", description = "Manually unlocks a feature for an organization bypassing onboarding requirements")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Feature unlocked successfully"),
+        ApiResponse(responseCode = "404", description = "Organization not found"),
+        ApiResponse(responseCode = "422", description = "Feature cannot be unlocked in current state")
+    ])
     @PostMapping("/{organizationId}/features/{feature}/unlock")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     fun unlockFeature(
         @PathVariable organizationId: UUID,
         @PathVariable feature: UnlockableFeature
@@ -152,6 +196,11 @@ class PlatformOnboardingController(
      * Sends a reminder for stalled onboarding.
      * Note: Actual reminder sending should be handled by a notification service.
      */
+    @Operation(summary = "Send onboarding reminder", description = "Sends a reminder notification to a stalled onboarding organization")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Reminder sent successfully"),
+        ApiResponse(responseCode = "404", description = "Organization not found")
+    ])
     @PostMapping("/{organizationId}/reminder")
     fun sendReminder(
         @PathVariable organizationId: UUID

@@ -40,7 +40,7 @@ class PlatformUser(
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
-    var role: PlatformUserRole = PlatformUserRole.SUPPORT_REP,
+    var role: PlatformUserRole = PlatformUserRole.SUPPORT_AGENT,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -103,19 +103,40 @@ class PlatformUser(
     fun isActive(): Boolean = status == PlatformUserStatus.ACTIVE
 
     /**
-     * Check if the user is a platform admin.
+     * Check if the user is a super admin.
      */
-    fun isPlatformAdmin(): Boolean = role == PlatformUserRole.PLATFORM_ADMIN
+    fun isSuperAdmin(): Boolean = role == PlatformUserRole.PLATFORM_SUPER_ADMIN
 
     /**
-     * Check if the user is a sales rep.
+     * Check if the user is any kind of admin (super or regular).
      */
-    fun isSalesRep(): Boolean = role == PlatformUserRole.SALES_REP
+    fun isAdmin(): Boolean = role == PlatformUserRole.PLATFORM_SUPER_ADMIN || role == PlatformUserRole.PLATFORM_ADMIN
 
     /**
-     * Check if the user is a support rep.
+     * Check if the user is an account manager.
      */
-    fun isSupportRep(): Boolean = role == PlatformUserRole.SUPPORT_REP
+    fun isAccountManager(): Boolean = role == PlatformUserRole.ACCOUNT_MANAGER
+
+    /**
+     * Check if the user is a support lead.
+     */
+    fun isSupportLead(): Boolean = role == PlatformUserRole.SUPPORT_LEAD
+
+    /**
+     * Check if the user is a support agent.
+     */
+    fun isSupportAgent(): Boolean = role == PlatformUserRole.SUPPORT_AGENT
+
+    /**
+     * Check if the user is a viewer.
+     */
+    fun isViewer(): Boolean = role == PlatformUserRole.PLATFORM_VIEWER
+
+    /**
+     * Check if the user has a specific platform permission.
+     */
+    fun hasPermission(permission: PlatformPermission): Boolean =
+        PlatformRolePermissions.hasPermission(role, permission)
 
     // ============================================
     // Updates

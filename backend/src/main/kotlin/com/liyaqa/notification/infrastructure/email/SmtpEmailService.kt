@@ -34,7 +34,7 @@ import org.springframework.stereotype.Service
     prefix = "email",
     name = ["enabled"],
     havingValue = "true",
-    matchIfMissing = true
+    matchIfMissing = false
 )
 class SmtpEmailService(
     private val mailSender: JavaMailSender,

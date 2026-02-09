@@ -68,7 +68,7 @@
         "hasPermission(permission), hasAnyPermission(permissions), hasAllPermissions(permissions) methods",
         "isPlatformUser and isPlatformRole(role) helper methods",
         "Persistent hydration via zustand/persist with localStorage",
-        "No ky imports — uses axios via api client",
+        "No ky imports \u2014 uses axios via api client",
         "npm run typecheck passes"
       ],
       "passes": true,
@@ -108,16 +108,16 @@
       "title": "Create auth API endpoint module",
       "description": "Create src/api/endpoints/auth.ts with functions for all PlatformAuthController endpoints: sendCode, verifyCode, refreshToken, getMe, logout. Each function uses the shared axios api instance.",
       "acceptanceCriteria": [
-        "sendCode(email: string) → POST /api/platform/auth/send-code",
-        "verifyCode(email: string, code: string) → POST /api/platform/auth/verify-code returns { accessToken, refreshToken, user }",
-        "refreshToken(token: string) → POST /api/platform/auth/refresh",
-        "getMe() → GET /api/platform/auth/me",
-        "logout() → POST /api/platform/auth/logout",
+        "sendCode(email: string) \u2192 POST /api/platform/auth/send-code",
+        "verifyCode(email: string, code: string) \u2192 POST /api/platform/auth/verify-code returns { accessToken, refreshToken, user }",
+        "refreshToken(token: string) \u2192 POST /api/platform/auth/refresh",
+        "getMe() \u2192 GET /api/platform/auth/me",
+        "logout() \u2192 POST /api/platform/auth/logout",
         "All functions properly typed with request/response types",
         "npm run typecheck passes"
       ],
       "passes": true,
-      "notes": "Created auth.ts with sendCode, verifyCode, refreshToken, getMe, logout — all typed."
+      "notes": "Created auth.ts with sendCode, verifyCode, refreshToken, getMe, logout \u2014 all typed."
     },
     {
       "id": "US-008",
@@ -555,8 +555,8 @@
         "All use i18next t() for label text",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "All 10 badge components already ported. Fixed invoice-status-badge to use useTranslation() hook for consistency. Fixed 66+ pre-existing TypeScript errors (verbatimModuleSyntax import type, unused vars, missing sonner dep, Zod resolver types). Fixed 44+ lint errors (react-refresh, React Compiler, unused eslint-disable directives). Extracted inline InfoRow component in review-step.tsx to fix render-time component creation."
     },
     {
       "id": "US-040",
@@ -595,7 +595,7 @@
       "description": "Port the deal creation/edit form and the multi-step deal-to-client conversion wizard (convert-deal-wizard, convert-deal-form, and all convert-deal-steps/). Adapt React Hook Form + Zod validation for Vite.",
       "acceptanceCriteria": [
         "Deal form supports create and edit modes",
-        "Conversion wizard has steps: Organization → Club → Admin → Subscription → Review",
+        "Conversion wizard has steps: Organization \u2192 Club \u2192 Admin \u2192 Subscription \u2192 Review",
         "Each step validates independently with Zod",
         "Wizard uses stepper UI component",
         "Form submission calls appropriate mutations",
@@ -625,7 +625,7 @@
       "description": "Port client-edit-form, client-onboarding-form, client-onboarding-wizard (with all client-onboarding-steps/), onboarding-success-dialog, client-health-card, client-activity-tab, client-support-tab, client-notes-tab.",
       "acceptanceCriteria": [
         "Client edit form with React Hook Form + Zod",
-        "Onboarding wizard: Organization → Club → Admin → Subscription → Review",
+        "Onboarding wizard: Organization \u2192 Club \u2192 Admin \u2192 Subscription \u2192 Review",
         "Health card displays score with color indicators",
         "Tab components work within client detail page layout",
         "All use useNavigate instead of useRouter",
@@ -918,7 +918,7 @@
       "id": "US-064",
       "phase": 4,
       "title": "Implement Login page with OTP flow",
-      "description": "Replace the placeholder LoginPage with a real implementation: email input → send code → enter OTP → verify → redirect to dashboard. Use auth store and auth API endpoints.",
+      "description": "Replace the placeholder LoginPage with a real implementation: email input \u2192 send code \u2192 enter OTP \u2192 verify \u2192 redirect to dashboard. Use auth store and auth API endpoints.",
       "acceptanceCriteria": [
         "Step 1: Email input with coral-branded form",
         "Step 2: 6-digit OTP input with resend timer",
@@ -1023,7 +1023,7 @@
       "title": "Implement Client onboarding and edit pages",
       "description": "Create /clients/new (onboarding wizard) and /clients/:id/edit (edit form) pages.",
       "acceptanceCriteria": [
-        "Onboarding wizard: Organization → Club → Admin → Subscription → Review → Success",
+        "Onboarding wizard: Organization \u2192 Club \u2192 Admin \u2192 Subscription \u2192 Review \u2192 Success",
         "Each step validates before advancing",
         "Success dialog shows created resources",
         "Edit page pre-fills client data",
@@ -1632,10 +1632,10 @@
         "Frontend starts: cd platform-dashboard && npm run dev",
         "Login flow works with liyaqasaas@gmail.com",
         "Dashboard loads with real data from API",
-        "Navigate to deals, clients, subscriptions — data renders",
-        "Create a deal, edit it, move stages — mutations work",
-        "Toggle dark mode — UI adapts",
-        "Switch to Arabic — RTL layout works",
+        "Navigate to deals, clients, subscriptions \u2014 data renders",
+        "Create a deal, edit it, move stages \u2014 mutations work",
+        "Toggle dark mode \u2014 UI adapts",
+        "Switch to Arabic \u2014 RTL layout works",
         "Kanban drag-and-drop works",
         "Form validation works (submit invalid data, see errors)",
         "Logout works and redirects to login"
@@ -1662,12 +1662,12 @@
     {
       "id": "US-109",
       "phase": 6,
-      "title": "Final quality gate — all checks pass",
+      "title": "Final quality gate \u2014 all checks pass",
       "description": "Run all quality checks one final time to confirm everything passes.",
       "acceptanceCriteria": [
-        "npm run typecheck — zero errors",
-        "npm run lint — zero errors",
-        "npm run build — succeeds",
+        "npm run typecheck \u2014 zero errors",
+        "npm run lint \u2014 zero errors",
+        "npm run build \u2014 succeeds",
         "All 109 stories have passes: true",
         "Output: <promise>COMPLETE</promise>"
       ],

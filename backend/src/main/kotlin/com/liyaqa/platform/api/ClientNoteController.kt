@@ -17,7 +17,8 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
+import com.liyaqa.platform.domain.model.PlatformUserRole
+import com.liyaqa.platform.infrastructure.security.PlatformSecured
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -45,7 +46,7 @@ class ClientNoteController(
      * Get all notes for a client organization.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP', 'SUPPORT_REP')")
+    @PlatformSecured
     @Operation(summary = "Get client notes", description = "Get all notes for a client organization")
     fun getNotes(
         @PathVariable organizationId: UUID,
@@ -70,7 +71,7 @@ class ClientNoteController(
      * Get pinned notes for a client organization.
      */
     @GetMapping("/pinned")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP', 'SUPPORT_REP')")
+    @PlatformSecured
     @Operation(summary = "Get pinned notes", description = "Get pinned notes for a client organization")
     fun getPinnedNotes(@PathVariable organizationId: UUID): ResponseEntity<List<ClientNoteResponse>> {
         val notes = clientNoteService.getPinnedNotes(organizationId)
@@ -81,7 +82,7 @@ class ClientNoteController(
      * Get a single note by ID.
      */
     @GetMapping("/{noteId}")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP', 'SUPPORT_REP')")
+    @PlatformSecured
     @Operation(summary = "Get note", description = "Get a single note by ID")
     fun getNote(
         @PathVariable organizationId: UUID,
@@ -99,7 +100,7 @@ class ClientNoteController(
      * Create a new note.
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP', 'SUPPORT_REP')")
+    @PlatformSecured
     @Operation(summary = "Create note", description = "Create a new note for a client")
     fun createNote(
         @PathVariable organizationId: UUID,
@@ -121,7 +122,7 @@ class ClientNoteController(
      * Update an existing note.
      */
     @PutMapping("/{noteId}")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP', 'SUPPORT_REP')")
+    @PlatformSecured
     @Operation(summary = "Update note", description = "Update an existing note")
     fun updateNote(
         @PathVariable organizationId: UUID,
@@ -150,7 +151,7 @@ class ClientNoteController(
      * Toggle pin status of a note.
      */
     @PostMapping("/{noteId}/toggle-pin")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP', 'SUPPORT_REP')")
+    @PlatformSecured
     @Operation(summary = "Toggle pin", description = "Toggle pin status of a note")
     fun togglePin(
         @PathVariable organizationId: UUID,
@@ -170,7 +171,7 @@ class ClientNoteController(
      * Delete a note.
      */
     @DeleteMapping("/{noteId}")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.ACCOUNT_MANAGER])
     @Operation(summary = "Delete note", description = "Delete a note")
     fun deleteNote(
         @PathVariable organizationId: UUID,
@@ -190,7 +191,7 @@ class ClientNoteController(
      * Get note categories (for filter dropdowns).
      */
     @GetMapping("/categories")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP', 'SUPPORT_REP')")
+    @PlatformSecured
     @Operation(summary = "Get categories", description = "Get list of all note categories")
     fun getCategories(): ResponseEntity<List<String>> {
         return ResponseEntity.ok(NoteCategory.entries.map { it.name })

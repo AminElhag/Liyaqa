@@ -1,0 +1,302 @@
+# ===========================================
+# Liyaqa Local Production Testing Stack
+# ===========================================
+# Mirrors production deployment for local debugging
+# Differences from production:
+#   - Builds from local source instead of pulling images
+#   - Exposes all ports for debugging (8080, 3000, 3001)
+#   - Uses local .env.local-prod configuration
+#   - Nginx optional (can access services directly)
+#   - Reduced resource limits for local machine
+#
+# Usage:
+#   docker-compose -f docker-compose.local-prod.yml --env-file .env.local-prod up
+#   docker-compose -f docker-compose.local-prod.yml --env-file .env.local-prod up -d
+#   docker-compose -f docker-compose.local-prod.yml logs -f
+#   docker-compose -f docker-compose.local-prod.yml down
+#
+# Build images first:
+#   docker-compose -f docker-compose.local-prod.yml build
+#
+# ===========================================
+
+version: '3.8'
+
+services:
+  # ===========================================
+  # PostgreSQL Database
+  # ===========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: liyaqa-local-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-liyaqa}
+      POSTGRES_USER: ${POSTGRES_USER:-liyaqa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data_local:/var/lib/postgresql/data
+    ports:
+      # Expose PostgreSQL directly for debugging (using 5435 to avoid conflicts)
+      - "5435:5432"
+    networks:
+      - liyaqa-local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-liyaqa} -d ${POSTGRES_DB:-liyaqa}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+    command: >
+      postgres
+      -c max_connections=50
+      -c shared_buffers=128MB
+      -c effective_cache_size=512MB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=8MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=512MB
+      -c max_wal_size=2GB
+
+  # ===========================================
+  # Redis Cache & Session Store
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: liyaqa-local-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
+    volumes:
+      - redis_data_local:/data
+    ports:
+      # Expose Redis directly for debugging
+      - "6379:6379"
+    networks:
+      - liyaqa-local
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+      start_period: 5s
+
+  # ===========================================
+  # MinIO (Local S3-compatible storage)
+  # ===========================================
+  minio:
+    image: minio/minio:latest
+    container_name: liyaqa-local-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin123}
+    volumes:
+      - minio_data_local:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - liyaqa-local
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # ===========================================
+  # Liyaqa Backend API (Built from local source)
+  # ===========================================
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    image: liyaqa-backend:local-prod
+    container_name: liyaqa-local-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Spring Configuration
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      SERVER_PORT: 8080
+      ENVIRONMENT: ${ENVIRONMENT:-local-production}
+
+      # JVM Settings (reduced for local)
+      JAVA_OPTS: ${JAVA_OPTS:--Xms256m -Xmx512m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC}
+
+      # Database
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-liyaqa}
+      DATABASE_USERNAME: ${POSTGRES_USER:-liyaqa}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-10}
+      DB_POOL_MIN_IDLE: ${DB_POOL_MIN_IDLE:-2}
+
+      # Redis - Spring Boot format
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      SPRING_DATA_REDIS_DATABASE: ${REDIS_DATABASE:-0}
+      SPRING_DATA_REDIS_TIMEOUT: ${REDIS_TIMEOUT:-5000}
+      SPRING_SESSION_STORE_TYPE: ${SPRING_SESSION_STORE_TYPE:-redis}
+      SPRING_SESSION_TIMEOUT: ${SPRING_SESSION_TIMEOUT:-1800}
+
+      # Security
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}
+      HSTS_ENABLED: ${HSTS_ENABLED:-false}
+
+      # Domain & Multi-tenancy
+      LIYAQA_BASE_DOMAIN: ${LIYAQA_BASE_DOMAIN:-localhost}
+
+      # Email (disabled by default for local testing)
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-smtp}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@localhost}
+
+      # SMS (disabled for local testing)
+      SMS_ENABLED: ${SMS_ENABLED:-false}
+
+      # Storage (MinIO for local testing)
+      STORAGE_TYPE: ${STORAGE_TYPE:-minio}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin123}
+      MINIO_BUCKET: ${MINIO_BUCKET:-liyaqa-files}
+
+      # Payments (disabled for local testing)
+      PAYTABS_ENABLED: ${PAYTABS_ENABLED:-false}
+      STCPAY_ENABLED: ${STCPAY_ENABLED:-false}
+      TAMARA_ENABLED: ${TAMARA_ENABLED:-false}
+
+      # ZATCA (disabled for local testing)
+      ZATCA_ENABLED: ${ZATCA_ENABLED:-false}
+
+      # Firebase (disabled for local testing)
+      FIREBASE_ENABLED: ${FIREBASE_ENABLED:-false}
+
+      # Monitoring
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:-health,info,metrics,prometheus}
+      MANAGEMENT_HEALTH_MAIL_ENABLED: ${MANAGEMENT_HEALTH_MAIL_ENABLED:-true}
+      TRACING_ENABLED: ${TRACING_ENABLED:-false}
+
+      # Logging (more verbose for local debugging)
+      LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
+      LOGGING_LEVEL_COM_LIYAQA: ${LOGGING_LEVEL_COM_LIYAQA:-DEBUG}
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: ${LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY:-DEBUG}
+
+    ports:
+      # Expose backend directly for debugging
+      - "8080:8080"
+    volumes:
+      - backend_logs_local:/var/log/liyaqa
+      - backend_uploads_local:/app/uploads
+    networks:
+      - liyaqa-local
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      start_period: 90s
+      retries: 5
+
+  # ===========================================
+  # Liyaqa Club Frontend (Built from local source)
+  # ===========================================
+  club-frontend:
+    build:
+      context: ../frontend
+      dockerfile: apps/club/Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+    image: liyaqa-club:local-prod
+    container_name: liyaqa-local-club
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+      NODE_OPTIONS: ${NODE_OPTIONS:---max-old-space-size=1024}
+      PORT: 3000
+    ports:
+      # Expose club frontend directly
+      - "3000:3000"
+    networks:
+      - liyaqa-local
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 15s
+      timeout: 5s
+      start_period: 45s
+      retries: 3
+
+  # ===========================================
+  # Liyaqa Platform Frontend (Built from local source)
+  # ===========================================
+  platform-frontend:
+    build:
+      context: ../frontend
+      dockerfile: apps/platform/Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+    image: liyaqa-platform:local-prod
+    container_name: liyaqa-local-platform
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+      NODE_OPTIONS: ${NODE_OPTIONS:---max-old-space-size=1024}
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    networks:
+      - liyaqa-local
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001"]
+      interval: 15s
+      timeout: 5s
+      start_period: 45s
+      retries: 3
+
+# ===========================================
+# Networks
+# ===========================================
+networks:
+  liyaqa-local:
+    name: liyaqa-local-network
+    driver: bridge
+
+# ===========================================
+# Volumes (Local persistent data)
+# ===========================================
+volumes:
+  postgres_data_local:
+    driver: local
+  redis_data_local:
+    driver: local
+  minio_data_local:
+    driver: local
+  backend_logs_local:
+    driver: local
+  backend_uploads_local:
+    driver: local

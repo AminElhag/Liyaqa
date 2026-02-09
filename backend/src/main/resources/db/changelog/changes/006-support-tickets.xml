@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Changeset 006-1: support_tickets_v2 table -->
+    <changeSet id="006-1" author="liyaqa">
+        <createTable tableName="support_tickets_v2">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="ticket_number" type="varchar(20)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="tenant_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by_user_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by_user_type" type="varchar(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subject" type="varchar(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category" type="varchar(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="priority" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(30)" defaultValue="OPEN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="assigned_to_id" type="uuid"/>
+            <column name="sla_response_deadline" type="timestamptz"/>
+            <column name="sla_deadline" type="timestamptz"/>
+            <column name="sla_paused_at" type="timestamptz"/>
+            <column name="sla_paused_duration" type="bigint" defaultValueNumeric="0"/>
+            <column name="resolved_at" type="timestamptz"/>
+            <column name="closed_at" type="timestamptz"/>
+            <column name="satisfaction_rating" type="int"/>
+            <column name="message_count" type="int" defaultValueNumeric="0"/>
+            <column name="last_message_at" type="timestamptz"/>
+            <column name="created_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValueNumeric="0"/>
+        </createTable>
+
+        <createIndex tableName="support_tickets_v2" indexName="idx_support_tickets_v2_tenant_id">
+            <column name="tenant_id"/>
+        </createIndex>
+        <createIndex tableName="support_tickets_v2" indexName="idx_support_tickets_v2_status">
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="support_tickets_v2" indexName="idx_support_tickets_v2_priority">
+            <column name="priority"/>
+        </createIndex>
+        <createIndex tableName="support_tickets_v2" indexName="idx_support_tickets_v2_category">
+            <column name="category"/>
+        </createIndex>
+        <createIndex tableName="support_tickets_v2" indexName="idx_support_tickets_v2_assigned_to">
+            <column name="assigned_to_id"/>
+        </createIndex>
+        <createIndex tableName="support_tickets_v2" indexName="idx_support_tickets_v2_ticket_number">
+            <column name="ticket_number"/>
+        </createIndex>
+        <createIndex tableName="support_tickets_v2" indexName="idx_support_tickets_v2_status_priority">
+            <column name="status"/>
+            <column name="priority"/>
+        </createIndex>
+        <createIndex tableName="support_tickets_v2" indexName="idx_support_tickets_v2_sla_deadline">
+            <column name="sla_deadline"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 006-2: ticket_messages_v2 table -->
+    <changeSet id="006-2" author="liyaqa">
+        <createTable tableName="ticket_messages_v2">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="ticket_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sender_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sender_type" type="varchar(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_internal_note" type="boolean" defaultValueBoolean="false"/>
+            <column name="attachment_urls" type="text"/>
+            <column name="created_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValueNumeric="0"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="ticket_messages_v2" baseColumnNames="ticket_id"
+                referencedTableName="support_tickets_v2" referencedColumnNames="id"
+                constraintName="fk_ticket_messages_v2_ticket"/>
+
+        <createIndex tableName="ticket_messages_v2" indexName="idx_ticket_messages_v2_ticket_id">
+            <column name="ticket_id"/>
+        </createIndex>
+        <createIndex tableName="ticket_messages_v2" indexName="idx_ticket_messages_v2_sender_id">
+            <column name="sender_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 006-3: ticket_status_history table -->
+    <changeSet id="006-3" author="liyaqa">
+        <createTable tableName="ticket_status_history">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="ticket_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="from_status" type="varchar(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="to_status" type="varchar(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changed_by" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changed_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="text"/>
+            <column name="created_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValueNumeric="0"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="ticket_status_history" baseColumnNames="ticket_id"
+                referencedTableName="support_tickets_v2" referencedColumnNames="id"
+                constraintName="fk_ticket_status_history_ticket"/>
+
+        <createIndex tableName="ticket_status_history" indexName="idx_ticket_status_history_ticket_id">
+            <column name="ticket_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 006-4: canned_responses table -->
+    <changeSet id="006-4" author="liyaqa">
+        <createTable tableName="canned_responses">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="varchar(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title_ar" type="varchar(200)"/>
+            <column name="content" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content_ar" type="text"/>
+            <column name="category" type="varchar(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="usage_count" type="int" defaultValueNumeric="0"/>
+            <column name="is_active" type="boolean" defaultValueBoolean="true"/>
+            <column name="created_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValueNumeric="0"/>
+        </createTable>
+
+        <createIndex tableName="canned_responses" indexName="idx_canned_responses_category">
+            <column name="category"/>
+        </createIndex>
+        <createIndex tableName="canned_responses" indexName="idx_canned_responses_is_active">
+            <column name="is_active"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 006-5: ticket_sequences table (singleton) -->
+    <changeSet id="006-5" author="liyaqa">
+        <createTable tableName="ticket_sequences">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="current_year" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_sequence" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <insert tableName="ticket_sequences">
+            <column name="id" value="00000000-0000-0000-0000-000000000004"/>
+            <column name="current_year" valueNumeric="2026"/>
+            <column name="current_sequence" valueNumeric="0"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

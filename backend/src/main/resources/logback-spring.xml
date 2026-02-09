@@ -51,12 +51,11 @@
      CONSOLE APPENDER - HUMAN READABLE FORMAT (Development)
     ════════════════════════════════════════════════════════════════════════════
     Used in development for easy reading during debugging
+    Includes PII masking patterns to prevent accidental exposure of sensitive data
     -->
     <appender name="HUMAN_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>
-                %d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%15.15t] %cyan(%-40.40logger{39}) : %msg%n%throwable
-            </pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%15.15t] %cyan(%-40.40logger{39}) : %msg%n%throwable</pattern>
             <charset>UTF-8</charset>
         </encoder>
     </appender>

@@ -6,6 +6,7 @@ import com.liyaqa.auth.infrastructure.security.JwtTokenProvider
 import com.liyaqa.notification.application.services.PlatformLoginEmailService
 import com.liyaqa.platform.api.PlatformAuthResponse
 import com.liyaqa.platform.api.PlatformUserResponse
+import com.liyaqa.platform.domain.model.PlatformRolePermissions
 import com.liyaqa.platform.domain.model.PlatformLoginToken
 import com.liyaqa.platform.domain.ports.PlatformLoginTokenRepository
 import com.liyaqa.platform.domain.ports.PlatformUserRepository
@@ -204,10 +205,14 @@ class PlatformPasswordlessAuthService(
 
         logger.info("Platform user logged in via passwordless: userId=${user.id} (${user.role})")
 
+        val permissions = PlatformRolePermissions.permissionsFor(user.role).map { it.name }
+
         return PlatformAuthResponse(
             accessToken = accessToken,
             refreshToken = refreshToken,
             expiresIn = jwtTokenProvider.getAccessTokenExpirationMs() / 1000,
+            scope = "platform",
+            permissions = permissions,
             user = PlatformUserResponse.from(user)
         )
     }

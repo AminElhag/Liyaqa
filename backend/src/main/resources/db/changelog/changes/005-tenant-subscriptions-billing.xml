@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Changeset 005-1: tenant_subscriptions table -->
+    <changeSet id="005-1" author="liyaqa">
+        <createTable tableName="tenant_subscriptions">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="plan_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="billing_cycle" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_date" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_period_start" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_period_end" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="next_billing_date" type="date"/>
+            <column name="cancelled_at" type="timestamptz"/>
+            <column name="cancellation_reason" type="text"/>
+            <column name="auto_renew" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trial_ends_at" type="date"/>
+            <column name="created_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValueNumeric="0"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="tenant_subscriptions" baseColumnNames="tenant_id"
+                referencedTableName="tenants" referencedColumnNames="id"
+                constraintName="fk_tenant_subscriptions_tenant"/>
+
+        <addForeignKeyConstraint
+                baseTableName="tenant_subscriptions" baseColumnNames="plan_id"
+                referencedTableName="subscription_plans" referencedColumnNames="id"
+                constraintName="fk_tenant_subscriptions_plan"/>
+
+        <createIndex tableName="tenant_subscriptions" indexName="idx_tenant_subscriptions_tenant_id">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <createIndex tableName="tenant_subscriptions" indexName="idx_tenant_subscriptions_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex tableName="tenant_subscriptions" indexName="idx_tenant_subscriptions_next_billing">
+            <column name="next_billing_date"/>
+        </createIndex>
+
+        <sql>
+            CREATE UNIQUE INDEX idx_tenant_subscriptions_active_unique
+            ON tenant_subscriptions (tenant_id)
+            WHERE status IN ('TRIAL', 'ACTIVE', 'PAST_DUE');
+        </sql>
+    </changeSet>
+
+    <!-- Changeset 005-2: subscription_invoices table -->
+    <changeSet id="005-2" author="liyaqa">
+        <createTable tableName="subscription_invoices">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subscription_id" type="uuid"/>
+            <column name="invoice_number" type="varchar(20)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="status" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subtotal" type="decimal(12,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vat_rate" type="decimal(5,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vat_amount" type="decimal(12,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total" type="decimal(12,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="issued_at" type="date"/>
+            <column name="due_date" type="date"/>
+            <column name="paid_at" type="date"/>
+            <column name="payment_method" type="varchar(50)"/>
+            <column name="notes" type="text"/>
+            <column name="billing_period_start" type="date"/>
+            <column name="billing_period_end" type="date"/>
+            <column name="zatca_status" type="varchar(20)"/>
+            <column name="zatca_invoice_hash" type="varchar(255)"/>
+            <column name="created_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValueNumeric="0"/>
+        </createTable>
+
+        <createIndex tableName="subscription_invoices" indexName="idx_subscription_invoices_tenant_id">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <createIndex tableName="subscription_invoices" indexName="idx_subscription_invoices_subscription_id">
+            <column name="subscription_id"/>
+        </createIndex>
+
+        <createIndex tableName="subscription_invoices" indexName="idx_subscription_invoices_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex tableName="subscription_invoices" indexName="idx_subscription_invoices_number">
+            <column name="invoice_number"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 005-3: subscription_invoice_sequences table -->
+    <changeSet id="005-3" author="liyaqa">
+        <createTable tableName="subscription_invoice_sequences">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="current_year" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_sequence" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <insert tableName="subscription_invoice_sequences">
+            <column name="id" value="00000000-0000-0000-0000-000000000003"/>
+            <column name="current_year" valueNumeric="2026"/>
+            <column name="current_sequence" valueNumeric="0"/>
+        </insert>
+    </changeSet>
+
+    <!-- Changeset 005-4: payment_records table -->
+    <changeSet id="005-4" author="liyaqa">
+        <createTable tableName="payment_records">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="invoice_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tenant_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="decimal(12,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="method" type="varchar(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reference_number" type="varchar(255)"/>
+            <column name="processed_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValueNumeric="0"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="payment_records" baseColumnNames="invoice_id"
+                referencedTableName="subscription_invoices" referencedColumnNames="id"
+                constraintName="fk_payment_records_invoice"/>
+
+        <createIndex tableName="payment_records" indexName="idx_payment_records_invoice_id">
+            <column name="invoice_id"/>
+        </createIndex>
+
+        <createIndex tableName="payment_records" indexName="idx_payment_records_tenant_id">
+            <column name="tenant_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

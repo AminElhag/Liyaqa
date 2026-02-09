@@ -30,52 +30,41 @@ enum class BillingCycle {
 }
 
 /**
- * Status of a sales deal in the pipeline.
+ * Stage of a sales deal in the 9-stage pipeline.
  */
-enum class DealStatus {
-    /** Initial lead, not yet qualified */
+enum class DealStage {
     LEAD,
-
-    /** Qualified lead, confirmed interest */
-    QUALIFIED,
-
-    /** Proposal sent to prospect */
-    PROPOSAL,
-
-    /** Negotiating terms */
+    CONTACTED,
+    DEMO_SCHEDULED,
+    DEMO_DONE,
+    PROPOSAL_SENT,
     NEGOTIATION,
-
-    /** Deal won, converted to client */
     WON,
-
-    /** Deal lost */
-    LOST
+    LOST,
+    CHURNED
 }
 
 /**
  * Source of a sales deal.
  */
 enum class DealSource {
-    /** Inbound from website */
     WEBSITE,
-
-    /** Referral from existing client */
     REFERRAL,
-
-    /** Outbound cold call */
-    COLD_CALL,
-
-    /** Marketing campaign */
-    MARKETING_CAMPAIGN,
-
-    /** Trade show or event */
-    EVENT,
-
-    /** Partner referral */
-    PARTNER,
-
-    /** Other source */
+    COLD_OUTREACH,
+    SOCIAL_MEDIA,
+    PARTNERSHIP,
     OTHER
+}
+
+/**
+ * Type of activity recorded on a deal.
+ */
+enum class DealActivityType {
+    NOTE,
+    CALL,
+    EMAIL,
+    MEETING,
+    STATUS_CHANGE
 }
 
 /**
@@ -141,16 +130,26 @@ enum class ClientPaymentMethod {
 
 /**
  * Role of a platform team user.
+ * Ordered from highest to lowest privilege.
  */
 enum class PlatformUserRole {
-    /** Full platform admin with all permissions */
+    /** Super admin with full platform access including system settings */
+    PLATFORM_SUPER_ADMIN,
+
+    /** Admin with full platform access except system settings and role assignment */
     PLATFORM_ADMIN,
 
-    /** Sales representative */
-    SALES_REP,
+    /** Account manager — manages clients, subscriptions, deals, invoices */
+    ACCOUNT_MANAGER,
 
-    /** Support representative */
-    SUPPORT_REP
+    /** Support lead — manages tickets, can assign/escalate, read-only impersonation */
+    SUPPORT_LEAD,
+
+    /** Support agent — ticket CRUD, client view, dashboard view */
+    SUPPORT_AGENT,
+
+    /** Viewer — read-only access to all platform data */
+    PLATFORM_VIEWER
 }
 
 /**

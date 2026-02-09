@@ -14,10 +14,15 @@ import com.liyaqa.platform.application.services.PlatformDashboardExportService
 import com.liyaqa.platform.application.services.PlatformDashboardService
 import com.liyaqa.platform.application.services.SupportTicketStatsResponse
 import com.liyaqa.platform.application.services.SupportTicketStatsService
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
+import com.liyaqa.platform.domain.model.PlatformUserRole
+import com.liyaqa.platform.infrastructure.security.PlatformSecured
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -47,7 +52,8 @@ import org.springframework.web.bind.annotation.RestController
  */
 @RestController
 @RequestMapping("/api/platform/dashboard")
-@PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP', 'MARKETING')")
+@PlatformSecured
+@Tag(name = "Platform Dashboard", description = "Platform dashboard metrics and analytics")
 class PlatformDashboardController(
     private val dashboardService: PlatformDashboardService,
     private val supportTicketStatsService: SupportTicketStatsService,
@@ -60,6 +66,8 @@ class PlatformDashboardController(
      * @param startDate Optional start date for filtering (ISO format: yyyy-MM-dd)
      * @param endDate Optional end date for filtering (ISO format: yyyy-MM-dd)
      */
+    @Operation(summary = "Get complete dashboard", description = "Returns the complete platform dashboard with all metrics, optionally filtered by date range and timezone.")
+    @ApiResponse(responseCode = "200", description = "Dashboard data retrieved successfully")
     @GetMapping
     fun getDashboard(
         @RequestParam(defaultValue = "Asia/Riyadh") timezone: String,
@@ -73,6 +81,8 @@ class PlatformDashboardController(
     /**
      * Gets summary statistics.
      */
+    @Operation(summary = "Get summary statistics", description = "Returns high-level summary statistics for the platform (total clients, revenue, etc.).")
+    @ApiResponse(responseCode = "200", description = "Summary statistics retrieved successfully")
     @GetMapping("/summary")
     fun getSummary(): ResponseEntity<PlatformSummaryResponse> {
         val summary = dashboardService.getSummary()
@@ -87,8 +97,10 @@ class PlatformDashboardController(
      * @param startDate Optional start date for filtering (ISO format: yyyy-MM-dd)
      * @param endDate Optional end date for filtering (ISO format: yyyy-MM-dd)
      */
+    @Operation(summary = "Get revenue metrics", description = "Returns detailed revenue metrics. Requires PLATFORM_ADMIN role.")
+    @ApiResponse(responseCode = "200", description = "Revenue metrics retrieved successfully")
     @GetMapping("/revenue")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     fun getRevenue(
         @RequestParam(defaultValue = "Asia/Riyadh") timezone: String,
         @RequestParam(required = false) startDate: String?,
@@ -102,8 +114,10 @@ class PlatformDashboardController(
      * Gets monthly revenue breakdown.
      * Only PLATFORM_ADMIN can view revenue details.
      */
+    @Operation(summary = "Get monthly revenue breakdown", description = "Returns a month-by-month revenue breakdown. Requires PLATFORM_ADMIN role.")
+    @ApiResponse(responseCode = "200", description = "Monthly revenue retrieved successfully")
     @GetMapping("/revenue/monthly")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     fun getMonthlyRevenue(
         @RequestParam(defaultValue = "12") months: Int
     ): ResponseEntity<List<MonthlyRevenueResponse>> {
@@ -114,6 +128,8 @@ class PlatformDashboardController(
     /**
      * Gets client growth metrics.
      */
+    @Operation(summary = "Get client growth metrics", description = "Returns client growth metrics including new clients, churn rate, and net growth.")
+    @ApiResponse(responseCode = "200", description = "Client growth metrics retrieved successfully")
     @GetMapping("/growth")
     fun getClientGrowth(): ResponseEntity<ClientGrowthResponse> {
         val growth = dashboardService.getClientGrowth()
@@ -123,6 +139,8 @@ class PlatformDashboardController(
     /**
      * Gets deal pipeline overview.
      */
+    @Operation(summary = "Get deal pipeline overview", description = "Returns an overview of the sales deal pipeline with stage counts and values.")
+    @ApiResponse(responseCode = "200", description = "Deal pipeline overview retrieved successfully")
     @GetMapping("/deal-pipeline")
     fun getDealPipeline(): ResponseEntity<DealPipelineOverviewResponse> {
         val pipeline = dashboardService.getDealPipeline()
@@ -132,6 +150,8 @@ class PlatformDashboardController(
     /**
      * Gets expiring subscriptions.
      */
+    @Operation(summary = "Get expiring subscriptions", description = "Returns subscriptions that are expiring within the specified number of days ahead.")
+    @ApiResponse(responseCode = "200", description = "Expiring subscriptions retrieved successfully")
     @GetMapping("/expiring-subscriptions")
     fun getExpiringSubscriptions(
         @RequestParam(defaultValue = "30") daysAhead: Int
@@ -143,8 +163,10 @@ class PlatformDashboardController(
     /**
      * Gets top clients by revenue.
      */
+    @Operation(summary = "Get top clients by revenue", description = "Returns the top clients ranked by revenue. Requires PLATFORM_ADMIN or ACCOUNT_MANAGER role.")
+    @ApiResponse(responseCode = "200", description = "Top clients retrieved successfully")
     @GetMapping("/top-clients")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.ACCOUNT_MANAGER])
     fun getTopClients(
         @RequestParam(defaultValue = "10") limit: Int
     ): ResponseEntity<List<TopClientResponse>> {
@@ -155,6 +177,8 @@ class PlatformDashboardController(
     /**
      * Gets recent platform activity.
      */
+    @Operation(summary = "Get recent activity", description = "Returns the most recent platform activity entries.")
+    @ApiResponse(responseCode = "200", description = "Recent activity retrieved successfully")
     @GetMapping("/recent-activity")
     fun getRecentActivity(
         @RequestParam(defaultValue = "20") limit: Int
@@ -166,6 +190,8 @@ class PlatformDashboardController(
     /**
      * Gets platform health indicators.
      */
+    @Operation(summary = "Get platform health", description = "Returns platform health indicators including system status and service availability.")
+    @ApiResponse(responseCode = "200", description = "Platform health retrieved successfully")
     @GetMapping("/health")
     fun getHealth(): ResponseEntity<PlatformHealthResponse> {
         val health = dashboardService.getHealth()
@@ -176,8 +202,10 @@ class PlatformDashboardController(
      * Gets support ticket statistics.
      * Available for PLATFORM_ADMIN and SUPPORT_REP roles.
      */
+    @Operation(summary = "Get support ticket statistics", description = "Returns support ticket statistics. Requires PLATFORM_ADMIN or SUPPORT role.")
+    @ApiResponse(responseCode = "200", description = "Support statistics retrieved successfully")
     @GetMapping("/support-stats")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SUPPORT_REP')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.SUPPORT_LEAD, PlatformUserRole.SUPPORT_AGENT])
     fun getSupportStats(): ResponseEntity<SupportTicketStatsResponse> {
         val stats = supportTicketStatsService.getStats()
         return ResponseEntity.ok(stats)
@@ -189,8 +217,10 @@ class PlatformDashboardController(
      * Exports summary statistics to CSV.
      * Only PLATFORM_ADMIN can export data.
      */
+    @Operation(summary = "Export summary to CSV", description = "Exports summary statistics as a CSV file download. Requires PLATFORM_ADMIN role.")
+    @ApiResponse(responseCode = "200", description = "CSV file generated successfully")
     @GetMapping("/export/summary-csv")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     fun exportSummaryToCsv(): ResponseEntity<ByteArray> {
         val csv = exportService.exportSummaryToCsv()
         val filename = exportService.generateFilename("summary", "csv")
@@ -207,8 +237,10 @@ class PlatformDashboardController(
      *
      * @param timezone Timezone for date calculations (default: Asia/Riyadh)
      */
+    @Operation(summary = "Export revenue to CSV", description = "Exports revenue metrics as a CSV file download. Requires PLATFORM_ADMIN role.")
+    @ApiResponse(responseCode = "200", description = "CSV file generated successfully")
     @GetMapping("/export/revenue-csv")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     fun exportRevenueToCsv(
         @RequestParam(defaultValue = "Asia/Riyadh") timezone: String
     ): ResponseEntity<ByteArray> {
@@ -227,8 +259,10 @@ class PlatformDashboardController(
      *
      * @param months Number of months to include (default: 12)
      */
+    @Operation(summary = "Export monthly revenue to CSV", description = "Exports monthly revenue breakdown as a CSV file download. Requires PLATFORM_ADMIN role.")
+    @ApiResponse(responseCode = "200", description = "CSV file generated successfully")
     @GetMapping("/export/monthly-csv")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     fun exportMonthlyRevenueToCsv(
         @RequestParam(defaultValue = "12") months: Int
     ): ResponseEntity<ByteArray> {
@@ -247,8 +281,10 @@ class PlatformDashboardController(
      *
      * @param limit Number of top clients to include (default: 10)
      */
+    @Operation(summary = "Export top clients to CSV", description = "Exports top clients by revenue as a CSV file download. Requires PLATFORM_ADMIN or ACCOUNT_MANAGER role.")
+    @ApiResponse(responseCode = "200", description = "CSV file generated successfully")
     @GetMapping("/export/clients-csv")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.ACCOUNT_MANAGER])
     fun exportTopClientsToCsv(
         @RequestParam(defaultValue = "10") limit: Int
     ): ResponseEntity<ByteArray> {
@@ -267,8 +303,10 @@ class PlatformDashboardController(
      *
      * @param timezone Timezone for date calculations (default: Asia/Riyadh)
      */
+    @Operation(summary = "Export dashboard to PDF", description = "Exports the complete dashboard report as a PDF file download. Requires PLATFORM_ADMIN role.")
+    @ApiResponse(responseCode = "200", description = "PDF file generated successfully")
     @GetMapping("/export/pdf")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     fun exportDashboardToPdf(
         @RequestParam(defaultValue = "Asia/Riyadh") timezone: String
     ): ResponseEntity<ByteArray> {

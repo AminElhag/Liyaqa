@@ -11,6 +11,7 @@ import com.liyaqa.platform.domain.model.PlatformUser
 import com.liyaqa.platform.domain.model.PlatformUserStatus
 import com.liyaqa.platform.domain.ports.PlatformUserRepository
 import com.liyaqa.shared.domain.LocalizedText
+import com.liyaqa.platform.domain.model.PlatformRolePermissions
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
@@ -134,11 +135,15 @@ class PlatformAuthController(
 
         logger.info("Platform user logged in: userId=${user.id} (${user.role})")
 
+        val permissions = PlatformRolePermissions.permissionsFor(user.role).map { it.name }
+
         return ResponseEntity.ok(
             PlatformAuthResponse(
                 accessToken = accessToken,
                 refreshToken = refreshToken,
                 expiresIn = jwtTokenProvider.getAccessTokenExpirationMs() / 1000,
+                scope = "platform",
+                permissions = permissions,
                 user = PlatformUserResponse.from(user)
             )
         )
@@ -192,11 +197,15 @@ class PlatformAuthController(
         )
         refreshTokenRepository.save(refreshTokenEntity)
 
+        val permissions = PlatformRolePermissions.permissionsFor(user.role).map { it.name }
+
         return ResponseEntity.ok(
             PlatformAuthResponse(
                 accessToken = accessToken,
                 refreshToken = refreshToken,
                 expiresIn = jwtTokenProvider.getAccessTokenExpirationMs() / 1000,
+                scope = "platform",
+                permissions = permissions,
                 user = PlatformUserResponse.from(user)
             )
         )
@@ -252,6 +261,24 @@ class PlatformAuthController(
 
         return ResponseEntity.ok(PlatformUserResponse.from(user))
     }
+
+    @Operation(
+        summary = "Platform Logout",
+        description = "Revokes the provided refresh token for platform users"
+    )
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Logout successful"),
+        ApiResponse(responseCode = "401", description = "Invalid refresh token")
+    ])
+    @PostMapping("/logout")
+    fun logout(@Valid @RequestBody request: RefreshTokenRequest): ResponseEntity<Map<String, String>> {
+        val tokenHash = jwtTokenProvider.hashToken(request.refreshToken)
+        refreshTokenRepository.findByTokenHash(tokenHash).ifPresent { token ->
+            token.revoke()
+            refreshTokenRepository.save(token)
+        }
+        return ResponseEntity.ok(mapOf("message" to "Logged out successfully"))
+    }
 }
 
 /**
@@ -261,6 +288,8 @@ data class PlatformAuthResponse(
     val accessToken: String,
     val refreshToken: String,
     val expiresIn: Long,
+    val scope: String = "platform",
+    val permissions: List<String> = emptyList(),
     val user: PlatformUserResponse
 )
 

@@ -43,6 +43,10 @@ class JwtTokenProvider(
         private const val CLAIM_IS_PLATFORM_USER = "is_platform_user"
         private const val CLAIM_PLATFORM_ORG_ID = "platform_org_id"
         private const val CLAIM_PERMISSIONS = "permissions"
+        private const val CLAIM_SCOPE = "scope"
+        private const val CLAIM_IS_IMPERSONATION = "is_impersonation"
+        private const val CLAIM_IMPERSONATOR_ID = "impersonator_id"
+        private const val CLAIM_READ_ONLY = "read_only"
         private const val TOKEN_TYPE_ACCESS = "access"
         private const val TOKEN_TYPE_REFRESH = "refresh"
     }
@@ -61,6 +65,8 @@ class JwtTokenProvider(
         val now = Instant.now()
         val expiry = now.plusMillis(accessTokenExpiration)
 
+        val scope = if (user.role == Role.MEMBER) "client" else "facility"
+
         val builder = Jwts.builder()
             .subject(user.id.toString())
             .claim(CLAIM_TENANT_ID, user.tenantId.toString())
@@ -69,6 +75,7 @@ class JwtTokenProvider(
             .claim(CLAIM_TOKEN_TYPE, TOKEN_TYPE_ACCESS)
             .claim(CLAIM_IS_PLATFORM_USER, user.isPlatformUser)
             .claim(CLAIM_PERMISSIONS, permissions)
+            .claim(CLAIM_SCOPE, scope)
 
         // Add platform organization ID if user is a platform user
         if (user.isPlatformUser && user.platformOrganizationId != null) {
@@ -110,6 +117,10 @@ class JwtTokenProvider(
         val now = Instant.now()
         val expiry = now.plusMillis(accessTokenExpiration)
 
+        val permissions = com.liyaqa.platform.domain.model.PlatformRolePermissions
+            .permissionsFor(user.role)
+            .map { it.name }
+
         return Jwts.builder()
             .subject(user.id.toString())
             .claim(CLAIM_TENANT_ID, user.id.toString()) // Platform users use their own ID
@@ -117,7 +128,8 @@ class JwtTokenProvider(
             .claim(CLAIM_EMAIL, user.email)
             .claim(CLAIM_TOKEN_TYPE, TOKEN_TYPE_ACCESS)
             .claim(CLAIM_IS_PLATFORM_USER, true)
-            .claim(CLAIM_PERMISSIONS, emptyList<String>())
+            .claim(CLAIM_PERMISSIONS, permissions)
+            .claim(CLAIM_SCOPE, "platform")
             .issuedAt(Date.from(now))
             .expiration(Date.from(expiry))
             .signWith(key)
@@ -136,6 +148,7 @@ class JwtTokenProvider(
             .subject(user.id.toString())
             .claim(CLAIM_TENANT_ID, user.id.toString())
             .claim(CLAIM_TOKEN_TYPE, TOKEN_TYPE_REFRESH)
+            .claim(CLAIM_SCOPE, "platform")
             .issuedAt(Date.from(now))
             .expiration(Date.from(expiry))
             .signWith(key)
@@ -275,6 +288,70 @@ class JwtTokenProvider(
         val digest = MessageDigest.getInstance("SHA-256")
         val hash = digest.digest(token.toByteArray())
         return Base64.getEncoder().encodeToString(hash)
+    }
+
+    /**
+     * Extracts the scope from the token.
+     * Returns "facility" if the claim is missing (backward compatibility).
+     */
+    fun extractScope(token: String): String {
+        val claims = parseToken(token)
+        return claims[CLAIM_SCOPE] as? String ?: "facility"
+    }
+
+    /**
+     * Extracts the raw role string from the token without parsing to enum.
+     */
+    fun extractRoleString(token: String): String {
+        val claims = parseToken(token)
+        return claims[CLAIM_ROLE] as String
+    }
+
+    /**
+     * Generates a special impersonation token for viewing a facility as the target user.
+     * The token includes impersonation markers and is read-only.
+     */
+    fun generateImpersonationToken(
+        targetUser: User,
+        impersonatorId: UUID,
+        expirationMs: Long
+    ): String {
+        val now = Instant.now()
+        val expiry = now.plusMillis(expirationMs)
+
+        return Jwts.builder()
+            .subject(targetUser.id.toString())
+            .claim(CLAIM_TENANT_ID, targetUser.tenantId.toString())
+            .claim(CLAIM_ROLE, targetUser.role.name)
+            .claim(CLAIM_EMAIL, targetUser.email)
+            .claim(CLAIM_TOKEN_TYPE, TOKEN_TYPE_ACCESS)
+            .claim(CLAIM_IS_PLATFORM_USER, false)
+            .claim(CLAIM_PERMISSIONS, emptyList<String>())
+            .claim(CLAIM_SCOPE, "facility")
+            .claim(CLAIM_IS_IMPERSONATION, true)
+            .claim(CLAIM_IMPERSONATOR_ID, impersonatorId.toString())
+            .claim(CLAIM_READ_ONLY, true)
+            .issuedAt(Date.from(now))
+            .expiration(Date.from(expiry))
+            .signWith(key)
+            .compact()
+    }
+
+    /**
+     * Extracts whether this token is an impersonation token.
+     */
+    fun extractIsImpersonation(token: String): Boolean {
+        val claims = parseToken(token)
+        return claims[CLAIM_IS_IMPERSONATION] as? Boolean ?: false
+    }
+
+    /**
+     * Extracts the impersonator's platform user ID from an impersonation token.
+     */
+    fun extractImpersonatorId(token: String): UUID? {
+        val claims = parseToken(token)
+        val id = claims[CLAIM_IMPERSONATOR_ID] as? String
+        return id?.let { UUID.fromString(it) }
     }
 
     private fun parseToken(token: String): Claims {

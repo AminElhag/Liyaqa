@@ -1,27 +1,29 @@
 package com.liyaqa.platform.api
 
-import com.liyaqa.platform.api.dto.ConvertDealRequest
-import com.liyaqa.platform.api.dto.CreateDealRequest
-import com.liyaqa.platform.api.dto.DealConversionResultResponse
+import com.liyaqa.platform.api.dto.ChangeStageRequest
+import com.liyaqa.platform.api.dto.CreateDealActivityRequest
+import com.liyaqa.platform.api.dto.DealActivityResponse
+import com.liyaqa.platform.api.dto.DealCreateRequest
+import com.liyaqa.platform.api.dto.DealMetricsResponse
+import com.liyaqa.platform.api.dto.DealPipelineResponse
 import com.liyaqa.platform.api.dto.DealResponse
-import com.liyaqa.platform.api.dto.DealStatsResponse
 import com.liyaqa.platform.api.dto.DealSummaryResponse
-import com.liyaqa.platform.api.dto.LoseDealRequest
+import com.liyaqa.platform.api.dto.DealUpdateRequest
 import com.liyaqa.platform.api.dto.PageResponse
-import com.liyaqa.platform.api.dto.ReassignDealRequest
-import com.liyaqa.platform.api.dto.SalesRepDealStatsResponse
-import com.liyaqa.platform.api.dto.UpdateDealRequest
 import com.liyaqa.platform.application.services.DealService
 import com.liyaqa.platform.domain.model.DealSource
-import com.liyaqa.platform.domain.model.DealStatus
-import com.liyaqa.shared.infrastructure.security.SecurityService
+import com.liyaqa.platform.domain.model.DealStage
+import com.liyaqa.platform.domain.model.PlatformUserRole
+import com.liyaqa.platform.infrastructure.security.PlatformSecured
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -32,70 +34,34 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
-/**
- * Controller for managing sales deals in the pipeline.
- * Accessible by platform users (internal Liyaqa team) only.
- *
- * Endpoints:
- * - GET    /api/platform/deals                  - List all deals
- * - GET    /api/platform/deals/stats            - Get deal pipeline statistics
- * - GET    /api/platform/deals/status/{status}  - Filter by status
- * - GET    /api/platform/deals/source/{source}  - Filter by source
- * - GET    /api/platform/deals/expiring         - Get deals expected to close soon
- * - GET    /api/platform/deals/{id}             - Get deal details
- * - GET    /api/platform/my-deals               - Get current user's deals
- * - GET    /api/platform/deals/sales-rep/{id}   - Get deals by sales rep
- * - GET    /api/platform/deals/sales-rep/{id}/stats - Get stats for sales rep
- * - POST   /api/platform/deals                  - Create deal
- * - PUT    /api/platform/deals/{id}             - Update deal
- * - POST   /api/platform/deals/{id}/advance     - Advance to next stage
- * - POST   /api/platform/deals/{id}/qualify     - Move to QUALIFIED
- * - POST   /api/platform/deals/{id}/proposal    - Move to PROPOSAL
- * - POST   /api/platform/deals/{id}/negotiate   - Move to NEGOTIATION
- * - POST   /api/platform/deals/{id}/convert     - Convert to client
- * - POST   /api/platform/deals/{id}/lose        - Mark as lost
- * - POST   /api/platform/deals/{id}/reopen      - Reopen lost deal
- * - POST   /api/platform/deals/{id}/reassign    - Reassign to another rep
- * - DELETE /api/platform/deals/{id}             - Delete deal
- */
 @RestController
-@RequestMapping("/api/platform")
-@PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP', 'MARKETING', 'SUPPORT')")
+@RequestMapping("/api/platform/deals")
+@PlatformSecured
+@Tag(name = "Deals", description = "Manage sales deals and pipeline")
 class DealController(
-    private val dealService: DealService,
-    private val securityService: SecurityService
+    private val dealService: DealService
 ) {
-    // ============================================
-    // CRUD Operations
-    // ============================================
-
-    /**
-     * Creates a new deal.
-     * Only PLATFORM_ADMIN and SALES_REP can create deals.
-     */
-    @PostMapping("/deals")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
+    @Operation(summary = "Create a deal", description = "Creates a new sales deal in the pipeline. Requires PLATFORM_ADMIN or ACCOUNT_MANAGER role.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "201", description = "Deal created successfully"),
+        ApiResponse(responseCode = "400", description = "Invalid request body")
+    ])
+    @PostMapping
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.ACCOUNT_MANAGER])
     fun createDeal(
-        @Valid @RequestBody request: CreateDealRequest
+        @Valid @RequestBody request: DealCreateRequest
     ): ResponseEntity<DealResponse> {
         val deal = dealService.createDeal(request.toCommand())
         return ResponseEntity.status(HttpStatus.CREATED).body(DealResponse.from(deal))
     }
 
-    /**
-     * Gets a deal by ID.
-     */
-    @GetMapping("/deals/{id}")
-    fun getDeal(@PathVariable id: UUID): ResponseEntity<DealResponse> {
-        val deal = dealService.getDeal(id)
-        return ResponseEntity.ok(DealResponse.from(deal))
-    }
-
-    /**
-     * Lists all deals with pagination.
-     */
-    @GetMapping("/deals")
-    fun getAllDeals(
+    @Operation(summary = "List deals", description = "Returns a paginated list of deals with optional filtering by stage, source, and assignee.")
+    @ApiResponse(responseCode = "200", description = "Deals retrieved successfully")
+    @GetMapping
+    fun listDeals(
+        @RequestParam(required = false) stage: DealStage?,
+        @RequestParam(required = false) source: DealSource?,
+        @RequestParam(required = false) assignedToId: UUID?,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
         @RequestParam(defaultValue = "createdAt") sortBy: String,
@@ -103,7 +69,7 @@ class DealController(
     ): ResponseEntity<PageResponse<DealSummaryResponse>> {
         val sort = Sort.by(Sort.Direction.valueOf(sortDirection.uppercase()), sortBy)
         val pageable = PageRequest.of(page, size, sort)
-        val dealsPage = dealService.getAllDeals(pageable)
+        val dealsPage = dealService.listDeals(stage, source, assignedToId, pageable)
 
         return ResponseEntity.ok(
             PageResponse(
@@ -118,17 +84,16 @@ class DealController(
         )
     }
 
-    /**
-     * Gets deals filtered by status.
-     */
-    @GetMapping("/deals/status/{status}")
+    @Operation(summary = "Get deals by status/stage", description = "Returns a paginated list of deals filtered by stage.")
+    @ApiResponse(responseCode = "200", description = "Deals retrieved successfully")
+    @GetMapping("/status/{status}")
     fun getDealsByStatus(
-        @PathVariable status: DealStatus,
+        @PathVariable status: DealStage,
         @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int
+        @RequestParam(defaultValue = "100") size: Int
     ): ResponseEntity<PageResponse<DealSummaryResponse>> {
         val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
-        val dealsPage = dealService.getDealsByStatus(status, pageable)
+        val dealsPage = dealService.listDeals(stage = status, pageable = pageable)
 
         return ResponseEntity.ok(
             PageResponse(
@@ -143,286 +108,90 @@ class DealController(
         )
     }
 
-    /**
-     * Gets deals filtered by source.
-     */
-    @GetMapping("/deals/source/{source}")
-    fun getDealsBySource(
-        @PathVariable source: DealSource,
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int
-    ): ResponseEntity<PageResponse<DealSummaryResponse>> {
-        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
-        val dealsPage = dealService.getDealsBySource(source, pageable)
-
-        return ResponseEntity.ok(
-            PageResponse(
-                content = dealsPage.content.map { DealSummaryResponse.from(it) },
-                page = dealsPage.number,
-                size = dealsPage.size,
-                totalElements = dealsPage.totalElements,
-                totalPages = dealsPage.totalPages,
-                first = dealsPage.isFirst,
-                last = dealsPage.isLast
-            )
-        )
+    @Operation(summary = "Get a deal by ID", description = "Retrieves the details of a specific deal including its activities.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Deal found"),
+        ApiResponse(responseCode = "404", description = "Deal not found")
+    ])
+    @GetMapping("/{id}")
+    fun getDeal(@PathVariable id: UUID): ResponseEntity<DealResponse> {
+        val deal = dealService.getDeal(id)
+        val activities = dealService.getActivities(id)
+        return ResponseEntity.ok(DealResponse.from(deal, activities))
     }
 
-    /**
-     * Gets all open deals (not WON or LOST).
-     */
-    @GetMapping("/deals/open")
-    fun getOpenDeals(
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int
-    ): ResponseEntity<PageResponse<DealSummaryResponse>> {
-        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "expectedCloseDate"))
-        val dealsPage = dealService.getOpenDeals(pageable)
-
-        return ResponseEntity.ok(
-            PageResponse(
-                content = dealsPage.content.map { DealSummaryResponse.from(it) },
-                page = dealsPage.number,
-                size = dealsPage.size,
-                totalElements = dealsPage.totalElements,
-                totalPages = dealsPage.totalPages,
-                first = dealsPage.isFirst,
-                last = dealsPage.isLast
-            )
-        )
-    }
-
-    /**
-     * Gets deals expected to close within given days.
-     */
-    @GetMapping("/deals/expiring")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
-    fun getDealsExpectedToClose(
-        @RequestParam(defaultValue = "30") daysAhead: Int
-    ): ResponseEntity<List<DealSummaryResponse>> {
-        val deals = dealService.getDealsExpectedToClose(daysAhead)
-        return ResponseEntity.ok(deals.map { DealSummaryResponse.from(it) })
-    }
-
-    /**
-     * Gets the current user's deals (for sales reps).
-     */
-    @GetMapping("/my-deals")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
-    fun getMyDeals(
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int,
-        @RequestParam(defaultValue = "false") openOnly: Boolean
-    ): ResponseEntity<PageResponse<DealSummaryResponse>> {
-        val currentUserId = securityService.getCurrentUserId()
-            ?: throw IllegalStateException("Could not determine current user")
-
-        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
-        val dealsPage = if (openOnly) {
-            dealService.getOpenDealsBySalesRep(currentUserId, pageable)
-        } else {
-            dealService.getDealsBySalesRep(currentUserId, pageable)
-        }
-
-        return ResponseEntity.ok(
-            PageResponse(
-                content = dealsPage.content.map { DealSummaryResponse.from(it) },
-                page = dealsPage.number,
-                size = dealsPage.size,
-                totalElements = dealsPage.totalElements,
-                totalPages = dealsPage.totalPages,
-                first = dealsPage.isFirst,
-                last = dealsPage.isLast
-            )
-        )
-    }
-
-    /**
-     * Gets deals by sales rep.
-     * Only PLATFORM_ADMIN can view other reps' deals.
-     */
-    @GetMapping("/deals/sales-rep/{salesRepId}")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
-    fun getDealsBySalesRep(
-        @PathVariable salesRepId: UUID,
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int,
-        @RequestParam(defaultValue = "false") openOnly: Boolean
-    ): ResponseEntity<PageResponse<DealSummaryResponse>> {
-        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
-        val dealsPage = if (openOnly) {
-            dealService.getOpenDealsBySalesRep(salesRepId, pageable)
-        } else {
-            dealService.getDealsBySalesRep(salesRepId, pageable)
-        }
-
-        return ResponseEntity.ok(
-            PageResponse(
-                content = dealsPage.content.map { DealSummaryResponse.from(it) },
-                page = dealsPage.number,
-                size = dealsPage.size,
-                totalElements = dealsPage.totalElements,
-                totalPages = dealsPage.totalPages,
-                first = dealsPage.isFirst,
-                last = dealsPage.isLast
-            )
-        )
-    }
-
-    /**
-     * Updates a deal.
-     * Only PLATFORM_ADMIN and SALES_REP can update deals.
-     */
-    @PutMapping("/deals/{id}")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
+    @Operation(summary = "Update a deal", description = "Updates an existing deal. Requires PLATFORM_ADMIN or ACCOUNT_MANAGER role.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Deal updated successfully"),
+        ApiResponse(responseCode = "400", description = "Invalid request body"),
+        ApiResponse(responseCode = "404", description = "Deal not found")
+    ])
+    @PutMapping("/{id}")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.ACCOUNT_MANAGER])
     fun updateDeal(
         @PathVariable id: UUID,
-        @Valid @RequestBody request: UpdateDealRequest
+        @Valid @RequestBody request: DealUpdateRequest
     ): ResponseEntity<DealResponse> {
         val deal = dealService.updateDeal(id, request.toCommand())
         return ResponseEntity.ok(DealResponse.from(deal))
     }
 
-    /**
-     * Deletes a deal. Only LEAD or LOST deals can be deleted.
-     * Only PLATFORM_ADMIN can delete deals.
-     */
-    @DeleteMapping("/deals/{id}")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
-    fun deleteDeal(@PathVariable id: UUID): ResponseEntity<Void> {
-        dealService.deleteDeal(id)
-        return ResponseEntity.noContent().build()
-    }
-
-    // ============================================
-    // Status Transitions
-    // ============================================
-
-    /**
-     * Advances a deal to the next stage.
-     */
-    @PostMapping("/deals/{id}/advance")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
-    fun advanceDeal(@PathVariable id: UUID): ResponseEntity<DealResponse> {
-        val deal = dealService.advanceDeal(id)
-        return ResponseEntity.ok(DealResponse.from(deal))
-    }
-
-    /**
-     * Qualifies a deal (LEAD -> QUALIFIED).
-     */
-    @PostMapping("/deals/{id}/qualify")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
-    fun qualifyDeal(@PathVariable id: UUID): ResponseEntity<DealResponse> {
-        val deal = dealService.qualifyDeal(id)
-        return ResponseEntity.ok(DealResponse.from(deal))
-    }
-
-    /**
-     * Sends a proposal (QUALIFIED -> PROPOSAL).
-     */
-    @PostMapping("/deals/{id}/proposal")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
-    fun sendProposal(@PathVariable id: UUID): ResponseEntity<DealResponse> {
-        val deal = dealService.sendProposal(id)
-        return ResponseEntity.ok(DealResponse.from(deal))
-    }
-
-    /**
-     * Starts negotiation (PROPOSAL -> NEGOTIATION).
-     */
-    @PostMapping("/deals/{id}/negotiate")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
-    fun startNegotiation(@PathVariable id: UUID): ResponseEntity<DealResponse> {
-        val deal = dealService.startNegotiation(id)
-        return ResponseEntity.ok(DealResponse.from(deal))
-    }
-
-    /**
-     * Converts a deal to a client.
-     * Creates organization, club, admin user, and optionally subscription.
-     */
-    @PostMapping("/deals/{id}/convert")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
-    fun convertDeal(
+    @Operation(summary = "Change deal stage", description = "Moves a deal to a different pipeline stage. Requires PLATFORM_ADMIN or ACCOUNT_MANAGER role.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Deal stage changed successfully"),
+        ApiResponse(responseCode = "404", description = "Deal not found"),
+        ApiResponse(responseCode = "422", description = "Invalid stage transition")
+    ])
+    @PutMapping("/{id}/stage")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.ACCOUNT_MANAGER])
+    fun changeDealStage(
         @PathVariable id: UUID,
-        @Valid @RequestBody request: ConvertDealRequest
-    ): ResponseEntity<DealConversionResultResponse> {
-        val result = dealService.convertDeal(id, request.toCommand())
-        return ResponseEntity.status(HttpStatus.CREATED).body(DealConversionResultResponse.from(result))
-    }
-
-    /**
-     * Marks a deal as lost with a reason.
-     */
-    @PostMapping("/deals/{id}/lose")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
-    fun loseDeal(
-        @PathVariable id: UUID,
-        @Valid @RequestBody request: LoseDealRequest
+        @Valid @RequestBody request: ChangeStageRequest
     ): ResponseEntity<DealResponse> {
-        val deal = dealService.loseDeal(id, request.toCommand())
+        val deal = dealService.changeDealStage(id, request.toCommand())
         return ResponseEntity.ok(DealResponse.from(deal))
     }
 
-    /**
-     * Reopens a lost deal back to LEAD status.
-     */
-    @PostMapping("/deals/{id}/reopen")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
-    fun reopenDeal(@PathVariable id: UUID): ResponseEntity<DealResponse> {
-        val deal = dealService.reopenDeal(id)
-        return ResponseEntity.ok(DealResponse.from(deal))
-    }
-
-    /**
-     * Reassigns a deal to another sales rep.
-     * Only PLATFORM_ADMIN can reassign deals.
-     */
-    @PostMapping("/deals/{id}/reassign")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
-    fun reassignDeal(
+    @Operation(summary = "Add an activity to a deal", description = "Records a new activity (call, email, meeting, etc.) on a deal. Requires PLATFORM_ADMIN or ACCOUNT_MANAGER role.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "201", description = "Activity added successfully"),
+        ApiResponse(responseCode = "400", description = "Invalid request body"),
+        ApiResponse(responseCode = "404", description = "Deal not found")
+    ])
+    @PostMapping("/{id}/activities")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.ACCOUNT_MANAGER])
+    fun addActivity(
         @PathVariable id: UUID,
-        @Valid @RequestBody request: ReassignDealRequest
-    ): ResponseEntity<DealResponse> {
-        val deal = dealService.reassignDeal(id, request.toCommand())
-        return ResponseEntity.ok(DealResponse.from(deal))
+        @Valid @RequestBody request: CreateDealActivityRequest
+    ): ResponseEntity<DealActivityResponse> {
+        val activity = dealService.addActivity(id, request.toCommand())
+        return ResponseEntity.status(HttpStatus.CREATED).body(DealActivityResponse.from(activity))
     }
 
-    // ============================================
-    // Statistics
-    // ============================================
-
-    /**
-     * Gets deal pipeline statistics.
-     */
-    @GetMapping("/deals/stats")
-    fun getDealStats(): ResponseEntity<DealStatsResponse> {
-        val stats = dealService.getDealStats()
-        return ResponseEntity.ok(DealStatsResponse.from(stats))
+    @Operation(summary = "Get deal activities", description = "Retrieves all activities recorded for a specific deal.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Activities retrieved successfully"),
+        ApiResponse(responseCode = "404", description = "Deal not found")
+    ])
+    @GetMapping("/{id}/activities")
+    fun getActivities(@PathVariable id: UUID): ResponseEntity<List<DealActivityResponse>> {
+        val activities = dealService.getActivities(id)
+        return ResponseEntity.ok(activities.map { DealActivityResponse.from(it) })
     }
 
-    /**
-     * Gets deal statistics for a specific sales rep.
-     */
-    @GetMapping("/deals/sales-rep/{salesRepId}/stats")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
-    fun getSalesRepDealStats(
-        @PathVariable salesRepId: UUID
-    ): ResponseEntity<SalesRepDealStatsResponse> {
-        val stats = dealService.getDealStatsForSalesRep(salesRepId)
-        return ResponseEntity.ok(SalesRepDealStatsResponse.from(stats))
+    @Operation(summary = "Get deal pipeline", description = "Returns the count of deals in each pipeline stage.")
+    @ApiResponse(responseCode = "200", description = "Pipeline counts retrieved successfully")
+    @GetMapping("/pipeline")
+    fun getPipeline(): ResponseEntity<DealPipelineResponse> {
+        val counts = dealService.getPipelineCounts()
+        return ResponseEntity.ok(DealPipelineResponse(counts = counts))
     }
 
-    /**
-     * Gets current user's deal statistics.
-     */
-    @GetMapping("/my-deals/stats")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
-    fun getMyDealStats(): ResponseEntity<SalesRepDealStatsResponse> {
-        val currentUserId = securityService.getCurrentUserId()
-            ?: throw IllegalStateException("Could not determine current user")
-        val stats = dealService.getDealStatsForSalesRep(currentUserId)
-        return ResponseEntity.ok(SalesRepDealStatsResponse.from(stats))
+    @Operation(summary = "Get deal metrics", description = "Returns aggregated deal metrics including win rate, average deal size, and conversion rates.")
+    @ApiResponse(responseCode = "200", description = "Deal metrics retrieved successfully")
+    @GetMapping("/metrics")
+    fun getMetrics(): ResponseEntity<DealMetricsResponse> {
+        val metrics = dealService.getMetrics()
+        return ResponseEntity.ok(DealMetricsResponse.from(metrics))
     }
 }

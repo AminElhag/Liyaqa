@@ -7,6 +7,7 @@ import { PlatformShell } from "@liyaqa/shared/components/layouts/platform-shell"
 import { useAuthStore, useHasHydrated } from "@liyaqa/shared/stores/auth-store";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
 import { isPlatformRole } from "@liyaqa/shared/types/auth";
+import { getAccessToken } from "@liyaqa/shared/lib/api/client";
 
 export default function PlatformLayout({
   children,
@@ -24,26 +25,47 @@ export default function PlatformLayout({
   const isLoginPage = pathname.includes("/platform-login");
 
   useEffect(() => {
-    // Wait for hydration and don't initialize if on login page
-    // Only call initialize once
-    if (hasHydrated && !isLoginPage && !initializeCalledRef.current) {
+    console.log('[Layout] Initialization check:', {
+      hasHydrated,
+      isLoginPage,
+      initializeCalled: initializeCalledRef.current,
+    });
+
+    // Wait for hydration before initializing auth
+    // Initialize even on login page to detect authenticated users
+    if (hasHydrated && !initializeCalledRef.current) {
+      console.log('[Layout] Calling initialize()...');
       initializeCalledRef.current = true;
       initialize();
     }
   }, [hasHydrated, initialize, isLoginPage]);
 
   useEffect(() => {
-    // Skip auth check for login page
-    if (isLoginPage) return;
+    console.log('[Layout] Auth check:', {
+      isLoginPage,
+      hasHydrated,
+      isLoading,
+      isAuthenticated,
+      hasAccessToken: !!getAccessToken(),
+    });
+
+    // Skip auth check for login page ONLY when not authenticated
+    // This allows navigation away from login when authentication completes
+    if (isLoginPage && !isAuthenticated) return;
 
     // Wait for hydration before making auth decisions
     if (!hasHydrated) return;
 
-    // Redirect to platform login if not authenticated and not loading
-    if (!isLoading && !isAuthenticated) {
-      router.push(`/${locale}/platform-login`);
+    // Check for access token in localStorage directly
+    // This prevents redirect if token exists (even if hydration hasn't completed)
+    const hasToken = getAccessToken() !== null;
+
+    // Redirect to platform login if not authenticated and not loading and no token
+    if (!isLoading && !isAuthenticated && !hasToken) {
+      console.log('[Layout] Redirecting to login - no auth');
+      router.replace(`/${locale}/platform-login?redirect=${encodeURIComponent(pathname)}`);
     }
-  }, [hasHydrated, isLoading, isAuthenticated, router, locale, isLoginPage]);
+  }, [hasHydrated, isLoading, isAuthenticated, router, locale, isLoginPage, pathname]);
 
   // Login page renders without shell
   if (isLoginPage) {

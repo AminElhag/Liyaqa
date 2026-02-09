@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.security.SecureRandom
 import java.time.Instant
 import java.util.UUID
 
@@ -70,6 +71,22 @@ class AuthService(
     private val frontendBaseUrl: String
 ) {
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
+    private val secureRandom = SecureRandom()
+
+    /**
+     * Generates a cryptographically secure random token.
+     * Uses SecureRandom with 32 bytes (256 bits) of entropy.
+     * Returns URL-safe base64-encoded string.
+     *
+     * @param byteLength Number of random bytes to generate (default 32 for 256-bit security)
+     * @return Secure random token as URL-safe base64 string
+     */
+    private fun generateSecureToken(byteLength: Int = 32): String {
+        val bytes = ByteArray(byteLength)
+        secureRandom.nextBytes(bytes)
+        // Convert to URL-safe base64 (replaces + with - and / with _)
+        return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
+    }
     /**
      * Authenticates a user with email and password.
      * Returns MfaRequired if MFA is enabled, otherwise returns tokens.
@@ -345,8 +362,8 @@ class AuthService(
         // Delete any existing reset tokens for this user
         passwordResetTokenRepository.deleteByUserId(user.id)
 
-        // Generate new token
-        val rawToken = UUID.randomUUID().toString()
+        // Generate cryptographically secure token (32 bytes = 256 bits of entropy)
+        val rawToken = generateSecureToken(32)
         val tokenHash = jwtTokenProvider.hashToken(rawToken)
 
         val resetToken = PasswordResetToken(

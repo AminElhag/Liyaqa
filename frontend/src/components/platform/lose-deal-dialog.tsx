@@ -13,11 +13,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { DealSummary, LoseDealRequest } from "@/types/platform";
-import { getLocalizedText } from "@/lib/utils";
+import type { Deal, DealSummary, LoseDealRequest } from "@/types/platform";
 
 interface LoseDealDialogProps {
-  deal: DealSummary | null;
+  deal: Deal | DealSummary | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: (data: LoseDealRequest) => void;
@@ -80,7 +79,7 @@ export function LoseDealDialog({
           <div className="space-y-4">
             <div className="p-3 bg-muted rounded-lg">
               <p className="text-sm text-muted-foreground">{texts.dealTitle}</p>
-              <p className="font-medium">{getLocalizedText(deal.title, locale)}</p>
+              <p className="font-medium">{deal.facilityName || deal.contactName}</p>
             </div>
 
             <div className="space-y-2">

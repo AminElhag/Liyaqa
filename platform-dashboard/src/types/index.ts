@@ -19,3 +19,4 @@ export * from "./platform-user";
 export * from "./onboarding";
 export * from "./alerts";
 export * from "./dunning";
+export * from "./agreement";

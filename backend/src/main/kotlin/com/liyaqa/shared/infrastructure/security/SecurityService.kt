@@ -3,6 +3,7 @@ package com.liyaqa.shared.infrastructure.security
 import com.liyaqa.auth.domain.model.Role
 import com.liyaqa.auth.domain.ports.UserRepository
 import com.liyaqa.auth.infrastructure.security.JwtUserPrincipal
+import com.liyaqa.platform.domain.model.PlatformUserRole
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
@@ -141,5 +142,22 @@ class SecurityService(
      */
     fun getCurrentTenantId(): UUID? {
         return getCurrentPrincipal()?.tenantId
+    }
+
+    /**
+     * Checks if the current user has a platform scope.
+     */
+    fun isPlatformScope(): Boolean {
+        return getCurrentPrincipal()?.scope == "platform"
+    }
+
+    /**
+     * Checks if the current user has any of the specified platform roles.
+     */
+    fun hasPlatformRole(vararg roles: PlatformUserRole): Boolean {
+        val principal = getCurrentPrincipal() ?: return false
+        if (principal.scope != "platform") return false
+        val platformRole = principal.platformRole ?: return false
+        return platformRole in roles
     }
 }

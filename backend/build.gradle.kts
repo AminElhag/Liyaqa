@@ -53,6 +53,9 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("com.h2database:h2") // For development/testing
 
+    // Liquibase (runs after Flyway for incremental schema evolution)
+    implementation("org.liquibase:liquibase-core")
+
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.12.5")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.5")
@@ -101,6 +104,11 @@ dependencies {
     implementation("org.springframework.retry:spring-retry:2.0.11")
     implementation("org.springframework:spring-aspects:6.2.2")
 
+    // Resilience4j - Rate limiting, circuit breakers, retry
+    implementation("io.github.resilience4j:resilience4j-spring-boot3:2.2.0")
+    implementation("io.github.resilience4j:resilience4j-ratelimiter:2.2.0")
+    implementation("io.github.resilience4j:resilience4j-kotlin:2.2.0")
+
     // AWS Secrets Manager (for production secrets management)
     implementation("software.amazon.awssdk:secretsmanager:2.20.+")
 
@@ -136,9 +144,9 @@ dependencies {
 
     // Testcontainers for PostgreSQL integration tests
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
-    testImplementation("org.testcontainers:testcontainers:1.19.3")
-    testImplementation("org.testcontainers:junit-jupiter:1.19.3")
-    testImplementation("org.testcontainers:postgresql:1.19.3")
+    testImplementation("org.testcontainers:testcontainers:2.0.3")
+    testImplementation("org.testcontainers:testcontainers-junit-jupiter:2.0.3")
+    testImplementation("org.testcontainers:testcontainers-postgresql:2.0.3")
 }
 
 tasks.withType<Test> {

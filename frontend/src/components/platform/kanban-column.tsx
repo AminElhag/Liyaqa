@@ -33,16 +33,30 @@ const COLUMN_CONFIG: Record<
     borderColor: "border-slate-200",
     headerBg: "bg-slate-100",
   },
-  QUALIFIED: {
-    labelEn: "Qualified",
-    labelAr: "المؤهلون",
+  CONTACTED: {
+    labelEn: "Contacted",
+    labelAr: "تم التواصل",
     bgColor: "bg-blue-50",
     borderColor: "border-blue-200",
     headerBg: "bg-blue-100",
   },
-  PROPOSAL: {
-    labelEn: "Proposal",
-    labelAr: "العروض",
+  DEMO_SCHEDULED: {
+    labelEn: "Demo Scheduled",
+    labelAr: "عرض مجدول",
+    bgColor: "bg-indigo-50",
+    borderColor: "border-indigo-200",
+    headerBg: "bg-indigo-100",
+  },
+  DEMO_DONE: {
+    labelEn: "Demo Done",
+    labelAr: "تم العرض",
+    bgColor: "bg-violet-50",
+    borderColor: "border-violet-200",
+    headerBg: "bg-violet-100",
+  },
+  PROPOSAL_SENT: {
+    labelEn: "Proposal Sent",
+    labelAr: "تم إرسال العرض",
     bgColor: "bg-amber-50",
     borderColor: "border-amber-200",
     headerBg: "bg-amber-100",
@@ -67,6 +81,13 @@ const COLUMN_CONFIG: Record<
     bgColor: "bg-red-50",
     borderColor: "border-red-200",
     headerBg: "bg-red-100",
+  },
+  CHURNED: {
+    labelEn: "Churned",
+    labelAr: "منسحب",
+    bgColor: "bg-gray-50",
+    borderColor: "border-gray-200",
+    headerBg: "bg-gray-100",
   },
 };
 

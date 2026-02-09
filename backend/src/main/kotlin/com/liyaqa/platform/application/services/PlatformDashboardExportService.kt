@@ -349,12 +349,10 @@ class PlatformDashboardExportService(
 
         addTableHeader(table, listOf("Stage", "Count"))
 
-        addTableRow(table, listOf("Leads", pipeline.leads.toString()))
-        addTableRow(table, listOf("Qualified", pipeline.qualified.toString()))
-        addTableRow(table, listOf("Proposal", pipeline.proposal.toString()))
-        addTableRow(table, listOf("Negotiation", pipeline.negotiation.toString()))
-        addTableRow(table, listOf("Total Value (SAR)", pipeline.totalValue.toString()))
-        addTableRow(table, listOf("Weighted Value (SAR)", pipeline.weightedValue.toString()))
+        for ((stage, count) in pipeline.counts) {
+            addTableRow(table, listOf(stage.name, count.toString()))
+        }
+        addTableRow(table, listOf("Total Value (${pipeline.currency})", pipeline.totalValue.toString()))
 
         return table
     }

@@ -1,5 +1,6 @@
 package com.liyaqa.platform.api.dto
 
+import com.liyaqa.platform.domain.model.DealStage
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
@@ -113,15 +114,11 @@ data class RecentActivityResponse(
 )
 
 /**
- * Deal pipeline overview.
+ * Deal pipeline overview with 9-stage distribution.
  */
 data class DealPipelineOverviewResponse(
-    val leads: Long,
-    val qualified: Long,
-    val proposal: Long,
-    val negotiation: Long,
+    val counts: Map<DealStage, Long>,
     val totalValue: BigDecimal,
-    val weightedValue: BigDecimal,
     val currency: String
 )
 

@@ -196,44 +196,6 @@ data class ClientUserResponse(
 }
 
 // ============================================
-// Impersonation DTOs
-// ============================================
-
-/**
- * Request to impersonate a user.
- */
-data class ImpersonateRequest(
-    val reason: String
-)
-
-/**
- * Response from impersonation.
- */
-data class ImpersonationResponse(
-    val accessToken: String,
-    val impersonatedUserId: UUID,
-    val impersonatedUserEmail: String,
-    val impersonatedRole: Role,
-    val expiresAt: Instant
-)
-
-/**
- * Impersonation session info.
- */
-data class ImpersonationSessionResponse(
-    val sessionId: UUID,
-    val impersonatorId: UUID,
-    val impersonatorEmail: String,
-    val impersonatedUserId: UUID,
-    val impersonatedUserEmail: String,
-    val reason: String,
-    val startedAt: Instant,
-    val endedAt: Instant?,
-    @get:JsonProperty("isActive")
-    val isActive: Boolean
-)
-
-// ============================================
 // Support Overview DTOs
 // ============================================
 

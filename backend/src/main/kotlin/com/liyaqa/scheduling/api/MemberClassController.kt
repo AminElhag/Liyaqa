@@ -2,6 +2,7 @@ package com.liyaqa.scheduling.api
 
 import com.liyaqa.auth.infrastructure.security.JwtUserPrincipal
 import com.liyaqa.scheduling.application.services.BookingOptionsResponse
+import com.liyaqa.scheduling.application.services.BookingPaymentService
 import com.liyaqa.scheduling.application.services.BookingService
 import com.liyaqa.scheduling.application.services.ClassPackBookingOption
 import com.liyaqa.scheduling.application.services.ClassPackService
@@ -48,6 +49,7 @@ class MemberClassController(
     private val sessionRepository: ClassSessionRepository,
     private val classService: ClassService,
     private val bookingService: BookingService,
+    private val bookingPaymentService: BookingPaymentService,
     private val classPackService: ClassPackService
 ) {
 
@@ -230,7 +232,7 @@ class MemberClassController(
         @AuthenticationPrincipal principal: JwtUserPrincipal
     ): ResponseEntity<MemberBookingOptionsResponse> {
         val memberId = principal.userId
-        val options = bookingService.getBookingOptions(sessionId, memberId)
+        val options = bookingPaymentService.getBookingOptions(sessionId, memberId)
         return ResponseEntity.ok(MemberBookingOptionsResponse.from(options))
     }
 
@@ -245,7 +247,7 @@ class MemberClassController(
     ): ResponseEntity<ClassBookingResponse> {
         val memberId = principal.userId
 
-        val booking = bookingService.createBookingWithPayment(
+        val booking = bookingPaymentService.createBookingWithPayment(
             CreateBookingWithPaymentCommand(
                 sessionId = sessionId,
                 memberId = memberId,

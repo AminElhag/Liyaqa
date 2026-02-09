@@ -115,6 +115,14 @@ class AuditService(
     }
 
     /**
+     * Gets audit logs by entity type with pagination.
+     */
+    @Transactional(readOnly = true)
+    fun getAuditLogsByEntityType(entityType: String, pageable: Pageable): Page<AuditLog> {
+        return auditLogRepository.findByEntityType(entityType, pageable)
+    }
+
+    /**
      * Gets audit logs by organization ID.
      */
     @Transactional(readOnly = true)

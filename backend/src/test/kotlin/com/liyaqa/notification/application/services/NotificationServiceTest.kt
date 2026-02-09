@@ -26,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoSettings
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.never
+import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.mockito.quality.Strictness
@@ -135,7 +136,7 @@ class NotificationServiceTest {
 
         // Then
         assertNotNull(result)
-        verify(smsService).send(any(), any())
+        verify(smsService).send(any<String>(), any<String>())
     }
 
     @Test
@@ -157,7 +158,7 @@ class NotificationServiceTest {
         // Then
         assertNotNull(result)
         assertEquals(NotificationStatus.FAILED, result.status)
-        verify(smsService, never()).send(any(), any())
+        verify(smsService, never()).send(any<String>(), any<String>())
     }
 
     @Test
@@ -369,4 +370,298 @@ class NotificationServiceTest {
     )
 
     private fun createDefaultPreference() = NotificationPreference.createDefault(testMemberId)
+
+    // ===== sendNotification Tests =====
+
+    @Test
+    fun `sendNotification should route EMAIL notifications correctly`() {
+        // Given
+        val notification = createTestNotification(channel = NotificationChannel.EMAIL)
+        whenever(notificationRepository.save(any<Notification>())).thenAnswer { it.getArgument(0) }
+
+        // When
+        val result = notificationService.sendNotification(notification)
+
+        // Then
+        verify(emailService).sendEmail(any<String>(), any<String>(), any<String>(), any<Boolean>())
+        verify(notificationRepository).save(any<Notification>())
+    }
+
+    @Test
+    fun `sendNotification should route SMS notifications correctly`() {
+        // Given
+        val notification = createTestNotification(channel = NotificationChannel.SMS)
+        whenever(smsService.isAvailable()) doReturn true
+        whenever(smsService.send(any(), any())) doReturn "msg-123"
+        whenever(notificationRepository.save(any<Notification>())).thenAnswer { it.getArgument(0) }
+
+        // When
+        val result = notificationService.sendNotification(notification)
+
+        // Then
+        verify(smsService).send(any<String>(), any<String>())
+        verify(notificationRepository).save(any<Notification>())
+    }
+
+    @Test
+    fun `sendNotification should route PUSH notifications correctly`() {
+        // Given
+        val notification = createTestNotification(channel = NotificationChannel.PUSH)
+        val pushResult = PushResult(successCount = 1, failureCount = 0, invalidTokens = emptyList())
+        whenever(pushNotificationService.sendToMember(any(), any(), any())) doReturn pushResult
+        whenever(notificationRepository.save(any<Notification>())).thenAnswer { it.getArgument(0) }
+
+        // When
+        val result = notificationService.sendNotification(notification)
+
+        // Then
+        verify(pushNotificationService).sendToMember(any(), any(), any())
+        verify(notificationRepository).save(any<Notification>())
+    }
+
+    @Test
+    fun `sendNotification should route IN_APP notifications correctly`() {
+        // Given
+        val notification = createTestNotification(channel = NotificationChannel.IN_APP)
+        whenever(notificationRepository.save(any<Notification>())).thenAnswer { it.getArgument(0) }
+
+        // When
+        val result = notificationService.sendNotification(notification)
+
+        // Then
+        verify(notificationRepository).save(any<Notification>())
+        verify(emailService, never()).sendEmail(any<String>(), any<String>(), any<String>(), any<Boolean>())
+        verify(smsService, never()).send(any<String>(), any<String>())
+    }
+
+    @Test
+    fun `sendNotification should route WHATSAPP notifications correctly`() {
+        // Given
+        val notification = createTestNotification(channel = NotificationChannel.WHATSAPP)
+        whenever(notificationRepository.save(any<Notification>())).thenAnswer { it.getArgument(0) }
+
+        // When
+        val result = notificationService.sendNotification(notification)
+
+        // Then
+        verify(notificationRepository).save(any<Notification>())
+        // WhatsApp is queued, not sent immediately
+        verify(emailService, never()).sendEmail(any<String>(), any<String>(), any<String>(), any<Boolean>())
+    }
+
+    // ===== sendPush Tests =====
+
+    @Test
+    fun `sendPush should send push notification when service available`() {
+        // Given
+        val pushResult = PushResult(successCount = 1, failureCount = 0, invalidTokens = emptyList())
+        whenever(pushNotificationService.sendToMember(any(), any(), any())) doReturn pushResult
+        whenever(notificationRepository.save(any<Notification>())).thenAnswer { it.getArgument(0) }
+
+        // When
+        val result = notificationService.sendPush(
+            memberId = testMemberId,
+            type = NotificationType.CLASS_BOOKING_CONFIRMED,
+            title = LocalizedText(en = "Booking Confirmed"),
+            body = LocalizedText(en = "Your booking is confirmed")
+        )
+
+        // Then
+        assertNotNull(result)
+        verify(pushNotificationService).sendToMember(any(), any(), any())
+    }
+
+    // ===== sendMultiChannel Tests =====
+
+    @Test
+    fun `sendMultiChannel should send to multiple channels`() {
+        // Given
+        whenever(smsService.isAvailable()) doReturn true
+        whenever(smsService.send(any(), any())) doReturn "msg-123"
+        whenever(notificationRepository.save(any<Notification>())).thenAnswer { it.getArgument(0) }
+
+        // When
+        val results = notificationService.sendMultiChannel(
+            memberId = testMemberId,
+            email = testEmail,
+            phone = testPhone,
+            type = NotificationType.INVOICE_PAID,
+            subject = LocalizedText(en = "Invoice Paid"),
+            body = LocalizedText(en = "Payment confirmed")
+        )
+
+        // Then
+        assertEquals(2, results.size)
+        verify(emailService).sendEmail(any<String>(), any<String>(), any<String>(), any<Boolean>())
+        verify(smsService).send(any<String>(), any<String>())
+    }
+
+    @Test
+    fun `sendMultiChannel should filter by enabled preferences`() {
+        // Given
+        val preference = createDefaultPreference().apply {
+            emailEnabled = true
+            smsEnabled = false
+        }
+        whenever(preferenceRepository.findByMemberId(any())) doReturn Optional.of(preference)
+        whenever(notificationRepository.save(any<Notification>())).thenAnswer { it.getArgument(0) }
+
+        // When
+        val results = notificationService.sendMultiChannel(
+            memberId = testMemberId,
+            email = testEmail,
+            phone = testPhone,
+            type = NotificationType.INVOICE_PAID,
+            subject = LocalizedText(en = "Invoice Paid"),
+            body = LocalizedText(en = "Payment confirmed")
+        )
+
+        // Then
+        // Both notifications created (sendEmail and sendSms called), but SMS marked as failed due to preferences
+        assertEquals(2, results.size)
+        verify(emailService).sendEmail(any<String>(), any<String>(), any<String>(), any<Boolean>())
+        verify(smsService, never()).send(any<String>(), any<String>()) // SMS not actually sent due to preference
+    }
+
+    // ===== processPendingNotifications Tests =====
+
+    @Test
+    fun `processPendingNotifications should process pending notifications`() {
+        // Given
+        val pendingNotification1 = createTestNotification(status = NotificationStatus.PENDING)
+        val pendingNotification2 = createTestNotification(status = NotificationStatus.PENDING)
+        whenever(notificationRepository.findPendingDue(any(), any()))
+            .thenReturn(PageImpl(listOf(pendingNotification1, pendingNotification2)))
+        whenever(notificationRepository.save(any<Notification>())).thenAnswer { it.getArgument(0) }
+
+        // When
+        val count = notificationService.processPendingNotifications(batchSize = 10)
+
+        // Then
+        assertEquals(2, count)
+        verify(emailService, times(2)).sendEmail(any<String>(), any<String>(), any<String>(), any<Boolean>())
+    }
+
+    @Test
+    fun `processPendingNotifications should return zero when no pending notifications`() {
+        // Given
+        whenever(notificationRepository.findPendingDue(any(), any()))
+            .thenReturn(PageImpl(emptyList()))
+
+        // When
+        val count = notificationService.processPendingNotifications()
+
+        // Then
+        assertEquals(0, count)
+    }
+
+    // ===== retryFailedNotifications Tests =====
+
+    @Test
+    fun `retryFailedNotifications should retry failed notifications`() {
+        // Given
+        val failedNotification = createTestNotification(status = NotificationStatus.FAILED)
+        whenever(notificationRepository.findFailedRetryable(any()))
+            .thenReturn(PageImpl(listOf(failedNotification)))
+        whenever(notificationRepository.save(any<Notification>())).thenAnswer { it.getArgument(0) }
+
+        // When
+        val count = notificationService.retryFailedNotifications(batchSize = 10)
+
+        // Then
+        assertEquals(1, count)
+        verify(emailService).sendEmail(any<String>(), any<String>(), any<String>(), any<Boolean>())
+    }
+
+    // ===== getNotificationsByMember Tests =====
+
+    @Test
+    fun `getNotificationsByMember should return paginated notifications`() {
+        // Given
+        val notification1 = createTestNotification()
+        val notification2 = createTestNotification()
+        val pageable = PageRequest.of(0, 10)
+        whenever(notificationRepository.findByMemberId(testMemberId, pageable))
+            .thenReturn(PageImpl(listOf(notification1, notification2)))
+
+        // When
+        val result = notificationService.getNotificationsByMember(testMemberId, pageable)
+
+        // Then
+        assertEquals(2, result.content.size)
+        verify(notificationRepository).findByMemberId(testMemberId, pageable)
+    }
+
+    // Note: sendMultiChannelIfNotDuplicate and markAllAsRead tests removed as these methods
+    // don't exist in the current NotificationService implementation
+
+    // ===== Error Handling Tests =====
+
+    @Test
+    fun `sendEmail should mark notification as failed when email service throws exception`() {
+        // Given
+        val notification = createTestNotification(channel = NotificationChannel.EMAIL)
+        whenever(emailService.sendEmail(any<String>(), any<String>(), any<String>(), any<Boolean>()))
+            .thenThrow(RuntimeException("Email service down"))
+        whenever(notificationRepository.save(any<Notification>())).thenAnswer { it.getArgument(0) }
+
+        // When
+        val result = notificationService.sendNotification(notification)
+
+        // Then
+        assertEquals(NotificationStatus.FAILED, result.status)
+        verify(notificationRepository).save(any<Notification>())
+    }
+
+    @Test
+    fun `sendSms should mark notification as failed when SMS service unavailable`() {
+        // Given
+        val notification = createTestNotification(channel = NotificationChannel.SMS)
+        whenever(smsService.isAvailable()) doReturn false
+        whenever(notificationRepository.save(any<Notification>())).thenAnswer { it.getArgument(0) }
+
+        // When
+        val result = notificationService.sendNotification(notification)
+
+        // Then
+        assertEquals(NotificationStatus.FAILED, result.status)
+        verify(notificationRepository).save(any<Notification>())
+    }
+
+    @Test
+    fun `sendPush should mark notification as failed when push service is null`() {
+        // Given
+        val pushlessService = NotificationService(
+            notificationRepository,
+            preferenceRepository,
+            emailService,
+            smsService,
+            null // No push service
+        )
+        val notification = createTestNotification(channel = NotificationChannel.PUSH)
+        whenever(notificationRepository.save(any<Notification>())).thenAnswer { it.getArgument(0) }
+
+        // When
+        val result = pushlessService.sendNotification(notification)
+
+        // Then
+        assertEquals(NotificationStatus.FAILED, result.status)
+        assertNotNull(result.failureReason)
+        assertTrue(result.failureReason!!.contains("not configured"))
+    }
+
+    @Test
+    fun `sendPush should mark as failed when all devices fail`() {
+        // Given
+        val notification = createTestNotification(channel = NotificationChannel.PUSH)
+        val pushResult = PushResult(successCount = 0, failureCount = 3, invalidTokens = emptyList())
+        whenever(pushNotificationService.sendToMember(any(), any(), any())) doReturn pushResult
+        whenever(notificationRepository.save(any<Notification>())).thenAnswer { it.getArgument(0) }
+
+        // When
+        val result = notificationService.sendNotification(notification)
+
+        // Then
+        assertEquals(NotificationStatus.FAILED, result.status)
+    }
 }

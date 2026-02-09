@@ -90,9 +90,11 @@ class RedisConfig {
      * - brandingConfig: 24 hours TTL (rarely changes)
      * - memberSubscriptions: 5 minutes TTL (frequent updates)
      * - sessionAvailability: 2 minutes TTL (real-time booking data)
+     * - platformDashboard: 5 minutes TTL (platform metrics)
      * - default: 10 minutes TTL
      */
-    @Bean
+    @Bean("cacheManager")
+    @org.springframework.context.annotation.Primary
     fun cacheManager(redisConnectionFactory: RedisConnectionFactory): CacheManager {
         val objectMapper = ObjectMapper()
             .registerKotlinModule()
@@ -131,6 +133,40 @@ class RedisConfig {
             .withCacheConfiguration("sessionAvailability", defaultConfig.entryTtl(Duration.ofMinutes(2)))
             .withCacheConfiguration("waitlistPosition", defaultConfig.entryTtl(Duration.ofMinutes(2)))
             .withCacheConfiguration("checkInStatus", defaultConfig.entryTtl(Duration.ofMinutes(2)))
+            // Platform dashboard cache (5 minutes)
+            .withCacheConfiguration("platformDashboard", defaultConfig.entryTtl(Duration.ofMinutes(5)))
+            // Feature access cache (5 minutes)
+            .withCacheConfiguration("featureAccess", defaultConfig.entryTtl(Duration.ofMinutes(5)))
+            .build()
+    }
+
+    /**
+     * Platform dashboard cache manager.
+     * Separate bean to match the naming expected by PlatformDashboardService.
+     * Uses the same Redis configuration as the primary cache manager.
+     */
+    @Bean("platformDashboardCacheManager")
+    fun platformDashboardCacheManager(redisConnectionFactory: RedisConnectionFactory): CacheManager {
+        val objectMapper = ObjectMapper()
+            .registerKotlinModule()
+            .registerModule(JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+
+        val defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
+            .entryTtl(Duration.ofMinutes(5))
+            .serializeKeysWith(
+                RedisSerializationContext.SerializationPair.fromSerializer(StringRedisSerializer())
+            )
+            .serializeValuesWith(
+                RedisSerializationContext.SerializationPair.fromSerializer(
+                    GenericJackson2JsonRedisSerializer(objectMapper)
+                )
+            )
+            .disableCachingNullValues()
+
+        return RedisCacheManager.builder(redisConnectionFactory)
+            .cacheDefaults(defaultConfig)
+            .withCacheConfiguration("platformDashboard", defaultConfig.entryTtl(Duration.ofMinutes(5)))
             .build()
     }
 

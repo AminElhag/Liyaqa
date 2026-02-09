@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="007-1" author="liyaqa">
+        <comment>Create impersonation_sessions table for DB-backed impersonation audit</comment>
+        <createTable tableName="impersonation_sessions">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="platform_user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_tenant_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="purpose" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="started_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ended_at" type="TIMESTAMPTZ"/>
+            <column name="actions_performed" type="TEXT"/>
+            <column name="ip_address" type="VARCHAR(45)"/>
+            <column name="user_agent" type="VARCHAR(500)"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <createIndex tableName="impersonation_sessions" indexName="idx_imp_sessions_platform_user">
+            <column name="platform_user_id"/>
+        </createIndex>
+
+        <createIndex tableName="impersonation_sessions" indexName="idx_imp_sessions_target_tenant">
+            <column name="target_tenant_id"/>
+        </createIndex>
+
+        <createIndex tableName="impersonation_sessions" indexName="idx_imp_sessions_is_active">
+            <column name="is_active"/>
+        </createIndex>
+
+        <createIndex tableName="impersonation_sessions" indexName="idx_imp_sessions_started_at">
+            <column name="started_at"/>
+        </createIndex>
+
+        <sql>
+            CREATE UNIQUE INDEX idx_imp_sessions_active_per_user
+            ON impersonation_sessions (platform_user_id)
+            WHERE is_active = true;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

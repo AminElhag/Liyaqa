@@ -13,8 +13,22 @@ interface JWTPayload {
 
 /**
  * Routes that require platform authentication
+ * Use specific path matching to avoid false positives
  */
-const PROTECTED_ROUTES = ["/platform"];
+const PROTECTED_ROUTE_PATTERNS = [
+  "/platform-dashboard",
+  "/platform-users",
+  "/clients",
+  "/deals",
+  "/client-plans",
+  "/client-subscriptions",
+  "/client-invoices",
+  "/support",
+  "/alerts",
+  "/health",
+  "/dunning",
+  "/view-clubs",
+];
 
 /**
  * Public routes that don't require authentication
@@ -23,10 +37,16 @@ const PUBLIC_ROUTES = ["/", "/platform-login", "/auth"];
 
 /**
  * Checks if a path is protected
+ * Uses exact prefix matching for known protected routes
  */
 function isProtectedRoute(pathname: string): boolean {
   const pathWithoutLocale = pathname.replace(/^\/(en|ar)/, "");
-  return PROTECTED_ROUTES.some((route) => pathWithoutLocale.startsWith(route));
+
+  // Exact match or starts with pattern followed by / or end of string
+  return PROTECTED_ROUTE_PATTERNS.some((route) => {
+    return pathWithoutLocale === route ||
+           pathWithoutLocale.startsWith(route + "/");
+  });
 }
 
 /**

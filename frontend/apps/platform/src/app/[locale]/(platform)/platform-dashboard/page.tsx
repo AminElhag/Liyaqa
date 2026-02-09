@@ -8,7 +8,7 @@ import { Loading } from "@liyaqa/shared/components/ui/spinner";
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Switch } from "@liyaqa/shared/components/ui/switch";
 import { Label } from "@liyaqa/shared/components/ui/label";
-import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
+import { useAuthStore, useHasHydrated } from "@liyaqa/shared/stores/auth-store";
 import {
   usePlatformDashboard,
   useMonthlyRevenue,
@@ -26,8 +26,8 @@ import type { UserRole } from "@liyaqa/shared/types/auth";
 
 export default function PlatformDashboardPage() {
   const locale = useLocale();
-  const { user } = useAuthStore();
-  const userRole = user?.role as UserRole;
+  const { user, isLoading: isAuthLoading } = useAuthStore();
+  const hasHydrated = useHasHydrated();
 
   // Date range state
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -43,6 +43,21 @@ export default function PlatformDashboardPage() {
         endDate: format(dateRange.to, "yyyy-MM-dd"),
       }
     : undefined;
+
+  // GUARD CLAUSE: Show loading while hydrating or if user not ready
+  if (!hasHydrated || isAuthLoading || !user || !user.role) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loading
+          text={locale === "ar" ? "جاري التحميل..." : "Loading..."}
+        />
+      </div>
+    );
+  }
+
+  // SAFE: TypeScript now knows user and user.role exist
+  // No type assertion needed - user.role is already typed as UserRole
+  const userRole: UserRole = user.role;
 
   // Determine which data to fetch based on role
   const isAdmin = userRole === "PLATFORM_ADMIN";

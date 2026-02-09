@@ -3,25 +3,46 @@ package com.liyaqa.auth.domain.model
 /**
  * User roles for authorization.
  *
- * Platform roles (internal Liyaqa team) - ordinals 0-3:
- * - PLATFORM_ADMIN, SALES_REP, MARKETING, SUPPORT
+ * Platform roles (internal Liyaqa team):
+ * - PLATFORM_SUPER_ADMIN, PLATFORM_ADMIN, ACCOUNT_MANAGER, SUPPORT_LEAD, SUPPORT_AGENT, PLATFORM_VIEWER
+ * - Deprecated: SALES_REP, MARKETING, SUPPORT (kept for backward compatibility with existing tokens)
  *
- * Client roles (organization users) - ordinals 4-8:
+ * Client roles (organization users):
  * - SUPER_ADMIN, CLUB_ADMIN, STAFF, TRAINER, MEMBER
  */
 enum class Role {
-    // ======== Platform Roles (Internal Team) ========
+    // ======== Platform Roles (New) ========
+
+    /** Super admin with full platform access including system settings */
+    PLATFORM_SUPER_ADMIN,
 
     /** Full platform access - can manage all clients, plans, users, and settings */
     PLATFORM_ADMIN,
 
-    /** Sales representative - can manage clients, deals, and subscriptions */
+    /** Account manager — manages clients, subscriptions, deals, invoices */
+    ACCOUNT_MANAGER,
+
+    /** Support lead — manages tickets, assignment/escalation, impersonation */
+    SUPPORT_LEAD,
+
+    /** Support agent — ticket CRUD, client view, dashboard view */
+    SUPPORT_AGENT,
+
+    /** Viewer — read-only access to all platform data */
+    PLATFORM_VIEWER,
+
+    // ======== Deprecated Platform Roles (kept for token backward compatibility) ========
+
+    /** @deprecated Use ACCOUNT_MANAGER instead */
+    @Deprecated("Use ACCOUNT_MANAGER", replaceWith = ReplaceWith("ACCOUNT_MANAGER"))
     SALES_REP,
 
-    /** Marketing team - can view analytics and campaigns */
+    /** @deprecated Use PLATFORM_VIEWER instead */
+    @Deprecated("Use PLATFORM_VIEWER", replaceWith = ReplaceWith("PLATFORM_VIEWER"))
     MARKETING,
 
-    /** Support team - can view/edit client data and impersonate users */
+    /** @deprecated Use SUPPORT_AGENT instead */
+    @Deprecated("Use SUPPORT_AGENT", replaceWith = ReplaceWith("SUPPORT_AGENT"))
     SUPPORT,
 
     // ======== Client Roles (Organization Users) ========
@@ -59,8 +80,14 @@ enum class Role {
     MEMBER;
 
     companion object {
-        /** All platform (internal team) roles */
-        val PLATFORM_ROLES = setOf(PLATFORM_ADMIN, SALES_REP, MARKETING, SUPPORT)
+        /** All platform (internal team) roles — new names */
+        val PLATFORM_ROLES = setOf(
+            PLATFORM_SUPER_ADMIN, PLATFORM_ADMIN, ACCOUNT_MANAGER,
+            SUPPORT_LEAD, SUPPORT_AGENT, PLATFORM_VIEWER,
+            @Suppress("DEPRECATION") SALES_REP,
+            @Suppress("DEPRECATION") MARKETING,
+            @Suppress("DEPRECATION") SUPPORT
+        )
 
         /** All client (organization) roles */
         val CLIENT_ROLES = setOf(SUPER_ADMIN, CLUB_ADMIN, STAFF, TRAINER, MEMBER)

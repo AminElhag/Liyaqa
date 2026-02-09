@@ -18,6 +18,7 @@ import com.liyaqa.membership.domain.model.MemberStatus
 import com.liyaqa.membership.domain.model.WalletTransactionType
 import com.liyaqa.notification.application.services.NotificationService
 import com.liyaqa.shared.domain.LocalizedText
+import com.liyaqa.shared.domain.TenantContext
 import com.liyaqa.scheduling.application.services.BookingService
 import com.liyaqa.scheduling.application.services.ClassService
 import io.swagger.v3.oas.annotations.Operation
@@ -25,6 +26,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.format.annotation.DateTimeFormat
@@ -63,6 +65,29 @@ class MeController(
     private val userRepository: UserRepository,
     private val walletService: WalletService
 ) {
+    private val logger = LoggerFactory.getLogger(MeController::class.java)
+
+    /**
+     * Helper method to validate member belongs to current tenant.
+     * Implements defense-in-depth security by adding explicit tenant check
+     * beyond repository-level filtering.
+     *
+     * @param member The member to validate
+     * @param userId The authenticated user ID (for logging)
+     * @return true if validation passes, false otherwise
+     */
+    private fun validateMemberTenant(member: com.liyaqa.membership.domain.model.Member, userId: UUID): Boolean {
+        val currentTenantId = TenantContext.getCurrentTenant()?.value
+        if (currentTenantId == null || member.tenantId != currentTenantId) {
+            logger.warn(
+                "Tenant validation failed: user=$userId, " +
+                "memberTenant=${member.tenantId}, currentTenant=$currentTenantId"
+            )
+            return false
+        }
+        return true
+    }
+
     // ==================== PROFILE ====================
 
     /**
@@ -79,6 +104,17 @@ class MeController(
         val member = memberService.findMemberByUserId(principal.userId)
 
         if (member != null) {
+            // Tenant validation: Ensure member belongs to current tenant
+            val currentTenantId = TenantContext.getCurrentTenant()?.value
+            if (currentTenantId == null || member.tenantId != currentTenantId) {
+                logger.warn(
+                    "Tenant validation failed in getMyProfile: user=${principal.userId}, " +
+                    "memberTenant=${member.tenantId}, currentTenant=$currentTenantId"
+                )
+                // Return 404 instead of 403 to prevent tenant enumeration
+                return ResponseEntity.notFound().build()
+            }
+
             return ResponseEntity.ok(
                 MyProfileResponse(
                     id = member.id,
@@ -109,6 +145,17 @@ class MeController(
         // Fallback: Return basic user info for admin/staff users without member profile
         val user = userRepository.findById(principal.userId)
             .orElse(null) ?: return ResponseEntity.notFound().build()
+
+        // Tenant validation: Ensure user belongs to current tenant
+        val currentTenantId = TenantContext.getCurrentTenant()?.value
+        if (currentTenantId == null || user.tenantId != currentTenantId) {
+            logger.warn(
+                "Tenant validation failed in getMyProfile (user fallback): user=${principal.userId}, " +
+                "userTenant=${user.tenantId}, currentTenant=$currentTenantId"
+            )
+            // Return 404 instead of 403 to prevent tenant enumeration
+            return ResponseEntity.notFound().build()
+        }
 
         return ResponseEntity.ok(
             MyProfileResponse(
@@ -141,6 +188,17 @@ class MeController(
     ): ResponseEntity<MyProfileResponse> {
         val member = memberService.findMemberByUserId(principal.userId)
             ?: return ResponseEntity.notFound().build()
+
+        // Tenant validation: Ensure member belongs to current tenant
+        val currentTenantId = TenantContext.getCurrentTenant()?.value
+        if (currentTenantId == null || member.tenantId != currentTenantId) {
+            logger.warn(
+                "Tenant validation failed: user=${principal.userId}, " +
+                "memberTenant=${member.tenantId}, currentTenant=$currentTenantId"
+            )
+            // Return 404 instead of 403 to prevent tenant enumeration
+            return ResponseEntity.notFound().build()
+        }
 
         val command = UpdateMemberCommand(
             firstName = request.firstName?.let { LocalizedText(it) },
@@ -221,6 +279,11 @@ class MeController(
     ): ResponseEntity<MySubscriptionResponse> {
         val member = memberService.findMemberByUserId(principal.userId)
             ?: return ResponseEntity.notFound().build()
+
+        // Tenant validation
+        if (!validateMemberTenant(member, principal.userId)) {
+            return ResponseEntity.notFound().build()
+        }
 
         val subscription = subscriptionService.getActiveSubscription(member.id)
             ?: return ResponseEntity.ok(
@@ -405,6 +468,11 @@ class MeController(
         val member = memberService.findMemberByUserId(principal.userId)
             ?: return ResponseEntity.notFound().build()
 
+        // Tenant validation
+        if (!validateMemberTenant(member, principal.userId)) {
+            return ResponseEntity.notFound().build()
+        }
+
         val invoicesPage = if (status != null) {
             invoiceService.searchInvoices(null, status, member.id, null, null, PageRequest.of(page, size))
         } else {
@@ -543,6 +611,11 @@ class MeController(
         val member = memberService.findMemberByUserId(principal.userId)
             ?: return ResponseEntity.notFound().build()
 
+        // Tenant validation
+        if (!validateMemberTenant(member, principal.userId)) {
+            return ResponseEntity.notFound().build()
+        }
+
         val wallet = walletService.getWallet(member.id)
         return if (wallet != null) {
             ResponseEntity.ok(WalletResponse.from(wallet))
@@ -652,7 +725,7 @@ class MeController(
             bookingId = bookingId,
             reason = "Cancelled by member"
         )
-        bookingService.cancelBooking(command)
+        bookingService.cancelBooking(command, principal.userId)
 
         return ResponseEntity.ok(
             mapOf(

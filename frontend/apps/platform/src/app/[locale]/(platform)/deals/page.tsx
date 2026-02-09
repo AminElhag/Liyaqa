@@ -76,8 +76,10 @@ export default function DealsPage() {
     source: locale === "ar" ? "المصدر" : "Source",
     all: locale === "ar" ? "الكل" : "All",
     lead: locale === "ar" ? "عميل محتمل" : "Lead",
-    qualified: locale === "ar" ? "مؤهل" : "Qualified",
-    proposal: locale === "ar" ? "عرض سعر" : "Proposal",
+    contacted: locale === "ar" ? "تم التواصل" : "Contacted",
+    demoScheduled: locale === "ar" ? "عرض مجدول" : "Demo Scheduled",
+    demoDone: locale === "ar" ? "تم العرض" : "Demo Done",
+    proposalSent: locale === "ar" ? "تم إرسال العرض" : "Proposal Sent",
     negotiation: locale === "ar" ? "تفاوض" : "Negotiation",
     won: locale === "ar" ? "تم الفوز" : "Won",
     lost: locale === "ar" ? "خسارة" : "Lost",
@@ -217,8 +219,10 @@ export default function DealsPage() {
                   <SelectContent>
                     <SelectItem value="ALL">{texts.all}</SelectItem>
                     <SelectItem value="LEAD">{texts.lead}</SelectItem>
-                    <SelectItem value="QUALIFIED">{texts.qualified}</SelectItem>
-                    <SelectItem value="PROPOSAL">{texts.proposal}</SelectItem>
+                    <SelectItem value="CONTACTED">{texts.contacted}</SelectItem>
+                    <SelectItem value="DEMO_SCHEDULED">{texts.demoScheduled}</SelectItem>
+                    <SelectItem value="DEMO_DONE">{texts.demoDone}</SelectItem>
+                    <SelectItem value="PROPOSAL_SENT">{texts.proposalSent}</SelectItem>
                     <SelectItem value="NEGOTIATION">{texts.negotiation}</SelectItem>
                     <SelectItem value="WON">{texts.won}</SelectItem>
                     <SelectItem value="LOST">{texts.lost}</SelectItem>

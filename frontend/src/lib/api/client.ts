@@ -17,29 +17,31 @@ export class SessionExpiredError extends Error {
   }
 }
 
-// Store tokens - access token in sessionStorage, refresh token in localStorage
+// Store tokens - both access token and refresh token in localStorage
+// Note: For production, consider using HTTP-only cookies for better security
 let accessToken: string | null = null;
 
 // Token management functions
 export function setAccessToken(token: string | null) {
   accessToken = token;
-  // Also persist to sessionStorage for page refresh survival
+  // Persist to localStorage for page navigation survival
+  // Note: This is a temporary fix. For production, consider using HTTP-only cookies.
   if (typeof window !== "undefined") {
     if (token) {
-      sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
+      localStorage.setItem(ACCESS_TOKEN_KEY, token);
     } else {
-      sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+      localStorage.removeItem(ACCESS_TOKEN_KEY);
     }
   }
 }
 
 export function getAccessToken(): string | null {
-  // Try memory first, then sessionStorage
+  // Try memory first, then localStorage
   if (accessToken) {
     return accessToken;
   }
   if (typeof window !== "undefined") {
-    const stored = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+    const stored = localStorage.getItem(ACCESS_TOKEN_KEY);
     if (stored) {
       accessToken = stored; // Restore to memory
       return stored;
@@ -69,7 +71,7 @@ export function clearTokens() {
   accessToken = null;
   if (typeof window !== "undefined") {
     localStorage.removeItem(REFRESH_TOKEN_KEY);
-    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
   }
 }
 
@@ -190,7 +192,7 @@ function createApiClient(): KyInstance {
     hooks: {
       beforeRequest: [
         (request) => {
-          // Get token (restores from sessionStorage if needed)
+          // Get token (restores from localStorage if needed)
           const token = getAccessToken();
 
           console.log("[API Client] Request URL:", request.url);

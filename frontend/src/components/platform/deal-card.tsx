@@ -3,10 +3,10 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useLocale } from "next-intl";
-import { Calendar, DollarSign, Percent, Building2, AlertTriangle } from "lucide-react";
+import { Calendar, DollarSign, Building2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { DealStatusBadge } from "./deal-status-badge";
-import { formatCurrency, formatDate, getLocalizedText } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { DealSummary } from "@/types/platform";
 
@@ -20,7 +20,6 @@ export function DealCard({ deal, onClick, isDragging }: DealCardProps) {
   const locale = useLocale();
 
   const texts = {
-    overdue: locale === "ar" ? "متأخر" : "Overdue",
     noCloseDate: locale === "ar" ? "غير محدد" : "Not set",
   };
 
@@ -36,44 +35,25 @@ export function DealCard({ deal, onClick, isDragging }: DealCardProps) {
         {/* Header: Title + Status */}
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-medium text-sm line-clamp-2">
-            {getLocalizedText(deal.title, locale)}
+            {deal.facilityName || deal.contactName}
           </h3>
           <DealStatusBadge status={deal.status} />
         </div>
 
-        {/* Company */}
-        {deal.companyName && (
+        {/* Facility Name */}
+        {deal.facilityName && (
           <div className="flex items-center gap-2 text-muted-foreground text-xs">
             <Building2 className="h-3 w-3" />
-            <span className="truncate">{deal.companyName}</span>
+            <span className="truncate">{deal.facilityName}</span>
           </div>
         )}
 
-        {/* Value & Probability */}
-        <div className="flex items-center justify-between text-xs">
+        {/* Value */}
+        <div className="flex items-center text-xs">
           <div className="flex items-center gap-1 text-muted-foreground">
             <DollarSign className="h-3 w-3" />
             <span className="font-medium text-foreground">
-              {formatCurrency(
-                deal.estimatedValue.amount,
-                deal.estimatedValue.currency,
-                locale
-              )}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Percent className="h-3 w-3 text-muted-foreground" />
-            <span
-              className={cn(
-                "font-medium",
-                deal.probability >= 70
-                  ? "text-green-600"
-                  : deal.probability >= 40
-                  ? "text-amber-600"
-                  : "text-slate-600"
-              )}
-            >
-              {deal.probability}%
+              {formatCurrency(deal.estimatedValue, "SAR", locale)}
             </span>
           </div>
         </div>
@@ -82,19 +62,7 @@ export function DealCard({ deal, onClick, isDragging }: DealCardProps) {
         <div className="flex items-center gap-2 text-xs">
           <Calendar className="h-3 w-3 text-muted-foreground" />
           {deal.expectedCloseDate ? (
-            <span
-              className={cn(
-                deal.isOverdue && "text-red-600 font-medium"
-              )}
-            >
-              {formatDate(deal.expectedCloseDate, locale)}
-              {deal.isOverdue && (
-                <span className="inline-flex items-center gap-1 ms-2">
-                  <AlertTriangle className="h-3 w-3" />
-                  {texts.overdue}
-                </span>
-              )}
-            </span>
+            <span>{formatDate(deal.expectedCloseDate, locale)}</span>
           ) : (
             <span className="text-muted-foreground">{texts.noCloseDate}</span>
           )}

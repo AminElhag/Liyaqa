@@ -7,6 +7,12 @@ spring:
       hibernate:
         format_sql: false
 
+  # Disable Flyway and Liquibase in tests - Hibernate ddl-auto handles schema
+  flyway:
+    enabled: false
+  liquibase:
+    enabled: false
+
   mail:
     host: localhost
     port: 25
@@ -40,6 +46,9 @@ jwt:
   refresh-token-expiration: 604800000
 
 liyaqa:
+  cache:
+    redis:
+      enabled: false
   email:
     enabled: false
     from-address: test@liyaqa.com

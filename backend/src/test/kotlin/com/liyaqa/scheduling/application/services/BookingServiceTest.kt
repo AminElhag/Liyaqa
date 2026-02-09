@@ -76,6 +76,15 @@ class BookingServiceTest {
     @Mock
     private lateinit var permissionService: PermissionService
 
+    @Mock
+    private lateinit var validationService: BookingValidationService
+
+    @Mock
+    private lateinit var bookingNotificationService: BookingNotificationService
+
+    @Mock
+    private lateinit var waitlistService: BookingWaitlistService
+
     private lateinit var bookingService: BookingService
 
     private lateinit var testMember: Member
@@ -95,7 +104,10 @@ class BookingServiceTest {
             webhookPublisher,
             classPackRepository,
             balanceRepository,
-            permissionService
+            permissionService,
+            validationService,
+            bookingNotificationService,
+            waitlistService
         )
 
         // Create test member
@@ -171,6 +183,13 @@ class BookingServiceTest {
             memberId = testMember.id,
             subscriptionId = testSubscription.id
         )
+
+        // Validation service - default to successful validation
+        whenever(validationService.validateBookingEligibility(any(), any(), any(), any())) doReturn BookingValidationResult(
+            canBook = true,
+            validatedSubscription = testSubscription
+        )
+        // validateNoOverlappingBookings is void, no need to stub (will do nothing by default)
     }
 
     @Test
@@ -261,6 +280,12 @@ class BookingServiceTest {
 
         whenever(subscriptionRepository.findById(expiredSubscription.id)) doReturn Optional.of(expiredSubscription)
 
+        // Mock validation service to return failure
+        whenever(validationService.validateBookingEligibility(any(), any(), any(), any())) doReturn BookingValidationResult(
+            canBook = false,
+            reason = "Subscription is not active"
+        )
+
         // When/Then
         assertThrows(IllegalArgumentException::class.java) {
             bookingService.createBooking(command)
@@ -287,6 +312,12 @@ class BookingServiceTest {
         )
 
         whenever(subscriptionRepository.findById(otherMemberSubscription.id)) doReturn Optional.of(otherMemberSubscription)
+
+        // Mock validation service to return failure
+        whenever(validationService.validateBookingEligibility(any(), any(), any(), any())) doReturn BookingValidationResult(
+            canBook = false,
+            reason = "Subscription does not belong to this member"
+        )
 
         // When/Then
         assertThrows(IllegalArgumentException::class.java) {
@@ -437,6 +468,12 @@ class BookingServiceTest {
 
         whenever(subscriptionRepository.findById(noClassesSubscription.id)) doReturn Optional.of(noClassesSubscription)
 
+        // Mock validation service to return failure
+        whenever(validationService.validateBookingEligibility(any(), any(), any(), any())) doReturn BookingValidationResult(
+            canBook = false,
+            reason = "No classes remaining on subscription"
+        )
+
         // When/Then
         assertThrows(IllegalArgumentException::class.java) {
             bookingService.createBooking(command)
@@ -486,6 +523,12 @@ class BookingServiceTest {
 
         whenever(gymClassRepository.findById(testGymClass.id)) doReturn Optional.of(gymClassRequiringSubscription)
         whenever(subscriptionRepository.findById(nonExistentSubscriptionId)) doReturn Optional.empty()
+
+        // Mock validation service to return failure
+        whenever(validationService.validateBookingEligibility(any(), any(), any(), any())) doReturn BookingValidationResult(
+            canBook = false,
+            reason = "Subscription not found"
+        )
 
         // When/Then - Service uses require() which throws IllegalArgumentException
         assertThrows(IllegalArgumentException::class.java) {

@@ -1,15 +1,23 @@
-import type { UUID, LocalizedText, Money } from "../api";
+import type { UUID } from "../api";
 
 /**
  * Status of a sales deal in the pipeline.
  */
 export type DealStatus =
   | "LEAD"
-  | "QUALIFIED"
-  | "PROPOSAL"
+  | "CONTACTED"
+  | "DEMO_SCHEDULED"
+  | "DEMO_DONE"
+  | "PROPOSAL_SENT"
   | "NEGOTIATION"
   | "WON"
-  | "LOST";
+  | "LOST"
+  | "CHURNED";
+
+/** Stages that are considered "open" (not terminal). */
+export const OPEN_STAGES: DealStatus[] = [
+  "LEAD", "CONTACTED", "DEMO_SCHEDULED", "DEMO_DONE", "PROPOSAL_SENT", "NEGOTIATION",
+];
 
 /**
  * Source of a sales deal.
@@ -24,74 +32,79 @@ export type DealSource =
   | "OTHER";
 
 /**
- * Full deal response with all details.
+ * Assigned platform user summary.
+ */
+export interface DealAssignee {
+  id: UUID;
+  displayName: string;
+  email: string;
+}
+
+/**
+ * Deal activity entry.
+ */
+export interface DealActivity {
+  id: UUID;
+  type: string;
+  content: string;
+  createdBy: UUID;
+  createdAt: string;
+}
+
+/**
+ * Full deal response matching backend DealResponse.
  */
 export interface Deal {
   id: UUID;
-  title: LocalizedText;
-  status: DealStatus;
-  source: DealSource;
+  facilityName?: string;
   contactName: string;
   contactEmail: string;
   contactPhone?: string;
-  companyName?: string;
-  estimatedValue: Money;
-  probability: number;
+  status: DealStatus;
+  source: DealSource;
+  notes?: string;
+  assignedTo?: DealAssignee;
+  estimatedValue: number;
+  currency: string;
   expectedCloseDate?: string;
-  actualCloseDate?: string;
-  interestedPlanId?: UUID;
-  salesRepId: UUID;
-  convertedOrganizationId?: UUID;
-  convertedSubscriptionId?: UUID;
-  notes?: LocalizedText;
-  lostReason?: LocalizedText;
-
-  // Calculated fields
-  isOpen: boolean;
-  isWon: boolean;
-  isLost: boolean;
-  canAdvance: boolean;
-  nextStage?: DealStatus;
-  weightedValue: Money;
-  daysToClose?: number;
-  isOverdue: boolean;
-
-  // Timestamps
+  closedAt?: string;
+  lostReason?: string;
   createdAt: string;
   updatedAt: string;
+  activities?: DealActivity[];
 }
 
 /**
- * Simplified deal response for listings.
+ * Simplified deal response matching backend DealSummaryResponse.
  */
 export interface DealSummary {
   id: UUID;
-  title: LocalizedText;
+  facilityName?: string;
+  contactName: string;
   status: DealStatus;
-  source: DealSource;
-  companyName?: string;
-  estimatedValue: Money;
-  probability: number;
+  estimatedValue: number;
   expectedCloseDate?: string;
-  salesRepId: UUID;
-  isOverdue: boolean;
 }
 
 /**
- * Response for deal pipeline statistics.
+ * Response for deal pipeline counts.
+ */
+export interface DealPipelineResponse {
+  counts: Record<DealStatus, number>;
+}
+
+/**
+ * Response for deal metrics matching backend DealMetricsResponse.
  */
 export interface DealStats {
   totalDeals: number;
   openDeals: number;
   wonDeals: number;
   lostDeals: number;
-  byStatus: Record<DealStatus, number>;
-  bySource: Record<DealSource, number>;
-  totalPipelineValue: Money;
-  weightedPipelineValue: Money;
-  wonValue: Money;
-  averageDealSize: Money;
-  winRate: number;
+  conversionRate: number;
+  avgDealValue: number;
+  avgDaysToClose: number;
+  stageDistribution: Record<DealStatus, number>;
 }
 
 /**
@@ -103,8 +116,8 @@ export interface SalesRepDealStats {
   openDeals: number;
   wonDeals: number;
   lostDeals: number;
-  pipelineValue: Money;
-  wonValue: Money;
+  pipelineValue: number;
+  wonValue: number;
   winRate: number;
 }
 
@@ -114,9 +127,9 @@ export interface SalesRepDealStats {
 export interface DealConversionResult {
   deal: Deal;
   organizationId: UUID;
-  organizationName: LocalizedText;
+  organizationName: string;
   clubId: UUID;
-  clubName: LocalizedText;
+  clubName: string;
   adminUserId: UUID;
   adminEmail: string;
   subscriptionId?: UUID;
@@ -128,38 +141,26 @@ export interface DealConversionResult {
 // ============================================
 
 export interface CreateDealRequest {
-  titleEn: string;
-  titleAr?: string;
-  source?: DealSource;
+  facilityName?: string;
   contactName: string;
   contactEmail: string;
   contactPhone?: string;
-  companyName?: string;
-  estimatedValueAmount?: number;
-  estimatedValueCurrency?: string;
-  probability?: number;
+  source?: DealSource;
+  notes?: string;
+  assignedToId?: UUID;
+  estimatedValue?: number;
+  currency?: string;
   expectedCloseDate?: string;
-  interestedPlanId?: UUID;
-  salesRepId: UUID;
-  notesEn?: string;
-  notesAr?: string;
 }
 
 export interface UpdateDealRequest {
-  titleEn?: string;
-  titleAr?: string;
-  source?: DealSource;
+  facilityName?: string;
   contactName?: string;
   contactEmail?: string;
   contactPhone?: string;
-  companyName?: string;
-  estimatedValueAmount?: number;
-  estimatedValueCurrency?: string;
-  probability?: number;
+  notes?: string;
+  estimatedValue?: number;
   expectedCloseDate?: string;
-  interestedPlanId?: UUID;
-  notesEn?: string;
-  notesAr?: string;
 }
 
 export interface ConvertDealRequest {
@@ -196,6 +197,11 @@ export interface ConvertDealRequest {
   startWithTrial?: boolean;
   trialDays?: number;
   discountPercentage?: number;
+}
+
+export interface ChangeStageRequest {
+  stage: DealStatus;
+  reason?: string;
 }
 
 export interface LoseDealRequest {

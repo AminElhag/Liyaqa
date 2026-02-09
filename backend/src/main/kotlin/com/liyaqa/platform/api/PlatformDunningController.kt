@@ -5,10 +5,15 @@ import com.liyaqa.platform.application.services.DunningStatistics
 import com.liyaqa.platform.domain.model.DunningSequence
 import com.liyaqa.platform.domain.model.DunningStatus
 import com.liyaqa.platform.domain.model.DunningStep
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
+import com.liyaqa.platform.domain.model.PlatformUserRole
+import com.liyaqa.platform.infrastructure.security.PlatformSecured
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 import java.util.UUID
@@ -34,13 +39,16 @@ import java.util.UUID
  */
 @RestController
 @RequestMapping("/api/platform/dunning")
-@PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP', 'SUPPORT_REP')")
+@PlatformSecured
+@Tag(name = "Dunning", description = "Payment dunning and collection management")
 class PlatformDunningController(
     private val dunningService: DunningService
 ) {
     /**
      * Gets all active dunning sequences.
      */
+    @Operation(summary = "Get active dunning sequences", description = "Returns a paginated list of all currently active dunning sequences.")
+    @ApiResponse(responseCode = "200", description = "Active dunning sequences retrieved successfully")
     @GetMapping
     fun getActive(pageable: Pageable): ResponseEntity<Page<DunningSequenceResponse>> {
         val page = dunningService.getActive(pageable)
@@ -50,6 +58,8 @@ class PlatformDunningController(
     /**
      * Gets dunning statistics.
      */
+    @Operation(summary = "Get dunning statistics", description = "Returns aggregated dunning statistics including recovery rates and outstanding amounts.")
+    @ApiResponse(responseCode = "200", description = "Dunning statistics retrieved successfully")
     @GetMapping("/statistics")
     fun getStatistics(): ResponseEntity<DunningStatistics> {
         val stats = dunningService.getStatistics()
@@ -59,6 +69,8 @@ class PlatformDunningController(
     /**
      * Gets dunning sequences escalated to CSM.
      */
+    @Operation(summary = "Get escalated dunning sequences", description = "Returns a paginated list of dunning sequences that have been escalated to a Customer Success Manager.")
+    @ApiResponse(responseCode = "200", description = "Escalated dunning sequences retrieved successfully")
     @GetMapping("/escalated")
     fun getEscalated(pageable: Pageable): ResponseEntity<Page<DunningSequenceResponse>> {
         val page = dunningService.getEscalated(pageable)
@@ -68,6 +80,8 @@ class PlatformDunningController(
     /**
      * Gets dunning sequences by status.
      */
+    @Operation(summary = "Get dunning sequences by status", description = "Returns a paginated list of dunning sequences filtered by status.")
+    @ApiResponse(responseCode = "200", description = "Dunning sequences retrieved successfully")
     @GetMapping("/by-status/{status}")
     fun getByStatus(
         @PathVariable status: DunningStatus,
@@ -80,6 +94,8 @@ class PlatformDunningController(
     /**
      * Gets dunning sequences for an organization.
      */
+    @Operation(summary = "Get dunning sequences by organization", description = "Returns a paginated list of dunning sequences for a specific organization.")
+    @ApiResponse(responseCode = "200", description = "Organization dunning sequences retrieved successfully")
     @GetMapping("/organization/{organizationId}")
     fun getByOrganizationId(
         @PathVariable organizationId: UUID,
@@ -92,6 +108,11 @@ class PlatformDunningController(
     /**
      * Gets active dunning for an organization.
      */
+    @Operation(summary = "Get active dunning for organization", description = "Returns the currently active dunning sequence for a specific organization, if any.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Active dunning sequence found"),
+        ApiResponse(responseCode = "404", description = "No active dunning sequence found for the organization")
+    ])
     @GetMapping("/organization/{organizationId}/active")
     fun getActiveByOrganizationId(
         @PathVariable organizationId: UUID
@@ -104,6 +125,11 @@ class PlatformDunningController(
     /**
      * Gets a dunning sequence by ID.
      */
+    @Operation(summary = "Get a dunning sequence by ID", description = "Retrieves the details of a specific dunning sequence.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Dunning sequence found"),
+        ApiResponse(responseCode = "404", description = "Dunning sequence not found")
+    ])
     @GetMapping("/{dunningId}")
     fun getById(@PathVariable dunningId: UUID): ResponseEntity<DunningSequenceResponse> {
         val dunning = dunningService.getById(dunningId)
@@ -113,6 +139,11 @@ class PlatformDunningController(
     /**
      * Retries payment for a dunning sequence.
      */
+    @Operation(summary = "Retry payment", description = "Initiates a manual payment retry for a dunning sequence.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Payment retry initiated"),
+        ApiResponse(responseCode = "404", description = "Dunning sequence not found")
+    ])
     @PostMapping("/{dunningId}/retry")
     fun retryPayment(
         @PathVariable dunningId: UUID
@@ -129,6 +160,11 @@ class PlatformDunningController(
     /**
      * Sends a payment link to the client.
      */
+    @Operation(summary = "Send payment link", description = "Sends a payment link to the client via email or SMS.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Payment link sent successfully"),
+        ApiResponse(responseCode = "404", description = "Dunning sequence not found")
+    ])
     @PostMapping("/{dunningId}/send-link")
     fun sendPaymentLink(
         @PathVariable dunningId: UUID
@@ -144,6 +180,12 @@ class PlatformDunningController(
     /**
      * Escalates a dunning sequence to CSM.
      */
+    @Operation(summary = "Escalate to CSM", description = "Escalates a dunning sequence to a Customer Success Manager for manual intervention.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Dunning sequence escalated successfully"),
+        ApiResponse(responseCode = "404", description = "Dunning sequence not found"),
+        ApiResponse(responseCode = "422", description = "Dunning sequence is already escalated")
+    ])
     @PostMapping("/{dunningId}/escalate")
     fun escalateToCsm(
         @PathVariable dunningId: UUID,
@@ -156,8 +198,13 @@ class PlatformDunningController(
     /**
      * Assigns a CSM to a dunning sequence.
      */
+    @Operation(summary = "Assign CSM to dunning", description = "Assigns a Customer Success Manager to handle a dunning sequence. Requires PLATFORM_ADMIN role.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "CSM assigned successfully"),
+        ApiResponse(responseCode = "404", description = "Dunning sequence not found")
+    ])
     @PostMapping("/{dunningId}/assign-csm")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     fun assignCsm(
         @PathVariable dunningId: UUID,
         @RequestBody request: AssignCsmRequest
@@ -170,8 +217,14 @@ class PlatformDunningController(
      * Pauses a dunning sequence.
      * Note: This functionality should be added to DunningService if needed.
      */
+    @Operation(summary = "Pause dunning sequence", description = "Pauses an active dunning sequence. Requires PLATFORM_ADMIN role.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Dunning sequence paused successfully"),
+        ApiResponse(responseCode = "404", description = "Dunning sequence not found"),
+        ApiResponse(responseCode = "422", description = "Dunning sequence cannot be paused from its current state")
+    ])
     @PostMapping("/{dunningId}/pause")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     fun pause(@PathVariable dunningId: UUID): ResponseEntity<DunningSequenceResponse> {
         // In a real implementation, add a pause method to DunningService
         val dunning = dunningService.getById(dunningId)
@@ -182,8 +235,14 @@ class PlatformDunningController(
      * Resumes a paused dunning sequence.
      * Note: This functionality should be added to DunningService if needed.
      */
+    @Operation(summary = "Resume dunning sequence", description = "Resumes a previously paused dunning sequence. Requires PLATFORM_ADMIN role.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Dunning sequence resumed successfully"),
+        ApiResponse(responseCode = "404", description = "Dunning sequence not found"),
+        ApiResponse(responseCode = "422", description = "Dunning sequence is not paused")
+    ])
     @PostMapping("/{dunningId}/resume")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     fun resume(@PathVariable dunningId: UUID): ResponseEntity<DunningSequenceResponse> {
         // In a real implementation, add a resume method to DunningService
         val dunning = dunningService.getById(dunningId)
@@ -193,8 +252,14 @@ class PlatformDunningController(
     /**
      * Cancels a dunning sequence (resolves manually).
      */
+    @Operation(summary = "Cancel dunning sequence", description = "Cancels a dunning sequence by resolving it manually with optional notes. Requires PLATFORM_ADMIN role.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Dunning sequence cancelled successfully"),
+        ApiResponse(responseCode = "404", description = "Dunning sequence not found"),
+        ApiResponse(responseCode = "422", description = "Dunning sequence cannot be cancelled from its current state")
+    ])
     @PostMapping("/{dunningId}/cancel")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     fun cancel(
         @PathVariable dunningId: UUID,
         @RequestBody(required = false) request: CancelDunningRequest?
@@ -206,6 +271,12 @@ class PlatformDunningController(
     /**
      * Marks a dunning sequence as recovered.
      */
+    @Operation(summary = "Mark dunning as recovered", description = "Marks a dunning sequence as recovered after successful payment collection.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Dunning sequence marked as recovered"),
+        ApiResponse(responseCode = "404", description = "Dunning sequence not found"),
+        ApiResponse(responseCode = "422", description = "Dunning sequence is already recovered or cancelled")
+    ])
     @PostMapping("/{dunningId}/recover")
     fun markRecovered(
         @PathVariable dunningId: UUID,
@@ -218,6 +289,11 @@ class PlatformDunningController(
     /**
      * Adds notes to a dunning sequence.
      */
+    @Operation(summary = "Add notes to dunning", description = "Adds notes to an existing dunning sequence for tracking purposes.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Notes added successfully"),
+        ApiResponse(responseCode = "404", description = "Dunning sequence not found")
+    ])
     @PostMapping("/{dunningId}/notes")
     fun addNotes(
         @PathVariable dunningId: UUID,

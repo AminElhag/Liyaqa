@@ -42,53 +42,6 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-/**
- * Response for booking options - shows available payment methods for a session.
- */
-data class BookingOptionsResponse(
-    val sessionId: UUID,
-    val memberId: UUID,
-    val canBook: Boolean,
-    val reason: String? = null,
-    val membershipOption: MembershipBookingOption? = null,
-    val classPackOptions: List<ClassPackBookingOption> = emptyList(),
-    val payPerEntryOption: PayPerEntryOption? = null
-)
-
-data class MembershipBookingOption(
-    val available: Boolean,
-    val classesRemaining: Int?,
-    val reason: String? = null
-)
-
-data class ClassPackBookingOption(
-    val balanceId: UUID,
-    val packName: LocalizedText,
-    val classesRemaining: Int,
-    val expiresAt: Instant?
-)
-
-data class PayPerEntryOption(
-    val available: Boolean,
-    val price: Money,
-    val taxRate: BigDecimal,
-    val totalWithTax: Money
-)
-
-/**
- * Command for creating a booking with a specific payment source.
- */
-data class CreateBookingWithPaymentCommand(
-    val sessionId: UUID,
-    val memberId: UUID,
-    val paymentSource: BookingPaymentSource,
-    val classPackBalanceId: UUID? = null,
-    val orderId: UUID? = null,
-    val paidAmount: Money? = null,
-    val notes: String? = null,
-    val bookedBy: UUID? = null
-)
-
 @Service
 @Transactional
 class BookingService(
@@ -101,11 +54,13 @@ class BookingService(
     private val webhookPublisher: WebhookEventPublisher,
     private val classPackRepository: ClassPackRepository,
     private val balanceRepository: MemberClassPackBalanceRepository,
-    private val permissionService: PermissionService
+    private val permissionService: PermissionService,
+    private val validationService: BookingValidationService,
+    private val bookingNotificationService: BookingNotificationService,
+    private val waitlistService: BookingWaitlistService
 ) {
     private val logger = LoggerFactory.getLogger(BookingService::class.java)
-    private val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-    private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
     /**
      * Books a member into a class session.
      * If the session is full and waitlist is enabled, adds to waitlist.
@@ -130,17 +85,21 @@ class BookingService(
             "Member already has an active booking for this session"
         }
 
-        // Check for overlapping bookings on the same day
-        validateNoOverlappingBookings(command.memberId, session)
-
         val gymClass = gymClassRepository.findById(session.gymClassId)
             .orElseThrow { NoSuchElementException("Gym class not found: ${session.gymClassId}") }
 
-        // Validate subscription if required
-        var validatedSubscription: Subscription? = null
-        if (gymClass.requiresSubscription) {
-            validatedSubscription = validateSubscriptionForBooking(command.memberId, command.subscriptionId, gymClass.deductsClassFromPlan)
+        // Validate booking eligibility (overlap and subscription checks)
+        val validationResult = validationService.validateBookingEligibility(
+            command.memberId,
+            session,
+            gymClass,
+            command.subscriptionId
+        )
+        require(validationResult.canBook) {
+            validationResult.reason ?: "Booking validation failed"
         }
+
+        val validatedSubscription = validationResult.validatedSubscription
 
         val booking: ClassBooking
 
@@ -180,9 +139,9 @@ class BookingService(
             val member = memberRepository.findById(command.memberId).orElse(null)
             if (member != null) {
                 if (savedBooking.isConfirmed()) {
-                    sendBookingConfirmationNotification(member, session, gymClass)
+                    bookingNotificationService.sendBookingConfirmation(member, session, gymClass)
                 } else if (savedBooking.isWaitlisted()) {
-                    sendWaitlistNotification(member, session, gymClass, savedBooking.waitlistPosition ?: 1)
+                    bookingNotificationService.sendWaitlistAdded(member, session, gymClass, savedBooking.waitlistPosition ?: 1)
                 }
             }
         } catch (e: Exception) {
@@ -205,99 +164,6 @@ class BookingService(
         return savedBooking
     }
 
-    /**
-     * Validates that the member doesn't have any overlapping class bookings.
-     * Two sessions overlap if their time ranges intersect.
-     * @param memberId The member ID
-     * @param newSession The session being booked
-     * @throws IllegalArgumentException if there's an overlapping booking
-     */
-    /**
-     * Validates that the member doesn't have overlapping bookings on the same day.
-     * Uses optimized query to prevent N+1 queries (fetches bookings, sessions, and classes in one go).
-     */
-    private fun validateNoOverlappingBookings(memberId: UUID, newSession: ClassSession) {
-        // Optimized query: fetches bookings with sessions and gym classes in a single query
-        // Returns List<Array<Any>> where each array contains [ClassBooking, ClassSession, GymClass]
-        val bookingsWithData = bookingRepository.findActiveBookingsWithSessionsAndClasses(
-            memberId,
-            newSession.sessionDate
-        )
-
-        for (row in bookingsWithData) {
-            // Unpack the result tuple
-            val booking = row[0] as ClassBooking
-            val existingSession = row[1] as ClassSession
-            val existingClass = row[2] as GymClass
-
-            // Check for time overlap
-            if (sessionsOverlap(
-                    newSession.startTime,
-                    newSession.endTime,
-                    existingSession.startTime,
-                    existingSession.endTime
-                )) {
-                val className = existingClass.name.en
-                throw IllegalArgumentException(
-                    "Cannot book: time conflicts with $className (${existingSession.startTime}-${existingSession.endTime})"
-                )
-            }
-        }
-    }
-
-    /**
-     * Checks if two time ranges overlap.
-     * Two ranges [start1, end1] and [start2, end2] overlap if start1 < end2 AND start2 < end1
-     */
-    private fun sessionsOverlap(
-        start1: LocalTime, end1: LocalTime,
-        start2: LocalTime, end2: LocalTime
-    ): Boolean {
-        return start1.isBefore(end2) && start2.isBefore(end1)
-    }
-
-    /**
-     * Validates that the member has a valid subscription for booking.
-     * @param memberId The member ID
-     * @param subscriptionId Optional specific subscription ID to use
-     * @param requiresClassAvailability Whether the class deducts from plan (requires classes available)
-     * @return The validated subscription
-     * @throws IllegalStateException if no valid subscription found
-     */
-    private fun validateSubscriptionForBooking(
-        memberId: UUID,
-        subscriptionId: UUID?,
-        requiresClassAvailability: Boolean
-    ): Subscription {
-        // If a specific subscription is provided, validate it
-        val subscription = if (subscriptionId != null) {
-            subscriptionRepository.findById(subscriptionId)
-                .orElseThrow { IllegalArgumentException("Subscription not found: $subscriptionId") }
-        } else {
-            // Find member's active subscription
-            subscriptionRepository.findActiveByMemberId(memberId)
-                .orElseThrow { IllegalStateException("Member does not have an active subscription") }
-        }
-
-        // Verify the subscription belongs to the member
-        require(subscription.memberId == memberId) {
-            "Subscription does not belong to this member"
-        }
-
-        // Verify subscription is active and not expired
-        require(subscription.isActive()) {
-            "Subscription is not active (status: ${subscription.status}, expired: ${subscription.isExpired()})"
-        }
-
-        // If class deducts from plan, verify classes are available
-        if (requiresClassAvailability) {
-            require(subscription.hasClassesAvailable()) {
-                "No classes remaining on subscription"
-            }
-        }
-
-        return subscription
-    }
 
     /**
      * Gets a booking by ID.
@@ -399,20 +265,20 @@ class BookingService(
             sessionRepository.save(session)
 
             // Promote first person from waitlist if available
-            promoteFromWaitlist(booking.sessionId, session, gymClass)
+            waitlistService.promoteFromWaitlist(booking.sessionId, session, gymClass)
         } else if (wasWaitlisted) {
             session.decrementWaitlist()
             sessionRepository.save(session)
 
             // Re-order waitlist positions
-            reorderWaitlist(booking.sessionId)
+            waitlistService.reorderWaitlist(booking.sessionId)
         }
 
         // Send cancellation notification
         try {
             val member = memberRepository.findById(booking.memberId).orElse(null)
             if (member != null && gymClass != null) {
-                sendBookingCancellationNotification(member, session, gymClass)
+                bookingNotificationService.sendBookingCancellation(member, session, gymClass)
             }
         } catch (e: Exception) {
             logger.error("Failed to send cancellation notification: ${e.message}", e)
@@ -502,47 +368,6 @@ class BookingService(
         return savedBooking
     }
 
-    /**
-     * Promotes the first person from the waitlist to confirmed status.
-     */
-    private fun promoteFromWaitlist(sessionId: UUID, session: ClassSession?, gymClass: GymClass?) {
-        val waitlist = bookingRepository.findWaitlistedBySessionIdOrderByPosition(sessionId)
-        if (waitlist.isEmpty()) return
-
-        val firstInLine = waitlist.first()
-        firstInLine.confirm()
-        bookingRepository.save(firstInLine)
-
-        val actualSession = session ?: sessionRepository.findById(sessionId).orElse(null) ?: return
-        actualSession.decrementWaitlist()
-        actualSession.incrementBookings()
-        sessionRepository.save(actualSession)
-
-        // Re-order remaining waitlist
-        reorderWaitlist(sessionId)
-
-        // Send promotion notification
-        try {
-            val member = memberRepository.findById(firstInLine.memberId).orElse(null)
-            val actualGymClass = gymClass ?: gymClassRepository.findById(actualSession.gymClassId).orElse(null)
-            if (member != null && actualGymClass != null) {
-                sendWaitlistPromotionNotification(member, actualSession, actualGymClass)
-            }
-        } catch (e: Exception) {
-            logger.error("Failed to send waitlist promotion notification: ${e.message}", e)
-        }
-    }
-
-    /**
-     * Re-orders waitlist positions after a cancellation or promotion.
-     */
-    private fun reorderWaitlist(sessionId: UUID) {
-        val waitlist = bookingRepository.findWaitlistedBySessionIdOrderByPosition(sessionId)
-        waitlist.forEachIndexed { index, booking ->
-            booking.setWaitlistPosition(index + 1)
-            bookingRepository.save(booking)
-        }
-    }
 
     /**
      * Marks all confirmed bookings for a completed session as no-show if not checked in.
@@ -610,189 +435,6 @@ class BookingService(
         logger.info("Booking deleted: $id")
     }
 
-    // ==================== NOTIFICATION HELPERS ====================
-
-    private fun sendBookingConfirmationNotification(member: Member, session: ClassSession, gymClass: GymClass) {
-        val className = gymClass.name.en
-        val classNameAr = gymClass.name.ar ?: className
-        val sessionDate = session.sessionDate.format(dateFormatter)
-        val sessionTime = session.startTime.format(timeFormatter)
-
-        val subject = LocalizedText(
-            en = "Class Booking Confirmed - $className",
-            ar = "تأكيد حجز الحصة - $classNameAr"
-        )
-
-        val body = LocalizedText(
-            en = """
-                <h2>Booking Confirmed</h2>
-                <p>Dear ${member.fullName},</p>
-                <p>Your booking for <strong>$className</strong> has been confirmed.</p>
-                <p><strong>Date:</strong> $sessionDate</p>
-                <p><strong>Time:</strong> $sessionTime</p>
-                <p>We look forward to seeing you!</p>
-                <p>Best regards,<br>Liyaqa Team</p>
-            """.trimIndent(),
-            ar = """
-                <h2>تم تأكيد الحجز</h2>
-                <p>عزيزي ${member.fullName}،</p>
-                <p>تم تأكيد حجزك لحصة <strong>$classNameAr</strong>.</p>
-                <p><strong>التاريخ:</strong> $sessionDate</p>
-                <p><strong>الوقت:</strong> $sessionTime</p>
-                <p>نتطلع لرؤيتك!</p>
-                <p>مع تحيات،<br>فريق لياقة</p>
-            """.trimIndent()
-        )
-
-        notificationService.sendMultiChannel(
-            memberId = member.id,
-            email = member.email,
-            phone = member.phone,
-            type = NotificationType.CLASS_BOOKING_CONFIRMED,
-            subject = subject,
-            body = body,
-            priority = NotificationPriority.NORMAL,
-            referenceId = session.id,
-            referenceType = "class_session"
-        )
-    }
-
-    private fun sendWaitlistNotification(member: Member, session: ClassSession, gymClass: GymClass, position: Int) {
-        val className = gymClass.name.en
-        val classNameAr = gymClass.name.ar ?: className
-        val sessionDate = session.sessionDate.format(dateFormatter)
-        val sessionTime = session.startTime.format(timeFormatter)
-
-        val subject = LocalizedText(
-            en = "Added to Waitlist - $className",
-            ar = "تمت الإضافة إلى قائمة الانتظار - $classNameAr"
-        )
-
-        val body = LocalizedText(
-            en = """
-                <h2>Added to Waitlist</h2>
-                <p>Dear ${member.fullName},</p>
-                <p>The class <strong>$className</strong> is currently full.</p>
-                <p>You have been added to the waitlist at position <strong>#$position</strong>.</p>
-                <p><strong>Date:</strong> $sessionDate</p>
-                <p><strong>Time:</strong> $sessionTime</p>
-                <p>We'll notify you if a spot becomes available.</p>
-                <p>Best regards,<br>Liyaqa Team</p>
-            """.trimIndent(),
-            ar = """
-                <h2>تمت الإضافة إلى قائمة الانتظار</h2>
-                <p>عزيزي ${member.fullName}،</p>
-                <p>حصة <strong>$classNameAr</strong> ممتلئة حالياً.</p>
-                <p>تمت إضافتك إلى قائمة الانتظار في المركز <strong>#$position</strong>.</p>
-                <p><strong>التاريخ:</strong> $sessionDate</p>
-                <p><strong>الوقت:</strong> $sessionTime</p>
-                <p>سنخبرك عندما يتوفر مكان.</p>
-                <p>مع تحيات،<br>فريق لياقة</p>
-            """.trimIndent()
-        )
-
-        notificationService.sendEmail(
-            memberId = member.id,
-            email = member.email,
-            type = NotificationType.CLASS_BOOKING_CONFIRMED,
-            subject = subject,
-            body = body,
-            priority = NotificationPriority.NORMAL,
-            referenceId = session.id,
-            referenceType = "class_session"
-        )
-    }
-
-    private fun sendBookingCancellationNotification(member: Member, session: ClassSession, gymClass: GymClass) {
-        val className = gymClass.name.en
-        val classNameAr = gymClass.name.ar ?: className
-        val sessionDate = session.sessionDate.format(dateFormatter)
-        val sessionTime = session.startTime.format(timeFormatter)
-
-        val subject = LocalizedText(
-            en = "Booking Cancelled - $className",
-            ar = "تم إلغاء الحجز - $classNameAr"
-        )
-
-        val body = LocalizedText(
-            en = """
-                <h2>Booking Cancelled</h2>
-                <p>Dear ${member.fullName},</p>
-                <p>Your booking for <strong>$className</strong> has been cancelled.</p>
-                <p><strong>Date:</strong> $sessionDate</p>
-                <p><strong>Time:</strong> $sessionTime</p>
-                <p>If you didn't request this cancellation, please contact us.</p>
-                <p>Best regards,<br>Liyaqa Team</p>
-            """.trimIndent(),
-            ar = """
-                <h2>تم إلغاء الحجز</h2>
-                <p>عزيزي ${member.fullName}،</p>
-                <p>تم إلغاء حجزك لحصة <strong>$classNameAr</strong>.</p>
-                <p><strong>التاريخ:</strong> $sessionDate</p>
-                <p><strong>الوقت:</strong> $sessionTime</p>
-                <p>إذا لم تطلب هذا الإلغاء، يرجى الاتصال بنا.</p>
-                <p>مع تحيات،<br>فريق لياقة</p>
-            """.trimIndent()
-        )
-
-        notificationService.sendEmail(
-            memberId = member.id,
-            email = member.email,
-            type = NotificationType.CLASS_BOOKING_CANCELLED,
-            subject = subject,
-            body = body,
-            priority = NotificationPriority.NORMAL,
-            referenceId = session.id,
-            referenceType = "class_session"
-        )
-    }
-
-    private fun sendWaitlistPromotionNotification(member: Member, session: ClassSession, gymClass: GymClass) {
-        val className = gymClass.name.en
-        val classNameAr = gymClass.name.ar ?: className
-        val sessionDate = session.sessionDate.format(dateFormatter)
-        val sessionTime = session.startTime.format(timeFormatter)
-
-        val subject = LocalizedText(
-            en = "Good News! You're In - $className",
-            ar = "أخبار سارة! تم تأكيد مكانك - $classNameAr"
-        )
-
-        val body = LocalizedText(
-            en = """
-                <h2>You're Off the Waitlist!</h2>
-                <p>Dear ${member.fullName},</p>
-                <p>Great news! A spot has opened up for <strong>$className</strong>.</p>
-                <p>Your booking is now <strong>confirmed</strong>!</p>
-                <p><strong>Date:</strong> $sessionDate</p>
-                <p><strong>Time:</strong> $sessionTime</p>
-                <p>We look forward to seeing you!</p>
-                <p>Best regards,<br>Liyaqa Team</p>
-            """.trimIndent(),
-            ar = """
-                <h2>تمت ترقيتك من قائمة الانتظار!</h2>
-                <p>عزيزي ${member.fullName}،</p>
-                <p>أخبار سارة! تم توفر مكان في حصة <strong>$classNameAr</strong>.</p>
-                <p>حجزك الآن <strong>مؤكد</strong>!</p>
-                <p><strong>التاريخ:</strong> $sessionDate</p>
-                <p><strong>الوقت:</strong> $sessionTime</p>
-                <p>نتطلع لرؤيتك!</p>
-                <p>مع تحيات،<br>فريق لياقة</p>
-            """.trimIndent()
-        )
-
-        notificationService.sendMultiChannel(
-            memberId = member.id,
-            email = member.email,
-            phone = member.phone,
-            type = NotificationType.CLASS_WAITLIST_PROMOTED,
-            subject = subject,
-            body = body,
-            priority = NotificationPriority.HIGH,
-            referenceId = session.id,
-            referenceType = "class_session"
-        )
-    }
 
     // ==================== BULK OPERATIONS ====================
 
@@ -846,414 +488,6 @@ class BookingService(
                 checkInBooking(bookingId)
             }
         }
-    }
-
-    // ==================== PAYMENT-AWARE BOOKING ====================
-
-    /**
-     * Gets available booking options for a member and session.
-     * Returns the payment methods the member can use based on:
-     * - Class pricing model
-     * - Member's subscription status
-     * - Member's class pack balances
-     */
-    @Transactional(readOnly = true)
-    fun getBookingOptions(sessionId: UUID, memberId: UUID): BookingOptionsResponse {
-        val session = sessionRepository.findById(sessionId)
-            .orElseThrow { NoSuchElementException("Session not found: $sessionId") }
-
-        val gymClass = gymClassRepository.findById(session.gymClassId)
-            .orElseThrow { NoSuchElementException("Gym class not found: ${session.gymClassId}") }
-
-        // Check if session is bookable
-        if (session.status != SessionStatus.SCHEDULED) {
-            return BookingOptionsResponse(
-                sessionId = sessionId,
-                memberId = memberId,
-                canBook = false,
-                reason = "Session is not available for booking (status: ${session.status})"
-            )
-        }
-
-        // Check if member already has a booking
-        val hasExistingBooking = bookingRepository.existsBySessionIdAndMemberIdAndStatusIn(
-            sessionId, memberId, listOf(BookingStatus.CONFIRMED, BookingStatus.WAITLISTED)
-        )
-        if (hasExistingBooking) {
-            return BookingOptionsResponse(
-                sessionId = sessionId,
-                memberId = memberId,
-                canBook = false,
-                reason = "You already have a booking for this session"
-            )
-        }
-
-        // Check advance booking window
-        val bookingWindowStart = LocalDate.now().plusDays(gymClass.advanceBookingDays.toLong())
-        if (session.sessionDate.isAfter(bookingWindowStart)) {
-            return BookingOptionsResponse(
-                sessionId = sessionId,
-                memberId = memberId,
-                canBook = false,
-                reason = "Booking opens ${gymClass.advanceBookingDays} days before the class"
-            )
-        }
-
-        // Build options based on pricing model
-        val membershipOption = buildMembershipOption(memberId, gymClass)
-        val classPackOptions = buildClassPackOptions(memberId, gymClass)
-        val payPerEntryOption = buildPayPerEntryOption(gymClass)
-
-        // Determine if any option is available
-        val hasAnyOption = (membershipOption?.available == true) ||
-            classPackOptions.isNotEmpty() ||
-            (payPerEntryOption?.available == true)
-
-        // Check if session is full
-        val isFull = !session.hasAvailableSpots()
-        val waitlistAvailable = gymClass.waitlistEnabled && session.canJoinWaitlist(gymClass.maxWaitlistSize)
-
-        val canBook = hasAnyOption && (!isFull || waitlistAvailable)
-        val reason = when {
-            !hasAnyOption -> "No valid payment method available for this class"
-            isFull && !waitlistAvailable -> "Session is full and waitlist is not available"
-            else -> null
-        }
-
-        return BookingOptionsResponse(
-            sessionId = sessionId,
-            memberId = memberId,
-            canBook = canBook,
-            reason = reason,
-            membershipOption = membershipOption,
-            classPackOptions = classPackOptions,
-            payPerEntryOption = payPerEntryOption
-        )
-    }
-
-    private fun buildMembershipOption(memberId: UUID, gymClass: GymClass): MembershipBookingOption? {
-        if (!gymClass.acceptsMembershipCredits()) {
-            return null
-        }
-
-        val subscription = subscriptionRepository.findActiveByMemberId(memberId).orElse(null)
-        if (subscription == null) {
-            return MembershipBookingOption(
-                available = false,
-                classesRemaining = null,
-                reason = "No active subscription"
-            )
-        }
-
-        val classesRemaining = subscription.classesRemaining
-        if (gymClass.deductsClassFromPlan && classesRemaining != null && classesRemaining <= 0) {
-            return MembershipBookingOption(
-                available = false,
-                classesRemaining = 0,
-                reason = "No classes remaining on subscription"
-            )
-        }
-
-        return MembershipBookingOption(
-            available = true,
-            classesRemaining = classesRemaining
-        )
-    }
-
-    private fun buildClassPackOptions(memberId: UUID, gymClass: GymClass): List<ClassPackBookingOption> {
-        if (!gymClass.acceptsClassPackCredits()) {
-            return emptyList()
-        }
-
-        val activeBalances = balanceRepository.findActiveByMemberId(memberId)
-
-        return activeBalances.mapNotNull { balance ->
-            val classPack = classPackRepository.findById(balance.classPackId).orElse(null)
-                ?: return@mapNotNull null
-
-            // Check if pack is valid for this class
-            if (!classPack.isValidForClass(gymClass)) {
-                return@mapNotNull null
-            }
-
-            ClassPackBookingOption(
-                balanceId = balance.id,
-                packName = classPack.name,
-                classesRemaining = balance.classesRemaining,
-                expiresAt = balance.expiresAt
-            )
-        }
-    }
-
-    private fun buildPayPerEntryOption(gymClass: GymClass): PayPerEntryOption? {
-        if (!gymClass.acceptsPayPerEntry()) {
-            return null
-        }
-
-        val dropInPrice = gymClass.dropInPrice ?: return null
-        val taxRate = gymClass.taxRate ?: BigDecimal.ZERO
-
-        val taxAmount = dropInPrice.amount.multiply(taxRate)
-            .divide(BigDecimal("100"), 2, RoundingMode.HALF_UP)
-        val totalWithTax = Money(dropInPrice.amount.add(taxAmount), dropInPrice.currency)
-
-        return PayPerEntryOption(
-            available = true,
-            price = dropInPrice,
-            taxRate = taxRate,
-            totalWithTax = totalWithTax
-        )
-    }
-
-    /**
-     * Creates a booking with a specific payment source.
-     * Validates that the payment source is valid for the class and member.
-     */
-    fun createBookingWithPayment(command: CreateBookingWithPaymentCommand): ClassBooking {
-        val session = sessionRepository.findById(command.sessionId)
-            .orElseThrow { NoSuchElementException("Session not found: ${command.sessionId}") }
-
-        val gymClass = gymClassRepository.findById(session.gymClassId)
-            .orElseThrow { NoSuchElementException("Gym class not found: ${session.gymClassId}") }
-
-        // Validate session is bookable
-        require(session.status == SessionStatus.SCHEDULED) {
-            "Cannot book a ${session.status} session"
-        }
-
-        // Check for existing booking
-        val existingBooking = bookingRepository.existsBySessionIdAndMemberIdAndStatusIn(
-            command.sessionId, command.memberId,
-            listOf(BookingStatus.CONFIRMED, BookingStatus.WAITLISTED)
-        )
-        require(!existingBooking) { "Member already has an active booking for this session" }
-
-        // Check for overlapping bookings
-        validateNoOverlappingBookings(command.memberId, session)
-
-        // Validate payment source for the class pricing model
-        validatePaymentSource(command.paymentSource, gymClass, command.memberId, command.classPackBalanceId)
-
-        // Get subscription if using membership
-        var subscriptionId: UUID? = null
-        if (command.paymentSource == BookingPaymentSource.MEMBERSHIP_INCLUDED) {
-            val subscription = subscriptionRepository.findActiveByMemberId(command.memberId)
-                .orElseThrow { IllegalStateException("No active subscription found") }
-            subscriptionId = subscription.id
-        }
-
-        // Use class pack credit if applicable
-        var usedBalance: MemberClassPackBalance? = null
-        if (command.paymentSource == BookingPaymentSource.CLASS_PACK) {
-            val balanceId = requireNotNull(command.classPackBalanceId) {
-                "Class pack balance ID is required for CLASS_PACK payment"
-            }
-            val balance = balanceRepository.findById(balanceId)
-                .orElseThrow { NoSuchElementException("Class pack balance not found: $balanceId") }
-
-            require(balance.memberId == command.memberId) { "Balance does not belong to this member" }
-            require(balance.canUseCredit()) { "Class pack balance cannot be used (expired or depleted)" }
-
-            // Verify pack is valid for this class
-            val classPack = classPackRepository.findById(balance.classPackId)
-                .orElseThrow { NoSuchElementException("Class pack not found: ${balance.classPackId}") }
-            require(classPack.isValidForClass(gymClass)) {
-                "This class pack is not valid for this class"
-            }
-
-            // Deduct credit
-            balance.useClass()
-            usedBalance = balanceRepository.save(balance)
-        }
-
-        // Create booking
-        val booking: ClassBooking
-        if (session.hasAvailableSpots()) {
-            booking = ClassBooking.createWithPayment(
-                sessionId = command.sessionId,
-                memberId = command.memberId,
-                paymentSource = command.paymentSource,
-                subscriptionId = subscriptionId,
-                classPackBalanceId = usedBalance?.id,
-                orderId = command.orderId,
-                paidAmount = command.paidAmount,
-                bookedBy = command.bookedBy
-            )
-            booking.notes = command.notes
-            session.incrementBookings()
-            sessionRepository.save(session)
-        } else if (gymClass.waitlistEnabled && session.canJoinWaitlist(gymClass.maxWaitlistSize)) {
-            val waitlistPosition = session.waitlistCount + 1
-            booking = ClassBooking.createWaitlistedWithPayment(
-                sessionId = command.sessionId,
-                memberId = command.memberId,
-                position = waitlistPosition,
-                paymentSource = command.paymentSource,
-                subscriptionId = subscriptionId,
-                classPackBalanceId = usedBalance?.id,
-                bookedBy = command.bookedBy
-            )
-            booking.notes = command.notes
-            session.incrementWaitlist()
-            sessionRepository.save(session)
-        } else {
-            // Refund class pack credit if used
-            usedBalance?.refundClass()
-            usedBalance?.let { balanceRepository.save(it) }
-            throw IllegalStateException("Session is full and waitlist is not available")
-        }
-
-        val savedBooking = bookingRepository.save(booking)
-        logger.info("Booking created with ${command.paymentSource}: ${savedBooking.id} for member ${command.memberId}")
-
-        // Send notification
-        try {
-            val member = memberRepository.findById(command.memberId).orElse(null)
-            if (member != null) {
-                if (savedBooking.isConfirmed()) {
-                    sendBookingConfirmationNotification(member, session, gymClass)
-                } else if (savedBooking.isWaitlisted()) {
-                    sendWaitlistNotification(member, session, gymClass, savedBooking.waitlistPosition ?: 1)
-                }
-            }
-        } catch (e: Exception) {
-            logger.error("Failed to send booking notification: ${e.message}", e)
-        }
-
-        // Publish webhook
-        try {
-            val tenantId = TenantContext.getCurrentTenant().value
-            if (savedBooking.isConfirmed()) {
-                webhookPublisher.publishBookingConfirmed(savedBooking, tenantId)
-            } else {
-                webhookPublisher.publishBookingCreated(savedBooking, tenantId)
-            }
-        } catch (e: Exception) {
-            logger.error("Failed to publish booking webhook: ${e.message}", e)
-        }
-
-        return savedBooking
-    }
-
-    private fun validatePaymentSource(
-        paymentSource: BookingPaymentSource,
-        gymClass: GymClass,
-        memberId: UUID,
-        classPackBalanceId: UUID?
-    ) {
-        when (paymentSource) {
-            BookingPaymentSource.MEMBERSHIP_INCLUDED -> {
-                require(gymClass.acceptsMembershipCredits()) {
-                    "This class does not accept membership credits"
-                }
-                val subscription = subscriptionRepository.findActiveByMemberId(memberId).orElse(null)
-                requireNotNull(subscription) { "No active subscription found" }
-
-                if (gymClass.deductsClassFromPlan) {
-                    require(subscription.hasClassesAvailable()) {
-                        "No classes remaining on subscription"
-                    }
-                }
-            }
-
-            BookingPaymentSource.CLASS_PACK -> {
-                require(gymClass.acceptsClassPackCredits()) {
-                    "This class does not accept class pack credits"
-                }
-                requireNotNull(classPackBalanceId) {
-                    "Class pack balance ID is required"
-                }
-            }
-
-            BookingPaymentSource.PAY_PER_ENTRY -> {
-                require(gymClass.acceptsPayPerEntry()) {
-                    "This class does not accept pay-per-entry"
-                }
-                requireNotNull(gymClass.dropInPrice) {
-                    "Drop-in price not configured for this class"
-                }
-            }
-
-            BookingPaymentSource.COMPLIMENTARY -> {
-                // Complimentary bookings are always allowed (admin operation)
-            }
-        }
-    }
-
-    /**
-     * Cancels a booking with payment source-aware refund handling.
-     * If the booking was paid with a class pack, refunds the credit.
-     */
-    fun cancelBookingWithRefund(command: CancelBookingCommand): ClassBooking {
-        val booking = bookingRepository.findById(command.bookingId)
-            .orElseThrow { NoSuchElementException("Booking not found: ${command.bookingId}") }
-
-        val session = sessionRepository.findById(booking.sessionId)
-            .orElseThrow { NoSuchElementException("Session not found: ${booking.sessionId}") }
-
-        val gymClass = gymClassRepository.findById(session.gymClassId)
-            .orElseThrow { NoSuchElementException("Gym class not found: ${session.gymClassId}") }
-
-        val wasConfirmed = booking.isConfirmed()
-        val wasWaitlisted = booking.isWaitlisted()
-
-        // Check for late cancellation
-        val isLateCancellation = isLateCancellation(session, gymClass)
-
-        // Refund class pack credit if applicable (unless late cancellation)
-        if (!isLateCancellation && booking.isPaidWithClassPack() && booking.classPackBalanceId != null) {
-            val balance = balanceRepository.findById(booking.classPackBalanceId!!).orElse(null)
-            if (balance != null) {
-                balance.refundClass()
-                balanceRepository.save(balance)
-                logger.info("Refunded class pack credit for booking ${booking.id}")
-            }
-        }
-
-        // Cancel the booking
-        booking.cancel(command.reason)
-        bookingRepository.save(booking)
-
-        if (wasConfirmed) {
-            session.decrementBookings()
-            sessionRepository.save(session)
-            promoteFromWaitlist(booking.sessionId, session, gymClass)
-        } else if (wasWaitlisted) {
-            session.decrementWaitlist()
-            sessionRepository.save(session)
-            reorderWaitlist(booking.sessionId)
-        }
-
-        // Send notification
-        try {
-            val member = memberRepository.findById(booking.memberId).orElse(null)
-            if (member != null) {
-                sendBookingCancellationNotification(member, session, gymClass)
-            }
-        } catch (e: Exception) {
-            logger.error("Failed to send cancellation notification: ${e.message}", e)
-        }
-
-        // Publish webhook
-        try {
-            val tenantId = TenantContext.getCurrentTenant().value
-            webhookPublisher.publishBookingCancelled(booking, tenantId)
-        } catch (e: Exception) {
-            logger.error("Failed to publish booking cancelled webhook: ${e.message}", e)
-        }
-
-        return booking
-    }
-
-    /**
-     * Checks if a cancellation would be considered "late" (within deadline).
-     */
-    @Transactional(readOnly = true)
-    fun isLateCancellation(session: ClassSession, gymClass: GymClass): Boolean {
-        val sessionStart = session.sessionDate.atTime(session.startTime)
-        val deadlineHours = gymClass.cancellationDeadlineHours.toLong()
-        val deadline = sessionStart.minusHours(deadlineHours)
-        return java.time.LocalDateTime.now().isAfter(deadline)
     }
 
     /**

@@ -21,7 +21,7 @@ import java.time.Duration
     prefix = "liyaqa.cache.redis",
     name = ["enabled"],
     havingValue = "false",
-    matchIfMissing = false
+    matchIfMissing = true
 )
 class CacheConfig {
 
@@ -43,6 +43,22 @@ class CacheConfig {
             .recordStats() // Enable metrics for monitoring
 
         return CaffeineCacheManager("platformDashboard").apply {
+            setCaffeine(caffeine)
+        }
+    }
+
+    /**
+     * Cache manager for feature access checks.
+     * Caches feature access results for 5 minutes per tenant+feature key.
+     */
+    @Bean
+    fun featureAccessCacheManager(): CacheManager {
+        val caffeine = Caffeine.newBuilder()
+            .maximumSize(500)
+            .expireAfterWrite(Duration.ofMinutes(5))
+            .recordStats()
+
+        return CaffeineCacheManager("featureAccess").apply {
             setCaffeine(caffeine)
         }
     }

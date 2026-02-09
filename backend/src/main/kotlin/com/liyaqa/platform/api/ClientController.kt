@@ -16,12 +16,16 @@ import com.liyaqa.platform.application.services.ClientHealthService
 import com.liyaqa.platform.application.services.ClientOnboardingService
 import com.liyaqa.shared.domain.LocalizedText
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
+import com.liyaqa.platform.domain.model.PlatformUserRole
+import com.liyaqa.platform.infrastructure.security.PlatformSecured
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -48,7 +52,8 @@ import java.util.UUID
  */
 @RestController
 @RequestMapping("/api/platform/clients")
-@PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP', 'MARKETING', 'SUPPORT')")
+@PlatformSecured
+@Tag(name = "Client Management", description = "Manage client organizations, onboarding, and clubs")
 class ClientController(
     private val onboardingService: ClientOnboardingService,
     private val healthService: ClientHealthService
@@ -58,7 +63,9 @@ class ClientController(
      * Only PLATFORM_ADMIN and SALES_REP can onboard clients.
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.ACCOUNT_MANAGER])
+    @Operation(summary = "Onboard new client", description = "Creates organization, club, admin user, and optionally subscription")
+    @ApiResponse(responseCode = "201", description = "Client onboarded successfully")
     fun onboardClient(
         @Valid @RequestBody request: OnboardClientRequest
     ): ResponseEntity<OnboardingResultResponse> {
@@ -70,6 +77,8 @@ class ClientController(
      * Gets a client by ID.
      */
     @GetMapping("/{id}")
+    @Operation(summary = "Get client by ID", description = "Retrieves client organization details")
+    @ApiResponses(ApiResponse(responseCode = "200", description = "Client found"), ApiResponse(responseCode = "404", description = "Client not found"))
     fun getClient(@PathVariable id: UUID): ResponseEntity<ClientResponse> {
         val client = onboardingService.getClient(id)
         return ResponseEntity.ok(ClientResponse.from(client))
@@ -79,6 +88,7 @@ class ClientController(
      * Lists all clients with pagination.
      */
     @GetMapping
+    @Operation(summary = "List all clients", description = "Lists all client organizations with pagination and optional status filter")
     fun getAllClients(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
@@ -112,6 +122,7 @@ class ClientController(
      * Gets client statistics.
      */
     @GetMapping("/stats")
+    @Operation(summary = "Get client statistics", description = "Returns aggregated client statistics")
     fun getClientStats(): ResponseEntity<ClientStatsResponse> {
         val stats = onboardingService.getClientStats()
         return ResponseEntity.ok(ClientStatsResponse.from(stats))
@@ -122,7 +133,9 @@ class ClientController(
      * Only PLATFORM_ADMIN can activate clients.
      */
     @PostMapping("/{id}/activate")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
+    @Operation(summary = "Activate client", description = "Activates a client organization")
+    @ApiResponses(ApiResponse(responseCode = "200", description = "Client activated"), ApiResponse(responseCode = "404", description = "Client not found"))
     fun activateClient(@PathVariable id: UUID): ResponseEntity<ClientResponse> {
         val client = onboardingService.activateClient(id)
         return ResponseEntity.ok(ClientResponse.from(client))
@@ -133,7 +146,9 @@ class ClientController(
      * Only PLATFORM_ADMIN can suspend clients.
      */
     @PostMapping("/{id}/suspend")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
+    @Operation(summary = "Suspend client", description = "Suspends a client organization")
+    @ApiResponses(ApiResponse(responseCode = "200", description = "Client suspended"), ApiResponse(responseCode = "404", description = "Client not found"))
     fun suspendClient(@PathVariable id: UUID): ResponseEntity<ClientResponse> {
         val client = onboardingService.suspendClient(id)
         return ResponseEntity.ok(ClientResponse.from(client))
@@ -144,7 +159,9 @@ class ClientController(
      * Only PLATFORM_ADMIN and SALES_REP can setup admins.
      */
     @PostMapping("/{id}/setup-admin")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.ACCOUNT_MANAGER])
+    @Operation(summary = "Setup admin user", description = "Creates an admin user for a client organization")
+    @ApiResponse(responseCode = "201", description = "Admin user created")
     fun setupAdmin(
         @PathVariable id: UUID,
         @Valid @RequestBody request: SetupAdminRequest
@@ -164,6 +181,7 @@ class ClientController(
      * Gets clubs for a client.
      */
     @GetMapping("/{id}/clubs")
+    @Operation(summary = "List client clubs", description = "Lists clubs belonging to a client organization")
     fun getClientClubs(
         @PathVariable id: UUID,
         @RequestParam(defaultValue = "0") page: Int,
@@ -190,7 +208,9 @@ class ClientController(
      * Only PLATFORM_ADMIN and SALES_REP can create clubs.
      */
     @PostMapping("/{id}/clubs")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.ACCOUNT_MANAGER])
+    @Operation(summary = "Create club for client", description = "Creates a new club under a client organization")
+    @ApiResponse(responseCode = "201", description = "Club created")
     fun createClientClub(
         @PathVariable id: UUID,
         @Valid @RequestBody request: CreateClientClubRequest

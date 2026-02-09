@@ -18,6 +18,7 @@ interface SpringDataAuditLogRepository : JpaRepository<AuditLog, UUID> {
     fun findByOrganizationId(organizationId: UUID, pageable: Pageable): Page<AuditLog>
     fun findByOrganizationIdAndAction(organizationId: UUID, action: AuditAction, pageable: Pageable): Page<AuditLog>
     fun findByOrganizationIdAndCreatedAtBetween(organizationId: UUID, start: Instant, end: Instant, pageable: Pageable): Page<AuditLog>
+    fun findByEntityType(entityType: String, pageable: Pageable): Page<AuditLog>
 }
 
 /**
@@ -35,6 +36,7 @@ interface AuditLogRepository {
     fun findByOrganizationId(organizationId: UUID, pageable: Pageable): Page<AuditLog>
     fun findByOrganizationIdAndAction(organizationId: UUID, action: AuditAction, pageable: Pageable): Page<AuditLog>
     fun findByOrganizationIdAndCreatedAtBetween(organizationId: UUID, start: Instant, end: Instant, pageable: Pageable): Page<AuditLog>
+    fun findByEntityType(entityType: String, pageable: Pageable): Page<AuditLog>
 }
 
 @Repository
@@ -74,4 +76,7 @@ class JpaAuditLogRepository(
 
     override fun findByOrganizationIdAndCreatedAtBetween(organizationId: UUID, start: Instant, end: Instant, pageable: Pageable): Page<AuditLog> =
         springDataRepository.findByOrganizationIdAndCreatedAtBetween(organizationId, start, end, pageable)
+
+    override fun findByEntityType(entityType: String, pageable: Pageable): Page<AuditLog> =
+        springDataRepository.findByEntityType(entityType, pageable)
 }

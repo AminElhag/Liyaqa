@@ -12,7 +12,8 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
+import com.liyaqa.platform.domain.model.PlatformUserRole
+import com.liyaqa.platform.infrastructure.security.PlatformSecured
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -40,7 +41,7 @@ import java.util.UUID
 @RestController
 @RequestMapping("/api/platform/clubs/{clubId}/agreements")
 @Tag(name = "Platform Agreement Management", description = "Platform admin endpoints for club agreement management")
-@PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP', 'SUPPORT_REP')")
+@PlatformSecured
 class PlatformAgreementController(
     private val platformAgreementService: PlatformAgreementService
 ) {
@@ -96,7 +97,7 @@ class PlatformAgreementController(
      * Only PLATFORM_ADMIN can create agreements.
      */
     @PostMapping
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     @Operation(summary = "Create agreement", description = "Create a new agreement for a club (admin only)")
     fun createAgreement(
         @PathVariable clubId: UUID,
@@ -120,7 +121,7 @@ class PlatformAgreementController(
      * Only PLATFORM_ADMIN can update agreements.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     @Operation(summary = "Update agreement", description = "Update an existing agreement (admin only)")
     fun updateAgreement(
         @PathVariable clubId: UUID,
@@ -145,7 +146,7 @@ class PlatformAgreementController(
      * Only PLATFORM_ADMIN can activate agreements.
      */
     @PostMapping("/{id}/activate")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     @Operation(summary = "Activate agreement", description = "Activate an agreement (admin only)")
     fun activateAgreement(
         @PathVariable clubId: UUID,
@@ -160,7 +161,7 @@ class PlatformAgreementController(
      * Only PLATFORM_ADMIN can deactivate agreements.
      */
     @PostMapping("/{id}/deactivate")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     @Operation(summary = "Deactivate agreement", description = "Deactivate an agreement (admin only)")
     fun deactivateAgreement(
         @PathVariable clubId: UUID,
@@ -175,7 +176,7 @@ class PlatformAgreementController(
      * Only PLATFORM_ADMIN can delete agreements.
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     @Operation(summary = "Delete agreement", description = "Delete (deactivate) an agreement (admin only)")
     fun deleteAgreement(
         @PathVariable clubId: UUID,

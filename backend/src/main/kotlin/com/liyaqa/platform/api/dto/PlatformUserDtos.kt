@@ -209,16 +209,22 @@ data class PlatformUserStatsResponse(
             inactive = stats.inactive,
             suspended = stats.suspended,
             byRole = RoleCountsResponse(
+                PLATFORM_SUPER_ADMIN = stats.byRole[PlatformUserRole.PLATFORM_SUPER_ADMIN] ?: 0,
                 PLATFORM_ADMIN = stats.byRole[PlatformUserRole.PLATFORM_ADMIN] ?: 0,
-                SALES_REP = stats.byRole[PlatformUserRole.SALES_REP] ?: 0,
-                SUPPORT_REP = stats.byRole[PlatformUserRole.SUPPORT_REP] ?: 0
+                ACCOUNT_MANAGER = stats.byRole[PlatformUserRole.ACCOUNT_MANAGER] ?: 0,
+                SUPPORT_LEAD = stats.byRole[PlatformUserRole.SUPPORT_LEAD] ?: 0,
+                SUPPORT_AGENT = stats.byRole[PlatformUserRole.SUPPORT_AGENT] ?: 0,
+                PLATFORM_VIEWER = stats.byRole[PlatformUserRole.PLATFORM_VIEWER] ?: 0
             )
         )
     }
 }
 
 data class RoleCountsResponse(
+    val PLATFORM_SUPER_ADMIN: Long,
     val PLATFORM_ADMIN: Long,
-    val SALES_REP: Long,
-    val SUPPORT_REP: Long
+    val ACCOUNT_MANAGER: Long,
+    val SUPPORT_LEAD: Long,
+    val SUPPORT_AGENT: Long,
+    val PLATFORM_VIEWER: Long
 )

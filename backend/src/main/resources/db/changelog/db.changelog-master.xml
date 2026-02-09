@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <include file="db/changelog/changes/001-deal-pipeline-evolution.xml"/>
+    <include file="db/changelog/changes/002-tenant-onboarding.xml"/>
+    <include file="db/changelog/changes/003-tenant-offboarding.xml"/>
+    <include file="db/changelog/changes/004-subscription-plans.xml"/>
+    <include file="db/changelog/changes/005-tenant-subscriptions-billing.xml"/>
+    <include file="db/changelog/changes/006-support-tickets.xml"/>
+    <include file="db/changelog/changes/007-impersonation-sessions.xml"/>
+    <include file="db/changelog/changes/008-team-and-api-keys.xml"/>
+    <include file="db/changelog/changes/009-platform-audit-logs.xml"/>
+
+</databaseChangeLog>

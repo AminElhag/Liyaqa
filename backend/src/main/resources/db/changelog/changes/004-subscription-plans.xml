@@ -1,0 +1,468 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- ============================================ -->
+    <!-- Changeset 004-1: subscription_plans table    -->
+    <!-- ============================================ -->
+    <changeSet id="004-1" author="liyaqa">
+        <createTable tableName="subscription_plans">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name_ar" type="VARCHAR(255)"/>
+            <column name="description" type="TEXT"/>
+            <column name="description_ar" type="TEXT"/>
+            <column name="tier" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="monthly_price_amount" type="DECIMAL(12,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="monthly_price_currency" type="VARCHAR(3)" defaultValue="SAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="annual_price_amount" type="DECIMAL(12,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="annual_price_currency" type="VARCHAR(3)" defaultValue="SAR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_clubs" type="INT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_locations_per_club" type="INT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_members" type="INT" defaultValueNumeric="100">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_staff_users" type="INT" defaultValueNumeric="5">
+                <constraints nullable="false"/>
+            </column>
+            <column name="features" type="JSONB" defaultValue="{}"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sort_order" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <createIndex tableName="subscription_plans" indexName="idx_subscription_plans_tier">
+            <column name="tier"/>
+        </createIndex>
+        <createIndex tableName="subscription_plans" indexName="idx_subscription_plans_active">
+            <column name="is_active"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ============================================ -->
+    <!-- Changeset 004-2: feature_flags table         -->
+    <!-- ============================================ -->
+    <changeSet id="004-2" author="liyaqa">
+        <createTable tableName="feature_flags">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="key" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uq_feature_flags_key"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="category" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="default_enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <createIndex tableName="feature_flags" indexName="idx_feature_flags_category">
+            <column name="category"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ============================================ -->
+    <!-- Changeset 004-3: tenant_feature_overrides    -->
+    <!-- ============================================ -->
+    <changeSet id="004-3" author="liyaqa">
+        <createTable tableName="tenant_feature_overrides">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="feature_key" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="enabled" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="TEXT"/>
+            <column name="overridden_by" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <addUniqueConstraint
+                tableName="tenant_feature_overrides"
+                columnNames="tenant_id, feature_key"
+                constraintName="uq_tenant_feature_overrides_tenant_key"/>
+
+        <addForeignKeyConstraint
+                baseTableName="tenant_feature_overrides"
+                baseColumnNames="tenant_id"
+                referencedTableName="tenants"
+                referencedColumnNames="id"
+                constraintName="fk_tenant_feature_overrides_tenant"/>
+
+        <createIndex tableName="tenant_feature_overrides" indexName="idx_tenant_feature_overrides_tenant">
+            <column name="tenant_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ============================================ -->
+    <!-- Changeset 004-4: Seed default plans          -->
+    <!-- ============================================ -->
+    <changeSet id="004-4" author="liyaqa">
+        <!-- STARTER plan -->
+        <insert tableName="subscription_plans">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="name" value="Starter"/>
+            <column name="name_ar" value="المبتدئ"/>
+            <column name="description" value="Essential features for small fitness studios"/>
+            <column name="tier" value="STARTER"/>
+            <column name="monthly_price_amount" valueNumeric="299"/>
+            <column name="monthly_price_currency" value="SAR"/>
+            <column name="annual_price_amount" valueNumeric="2990"/>
+            <column name="annual_price_currency" value="SAR"/>
+            <column name="max_clubs" valueNumeric="1"/>
+            <column name="max_locations_per_club" valueNumeric="1"/>
+            <column name="max_members" valueNumeric="200"/>
+            <column name="max_staff_users" valueNumeric="5"/>
+            <column name="features" value='{"member_portal":true,"mobile_app":false,"advanced_reporting":false,"api_access":false,"marketing_automation":false,"loyalty_program":false,"access_control":false,"facility_booking":true,"personal_training":false,"corporate_accounts":false,"family_groups":false,"online_payments":true,"wearables_integration":false,"custom_branding":false,"multi_language":false,"sms_notifications":true,"email_notifications":true,"push_notifications":false,"class_scheduling":true,"attendance_tracking":true,"basic_reporting":true,"member_check_in":true,"payment_processing":true,"inventory_management":false,"staff_scheduling":false,"lead_management":false}'/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="sort_order" valueNumeric="1"/>
+        </insert>
+
+        <!-- PROFESSIONAL plan -->
+        <insert tableName="subscription_plans">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="name" value="Professional"/>
+            <column name="name_ar" value="المحترف"/>
+            <column name="description" value="Advanced features for growing fitness businesses"/>
+            <column name="tier" value="PROFESSIONAL"/>
+            <column name="monthly_price_amount" valueNumeric="599"/>
+            <column name="monthly_price_currency" value="SAR"/>
+            <column name="annual_price_amount" valueNumeric="5990"/>
+            <column name="annual_price_currency" value="SAR"/>
+            <column name="max_clubs" valueNumeric="3"/>
+            <column name="max_locations_per_club" valueNumeric="2"/>
+            <column name="max_members" valueNumeric="1000"/>
+            <column name="max_staff_users" valueNumeric="15"/>
+            <column name="features" value='{"member_portal":true,"mobile_app":true,"advanced_reporting":true,"api_access":false,"marketing_automation":true,"loyalty_program":true,"access_control":true,"facility_booking":true,"personal_training":true,"corporate_accounts":false,"family_groups":true,"online_payments":true,"wearables_integration":false,"custom_branding":true,"multi_language":true,"sms_notifications":true,"email_notifications":true,"push_notifications":true,"class_scheduling":true,"attendance_tracking":true,"basic_reporting":true,"member_check_in":true,"payment_processing":true,"inventory_management":true,"staff_scheduling":true,"lead_management":true}'/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="sort_order" valueNumeric="2"/>
+        </insert>
+
+        <!-- BUSINESS plan -->
+        <insert tableName="subscription_plans">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="name" value="Business"/>
+            <column name="name_ar" value="الأعمال"/>
+            <column name="description" value="Full-featured solution for established fitness chains"/>
+            <column name="tier" value="BUSINESS"/>
+            <column name="monthly_price_amount" valueNumeric="999"/>
+            <column name="monthly_price_currency" value="SAR"/>
+            <column name="annual_price_amount" valueNumeric="9990"/>
+            <column name="annual_price_currency" value="SAR"/>
+            <column name="max_clubs" valueNumeric="10"/>
+            <column name="max_locations_per_club" valueNumeric="5"/>
+            <column name="max_members" valueNumeric="5000"/>
+            <column name="max_staff_users" valueNumeric="50"/>
+            <column name="features" value='{"member_portal":true,"mobile_app":true,"advanced_reporting":true,"api_access":true,"marketing_automation":true,"loyalty_program":true,"access_control":true,"facility_booking":true,"personal_training":true,"corporate_accounts":true,"family_groups":true,"online_payments":true,"wearables_integration":true,"custom_branding":true,"multi_language":true,"sms_notifications":true,"email_notifications":true,"push_notifications":true,"class_scheduling":true,"attendance_tracking":true,"basic_reporting":true,"member_check_in":true,"payment_processing":true,"inventory_management":true,"staff_scheduling":true,"lead_management":true}'/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="sort_order" valueNumeric="3"/>
+        </insert>
+
+        <!-- ENTERPRISE plan -->
+        <insert tableName="subscription_plans">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="name" value="Enterprise"/>
+            <column name="name_ar" value="المؤسسة"/>
+            <column name="description" value="Unlimited, white-glove solution for large organizations"/>
+            <column name="tier" value="ENTERPRISE"/>
+            <column name="monthly_price_amount" valueNumeric="1999"/>
+            <column name="monthly_price_currency" value="SAR"/>
+            <column name="annual_price_amount" valueNumeric="19990"/>
+            <column name="annual_price_currency" value="SAR"/>
+            <column name="max_clubs" valueNumeric="999"/>
+            <column name="max_locations_per_club" valueNumeric="999"/>
+            <column name="max_members" valueNumeric="999999"/>
+            <column name="max_staff_users" valueNumeric="999"/>
+            <column name="features" value='{"member_portal":true,"mobile_app":true,"advanced_reporting":true,"api_access":true,"marketing_automation":true,"loyalty_program":true,"access_control":true,"facility_booking":true,"personal_training":true,"corporate_accounts":true,"family_groups":true,"online_payments":true,"wearables_integration":true,"custom_branding":true,"multi_language":true,"sms_notifications":true,"email_notifications":true,"push_notifications":true,"class_scheduling":true,"attendance_tracking":true,"basic_reporting":true,"member_check_in":true,"payment_processing":true,"inventory_management":true,"staff_scheduling":true,"lead_management":true}'/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="sort_order" valueNumeric="4"/>
+        </insert>
+    </changeSet>
+
+    <!-- ============================================ -->
+    <!-- Changeset 004-5: Seed default feature flags  -->
+    <!-- ============================================ -->
+    <changeSet id="004-5" author="liyaqa">
+        <!-- MEMBER_ENGAGEMENT -->
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="member_portal"/>
+            <column name="name" value="Member Portal"/>
+            <column name="description" value="Self-service member portal for profile management and bookings"/>
+            <column name="category" value="MEMBER_ENGAGEMENT"/>
+            <column name="default_enabled" valueBoolean="true"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="mobile_app"/>
+            <column name="name" value="Mobile App"/>
+            <column name="description" value="Native mobile application for members"/>
+            <column name="category" value="MEMBER_ENGAGEMENT"/>
+            <column name="default_enabled" valueBoolean="false"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="wearables_integration"/>
+            <column name="name" value="Wearables Integration"/>
+            <column name="description" value="Integration with fitness wearables and trackers"/>
+            <column name="category" value="MEMBER_ENGAGEMENT"/>
+            <column name="default_enabled" valueBoolean="false"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="member_check_in"/>
+            <column name="name" value="Member Check-In"/>
+            <column name="description" value="Member check-in and attendance tracking at the door"/>
+            <column name="category" value="MEMBER_ENGAGEMENT"/>
+            <column name="default_enabled" valueBoolean="true"/>
+        </insert>
+
+        <!-- MARKETING_LOYALTY -->
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="marketing_automation"/>
+            <column name="name" value="Marketing Automation"/>
+            <column name="description" value="Automated marketing campaigns and email sequences"/>
+            <column name="category" value="MARKETING_LOYALTY"/>
+            <column name="default_enabled" valueBoolean="false"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="loyalty_program"/>
+            <column name="name" value="Loyalty Program"/>
+            <column name="description" value="Points-based loyalty and rewards program"/>
+            <column name="category" value="MARKETING_LOYALTY"/>
+            <column name="default_enabled" valueBoolean="false"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="lead_management"/>
+            <column name="name" value="Lead Management"/>
+            <column name="description" value="Lead capture, tracking, and conversion pipeline"/>
+            <column name="category" value="MARKETING_LOYALTY"/>
+            <column name="default_enabled" valueBoolean="false"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="sms_notifications"/>
+            <column name="name" value="SMS Notifications"/>
+            <column name="description" value="SMS notification delivery channel"/>
+            <column name="category" value="MARKETING_LOYALTY"/>
+            <column name="default_enabled" valueBoolean="true"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="email_notifications"/>
+            <column name="name" value="Email Notifications"/>
+            <column name="description" value="Email notification delivery channel"/>
+            <column name="category" value="MARKETING_LOYALTY"/>
+            <column name="default_enabled" valueBoolean="true"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="push_notifications"/>
+            <column name="name" value="Push Notifications"/>
+            <column name="description" value="Mobile push notification delivery channel"/>
+            <column name="category" value="MARKETING_LOYALTY"/>
+            <column name="default_enabled" valueBoolean="false"/>
+        </insert>
+
+        <!-- OPERATIONS -->
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="access_control"/>
+            <column name="name" value="Access Control"/>
+            <column name="description" value="Door access control and hardware integration"/>
+            <column name="category" value="OPERATIONS"/>
+            <column name="default_enabled" valueBoolean="false"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="facility_booking"/>
+            <column name="name" value="Facility Booking"/>
+            <column name="description" value="Facility and resource booking system"/>
+            <column name="category" value="OPERATIONS"/>
+            <column name="default_enabled" valueBoolean="true"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="personal_training"/>
+            <column name="name" value="Personal Training"/>
+            <column name="description" value="PT session management and trainer scheduling"/>
+            <column name="category" value="OPERATIONS"/>
+            <column name="default_enabled" valueBoolean="false"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="class_scheduling"/>
+            <column name="name" value="Class Scheduling"/>
+            <column name="description" value="Group class scheduling and booking"/>
+            <column name="category" value="OPERATIONS"/>
+            <column name="default_enabled" valueBoolean="true"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="attendance_tracking"/>
+            <column name="name" value="Attendance Tracking"/>
+            <column name="description" value="Class and session attendance tracking"/>
+            <column name="category" value="OPERATIONS"/>
+            <column name="default_enabled" valueBoolean="true"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="inventory_management"/>
+            <column name="name" value="Inventory Management"/>
+            <column name="description" value="Product and equipment inventory tracking"/>
+            <column name="category" value="OPERATIONS"/>
+            <column name="default_enabled" valueBoolean="false"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="staff_scheduling"/>
+            <column name="name" value="Staff Scheduling"/>
+            <column name="description" value="Staff shift scheduling and management"/>
+            <column name="category" value="OPERATIONS"/>
+            <column name="default_enabled" valueBoolean="false"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="custom_branding"/>
+            <column name="name" value="Custom Branding"/>
+            <column name="description" value="White-label branding and custom themes"/>
+            <column name="category" value="OPERATIONS"/>
+            <column name="default_enabled" valueBoolean="false"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="multi_language"/>
+            <column name="name" value="Multi-Language"/>
+            <column name="description" value="Multi-language support for member-facing content"/>
+            <column name="category" value="OPERATIONS"/>
+            <column name="default_enabled" valueBoolean="false"/>
+        </insert>
+
+        <!-- ACCOUNTS_PAYMENTS -->
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="corporate_accounts"/>
+            <column name="name" value="Corporate Accounts"/>
+            <column name="description" value="Corporate membership and billing management"/>
+            <column name="category" value="ACCOUNTS_PAYMENTS"/>
+            <column name="default_enabled" valueBoolean="false"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="family_groups"/>
+            <column name="name" value="Family Groups"/>
+            <column name="description" value="Family membership grouping and shared billing"/>
+            <column name="category" value="ACCOUNTS_PAYMENTS"/>
+            <column name="default_enabled" valueBoolean="false"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="online_payments"/>
+            <column name="name" value="Online Payments"/>
+            <column name="description" value="Online payment collection via payment gateway"/>
+            <column name="category" value="ACCOUNTS_PAYMENTS"/>
+            <column name="default_enabled" valueBoolean="true"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="payment_processing"/>
+            <column name="name" value="Payment Processing"/>
+            <column name="description" value="In-app payment processing for memberships and products"/>
+            <column name="category" value="ACCOUNTS_PAYMENTS"/>
+            <column name="default_enabled" valueBoolean="true"/>
+        </insert>
+
+        <!-- REPORTING -->
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="basic_reporting"/>
+            <column name="name" value="Basic Reporting"/>
+            <column name="description" value="Standard reports and dashboards"/>
+            <column name="category" value="REPORTING"/>
+            <column name="default_enabled" valueBoolean="true"/>
+        </insert>
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="advanced_reporting"/>
+            <column name="name" value="Advanced Reporting"/>
+            <column name="description" value="Custom reports, exports, and analytics dashboards"/>
+            <column name="category" value="REPORTING"/>
+            <column name="default_enabled" valueBoolean="false"/>
+        </insert>
+
+        <!-- INTEGRATIONS -->
+        <insert tableName="feature_flags">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="key" value="api_access"/>
+            <column name="name" value="API Access"/>
+            <column name="description" value="REST API access for third-party integrations"/>
+            <column name="category" value="INTEGRATIONS"/>
+            <column name="default_enabled" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

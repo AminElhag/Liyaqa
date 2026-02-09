@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- ================================================================ -->
+    <!-- Deal Pipeline Evolution: 6-stage to 9-stage pipeline             -->
+    <!-- ================================================================ -->
+
+    <changeSet id="001-rename-deal-columns" author="liyaqa">
+        <comment>Rename deal columns for pipeline evolution</comment>
+
+        <renameColumn tableName="deals" oldColumnName="status" newColumnName="stage"
+                      columnDataType="varchar(255)"/>
+        <renameColumn tableName="deals" oldColumnName="company_name" newColumnName="facility_name"
+                      columnDataType="varchar(255)"/>
+        <renameColumn tableName="deals" oldColumnName="actual_close_date" newColumnName="closed_at"
+                      columnDataType="date"/>
+        <renameColumn tableName="deals" oldColumnName="sales_rep_id" newColumnName="assigned_to_id"
+                      columnDataType="uuid"/>
+    </changeSet>
+
+    <changeSet id="002-add-fk-assigned-to" author="liyaqa">
+        <comment>Add FK constraint on deals.assigned_to_id to platform_users</comment>
+        <addForeignKeyConstraint
+                baseTableName="deals"
+                baseColumnNames="assigned_to_id"
+                referencedTableName="platform_users"
+                referencedColumnNames="id"
+                constraintName="fk_deals_assigned_to"/>
+    </changeSet>
+
+    <changeSet id="003-change-notes-to-text" author="liyaqa">
+        <comment>Change notes from localized (en/ar) to simple text</comment>
+
+        <addColumn tableName="deals">
+            <column name="notes" type="text"/>
+        </addColumn>
+
+        <!-- Migrate data: copy notes_en to notes -->
+        <sql>UPDATE deals SET notes = notes_en WHERE notes_en IS NOT NULL</sql>
+
+        <dropColumn tableName="deals" columnName="notes_en"/>
+        <dropColumn tableName="deals" columnName="notes_ar"/>
+    </changeSet>
+
+    <changeSet id="004-change-lost-reason-to-text" author="liyaqa">
+        <comment>Change lost_reason from localized to simple text</comment>
+
+        <addColumn tableName="deals">
+            <column name="lost_reason" type="text"/>
+        </addColumn>
+
+        <!-- Migrate data: copy lost_reason_en to lost_reason -->
+        <sql>UPDATE deals SET lost_reason = lost_reason_en WHERE lost_reason_en IS NOT NULL</sql>
+
+        <dropColumn tableName="deals" columnName="lost_reason_en"/>
+        <dropColumn tableName="deals" columnName="lost_reason_ar"/>
+    </changeSet>
+
+    <changeSet id="005-drop-unused-columns" author="liyaqa">
+        <comment>Drop columns no longer needed in the simplified deal model</comment>
+
+        <dropColumn tableName="deals" columnName="probability"/>
+        <dropColumn tableName="deals" columnName="interested_plan_id"/>
+        <dropColumn tableName="deals" columnName="converted_organization_id"/>
+        <dropColumn tableName="deals" columnName="converted_subscription_id"/>
+        <dropColumn tableName="deals" columnName="title_en"/>
+        <dropColumn tableName="deals" columnName="title_ar"/>
+    </changeSet>
+
+    <changeSet id="006-add-currency-column" author="liyaqa">
+        <comment>Add currency column with SAR default</comment>
+
+        <addColumn tableName="deals">
+            <column name="currency" type="varchar(3)" defaultValue="SAR">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="007-migrate-stage-values" author="liyaqa">
+        <comment>Migrate old stage values to new pipeline stages</comment>
+
+        <sql>UPDATE deals SET stage = 'CONTACTED' WHERE stage = 'QUALIFIED'</sql>
+        <sql>UPDATE deals SET stage = 'PROPOSAL_SENT' WHERE stage = 'PROPOSAL'</sql>
+    </changeSet>
+
+    <changeSet id="008-create-deal-activities" author="liyaqa">
+        <comment>Create deal_activities table for audit trail</comment>
+
+        <createTable tableName="deal_activities">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="deal_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="deal_activities"
+                baseColumnNames="deal_id"
+                referencedTableName="deals"
+                referencedColumnNames="id"
+                constraintName="fk_deal_activities_deal"/>
+
+        <addForeignKeyConstraint
+                baseTableName="deal_activities"
+                baseColumnNames="created_by"
+                referencedTableName="platform_users"
+                referencedColumnNames="id"
+                constraintName="fk_deal_activities_created_by"/>
+
+        <createIndex tableName="deal_activities" indexName="idx_deal_activities_deal_id">
+            <column name="deal_id"/>
+        </createIndex>
+
+        <createIndex tableName="deal_activities" indexName="idx_deal_activities_created_at">
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

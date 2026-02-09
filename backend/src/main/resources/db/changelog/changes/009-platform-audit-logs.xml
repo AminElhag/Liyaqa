@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="009-1" author="liyaqa">
+        <comment>Create platform_audit_logs table for platform-level audit trail</comment>
+
+        <createTable tableName="platform_audit_logs">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="actor_id" type="UUID"/>
+            <column name="actor_type" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="actor_name" type="VARCHAR(255)"/>
+            <column name="action" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="resource_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="resource_id" type="UUID"/>
+            <column name="tenant_id" type="UUID"/>
+            <column name="details" type="TEXT"/>
+            <column name="ip_address" type="VARCHAR(45)"/>
+            <column name="user_agent" type="VARCHAR(500)"/>
+            <column name="correlation_id" type="VARCHAR(36)"/>
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="platform_audit_logs" indexName="idx_platform_audit_logs_action">
+            <column name="action"/>
+        </createIndex>
+        <createIndex tableName="platform_audit_logs" indexName="idx_platform_audit_logs_actor_id">
+            <column name="actor_id"/>
+        </createIndex>
+        <createIndex tableName="platform_audit_logs" indexName="idx_platform_audit_logs_resource_type">
+            <column name="resource_type"/>
+        </createIndex>
+        <createIndex tableName="platform_audit_logs" indexName="idx_platform_audit_logs_tenant_id">
+            <column name="tenant_id"/>
+        </createIndex>
+        <createIndex tableName="platform_audit_logs" indexName="idx_platform_audit_logs_created_at">
+            <column name="created_at" descending="true"/>
+        </createIndex>
+        <createIndex tableName="platform_audit_logs" indexName="idx_platform_audit_logs_correlation_id">
+            <column name="correlation_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

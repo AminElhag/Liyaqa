@@ -1,474 +1,275 @@
 package com.liyaqa.platform.application.services
 
-import com.liyaqa.auth.domain.model.User
-import com.liyaqa.organization.domain.model.Club
-import com.liyaqa.organization.domain.model.Organization
-import com.liyaqa.platform.application.commands.ConvertDealCommand
+import com.liyaqa.platform.application.commands.ChangeStageCommand
+import com.liyaqa.platform.application.commands.CreateDealActivityCommand
 import com.liyaqa.platform.application.commands.CreateDealCommand
-import com.liyaqa.platform.application.commands.LoseDealCommand
-import com.liyaqa.platform.application.commands.ReassignDealCommand
 import com.liyaqa.platform.application.commands.UpdateDealCommand
-import com.liyaqa.platform.domain.model.ClientSubscription
 import com.liyaqa.platform.domain.model.Deal
+import com.liyaqa.platform.domain.model.DealActivity
+import com.liyaqa.platform.domain.model.DealActivityType
 import com.liyaqa.platform.domain.model.DealSource
-import com.liyaqa.platform.domain.model.DealStatus
-import com.liyaqa.platform.domain.ports.ClientPlanRepository
+import com.liyaqa.platform.domain.model.DealStage
+import com.liyaqa.platform.domain.ports.DealActivityRepository
 import com.liyaqa.platform.domain.ports.DealRepository
-import com.liyaqa.shared.domain.Money
+import com.liyaqa.platform.domain.ports.PlatformUserRepository
+import com.liyaqa.platform.events.model.PlatformEvent
+import com.liyaqa.shared.infrastructure.security.SecurityService
 import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
-/**
- * Service for managing sales deals in the pipeline.
- * Only accessible by platform users (internal Liyaqa team).
- */
 @Service
 @Transactional
 class DealService(
     private val dealRepository: DealRepository,
-    private val planRepository: ClientPlanRepository,
-    private val clientOnboardingService: ClientOnboardingService
+    private val dealActivityRepository: DealActivityRepository,
+    private val platformUserRepository: PlatformUserRepository,
+    private val securityService: SecurityService,
+    private val eventPublisher: ApplicationEventPublisher
 ) {
     private val logger = LoggerFactory.getLogger(DealService::class.java)
 
     // ============================================
-    // CRUD Operations
+    // CRUD
     // ============================================
 
-    /**
-     * Creates a new deal.
-     */
     fun createDeal(command: CreateDealCommand): Deal {
-        // Validate interested plan if provided
-        if (command.interestedPlanId != null && !planRepository.existsById(command.interestedPlanId)) {
-            throw NoSuchElementException("Client plan not found: ${command.interestedPlanId}")
+        val assignedTo = if (command.assignedToId != null) {
+            platformUserRepository.findById(command.assignedToId)
+                .orElseThrow { NoSuchElementException("Platform user not found: ${command.assignedToId}") }
+        } else {
+            val currentUserId = securityService.getCurrentUserId()
+                ?: throw IllegalStateException("Could not determine current user")
+            platformUserRepository.findById(currentUserId)
+                .orElseThrow { NoSuchElementException("Current platform user not found") }
         }
 
         val deal = Deal.create(
-            title = command.title,
+            facilityName = command.facilityName,
             source = command.source,
             contactName = command.contactName,
             contactEmail = command.contactEmail,
-            salesRepId = command.salesRepId,
+            assignedTo = assignedTo,
             contactPhone = command.contactPhone,
-            companyName = command.companyName,
-            estimatedValue = command.estimatedValue,
-            probability = command.probability,
+            estimatedValue = command.estimatedValue ?: BigDecimal.ZERO,
+            currency = command.currency,
             expectedCloseDate = command.expectedCloseDate,
-            interestedPlanId = command.interestedPlanId,
             notes = command.notes
         )
 
         val saved = dealRepository.save(deal)
-        logger.info("Created deal: ${saved.id} - ${saved.title.en}")
+
+        // Auto-create STATUS_CHANGE activity
+        recordStageChange(saved.id, null, DealStage.LEAD)
+
+        eventPublisher.publishEvent(PlatformEvent.DealCreated(
+            dealId = saved.id,
+            facilityName = saved.facilityName,
+            contactName = saved.contactName,
+            source = saved.source.name
+        ))
+
+        logger.info("Created deal: ${saved.id} - ${saved.facilityName ?: saved.contactName}")
         return saved
     }
 
-    /**
-     * Gets a deal by ID.
-     */
     @Transactional(readOnly = true)
     fun getDeal(id: UUID): Deal {
         return dealRepository.findById(id)
             .orElseThrow { NoSuchElementException("Deal not found: $id") }
     }
 
-    /**
-     * Gets all deals with pagination.
-     */
     @Transactional(readOnly = true)
-    fun getAllDeals(pageable: Pageable): Page<Deal> {
-        return dealRepository.findAll(pageable)
+    fun listDeals(
+        stage: DealStage? = null,
+        source: DealSource? = null,
+        assignedToId: UUID? = null,
+        pageable: Pageable
+    ): Page<Deal> {
+        return when {
+            stage != null -> dealRepository.findByStage(stage, pageable)
+            assignedToId != null -> dealRepository.findByAssignedToId(assignedToId, pageable)
+            source != null -> dealRepository.findBySource(source, pageable)
+            else -> dealRepository.findAll(pageable)
+        }
     }
 
-    /**
-     * Gets deals by status.
-     */
-    @Transactional(readOnly = true)
-    fun getDealsByStatus(status: DealStatus, pageable: Pageable): Page<Deal> {
-        return dealRepository.findByStatus(status, pageable)
-    }
-
-    /**
-     * Gets deals by sales rep.
-     */
-    @Transactional(readOnly = true)
-    fun getDealsBySalesRep(salesRepId: UUID, pageable: Pageable): Page<Deal> {
-        return dealRepository.findBySalesRepId(salesRepId, pageable)
-    }
-
-    /**
-     * Gets open deals for a sales rep.
-     */
-    @Transactional(readOnly = true)
-    fun getOpenDealsBySalesRep(salesRepId: UUID, pageable: Pageable): Page<Deal> {
-        return dealRepository.findOpenBySalesRepId(salesRepId, pageable)
-    }
-
-    /**
-     * Gets deals by source.
-     */
-    @Transactional(readOnly = true)
-    fun getDealsBySource(source: DealSource, pageable: Pageable): Page<Deal> {
-        return dealRepository.findBySource(source, pageable)
-    }
-
-    /**
-     * Gets all open deals.
-     */
-    @Transactional(readOnly = true)
-    fun getOpenDeals(pageable: Pageable): Page<Deal> {
-        return dealRepository.findOpen(pageable)
-    }
-
-    /**
-     * Gets deals expected to close within given days.
-     */
-    @Transactional(readOnly = true)
-    fun getDealsExpectedToClose(days: Int): List<Deal> {
-        return dealRepository.findExpectedToCloseWithin(days)
-    }
-
-    /**
-     * Updates a deal.
-     */
     fun updateDeal(id: UUID, command: UpdateDealCommand): Deal {
-        val deal = dealRepository.findById(id)
-            .orElseThrow { NoSuchElementException("Deal not found: $id") }
-
+        val deal = getDeal(id)
         require(deal.isOpen()) { "Cannot update closed deals" }
 
-        // Validate interested plan if provided
-        if (command.interestedPlanId != null && !planRepository.existsById(command.interestedPlanId)) {
-            throw NoSuchElementException("Client plan not found: ${command.interestedPlanId}")
-        }
-
-        command.title?.let { deal.title = it }
-        command.source?.let { deal.source = it }
+        command.facilityName?.let { deal.facilityName = it }
         command.contactName?.let { deal.contactName = it }
         command.contactEmail?.let { deal.contactEmail = it }
         command.contactPhone?.let { deal.contactPhone = it }
-        command.companyName?.let { deal.companyName = it }
-        command.estimatedValue?.let { deal.updateEstimatedValue(it) }
-        command.probability?.let { deal.updateProbability(it) }
-        command.expectedCloseDate?.let { deal.expectedCloseDate = it }
-        command.interestedPlanId?.let { deal.updateInterestedPlan(it) }
         command.notes?.let { deal.notes = it }
+        command.estimatedValue?.let { deal.estimatedValue = it }
+        command.expectedCloseDate?.let { deal.expectedCloseDate = it }
 
         return dealRepository.save(deal)
     }
 
-    /**
-     * Deletes a deal. Only LEAD or LOST deals can be deleted.
-     */
-    fun deleteDeal(id: UUID) {
-        val deal = dealRepository.findById(id)
-            .orElseThrow { NoSuchElementException("Deal not found: $id") }
+    // ============================================
+    // Stage Transitions
+    // ============================================
 
-        require(deal.status in listOf(DealStatus.LEAD, DealStatus.LOST)) {
-            "Can only delete deals in LEAD or LOST status, current: ${deal.status}"
+    fun changeDealStage(id: UUID, command: ChangeStageCommand): Deal {
+        val deal = getDeal(id)
+        val oldStage = deal.stage
+
+        if (command.newStage == DealStage.LOST && command.reason != null) {
+            deal.lostReason = command.reason
         }
 
-        dealRepository.deleteById(id)
-        logger.info("Deleted deal: $id")
-    }
-
-    // ============================================
-    // Status Transitions
-    // ============================================
-
-    /**
-     * Advances a deal to the next stage.
-     */
-    fun advanceDeal(id: UUID): Deal {
-        val deal = getDeal(id)
-        deal.advance()
+        deal.changeStage(command.newStage)
         val saved = dealRepository.save(deal)
-        logger.info("Advanced deal ${deal.id} to ${deal.status}")
-        return saved
-    }
 
-    /**
-     * Qualifies a deal (LEAD -> QUALIFIED).
-     */
-    fun qualifyDeal(id: UUID): Deal {
-        val deal = getDeal(id)
-        deal.qualify()
-        val saved = dealRepository.save(deal)
-        logger.info("Qualified deal: ${deal.id}")
-        return saved
-    }
-
-    /**
-     * Sends a proposal (QUALIFIED -> PROPOSAL).
-     */
-    fun sendProposal(id: UUID): Deal {
-        val deal = getDeal(id)
-        deal.sendProposal()
-        val saved = dealRepository.save(deal)
-        logger.info("Sent proposal for deal: ${deal.id}")
-        return saved
-    }
-
-    /**
-     * Starts negotiation (PROPOSAL -> NEGOTIATION).
-     */
-    fun startNegotiation(id: UUID): Deal {
-        val deal = getDeal(id)
-        deal.startNegotiation()
-        val saved = dealRepository.save(deal)
-        logger.info("Started negotiation for deal: ${deal.id}")
-        return saved
-    }
-
-    /**
-     * Marks a deal as lost with a reason.
-     */
-    fun loseDeal(id: UUID, command: LoseDealCommand): Deal {
-        val deal = getDeal(id)
-        deal.lose(command.reason)
-        val saved = dealRepository.save(deal)
-        logger.info("Lost deal: ${deal.id}, reason: ${command.reason.en}")
-        return saved
-    }
-
-    /**
-     * Reopens a lost deal back to LEAD status.
-     */
-    fun reopenDeal(id: UUID): Deal {
-        val deal = getDeal(id)
-        deal.reopen()
-        val saved = dealRepository.save(deal)
-        logger.info("Reopened deal: ${deal.id}")
-        return saved
-    }
-
-    /**
-     * Reassigns a deal to another sales rep.
-     */
-    fun reassignDeal(id: UUID, command: ReassignDealCommand): Deal {
-        val deal = getDeal(id)
-        deal.reassign(command.newSalesRepId)
-        val saved = dealRepository.save(deal)
-        logger.info("Reassigned deal ${deal.id} to sales rep ${command.newSalesRepId}")
-        return saved
-    }
-
-    // ============================================
-    // Deal Conversion
-    // ============================================
-
-    /**
-     * Converts a deal to a client.
-     * Creates an organization, club, admin user, and optionally a subscription.
-     */
-    fun convertDeal(id: UUID, command: ConvertDealCommand): DealConversionResult {
-        val deal = getDeal(id)
-
-        require(deal.status == DealStatus.NEGOTIATION) {
-            "Can only convert deals in NEGOTIATION status, current: ${deal.status}"
+        when (command.newStage) {
+            DealStage.WON -> eventPublisher.publishEvent(PlatformEvent.DealWon(
+                dealId = saved.id,
+                facilityName = saved.facilityName,
+                contactName = saved.contactName,
+                contactEmail = saved.contactEmail,
+                estimatedValue = saved.estimatedValue
+            ))
+            DealStage.LOST -> eventPublisher.publishEvent(PlatformEvent.DealLost(
+                dealId = saved.id,
+                facilityName = saved.facilityName,
+                reason = saved.lostReason
+            ))
+            else -> eventPublisher.publishEvent(PlatformEvent.DealStageChanged(
+                dealId = saved.id,
+                fromStage = oldStage.name,
+                toStage = command.newStage.name,
+                facilityName = saved.facilityName,
+                contactEmail = saved.contactEmail
+            ))
         }
 
-        // Validate plan if provided
-        if (command.clientPlanId != null && !planRepository.existsById(command.clientPlanId)) {
-            throw NoSuchElementException("Client plan not found: ${command.clientPlanId}")
-        }
-
-        logger.info("Converting deal ${deal.id} to client: ${command.organizationName.en}")
-
-        // Build onboarding command
-        val onboardCommand = OnboardClientCommand(
-            organizationName = command.organizationName,
-            organizationTradeName = command.organizationTradeName,
-            organizationType = command.organizationType,
-            organizationEmail = command.organizationEmail,
-            organizationPhone = command.organizationPhone,
-            organizationWebsite = command.organizationWebsite,
-            vatRegistrationNumber = command.vatRegistrationNumber,
-            commercialRegistrationNumber = command.commercialRegistrationNumber,
-            clubName = command.clubName,
-            clubDescription = command.clubDescription,
-            adminEmail = command.adminEmail,
-            adminPassword = command.adminPassword,
-            adminDisplayName = command.adminDisplayName,
-            clientPlanId = command.clientPlanId,
-            agreedPrice = command.agreedPrice,
-            billingCycle = command.billingCycle,
-            contractMonths = command.contractMonths,
-            startWithTrial = command.startWithTrial,
-            trialDays = command.trialDays,
-            discountPercentage = command.discountPercentage,
-            salesRepId = deal.salesRepId,
-            dealId = deal.id
-        )
-
-        // Delegate to ClientOnboardingService
-        val onboardingResult = clientOnboardingService.onboardClient(onboardCommand)
-
-        // Mark deal as won
-        deal.win(
-            organizationId = onboardingResult.organization.id,
-            subscriptionId = onboardingResult.subscription?.id
-        )
-        dealRepository.save(deal)
-
-        logger.info("Deal ${deal.id} converted successfully. Organization: ${onboardingResult.organization.id}")
-
-        return DealConversionResult(
-            deal = deal,
-            organization = onboardingResult.organization,
-            club = onboardingResult.club,
-            adminUser = onboardingResult.adminUser,
-            subscription = onboardingResult.subscription
-        )
+        recordStageChange(saved.id, oldStage, command.newStage)
+        logger.info("Deal ${deal.id} stage changed: $oldStage -> ${command.newStage}")
+        return saved
     }
 
     // ============================================
-    // Statistics
+    // Activities
     // ============================================
 
-    /**
-     * Gets deal pipeline statistics.
-     */
+    fun addActivity(dealId: UUID, command: CreateDealActivityCommand): DealActivity {
+        require(dealRepository.existsById(dealId)) { "Deal not found: $dealId" }
+
+        val currentUserId = securityService.getCurrentUserId()
+            ?: throw IllegalStateException("Could not determine current user")
+
+        val activity = DealActivity(
+            dealId = dealId,
+            type = command.type,
+            content = command.content,
+            createdBy = currentUserId
+        )
+        return dealActivityRepository.save(activity)
+    }
+
     @Transactional(readOnly = true)
-    fun getDealStats(): DealStats {
-        val totalDeals = dealRepository.count()
-        val byStatus = DealStatus.entries.associateWith { dealRepository.countByStatus(it) }
-        val openDeals = byStatus.filterKeys { it !in listOf(DealStatus.WON, DealStatus.LOST) }.values.sum()
-        val wonDeals = byStatus[DealStatus.WON] ?: 0
-        val lostDeals = byStatus[DealStatus.LOST] ?: 0
+    fun getActivities(dealId: UUID): List<DealActivity> {
+        return dealActivityRepository.findByDealId(dealId)
+    }
 
-        // Calculate pipeline values
-        val allDeals = dealRepository.findAll(Pageable.unpaged()).content
-        val openDealsList = allDeals.filter { it.isOpen() }
-        val wonDealsList = allDeals.filter { it.isWon() }
+    // ============================================
+    // Pipeline & Metrics
+    // ============================================
 
-        val totalPipelineValue = openDealsList.fold(Money.ZERO) { acc, deal ->
-            Money.of(acc.amount.add(deal.estimatedValue.amount), "SAR")
-        }
+    @Transactional(readOnly = true)
+    fun getPipelineCounts(): Map<DealStage, Long> {
+        return dealRepository.countByStageGrouped()
+    }
 
-        val weightedPipelineValue = openDealsList.fold(Money.ZERO) { acc, deal ->
-            Money.of(acc.amount.add(deal.getWeightedValue().amount), "SAR")
-        }
+    @Transactional(readOnly = true)
+    fun getMetrics(): DealMetrics {
+        val counts = dealRepository.countByStageGrouped()
+        val totalDeals = counts.values.sum()
+        val openStages = DealStage.entries.filter { it !in Deal.TERMINAL_STAGES }
+        val openDeals = openStages.sumOf { counts[it] ?: 0L }
+        val wonDeals = counts[DealStage.WON] ?: 0L
+        val lostDeals = counts[DealStage.LOST] ?: 0L
 
-        val wonValue = wonDealsList.fold(Money.ZERO) { acc, deal ->
-            Money.of(acc.amount.add(deal.estimatedValue.amount), "SAR")
-        }
-
-        val averageDealSize = if (wonDealsList.isNotEmpty()) {
-            Money.of(
-                wonValue.amount.divide(BigDecimal(wonDealsList.size), 2, RoundingMode.HALF_UP),
-                "SAR"
-            )
-        } else Money.ZERO
-
-        val winRate = if (wonDeals + lostDeals > 0) {
-            wonDeals.toDouble() / (wonDeals + lostDeals).toDouble()
+        val closedDeals = wonDeals + lostDeals
+        val conversionRate = if (closedDeals > 0) {
+            wonDeals.toDouble() / closedDeals.toDouble()
         } else 0.0
 
-        // Count by source
-        val bySource = DealSource.entries.associateWith { source ->
-            dealRepository.findBySource(source, Pageable.unpaged()).totalElements
-        }
+        // Avg deal value from won deals
+        val wonDealsList = dealRepository.findByStage(DealStage.WON, Pageable.unpaged()).content
+        val avgDealValue = if (wonDealsList.isNotEmpty()) {
+            wonDealsList.map { it.estimatedValue }.fold(BigDecimal.ZERO) { acc, v -> acc.add(v) }
+                .divide(BigDecimal(wonDealsList.size), 2, RoundingMode.HALF_UP)
+        } else BigDecimal.ZERO
 
-        return DealStats(
+        // Avg days to close (from createdAt to closedAt on won deals)
+        val avgDaysToClose = if (wonDealsList.isNotEmpty()) {
+            val totalDays = wonDealsList.mapNotNull { deal ->
+                deal.closedAt?.let { closedAt ->
+                    val createdDate = deal.createdAt.atZone(ZoneOffset.UTC).toLocalDate()
+                    ChronoUnit.DAYS.between(createdDate, closedAt)
+                }
+            }
+            if (totalDays.isNotEmpty()) totalDays.average() else 0.0
+        } else 0.0
+
+        return DealMetrics(
             totalDeals = totalDeals,
             openDeals = openDeals,
             wonDeals = wonDeals,
             lostDeals = lostDeals,
-            byStatus = byStatus,
-            bySource = bySource,
-            totalPipelineValue = totalPipelineValue,
-            weightedPipelineValue = weightedPipelineValue,
-            wonValue = wonValue,
-            averageDealSize = averageDealSize,
-            winRate = winRate
+            conversionRate = conversionRate,
+            avgDealValue = avgDealValue,
+            avgDaysToClose = avgDaysToClose,
+            stageDistribution = counts
         )
     }
 
-    /**
-     * Gets deal statistics for a specific sales rep.
-     */
-    @Transactional(readOnly = true)
-    fun getDealStatsForSalesRep(salesRepId: UUID): SalesRepDealStats {
-        val totalDeals = dealRepository.countBySalesRepId(salesRepId)
-        val openDeals = dealRepository.countOpenBySalesRepId(salesRepId)
+    // ============================================
+    // Helpers
+    // ============================================
 
-        val allDeals = dealRepository.findBySalesRepId(salesRepId, Pageable.unpaged()).content
-        val wonDeals = allDeals.filter { it.isWon() }.size.toLong()
-        val lostDeals = allDeals.filter { it.isLost() }.size.toLong()
+    private fun recordStageChange(dealId: UUID, fromStage: DealStage?, toStage: DealStage) {
+        val currentUserId = try {
+            securityService.getCurrentUserId()
+        } catch (_: Exception) {
+            null
+        } ?: return // Skip if no user context (shouldn't happen in practice)
 
-        val openDealsList = allDeals.filter { it.isOpen() }
-        val pipelineValue = openDealsList.fold(Money.ZERO) { acc, deal ->
-            Money.of(acc.amount.add(deal.estimatedValue.amount), "SAR")
+        val content = if (fromStage != null) {
+            "Stage changed from $fromStage to $toStage"
+        } else {
+            "Deal created in stage $toStage"
         }
 
-        val wonDealsList = allDeals.filter { it.isWon() }
-        val wonValue = wonDealsList.fold(Money.ZERO) { acc, deal ->
-            Money.of(acc.amount.add(deal.estimatedValue.amount), "SAR")
-        }
-
-        val winRate = if (wonDeals + lostDeals > 0) {
-            wonDeals.toDouble() / (wonDeals + lostDeals).toDouble()
-        } else 0.0
-
-        return SalesRepDealStats(
-            salesRepId = salesRepId,
-            totalDeals = totalDeals,
-            openDeals = openDeals,
-            wonDeals = wonDeals,
-            lostDeals = lostDeals,
-            pipelineValue = pipelineValue,
-            wonValue = wonValue,
-            winRate = winRate
+        val activity = DealActivity(
+            dealId = dealId,
+            type = DealActivityType.STATUS_CHANGE,
+            content = content,
+            createdBy = currentUserId
         )
+        dealActivityRepository.save(activity)
     }
 }
 
-/**
- * Result of deal conversion to client.
- */
-data class DealConversionResult(
-    val deal: Deal,
-    val organization: Organization,
-    val club: Club,
-    val adminUser: User,
-    val subscription: ClientSubscription?
-)
-
-/**
- * Deal pipeline statistics.
- */
-data class DealStats(
+data class DealMetrics(
     val totalDeals: Long,
     val openDeals: Long,
     val wonDeals: Long,
     val lostDeals: Long,
-    val byStatus: Map<DealStatus, Long>,
-    val bySource: Map<DealSource, Long>,
-    val totalPipelineValue: Money,
-    val weightedPipelineValue: Money,
-    val wonValue: Money,
-    val averageDealSize: Money,
-    val winRate: Double
-)
-
-/**
- * Deal statistics for a specific sales rep.
- */
-data class SalesRepDealStats(
-    val salesRepId: UUID,
-    val totalDeals: Long,
-    val openDeals: Long,
-    val wonDeals: Long,
-    val lostDeals: Long,
-    val pipelineValue: Money,
-    val wonValue: Money,
-    val winRate: Double
+    val conversionRate: Double,
+    val avgDealValue: BigDecimal,
+    val avgDaysToClose: Double,
+    val stageDistribution: Map<DealStage, Long>
 )

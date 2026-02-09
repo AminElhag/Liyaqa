@@ -14,12 +14,17 @@ import com.liyaqa.platform.domain.model.TicketCategory
 import com.liyaqa.platform.domain.model.TicketPriority
 import com.liyaqa.platform.domain.model.TicketStatus
 import com.liyaqa.platform.api.dto.PageResponse
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
+import com.liyaqa.platform.domain.model.PlatformUserRole
+import com.liyaqa.platform.infrastructure.security.PlatformSecured
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -38,7 +43,8 @@ import java.util.UUID
  */
 @RestController
 @RequestMapping("/api/platform/support-tickets")
-@PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP', 'SUPPORT_REP')")
+@PlatformSecured
+@Tag(name = "Support Tickets", description = "Support ticket management")
 class SupportTicketController(
     private val supportTicketService: SupportTicketService
 ) {
@@ -46,6 +52,8 @@ class SupportTicketController(
     /**
      * Create a new support ticket.
      */
+    @Operation(summary = "Create support ticket", description = "Creates a new support ticket with the specified details")
+    @ApiResponse(responseCode = "201", description = "Ticket created successfully")
     @PostMapping
     fun createTicket(
         @Valid @RequestBody request: CreateSupportTicketRequest,
@@ -64,6 +72,8 @@ class SupportTicketController(
     /**
      * Get all tickets with optional filters.
      */
+    @Operation(summary = "List support tickets", description = "Returns paginated list of support tickets with optional status, priority, category, and search filters")
+    @ApiResponse(responseCode = "200", description = "Tickets retrieved successfully")
     @GetMapping
     fun getAllTickets(
         @RequestParam(defaultValue = "0") page: Int,
@@ -106,6 +116,11 @@ class SupportTicketController(
     /**
      * Get ticket by ID.
      */
+    @Operation(summary = "Get support ticket", description = "Returns a specific support ticket by its ID")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Ticket retrieved successfully"),
+        ApiResponse(responseCode = "404", description = "Ticket not found")
+    ])
     @GetMapping("/{id}")
     fun getTicket(@PathVariable id: UUID): ResponseEntity<SupportTicketResponse> {
         val ticket = supportTicketService.getTicket(id)
@@ -115,6 +130,11 @@ class SupportTicketController(
     /**
      * Update ticket.
      */
+    @Operation(summary = "Update support ticket", description = "Updates the details of an existing support ticket")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Ticket updated successfully"),
+        ApiResponse(responseCode = "404", description = "Ticket not found")
+    ])
     @PutMapping("/{id}")
     fun updateTicket(
         @PathVariable id: UUID,
@@ -127,6 +147,12 @@ class SupportTicketController(
     /**
      * Change ticket status.
      */
+    @Operation(summary = "Change ticket status", description = "Changes the status of a support ticket (e.g., open, in-progress, resolved, closed)")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Status changed successfully"),
+        ApiResponse(responseCode = "404", description = "Ticket not found"),
+        ApiResponse(responseCode = "422", description = "Invalid status transition")
+    ])
     @PostMapping("/{id}/status")
     fun changeStatus(
         @PathVariable id: UUID,
@@ -139,6 +165,11 @@ class SupportTicketController(
     /**
      * Assign ticket to a user.
      */
+    @Operation(summary = "Assign ticket", description = "Assigns a support ticket to a specific platform user")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Ticket assigned successfully"),
+        ApiResponse(responseCode = "404", description = "Ticket or assignee not found")
+    ])
     @PostMapping("/{id}/assign")
     fun assignTicket(
         @PathVariable id: UUID,
@@ -151,6 +182,11 @@ class SupportTicketController(
     /**
      * Unassign ticket.
      */
+    @Operation(summary = "Unassign ticket", description = "Removes the current assignee from a support ticket")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Ticket unassigned successfully"),
+        ApiResponse(responseCode = "404", description = "Ticket not found")
+    ])
     @PostMapping("/{id}/unassign")
     fun unassignTicket(@PathVariable id: UUID): ResponseEntity<SupportTicketResponse> {
         val ticket = supportTicketService.unassignTicket(id)
@@ -161,8 +197,13 @@ class SupportTicketController(
      * Delete ticket.
      * Only PLATFORM_ADMIN can delete tickets.
      */
+    @Operation(summary = "Delete support ticket", description = "Permanently deletes a support ticket")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "204", description = "Ticket deleted successfully"),
+        ApiResponse(responseCode = "404", description = "Ticket not found")
+    ])
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     fun deleteTicket(@PathVariable id: UUID): ResponseEntity<Unit> {
         supportTicketService.deleteTicket(id)
         return ResponseEntity.noContent().build()
@@ -171,6 +212,11 @@ class SupportTicketController(
     /**
      * Get ticket messages.
      */
+    @Operation(summary = "Get ticket messages", description = "Returns all messages for a specific support ticket")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Messages retrieved successfully"),
+        ApiResponse(responseCode = "404", description = "Ticket not found")
+    ])
     @GetMapping("/{id}/messages")
     fun getMessages(@PathVariable id: UUID): ResponseEntity<List<TicketMessageResponse>> {
         val messages = supportTicketService.getMessages(id)
@@ -180,6 +226,11 @@ class SupportTicketController(
     /**
      * Add message to ticket.
      */
+    @Operation(summary = "Add ticket message", description = "Adds a new message to a support ticket thread")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "201", description = "Message added successfully"),
+        ApiResponse(responseCode = "404", description = "Ticket not found")
+    ])
     @PostMapping("/{id}/messages")
     fun addMessage(
         @PathVariable id: UUID,
@@ -199,6 +250,8 @@ class SupportTicketController(
     /**
      * Get ticket statistics.
      */
+    @Operation(summary = "Get ticket statistics", description = "Returns aggregated support ticket statistics including counts by status and priority")
+    @ApiResponse(responseCode = "200", description = "Statistics retrieved successfully")
     @GetMapping("/stats")
     fun getStats(): ResponseEntity<TicketStatsResponse> {
         val stats = supportTicketService.getStats()

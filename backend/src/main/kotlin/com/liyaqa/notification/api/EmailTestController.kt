@@ -1,6 +1,7 @@
 package com.liyaqa.notification.api
 
 import com.liyaqa.notification.domain.ports.EmailService
+import com.liyaqa.shared.utils.PiiMasker
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -23,7 +24,7 @@ class EmailTestController(
     fun sendTestEmail(
         @RequestBody request: TestEmailRequest
     ): ResponseEntity<TestEmailResponse> {
-        logger.info("Sending test email to: {}", request.to)
+        logger.info("Sending test email to: {}", PiiMasker.maskEmail(request.to))
 
         return try {
             emailService.sendEmail(
@@ -33,7 +34,7 @@ class EmailTestController(
                 isHtml = request.isHtml
             )
 
-            logger.info("Test email sent successfully to: {}", request.to)
+            logger.info("Test email sent successfully to: {}", PiiMasker.maskEmail(request.to))
             ResponseEntity.ok(
                 TestEmailResponse(
                     success = true,
@@ -42,7 +43,7 @@ class EmailTestController(
                 )
             )
         } catch (e: Exception) {
-            logger.error("Failed to send test email to: {}", request.to, e)
+            logger.error("Failed to send test email to: {}", PiiMasker.maskEmail(request.to), e)
             ResponseEntity.status(500).body(
                 TestEmailResponse(
                     success = false,
@@ -61,7 +62,7 @@ class EmailTestController(
     fun sendTestEmailWithAttachments(
         @RequestBody request: TestEmailWithAttachmentsRequest
     ): ResponseEntity<TestEmailResponse> {
-        logger.info("Sending test email with attachments to: {}", request.to)
+        logger.info("Sending test email with attachments to: {}", PiiMasker.maskEmail(request.to))
 
         return try {
             val attachments = request.attachments.map {
@@ -80,7 +81,7 @@ class EmailTestController(
                 isHtml = request.isHtml
             )
 
-            logger.info("Test email with attachments sent successfully to: {}", request.to)
+            logger.info("Test email with attachments sent successfully to: {}", PiiMasker.maskEmail(request.to))
             ResponseEntity.ok(
                 TestEmailResponse(
                     success = true,
@@ -89,7 +90,7 @@ class EmailTestController(
                 )
             )
         } catch (e: Exception) {
-            logger.error("Failed to send test email with attachments to: {}", request.to, e)
+            logger.error("Failed to send test email with attachments to: {}", PiiMasker.maskEmail(request.to), e)
             ResponseEntity.status(500).body(
                 TestEmailResponse(
                     success = false,

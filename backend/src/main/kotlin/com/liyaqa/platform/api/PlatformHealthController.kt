@@ -7,10 +7,15 @@ import com.liyaqa.platform.application.services.HealthStatistics
 import com.liyaqa.platform.domain.model.ClientHealthScore
 import com.liyaqa.platform.domain.model.HealthTrend
 import com.liyaqa.platform.domain.model.RiskLevel
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
+import com.liyaqa.platform.domain.model.PlatformUserRole
+import com.liyaqa.platform.infrastructure.security.PlatformSecured
 import org.springframework.web.bind.annotation.*
 import java.util.UUID
 
@@ -31,13 +36,16 @@ import java.util.UUID
  */
 @RestController
 @RequestMapping("/api/platform/health")
-@PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP', 'SUPPORT_REP')")
+@PlatformSecured
+@Tag(name = "Health Monitoring", description = "Platform and client health monitoring")
 class PlatformHealthController(
     private val healthScoreService: HealthScoreService
 ) {
     /**
      * Gets health overview statistics.
      */
+    @Operation(summary = "Get health overview", description = "Returns aggregated health statistics across all clients")
+    @ApiResponse(responseCode = "200", description = "Health statistics retrieved successfully")
     @GetMapping("/overview")
     fun getOverview(): ResponseEntity<HealthStatistics> {
         val stats = healthScoreService.getStatistics()
@@ -47,6 +55,8 @@ class PlatformHealthController(
     /**
      * Gets all at-risk clients (health score < 60).
      */
+    @Operation(summary = "Get at-risk clients", description = "Returns paginated list of clients with health score below 60")
+    @ApiResponse(responseCode = "200", description = "At-risk clients retrieved successfully")
     @GetMapping("/at-risk")
     fun getAtRiskClients(pageable: Pageable): ResponseEntity<Page<ClientHealthScoreResponse>> {
         val page = healthScoreService.getAtRiskClients(pageable)
@@ -56,6 +66,8 @@ class PlatformHealthController(
     /**
      * Gets all healthy clients (health score >= 80).
      */
+    @Operation(summary = "Get healthy clients", description = "Returns paginated list of clients with health score 80 or above")
+    @ApiResponse(responseCode = "200", description = "Healthy clients retrieved successfully")
     @GetMapping("/healthy")
     fun getHealthyClients(pageable: Pageable): ResponseEntity<Page<ClientHealthScoreResponse>> {
         val page = healthScoreService.getHealthyClients(pageable)
@@ -65,6 +77,8 @@ class PlatformHealthController(
     /**
      * Gets clients with declining health scores.
      */
+    @Operation(summary = "Get declining clients", description = "Returns paginated list of clients with declining health trend")
+    @ApiResponse(responseCode = "200", description = "Declining clients retrieved successfully")
     @GetMapping("/declining")
     fun getDecliningClients(pageable: Pageable): ResponseEntity<Page<ClientHealthScoreResponse>> {
         val page = healthScoreService.getDecliningClients(pageable)
@@ -74,6 +88,8 @@ class PlatformHealthController(
     /**
      * Gets clients by risk level.
      */
+    @Operation(summary = "Get clients by risk level", description = "Returns paginated list of clients filtered by the specified risk level")
+    @ApiResponse(responseCode = "200", description = "Clients retrieved successfully")
     @GetMapping("/by-risk/{riskLevel}")
     fun getByRiskLevel(
         @PathVariable riskLevel: RiskLevel,
@@ -86,6 +102,11 @@ class PlatformHealthController(
     /**
      * Gets the latest health score for an organization.
      */
+    @Operation(summary = "Get health score by organization", description = "Returns the latest health score for a specific organization")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Health score retrieved successfully"),
+        ApiResponse(responseCode = "404", description = "Organization not found")
+    ])
     @GetMapping("/{organizationId}")
     fun getByOrganizationId(
         @PathVariable organizationId: UUID
@@ -97,6 +118,11 @@ class PlatformHealthController(
     /**
      * Gets health score history for an organization.
      */
+    @Operation(summary = "Get health score history", description = "Returns paginated health score history for an organization over the specified number of days")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Health score history retrieved successfully"),
+        ApiResponse(responseCode = "404", description = "Organization not found")
+    ])
     @GetMapping("/{organizationId}/history")
     fun getHistory(
         @PathVariable organizationId: UUID,
@@ -110,6 +136,11 @@ class PlatformHealthController(
     /**
      * Gets a detailed health report for an organization.
      */
+    @Operation(summary = "Get health report", description = "Returns a detailed health report for an organization including recommendations")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Health report retrieved successfully"),
+        ApiResponse(responseCode = "404", description = "Organization not found")
+    ])
     @GetMapping("/{organizationId}/report")
     fun getReport(
         @PathVariable organizationId: UUID
@@ -121,8 +152,13 @@ class PlatformHealthController(
     /**
      * Recalculates the health score for an organization.
      */
+    @Operation(summary = "Recalculate health score", description = "Recalculates and saves the health score for an organization based on provided metrics")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Health score recalculated successfully"),
+        ApiResponse(responseCode = "404", description = "Organization not found")
+    ])
     @PostMapping("/{organizationId}/recalculate")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     fun recalculate(
         @PathVariable organizationId: UUID,
         @RequestBody metrics: HealthMetrics

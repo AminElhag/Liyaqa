@@ -17,10 +17,8 @@ import {
   Phone,
   Calendar,
   DollarSign,
-  Percent,
   User,
   FileText,
-  ExternalLink,
 } from "lucide-react";
 import {
   Card,
@@ -30,7 +28,6 @@ import {
   CardTitle,
 } from "@liyaqa/shared/components/ui/card";
 import { Button } from "@liyaqa/shared/components/ui/button";
-import { Badge } from "@liyaqa/shared/components/ui/badge";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
 import { DealStatusBadge } from "@liyaqa/shared/components/platform/deal-status-badge";
 import { LoseDealDialog } from "@liyaqa/shared/components/platform/lose-deal-dialog";
@@ -45,7 +42,8 @@ import {
   useDeleteDeal,
 } from "@liyaqa/shared/queries/platform/use-deals";
 import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
-import { formatCurrency, formatDate, getLocalizedText } from "@liyaqa/shared/utils";
+import { formatCurrency, formatDate } from "@liyaqa/shared/utils";
+import { OPEN_STAGES } from "@liyaqa/shared/types/platform/deal";
 import type { LoseDealRequest } from "@liyaqa/shared/types/platform";
 
 export default function DealDetailPage() {
@@ -85,23 +83,17 @@ export default function DealDetailPage() {
     dealDetails: locale === "ar" ? "تفاصيل الصفقة" : "Deal Details",
     notes: locale === "ar" ? "ملاحظات" : "Notes",
     lostReason: locale === "ar" ? "سبب الخسارة" : "Lost Reason",
-    conversion: locale === "ar" ? "التحويل" : "Conversion",
-    viewClient: locale === "ar" ? "عرض العميل" : "View Client",
     contactName: locale === "ar" ? "اسم جهة الاتصال" : "Contact Name",
     email: locale === "ar" ? "البريد الإلكتروني" : "Email",
     phone: locale === "ar" ? "الهاتف" : "Phone",
     company: locale === "ar" ? "الشركة" : "Company",
     source: locale === "ar" ? "المصدر" : "Source",
     value: locale === "ar" ? "القيمة المقدرة" : "Estimated Value",
-    weightedValue: locale === "ar" ? "القيمة المرجحة" : "Weighted Value",
-    probability: locale === "ar" ? "الاحتمالية" : "Probability",
     expectedClose: locale === "ar" ? "تاريخ الإغلاق المتوقع" : "Expected Close",
     actualClose: locale === "ar" ? "تاريخ الإغلاق الفعلي" : "Actual Close",
     salesRep: locale === "ar" ? "مندوب المبيعات" : "Sales Rep",
     createdAt: locale === "ar" ? "تاريخ الإنشاء" : "Created",
     updatedAt: locale === "ar" ? "آخر تحديث" : "Last Updated",
-    overdue: locale === "ar" ? "متأخر" : "Overdue",
-    daysToClose: locale === "ar" ? "أيام للإغلاق" : "Days to Close",
     loading: locale === "ar" ? "جاري التحميل..." : "Loading...",
     error: locale === "ar" ? "حدث خطأ أثناء تحميل الصفقة" : "Error loading deal",
     notFound: locale === "ar" ? "الصفقة غير موجودة" : "Deal not found",
@@ -161,7 +153,7 @@ export default function DealDetailPage() {
     );
   }
 
-  const isOpen = deal.isOpen;
+  const isOpen = OPEN_STAGES.includes(deal.status);
   const canDelete = deal.status === "LEAD" || deal.status === "LOST";
 
   return (
@@ -177,17 +169,14 @@ export default function DealDetailPage() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold">
-                {getLocalizedText(deal.title, locale)}
+                {deal.facilityName || deal.contactName}
               </h1>
               <DealStatusBadge status={deal.status} />
-              {deal.isOverdue && (
-                <Badge variant="destructive">{texts.overdue}</Badge>
-              )}
             </div>
-            {deal.companyName && (
+            {deal.facilityName && (
               <p className="text-muted-foreground flex items-center gap-2">
                 <Building2 className="h-4 w-4" />
-                {deal.companyName}
+                {deal.facilityName}
               </p>
             )}
           </div>
@@ -224,13 +213,13 @@ export default function DealDetailPage() {
                   {texts.qualify}
                 </Button>
               )}
-              {deal.status === "QUALIFIED" && (
+              {deal.status === "DEMO_DONE" && (
                 <Button onClick={() => sendProposal.mutate(dealId)}>
                   <ArrowRight className="me-2 h-4 w-4" />
                   {texts.sendProposal}
                 </Button>
               )}
-              {deal.status === "PROPOSAL" && (
+              {deal.status === "PROPOSAL_SENT" && (
                 <Button onClick={() => startNegotiation.mutate(dealId)}>
                   <ArrowRight className="me-2 h-4 w-4" />
                   {texts.startNegotiation}
@@ -299,12 +288,12 @@ export default function DealDetailPage() {
                 </div>
               </div>
             )}
-            {deal.companyName && (
+            {deal.facilityName && (
               <div className="flex items-center gap-3">
                 <Building2 className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm text-muted-foreground">{texts.company}</p>
-                  <p className="font-medium">{deal.companyName}</p>
+                  <p className="font-medium">{deal.facilityName}</p>
                 </div>
               </div>
             )}
@@ -334,31 +323,11 @@ export default function DealDetailPage() {
                 <p className="text-sm text-muted-foreground">{texts.value}</p>
                 <p className="font-medium">
                   {formatCurrency(
-                    deal.estimatedValue.amount,
-                    deal.estimatedValue.currency,
+                    deal.estimatedValue,
+                    deal.currency,
                     locale
                   )}
                 </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">{texts.weightedValue}</p>
-                <p className="font-medium">
-                  {formatCurrency(
-                    deal.weightedValue.amount,
-                    deal.weightedValue.currency,
-                    locale
-                  )}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Percent className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">{texts.probability}</p>
-                <p className="font-medium">{deal.probability}%</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -369,21 +338,16 @@ export default function DealDetailPage() {
                   {deal.expectedCloseDate
                     ? formatDate(deal.expectedCloseDate, locale)
                     : texts.na}
-                  {deal.daysToClose !== undefined && deal.daysToClose !== null && (
-                    <span className="text-muted-foreground text-sm ms-2">
-                      ({deal.daysToClose} {texts.daysToClose})
-                    </span>
-                  )}
                 </p>
               </div>
             </div>
-            {deal.actualCloseDate && (
+            {deal.closedAt && (
               <div className="flex items-center gap-3">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm text-muted-foreground">{texts.actualClose}</p>
                   <p className="font-medium">
-                    {formatDate(deal.actualCloseDate, locale)}
+                    {formatDate(deal.closedAt, locale)}
                   </p>
                 </div>
               </div>
@@ -392,15 +356,13 @@ export default function DealDetailPage() {
         </Card>
 
         {/* Notes */}
-        {deal.notes && (deal.notes.en || deal.notes.ar) && (
+        {deal.notes && (
           <Card>
             <CardHeader>
               <CardTitle>{texts.notes}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="whitespace-pre-wrap">
-                {getLocalizedText(deal.notes, locale)}
-              </p>
+              <p className="whitespace-pre-wrap">{deal.notes}</p>
             </CardContent>
           </Card>
         )}
@@ -412,26 +374,7 @@ export default function DealDetailPage() {
               <CardTitle>{texts.lostReason}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="whitespace-pre-wrap">
-                {getLocalizedText(deal.lostReason, locale)}
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Conversion Info */}
-        {deal.status === "WON" && deal.convertedOrganizationId && (
-          <Card>
-            <CardHeader>
-              <CardTitle>{texts.conversion}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" asChild>
-                <Link href={`/${locale}/clients/${deal.convertedOrganizationId}`}>
-                  <ExternalLink className="me-2 h-4 w-4" />
-                  {texts.viewClient}
-                </Link>
-              </Button>
+              <p className="whitespace-pre-wrap">{deal.lostReason}</p>
             </CardContent>
           </Card>
         )}
@@ -455,7 +398,7 @@ export default function DealDetailPage() {
 
       {/* Lose Deal Dialog */}
       <LoseDealDialog
-        deal={deal ? { ...deal, title: deal.title } : null}
+        deal={deal ?? null}
         open={loseDealDialogOpen}
         onOpenChange={setLoseDealDialogOpen}
         onConfirm={handleLoseConfirm}

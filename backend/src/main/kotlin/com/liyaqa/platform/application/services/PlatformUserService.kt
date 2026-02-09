@@ -219,11 +219,9 @@ class PlatformUserService(
         val inactive = platformUserRepository.countByStatus(PlatformUserStatus.INACTIVE)
         val suspended = platformUserRepository.countByStatus(PlatformUserStatus.SUSPENDED)
 
-        val byRole = mapOf(
-            PlatformUserRole.PLATFORM_ADMIN to platformUserRepository.countByRole(PlatformUserRole.PLATFORM_ADMIN),
-            PlatformUserRole.SALES_REP to platformUserRepository.countByRole(PlatformUserRole.SALES_REP),
-            PlatformUserRole.SUPPORT_REP to platformUserRepository.countByRole(PlatformUserRole.SUPPORT_REP)
-        )
+        val byRole = PlatformUserRole.entries.associateWith { role ->
+            platformUserRepository.countByRole(role)
+        }
 
         return PlatformUserStats(
             total = total,

@@ -5,10 +5,15 @@ import com.liyaqa.platform.application.services.AlertStatistics
 import com.liyaqa.platform.domain.model.AlertSeverity
 import com.liyaqa.platform.domain.model.AlertType
 import com.liyaqa.platform.domain.model.PlatformAlert
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
+import com.liyaqa.platform.domain.model.PlatformUserRole
+import com.liyaqa.platform.infrastructure.security.PlatformSecured
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation.*
@@ -35,13 +40,16 @@ import java.util.UUID
  */
 @RestController
 @RequestMapping("/api/platform/alerts")
-@PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP', 'SUPPORT_REP')")
+@PlatformSecured
+@Tag(name = "Platform Alerts", description = "Manage platform alerts and notifications")
 class PlatformAlertController(
     private val alertService: AlertService
 ) {
     /**
      * Gets all active alerts.
      */
+    @Operation(summary = "Get active alerts", description = "Returns a paginated list of all currently active platform alerts.")
+    @ApiResponse(responseCode = "200", description = "Active alerts retrieved successfully")
     @GetMapping
     fun getActive(pageable: Pageable): ResponseEntity<Page<PlatformAlertResponse>> {
         val page = alertService.getAllActiveAlerts(pageable)
@@ -51,6 +59,8 @@ class PlatformAlertController(
     /**
      * Gets alert statistics.
      */
+    @Operation(summary = "Get alert statistics", description = "Returns aggregated statistics about platform alerts (counts by severity, type, etc.).")
+    @ApiResponse(responseCode = "200", description = "Alert statistics retrieved successfully")
     @GetMapping("/statistics")
     fun getStatistics(): ResponseEntity<AlertStatistics> {
         val stats = alertService.getStatistics()
@@ -60,6 +70,8 @@ class PlatformAlertController(
     /**
      * Gets unacknowledged alerts.
      */
+    @Operation(summary = "Get unacknowledged alerts", description = "Returns a paginated list of alerts that have not yet been acknowledged.")
+    @ApiResponse(responseCode = "200", description = "Unacknowledged alerts retrieved successfully")
     @GetMapping("/unacknowledged")
     fun getUnacknowledged(pageable: Pageable): ResponseEntity<Page<PlatformAlertResponse>> {
         val page = alertService.getUnacknowledgedAlerts(pageable)
@@ -69,6 +81,8 @@ class PlatformAlertController(
     /**
      * Gets critical unacknowledged alerts.
      */
+    @Operation(summary = "Get critical unacknowledged alerts", description = "Returns a paginated list of critical-severity alerts that have not been acknowledged.")
+    @ApiResponse(responseCode = "200", description = "Critical unacknowledged alerts retrieved successfully")
     @GetMapping("/critical")
     fun getCriticalUnacknowledged(pageable: Pageable): ResponseEntity<Page<PlatformAlertResponse>> {
         val page = alertService.getCriticalUnacknowledgedAlerts(pageable)
@@ -78,6 +92,8 @@ class PlatformAlertController(
     /**
      * Gets alerts by type.
      */
+    @Operation(summary = "Get alerts by type", description = "Returns a paginated list of alerts filtered by alert type.")
+    @ApiResponse(responseCode = "200", description = "Alerts retrieved successfully")
     @GetMapping("/by-type/{type}")
     fun getByType(
         @PathVariable type: AlertType,
@@ -90,6 +106,8 @@ class PlatformAlertController(
     /**
      * Gets alerts by severity.
      */
+    @Operation(summary = "Get alerts by severity", description = "Returns a paginated list of alerts filtered by severity level.")
+    @ApiResponse(responseCode = "200", description = "Alerts retrieved successfully")
     @GetMapping("/by-severity/{severity}")
     fun getBySeverity(
         @PathVariable severity: AlertSeverity,
@@ -102,6 +120,8 @@ class PlatformAlertController(
     /**
      * Gets active alerts for an organization.
      */
+    @Operation(summary = "Get alerts by organization", description = "Returns a paginated list of active alerts for a specific organization.")
+    @ApiResponse(responseCode = "200", description = "Organization alerts retrieved successfully")
     @GetMapping("/organization/{organizationId}")
     fun getByOrganizationId(
         @PathVariable organizationId: UUID,
@@ -114,6 +134,11 @@ class PlatformAlertController(
     /**
      * Gets an alert by ID.
      */
+    @Operation(summary = "Get an alert by ID", description = "Retrieves the details of a specific platform alert.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Alert found"),
+        ApiResponse(responseCode = "404", description = "Alert not found")
+    ])
     @GetMapping("/{alertId}")
     fun getById(@PathVariable alertId: UUID): ResponseEntity<PlatformAlertResponse> {
         val alert = alertService.getById(alertId)
@@ -123,6 +148,12 @@ class PlatformAlertController(
     /**
      * Acknowledges an alert.
      */
+    @Operation(summary = "Acknowledge an alert", description = "Marks an alert as acknowledged by the current user.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Alert acknowledged successfully"),
+        ApiResponse(responseCode = "404", description = "Alert not found"),
+        ApiResponse(responseCode = "422", description = "Alert is already acknowledged or resolved")
+    ])
     @PostMapping("/{alertId}/acknowledge")
     fun acknowledge(
         @PathVariable alertId: UUID,
@@ -137,6 +168,12 @@ class PlatformAlertController(
     /**
      * Resolves an alert.
      */
+    @Operation(summary = "Resolve an alert", description = "Marks an alert as resolved with optional resolution notes.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Alert resolved successfully"),
+        ApiResponse(responseCode = "404", description = "Alert not found"),
+        ApiResponse(responseCode = "422", description = "Alert is already resolved")
+    ])
     @PostMapping("/{alertId}/resolve")
     fun resolve(
         @PathVariable alertId: UUID,
@@ -151,6 +188,11 @@ class PlatformAlertController(
     /**
      * Dismisses an alert for the client.
      */
+    @Operation(summary = "Dismiss an alert", description = "Dismisses an alert so it is no longer visible to the client.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Alert dismissed successfully"),
+        ApiResponse(responseCode = "404", description = "Alert not found")
+    ])
     @PostMapping("/{alertId}/dismiss")
     fun dismiss(@PathVariable alertId: UUID): ResponseEntity<PlatformAlertResponse> {
         val alert = alertService.dismissAlertForClient(alertId)
@@ -160,8 +202,10 @@ class PlatformAlertController(
     /**
      * Bulk acknowledge alerts.
      */
+    @Operation(summary = "Bulk acknowledge alerts", description = "Acknowledges multiple alerts in a single request. Requires PLATFORM_ADMIN role.")
+    @ApiResponse(responseCode = "200", description = "Bulk acknowledge completed (partial failures possible)")
     @PostMapping("/bulk-acknowledge")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     fun bulkAcknowledge(
         @RequestBody request: BulkAlertRequest,
         @AuthenticationPrincipal user: UserDetails
@@ -185,8 +229,10 @@ class PlatformAlertController(
     /**
      * Bulk resolve alerts.
      */
+    @Operation(summary = "Bulk resolve alerts", description = "Resolves multiple alerts in a single request. Requires PLATFORM_ADMIN role.")
+    @ApiResponse(responseCode = "200", description = "Bulk resolve completed (partial failures possible)")
     @PostMapping("/bulk-resolve")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     fun bulkResolve(
         @RequestBody request: BulkAlertRequest,
         @AuthenticationPrincipal user: UserDetails

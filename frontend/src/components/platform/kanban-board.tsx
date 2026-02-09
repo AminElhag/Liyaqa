@@ -30,16 +30,19 @@ interface KanbanBoardProps {
 }
 
 // Only show these stages in the kanban (open deals)
-const KANBAN_STAGES: DealStatus[] = ["LEAD", "QUALIFIED", "PROPOSAL", "NEGOTIATION"];
+const KANBAN_STAGES: DealStatus[] = ["LEAD", "CONTACTED", "PROPOSAL_SENT", "NEGOTIATION"];
 
 // Map of valid transitions
 const VALID_TRANSITIONS: Record<DealStatus, DealStatus[]> = {
-  LEAD: ["QUALIFIED"],
-  QUALIFIED: ["PROPOSAL"],
-  PROPOSAL: ["NEGOTIATION"],
+  LEAD: ["CONTACTED"],
+  CONTACTED: ["PROPOSAL_SENT"],
+  DEMO_SCHEDULED: [],
+  DEMO_DONE: [],
+  PROPOSAL_SENT: ["NEGOTIATION"],
   NEGOTIATION: [],
   WON: [],
   LOST: [],
+  CHURNED: [],
 };
 
 export function KanbanBoard({ onDealClick }: KanbanBoardProps) {
@@ -48,8 +51,8 @@ export function KanbanBoard({ onDealClick }: KanbanBoardProps) {
 
   // Fetch deals for each stage
   const leadDeals = useDealsByStatus("LEAD", { size: 100 });
-  const qualifiedDeals = useDealsByStatus("QUALIFIED", { size: 100 });
-  const proposalDeals = useDealsByStatus("PROPOSAL", { size: 100 });
+  const contactedDeals = useDealsByStatus("CONTACTED", { size: 100 });
+  const proposalDeals = useDealsByStatus("PROPOSAL_SENT", { size: 100 });
   const negotiationDeals = useDealsByStatus("NEGOTIATION", { size: 100 });
 
   // Mutations for status transitions
@@ -59,17 +62,20 @@ export function KanbanBoard({ onDealClick }: KanbanBoardProps) {
 
   const isLoading =
     leadDeals.isLoading ||
-    qualifiedDeals.isLoading ||
+    contactedDeals.isLoading ||
     proposalDeals.isLoading ||
     negotiationDeals.isLoading;
 
   const dealsMap: Record<DealStatus, DealSummary[]> = {
     LEAD: leadDeals.data?.content || [],
-    QUALIFIED: qualifiedDeals.data?.content || [],
-    PROPOSAL: proposalDeals.data?.content || [],
+    CONTACTED: contactedDeals.data?.content || [],
+    DEMO_SCHEDULED: [],
+    DEMO_DONE: [],
+    PROPOSAL_SENT: proposalDeals.data?.content || [],
     NEGOTIATION: negotiationDeals.data?.content || [],
     WON: [],
     LOST: [],
+    CHURNED: [],
   };
 
   const sensors = useSensors(
@@ -127,10 +133,10 @@ export function KanbanBoard({ onDealClick }: KanbanBoardProps) {
 
       // Execute the appropriate mutation
       switch (targetStatus) {
-        case "QUALIFIED":
+        case "CONTACTED":
           qualifyDeal.mutate(dealId);
           break;
-        case "PROPOSAL":
+        case "PROPOSAL_SENT":
           sendProposal.mutate(dealId);
           break;
         case "NEGOTIATION":

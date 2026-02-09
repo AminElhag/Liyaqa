@@ -9,20 +9,19 @@ import com.liyaqa.platform.api.dto.ClientMemberSubscriptionResponse
 import com.liyaqa.platform.api.dto.ClientMemberSummaryResponse
 import com.liyaqa.platform.api.dto.ClientSupportOverviewResponse
 import com.liyaqa.platform.api.dto.ClientUserResponse
-import com.liyaqa.platform.api.dto.ImpersonateRequest
-import com.liyaqa.platform.api.dto.ImpersonationResponse
 import com.liyaqa.platform.api.dto.PageResponse
-import com.liyaqa.platform.application.services.ImpersonationService
 import com.liyaqa.platform.application.services.PlatformSupportService
-import jakarta.validation.Valid
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
+import com.liyaqa.platform.domain.model.PlatformUserRole
+import com.liyaqa.platform.infrastructure.security.PlatformSecured
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -39,15 +38,13 @@ import java.util.UUID
  * - GET  /api/platform/support/clients/{id}/clubs/{clubId}/subscriptions  - Get club subscriptions
  * - GET  /api/platform/support/clients/{id}/clubs/{clubId}/invoices       - Get club invoices
  * - GET  /api/platform/support/clients/{id}/clubs/{clubId}/users          - Get club users
- * - POST /api/platform/support/impersonate/{userId}           - Impersonate a user
- * - POST /api/platform/support/end-impersonation              - End impersonation session
  */
 @RestController
 @RequestMapping("/api/platform/support")
-@PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SUPPORT')")
+@PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.SUPPORT_LEAD, PlatformUserRole.SUPPORT_AGENT])
+@Tag(name = "Platform Support", description = "Platform support dashboard and metrics")
 class PlatformSupportController(
-    private val supportService: PlatformSupportService,
-    private val impersonationService: ImpersonationService
+    private val supportService: PlatformSupportService
 ) {
     // ============================================
     // Client Data Viewing
@@ -56,6 +53,11 @@ class PlatformSupportController(
     /**
      * Gets a support overview for a client organization.
      */
+    @Operation(summary = "Get client support overview", description = "Returns a support overview for a client organization including club count, member stats, and billing summary")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Client overview retrieved successfully"),
+        ApiResponse(responseCode = "404", description = "Organization not found")
+    ])
     @GetMapping("/clients/{organizationId}/overview")
     fun getClientOverview(
         @PathVariable organizationId: UUID
@@ -67,6 +69,11 @@ class PlatformSupportController(
     /**
      * Gets members for a specific club.
      */
+    @Operation(summary = "Get club members", description = "Returns paginated list of members for a specific club with optional search and status filters")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Members retrieved successfully"),
+        ApiResponse(responseCode = "404", description = "Organization or club not found")
+    ])
     @GetMapping("/clients/{organizationId}/clubs/{clubId}/members")
     fun getClientMembers(
         @PathVariable organizationId: UUID,
@@ -98,6 +105,11 @@ class PlatformSupportController(
     /**
      * Gets detailed member info.
      */
+    @Operation(summary = "Get member detail", description = "Returns detailed information for a specific member including subscriptions and invoices")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Member detail retrieved successfully"),
+        ApiResponse(responseCode = "404", description = "Organization, club, or member not found")
+    ])
     @GetMapping("/clients/{organizationId}/clubs/{clubId}/members/{memberId}")
     fun getMemberDetail(
         @PathVariable organizationId: UUID,
@@ -111,6 +123,11 @@ class PlatformSupportController(
     /**
      * Gets subscriptions for a specific club.
      */
+    @Operation(summary = "Get club subscriptions", description = "Returns paginated list of subscriptions for a specific club with optional status filter")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Subscriptions retrieved successfully"),
+        ApiResponse(responseCode = "404", description = "Organization or club not found")
+    ])
     @GetMapping("/clients/{organizationId}/clubs/{clubId}/subscriptions")
     fun getClientSubscriptions(
         @PathVariable organizationId: UUID,
@@ -141,6 +158,11 @@ class PlatformSupportController(
     /**
      * Gets invoices for a specific club.
      */
+    @Operation(summary = "Get club invoices", description = "Returns paginated list of invoices for a specific club with optional status filter")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Invoices retrieved successfully"),
+        ApiResponse(responseCode = "404", description = "Organization or club not found")
+    ])
     @GetMapping("/clients/{organizationId}/clubs/{clubId}/invoices")
     fun getClientInvoices(
         @PathVariable organizationId: UUID,
@@ -171,6 +193,11 @@ class PlatformSupportController(
     /**
      * Gets users for a specific club.
      */
+    @Operation(summary = "Get club users", description = "Returns paginated list of users for a specific club")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Users retrieved successfully"),
+        ApiResponse(responseCode = "404", description = "Organization or club not found")
+    ])
     @GetMapping("/clients/{organizationId}/clubs/{clubId}/users")
     fun getClientUsers(
         @PathVariable organizationId: UUID,
@@ -197,30 +224,4 @@ class PlatformSupportController(
         )
     }
 
-    // ============================================
-    // Impersonation
-    // ============================================
-
-    /**
-     * Impersonates a user.
-     * Creates an impersonation session and returns an access token for that user.
-     * Audit log is created for this action.
-     */
-    @PostMapping("/impersonate/{userId}")
-    fun impersonateUser(
-        @PathVariable userId: UUID,
-        @Valid @RequestBody request: ImpersonateRequest
-    ): ResponseEntity<ImpersonationResponse> {
-        val response = impersonationService.impersonate(userId, request.reason)
-        return ResponseEntity.ok(response)
-    }
-
-    /**
-     * Ends the current impersonation session.
-     */
-    @PostMapping("/end-impersonation")
-    fun endImpersonation(): ResponseEntity<Void> {
-        impersonationService.endImpersonation()
-        return ResponseEntity.ok().build()
-    }
 }

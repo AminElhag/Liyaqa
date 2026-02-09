@@ -72,13 +72,6 @@ export default function PlatformLoginPage() {
 
       console.log('[Login] Redirect params:', { redirectTo, expiredParam });
 
-      // Don't redirect if user is coming from an expired session
-      // (let them see the login page and re-authenticate first)
-      if (expiredParam) {
-        console.log('[Login] Skipping - expired session');
-        return;
-      }
-
       // Redirect to the intended destination or dashboard
       const destination = (redirectTo && redirectTo.startsWith(`/${locale}/`))
         ? redirectTo

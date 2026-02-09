@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="008-1" author="liyaqa">
+        <comment>Create platform_invite_tokens table for team invite and password reset flows</comment>
+        <createTable tableName="platform_invite_tokens">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="token_hash" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="platform_user_id" type="UUID"/>
+            <column name="expires_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="used_at" type="TIMESTAMPTZ"/>
+            <column name="is_used" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <createIndex tableName="platform_invite_tokens" indexName="idx_invite_tokens_token_hash" unique="true">
+            <column name="token_hash"/>
+        </createIndex>
+
+        <createIndex tableName="platform_invite_tokens" indexName="idx_invite_tokens_email">
+            <column name="email"/>
+        </createIndex>
+
+        <createIndex tableName="platform_invite_tokens" indexName="idx_invite_tokens_type">
+            <column name="type"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="008-2" author="liyaqa">
+        <comment>Create tenant_api_keys table for external API key authentication</comment>
+        <createTable tableName="tenant_api_keys">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="key_prefix" type="VARCHAR(8)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="key_hash" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="permissions" type="TEXT"/>
+            <column name="rate_limit" type="INT" defaultValueNumeric="60">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="TIMESTAMPTZ"/>
+            <column name="last_used_at" type="TIMESTAMPTZ"/>
+            <column name="created_by" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revoked_at" type="TIMESTAMPTZ"/>
+            <column name="revoked_by" type="UUID"/>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <createIndex tableName="tenant_api_keys" indexName="idx_api_keys_tenant_id">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <createIndex tableName="tenant_api_keys" indexName="idx_api_keys_key_prefix" unique="true">
+            <column name="key_prefix"/>
+        </createIndex>
+
+        <createIndex tableName="tenant_api_keys" indexName="idx_api_keys_is_active">
+            <column name="is_active"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

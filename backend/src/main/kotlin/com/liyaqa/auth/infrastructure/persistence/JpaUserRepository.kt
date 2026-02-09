@@ -19,6 +19,7 @@ interface SpringDataUserRepository : JpaRepository<User, UUID> {
     fun findByRole(role: Role, pageable: Pageable): Page<User>
     fun existsByEmailAndTenantId(email: String, tenantId: UUID): Boolean
     fun findByOauthProviderAndOauthProviderId(oauthProvider: String, oauthProviderId: String): User?
+    fun findFirstByTenantIdAndRoleInOrderByCreatedAtAsc(tenantId: UUID, roles: List<Role>): Optional<User>
 }
 
 @Repository
@@ -64,4 +65,7 @@ class JpaUserRepository(
 
     override fun findByOAuthProviderAndProviderId(oauthProvider: String, oauthProviderId: String): User? =
         springDataRepository.findByOauthProviderAndOauthProviderId(oauthProvider, oauthProviderId)
+
+    override fun findFirstByTenantIdAndRoleIn(tenantId: UUID, roles: List<Role>): Optional<User> =
+        springDataRepository.findFirstByTenantIdAndRoleInOrderByCreatedAtAsc(tenantId, roles)
 }

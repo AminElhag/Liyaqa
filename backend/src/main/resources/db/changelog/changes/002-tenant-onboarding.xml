@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Changeset 1: tenants table -->
+    <changeSet id="002-1-create-tenants-table" author="liyaqa">
+        <createTable tableName="tenants">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="facility_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="facility_name_ar" type="VARCHAR(255)"/>
+            <column name="subdomain" type="VARCHAR(100)">
+                <constraints unique="true"/>
+            </column>
+            <column name="cr_number" type="VARCHAR(50)"/>
+            <column name="vat_number" type="VARCHAR(50)"/>
+            <column name="contact_email" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="contact_phone" type="VARCHAR(30)"/>
+            <column name="address" type="VARCHAR(500)"/>
+            <column name="city" type="VARCHAR(100)"/>
+            <column name="region" type="VARCHAR(100)"/>
+            <column name="country" type="VARCHAR(10)" defaultValue="SA">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subscription_plan_id" type="UUID"/>
+            <column name="deal_id" type="UUID"/>
+            <column name="organization_id" type="UUID"/>
+            <column name="club_id" type="UUID"/>
+            <column name="onboarded_by" type="UUID"/>
+            <column name="onboarded_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="deactivated_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="data_retention_until" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="metadata" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <createIndex tableName="tenants" indexName="idx_tenants_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex tableName="tenants" indexName="idx_tenants_deal_id">
+            <column name="deal_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Changeset 2: tenant_onboarding_checklist table -->
+    <changeSet id="002-2-create-tenant-onboarding-checklist-table" author="liyaqa">
+        <createTable tableName="tenant_onboarding_checklist">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_checklist_tenant"
+                             references="tenants(id)"/>
+            </column>
+            <column name="step" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="completed_by" type="UUID"/>
+            <column name="notes" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <addUniqueConstraint tableName="tenant_onboarding_checklist"
+                             columnNames="tenant_id, step"
+                             constraintName="uq_checklist_tenant_step"/>
+
+        <createIndex tableName="tenant_onboarding_checklist" indexName="idx_checklist_tenant_id">
+            <column name="tenant_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

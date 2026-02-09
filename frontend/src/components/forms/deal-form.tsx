@@ -22,12 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Deal, DealSource, CreateDealRequest, UpdateDealRequest } from "@/types/platform";
+import type { Deal, DealSource } from "@/types/platform";
 
-// Zod schema for deal form
+// Zod schema matching backend DealCreateRequest/DealUpdateRequest
 const dealFormSchema = z.object({
-  titleEn: z.string().min(1, "Title (English) is required"),
-  titleAr: z.string().optional(),
+  facilityName: z.string().optional(),
+  contactName: z.string().min(1, "Contact name is required"),
+  contactEmail: z.string().email("Invalid email address"),
+  contactPhone: z.string().optional(),
   source: z.enum([
     "WEBSITE",
     "REFERRAL",
@@ -37,18 +39,11 @@ const dealFormSchema = z.object({
     "PARTNER",
     "OTHER",
   ]),
-  contactName: z.string().min(1, "Contact name is required"),
-  contactEmail: z.string().email("Invalid email address"),
-  contactPhone: z.string().optional(),
-  companyName: z.string().optional(),
-  estimatedValueAmount: z.coerce.number().min(0, "Value must be positive"),
-  estimatedValueCurrency: z.string().default("SAR"),
-  probability: z.coerce.number().min(0).max(100, "Probability must be 0-100"),
+  notes: z.string().optional(),
+  assignedToId: z.string().optional(),
+  estimatedValue: z.coerce.number().min(0, "Value must be positive"),
+  currency: z.string().default("SAR"),
   expectedCloseDate: z.string().optional(),
-  interestedPlanId: z.string().optional(),
-  salesRepId: z.string().min(1, "Sales rep is required"),
-  notesEn: z.string().optional(),
-  notesAr: z.string().optional(),
 });
 
 export type DealFormData = z.infer<typeof dealFormSchema>;
@@ -62,7 +57,6 @@ interface SalesRep {
 interface DealFormProps {
   deal?: Deal;
   salesReps: SalesRep[];
-  plans?: Array<{ id: string; name: { en: string; ar?: string | null } }>;
   onSubmit: (data: DealFormData) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
@@ -81,7 +75,6 @@ const SOURCE_OPTIONS: Array<{ value: DealSource; labelEn: string; labelAr: strin
 export function DealForm({
   deal,
   salesReps,
-  plans = [],
   onSubmit,
   onCancel,
   isSubmitting = false,
@@ -97,29 +90,23 @@ export function DealForm({
   } = useForm<DealFormData>({
     resolver: zodResolver(dealFormSchema),
     defaultValues: {
-      titleEn: deal?.title?.en || "",
-      titleAr: deal?.title?.ar || "",
+      facilityName: deal?.facilityName || "",
       source: deal?.source || "WEBSITE",
       contactName: deal?.contactName || "",
       contactEmail: deal?.contactEmail || "",
       contactPhone: deal?.contactPhone || "",
-      companyName: deal?.companyName || "",
-      estimatedValueAmount: deal?.estimatedValue?.amount || 0,
-      estimatedValueCurrency: deal?.estimatedValue?.currency || "SAR",
-      probability: deal?.probability || 10,
+      estimatedValue: deal?.estimatedValue || 0,
+      currency: deal?.currency || "SAR",
       expectedCloseDate: deal?.expectedCloseDate || "",
-      interestedPlanId: deal?.interestedPlanId || "",
-      salesRepId: deal?.salesRepId || "",
-      notesEn: deal?.notes?.en || "",
-      notesAr: deal?.notes?.ar || "",
+      assignedToId: deal?.assignedTo?.id || "",
+      notes: deal?.notes || "",
     },
   });
 
   const texts = {
     basicInfo: locale === "ar" ? "معلومات الصفقة" : "Deal Information",
     basicInfoDesc: locale === "ar" ? "أدخل معلومات الصفقة الأساسية" : "Enter the deal's basic information",
-    titleEn: locale === "ar" ? "العنوان (إنجليزي)" : "Title (EN)",
-    titleAr: locale === "ar" ? "العنوان (عربي)" : "Title (AR)",
+    facilityName: locale === "ar" ? "اسم المنشأة" : "Facility Name",
     source: locale === "ar" ? "المصدر" : "Source",
     selectSource: locale === "ar" ? "اختر المصدر" : "Select source",
     contactInfo: locale === "ar" ? "معلومات الاتصال" : "Contact Information",
@@ -127,31 +114,24 @@ export function DealForm({
     contactName: locale === "ar" ? "اسم جهة الاتصال" : "Contact Name",
     contactEmail: locale === "ar" ? "البريد الإلكتروني" : "Email",
     contactPhone: locale === "ar" ? "رقم الهاتف" : "Phone",
-    companyName: locale === "ar" ? "اسم الشركة" : "Company Name",
     dealDetails: locale === "ar" ? "تفاصيل الصفقة" : "Deal Details",
-    dealDetailsDesc: locale === "ar" ? "القيمة والاحتمالية وتاريخ الإغلاق المتوقع" : "Value, probability, and expected close date",
+    dealDetailsDesc: locale === "ar" ? "القيمة وتاريخ الإغلاق المتوقع" : "Value and expected close date",
     estimatedValue: locale === "ar" ? "القيمة المقدرة" : "Estimated Value",
     currency: locale === "ar" ? "العملة" : "Currency",
-    probability: locale === "ar" ? "الاحتمالية (%)" : "Probability (%)",
     expectedCloseDate: locale === "ar" ? "تاريخ الإغلاق المتوقع" : "Expected Close Date",
     assignment: locale === "ar" ? "التعيين" : "Assignment",
-    assignmentDesc: locale === "ar" ? "مندوب المبيعات والخطة المهتم بها" : "Sales rep and interested plan",
+    assignmentDesc: locale === "ar" ? "مندوب المبيعات" : "Sales rep assignment",
     salesRep: locale === "ar" ? "مندوب المبيعات" : "Sales Rep",
     selectSalesRep: locale === "ar" ? "اختر مندوب المبيعات" : "Select sales rep",
-    interestedPlan: locale === "ar" ? "الخطة المهتم بها" : "Interested Plan",
-    selectPlan: locale === "ar" ? "اختر خطة (اختياري)" : "Select plan (optional)",
-    none: locale === "ar" ? "لا يوجد" : "None",
     notes: locale === "ar" ? "ملاحظات" : "Notes",
-    notesEn: locale === "ar" ? "ملاحظات (إنجليزي)" : "Notes (EN)",
-    notesAr: locale === "ar" ? "ملاحظات (عربي)" : "Notes (AR)",
+    notesPlaceholder: locale === "ar" ? "ملاحظات إضافية عن الصفقة..." : "Additional notes about the deal...",
     cancel: locale === "ar" ? "إلغاء" : "Cancel",
     save: locale === "ar" ? "حفظ" : "Save",
     saving: locale === "ar" ? "جاري الحفظ..." : "Saving...",
   };
 
   const watchSource = watch("source");
-  const watchSalesRepId = watch("salesRepId");
-  const watchInterestedPlanId = watch("interestedPlanId");
+  const watchAssignedToId = watch("assignedToId");
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -162,27 +142,13 @@ export function DealForm({
           <CardDescription>{texts.basicInfoDesc}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="titleEn">{texts.titleEn} *</Label>
-              <Input
-                id="titleEn"
-                {...register("titleEn")}
-                placeholder="New Gym Partnership"
-              />
-              {errors.titleEn && (
-                <p className="text-sm text-destructive">{errors.titleEn.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="titleAr">{texts.titleAr}</Label>
-              <Input
-                id="titleAr"
-                {...register("titleAr")}
-                placeholder="شراكة نادي جديد"
-                dir="rtl"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="facilityName">{texts.facilityName}</Label>
+            <Input
+              id="facilityName"
+              {...register("facilityName")}
+              placeholder="New Gym Partnership"
+            />
           </div>
 
           <div className="space-y-2">
@@ -226,17 +192,6 @@ export function DealForm({
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="companyName">{texts.companyName}</Label>
-              <Input
-                id="companyName"
-                {...register("companyName")}
-                placeholder="Fitness Corp"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
               <Label htmlFor="contactEmail">{texts.contactEmail} *</Label>
               <Input
                 id="contactEmail"
@@ -248,14 +203,15 @@ export function DealForm({
                 <p className="text-sm text-destructive">{errors.contactEmail.message}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="contactPhone">{texts.contactPhone}</Label>
-              <Input
-                id="contactPhone"
-                {...register("contactPhone")}
-                placeholder="+966 50 123 4567"
-              />
-            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="contactPhone">{texts.contactPhone}</Label>
+            <Input
+              id="contactPhone"
+              {...register("contactPhone")}
+              placeholder="+966 50 123 4567"
+            />
           </div>
         </CardContent>
       </Card>
@@ -267,24 +223,24 @@ export function DealForm({
           <CardDescription>{texts.dealDetailsDesc}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="estimatedValueAmount">{texts.estimatedValue}</Label>
+              <Label htmlFor="estimatedValue">{texts.estimatedValue}</Label>
               <Input
-                id="estimatedValueAmount"
+                id="estimatedValue"
                 type="number"
-                {...register("estimatedValueAmount")}
+                {...register("estimatedValue")}
                 placeholder="10000"
               />
-              {errors.estimatedValueAmount && (
-                <p className="text-sm text-destructive">{errors.estimatedValueAmount.message}</p>
+              {errors.estimatedValue && (
+                <p className="text-sm text-destructive">{errors.estimatedValue.message}</p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="estimatedValueCurrency">{texts.currency}</Label>
+              <Label htmlFor="currency">{texts.currency}</Label>
               <Select
-                value={watch("estimatedValueCurrency")}
-                onValueChange={(value) => setValue("estimatedValueCurrency", value)}
+                value={watch("currency")}
+                onValueChange={(value) => setValue("currency", value)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -295,20 +251,6 @@ export function DealForm({
                   <SelectItem value="EUR">EUR</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="probability">{texts.probability}</Label>
-              <Input
-                id="probability"
-                type="number"
-                min="0"
-                max="100"
-                {...register("probability")}
-                placeholder="10"
-              />
-              {errors.probability && (
-                <p className="text-sm text-destructive">{errors.probability.message}</p>
-              )}
             </div>
           </div>
 
@@ -324,18 +266,18 @@ export function DealForm({
       </Card>
 
       {/* Assignment */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{texts.assignment}</CardTitle>
-          <CardDescription>{texts.assignmentDesc}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {salesReps.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{texts.assignment}</CardTitle>
+            <CardDescription>{texts.assignmentDesc}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>{texts.salesRep} *</Label>
+              <Label>{texts.salesRep}</Label>
               <Select
-                value={watchSalesRepId}
-                onValueChange={(value) => setValue("salesRepId", value)}
+                value={watchAssignedToId || ""}
+                onValueChange={(value) => setValue("assignedToId", value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={texts.selectSalesRep} />
@@ -355,63 +297,23 @@ export function DealForm({
                   })}
                 </SelectContent>
               </Select>
-              {errors.salesRepId && (
-                <p className="text-sm text-destructive">{errors.salesRepId.message}</p>
-              )}
             </div>
-            {plans.length > 0 && (
-              <div className="space-y-2">
-                <Label>{texts.interestedPlan}</Label>
-                <Select
-                  value={watchInterestedPlanId || ""}
-                  onValueChange={(value) => setValue("interestedPlanId", value === "" ? undefined : value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={texts.selectPlan} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">{texts.none}</SelectItem>
-                    {plans.map((plan) => (
-                      <SelectItem key={plan.id} value={plan.id}>
-                        {locale === "ar" && plan.name.ar
-                          ? plan.name.ar
-                          : plan.name.en}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Notes */}
       <Card>
         <CardHeader>
           <CardTitle>{texts.notes}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="notesEn">{texts.notesEn}</Label>
-              <Textarea
-                id="notesEn"
-                {...register("notesEn")}
-                placeholder="Additional notes about the deal..."
-                rows={3}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="notesAr">{texts.notesAr}</Label>
-              <Textarea
-                id="notesAr"
-                {...register("notesAr")}
-                placeholder="ملاحظات إضافية عن الصفقة..."
-                dir="rtl"
-                rows={3}
-              />
-            </div>
+        <CardContent>
+          <div className="space-y-2">
+            <Textarea
+              {...register("notes")}
+              placeholder={texts.notesPlaceholder}
+              rows={3}
+            />
           </div>
         </CardContent>
       </Card>

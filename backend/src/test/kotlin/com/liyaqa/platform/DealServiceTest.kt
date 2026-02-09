@@ -1,18 +1,22 @@
 package com.liyaqa.platform
 
+import com.liyaqa.platform.application.commands.ChangeStageCommand
+import com.liyaqa.platform.application.commands.CreateDealActivityCommand
 import com.liyaqa.platform.application.commands.CreateDealCommand
-import com.liyaqa.platform.application.commands.LoseDealCommand
-import com.liyaqa.platform.application.commands.ReassignDealCommand
 import com.liyaqa.platform.application.commands.UpdateDealCommand
-import com.liyaqa.platform.application.services.ClientOnboardingService
 import com.liyaqa.platform.application.services.DealService
 import com.liyaqa.platform.domain.model.Deal
+import com.liyaqa.platform.domain.model.DealActivity
+import com.liyaqa.platform.domain.model.DealActivityType
 import com.liyaqa.platform.domain.model.DealSource
-import com.liyaqa.platform.domain.model.DealStatus
-import com.liyaqa.platform.domain.ports.ClientPlanRepository
+import com.liyaqa.platform.domain.model.DealStage
+import com.liyaqa.platform.domain.model.PlatformUser
+import com.liyaqa.platform.domain.model.PlatformUserRole
+import com.liyaqa.platform.domain.ports.DealActivityRepository
 import com.liyaqa.platform.domain.ports.DealRepository
+import com.liyaqa.platform.domain.ports.PlatformUserRepository
 import com.liyaqa.shared.domain.LocalizedText
-import com.liyaqa.shared.domain.Money
+import com.liyaqa.shared.infrastructure.security.SecurityService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -28,10 +32,11 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.mockito.quality.Strictness
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
 import java.math.BigDecimal
-import java.time.LocalDate
 import java.util.Optional
 import java.util.UUID
 
@@ -43,275 +48,345 @@ class DealServiceTest {
     private lateinit var dealRepository: DealRepository
 
     @Mock
-    private lateinit var planRepository: ClientPlanRepository
+    private lateinit var dealActivityRepository: DealActivityRepository
 
     @Mock
-    private lateinit var clientOnboardingService: ClientOnboardingService
+    private lateinit var platformUserRepository: PlatformUserRepository
+
+    @Mock
+    private lateinit var securityService: SecurityService
+
+    @Mock
+    private lateinit var eventPublisher: ApplicationEventPublisher
 
     private lateinit var dealService: DealService
-
-    private val testSalesRepId = UUID.randomUUID()
+    private lateinit var testUser: PlatformUser
+    private val testUserId = UUID.randomUUID()
 
     @BeforeEach
     fun setUp() {
-        dealService = DealService(dealRepository, planRepository, clientOnboardingService)
+        dealService = DealService(dealRepository, dealActivityRepository, platformUserRepository, securityService, eventPublisher)
+        testUser = PlatformUser(
+            id = testUserId,
+            email = "rep@liyaqa.com",
+            passwordHash = "hash",
+            displayName = LocalizedText(en = "Sales Rep", ar = null),
+            role = PlatformUserRole.ACCOUNT_MANAGER
+        )
+        whenever(securityService.getCurrentUserId()) doReturn testUserId
+        whenever(platformUserRepository.findById(testUserId)) doReturn Optional.of(testUser)
     }
+
+    // ============================================
+    // Create
+    // ============================================
 
     @Test
     fun `createDeal should create deal successfully`() {
-        // Given
         val command = CreateDealCommand(
-            title = LocalizedText(en = "New Customer Deal", ar = "صفقة عميل جديد"),
-            source = DealSource.WEBSITE,
+            facilityName = "Test Gym",
             contactName = "John Doe",
             contactEmail = "john@example.com",
-            salesRepId = testSalesRepId,
-            estimatedValue = Money.of(BigDecimal("10000"), "SAR")
+            source = DealSource.WEBSITE,
+            assignedToId = testUserId,
+            estimatedValue = BigDecimal("10000")
         )
 
         whenever(dealRepository.save(any<Deal>())) doReturn createTestDeal()
+        whenever(dealActivityRepository.save(any<DealActivity>())) doReturn DealActivity(
+            dealId = UUID.randomUUID(),
+            type = DealActivityType.STATUS_CHANGE,
+            content = "Deal created in stage LEAD",
+            createdBy = testUserId
+        )
 
-        // When
         val result = dealService.createDeal(command)
-
-        // Then
         assertNotNull(result)
         verify(dealRepository).save(any<Deal>())
+        verify(dealActivityRepository).save(any<DealActivity>()) // Auto-creates STATUS_CHANGE
     }
 
     @Test
-    fun `createDeal should validate plan exists when provided`() {
-        // Given
-        val planId = UUID.randomUUID()
+    fun `createDeal should use current user when assignedToId is null`() {
         val command = CreateDealCommand(
-            title = LocalizedText(en = "New Customer Deal", ar = "صفقة عميل جديد"),
-            source = DealSource.WEBSITE,
+            facilityName = "Test Gym",
             contactName = "John Doe",
             contactEmail = "john@example.com",
-            salesRepId = testSalesRepId,
-            interestedPlanId = planId
+            assignedToId = null
         )
 
-        whenever(planRepository.existsById(planId)) doReturn false
+        whenever(dealRepository.save(any<Deal>())) doReturn createTestDeal()
+        whenever(dealActivityRepository.save(any<DealActivity>())) doReturn DealActivity(
+            dealId = UUID.randomUUID(),
+            type = DealActivityType.STATUS_CHANGE,
+            content = "Deal created",
+            createdBy = testUserId
+        )
 
-        // When/Then
-        assertThrows(NoSuchElementException::class.java) {
-            dealService.createDeal(command)
-        }
-
-        verify(dealRepository, never()).save(any<Deal>())
+        dealService.createDeal(command)
+        verify(platformUserRepository).findById(testUserId)
     }
+
+    // ============================================
+    // Get / List
+    // ============================================
 
     @Test
     fun `getDeal should return deal when found`() {
-        // Given
         val testDeal = createTestDeal()
         whenever(dealRepository.findById(testDeal.id)) doReturn Optional.of(testDeal)
 
-        // When
         val result = dealService.getDeal(testDeal.id)
-
-        // Then
         assertEquals(testDeal.id, result.id)
-        assertEquals(testDeal.title.en, result.title.en)
     }
 
     @Test
-    fun `getDeal should throw when deal not found`() {
-        // Given
+    fun `getDeal should throw when not found`() {
         val dealId = UUID.randomUUID()
         whenever(dealRepository.findById(dealId)) doReturn Optional.empty()
 
-        // When/Then
         assertThrows(NoSuchElementException::class.java) {
             dealService.getDeal(dealId)
         }
     }
 
     @Test
-    fun `getAllDeals should return paginated deals`() {
-        // Given
+    fun `listDeals should return paginated deals`() {
         val pageable = PageRequest.of(0, 10)
         val deals = listOf(createTestDeal(), createTestDeal())
         val page = PageImpl(deals, pageable, deals.size.toLong())
 
         whenever(dealRepository.findAll(pageable)) doReturn page
 
-        // When
-        val result = dealService.getAllDeals(pageable)
-
-        // Then
+        val result = dealService.listDeals(pageable = pageable)
         assertEquals(2, result.content.size)
     }
 
     @Test
-    fun `advanceDeal should progress deal to next status`() {
-        // Given
-        val testDeal = createTestDeal(status = DealStatus.LEAD)
-        whenever(dealRepository.findById(testDeal.id)) doReturn Optional.of(testDeal)
-        whenever(dealRepository.save(any<Deal>())) doReturn testDeal
+    fun `listDeals filters by stage`() {
+        val pageable = PageRequest.of(0, 10)
+        val deals = listOf(createTestDeal())
+        val page = PageImpl(deals, pageable, deals.size.toLong())
 
-        // When
-        val result = dealService.advanceDeal(testDeal.id)
+        whenever(dealRepository.findByStage(DealStage.LEAD, pageable)) doReturn page
 
-        // Then
-        assertEquals(DealStatus.QUALIFIED, result.status)
-        verify(dealRepository).save(any<Deal>())
+        val result = dealService.listDeals(stage = DealStage.LEAD, pageable = pageable)
+        assertEquals(1, result.content.size)
     }
 
-    @Test
-    fun `qualifyDeal should change status from LEAD to QUALIFIED`() {
-        // Given
-        val testDeal = createTestDeal(status = DealStatus.LEAD)
-        whenever(dealRepository.findById(testDeal.id)) doReturn Optional.of(testDeal)
-        whenever(dealRepository.save(any<Deal>())) doReturn testDeal
-
-        // When
-        val result = dealService.qualifyDeal(testDeal.id)
-
-        // Then
-        assertEquals(DealStatus.QUALIFIED, result.status)
-    }
-
-    @Test
-    fun `sendProposal should change status from QUALIFIED to PROPOSAL`() {
-        // Given
-        val testDeal = createTestDeal(status = DealStatus.QUALIFIED)
-        whenever(dealRepository.findById(testDeal.id)) doReturn Optional.of(testDeal)
-        whenever(dealRepository.save(any<Deal>())) doReturn testDeal
-
-        // When
-        val result = dealService.sendProposal(testDeal.id)
-
-        // Then
-        assertEquals(DealStatus.PROPOSAL, result.status)
-    }
-
-    @Test
-    fun `startNegotiation should change status from PROPOSAL to NEGOTIATION`() {
-        // Given
-        val testDeal = createTestDeal(status = DealStatus.PROPOSAL)
-        whenever(dealRepository.findById(testDeal.id)) doReturn Optional.of(testDeal)
-        whenever(dealRepository.save(any<Deal>())) doReturn testDeal
-
-        // When
-        val result = dealService.startNegotiation(testDeal.id)
-
-        // Then
-        assertEquals(DealStatus.NEGOTIATION, result.status)
-    }
-
-    @Test
-    fun `loseDeal should mark deal as lost with reason`() {
-        // Given
-        val testDeal = createTestDeal(status = DealStatus.NEGOTIATION)
-        val command = LoseDealCommand(
-            reason = LocalizedText(en = "Budget constraints", ar = "قيود الميزانية")
-        )
-        whenever(dealRepository.findById(testDeal.id)) doReturn Optional.of(testDeal)
-        whenever(dealRepository.save(any<Deal>())) doReturn testDeal
-
-        // When
-        val result = dealService.loseDeal(testDeal.id, command)
-
-        // Then
-        assertEquals(DealStatus.LOST, result.status)
-        assertEquals("Budget constraints", result.lostReason?.en)
-    }
-
-    @Test
-    fun `reopenDeal should change status from LOST to LEAD`() {
-        // Given
-        val testDeal = createTestDeal(status = DealStatus.LOST)
-        whenever(dealRepository.findById(testDeal.id)) doReturn Optional.of(testDeal)
-        whenever(dealRepository.save(any<Deal>())) doReturn testDeal
-
-        // When
-        val result = dealService.reopenDeal(testDeal.id)
-
-        // Then
-        assertEquals(DealStatus.LEAD, result.status)
-    }
-
-    @Test
-    fun `reassignDeal should change sales rep`() {
-        // Given
-        val newSalesRepId = UUID.randomUUID()
-        val testDeal = createTestDeal()
-        val command = ReassignDealCommand(newSalesRepId = newSalesRepId)
-        whenever(dealRepository.findById(testDeal.id)) doReturn Optional.of(testDeal)
-        whenever(dealRepository.save(any<Deal>())) doReturn testDeal
-
-        // When
-        val result = dealService.reassignDeal(testDeal.id, command)
-
-        // Then
-        assertEquals(newSalesRepId, result.salesRepId)
-    }
+    // ============================================
+    // Update
+    // ============================================
 
     @Test
     fun `updateDeal should throw when deal is closed`() {
-        // Given
-        val testDeal = createTestDeal(status = DealStatus.WON)
-        val command = UpdateDealCommand(
-            title = LocalizedText(en = "Updated Title", ar = "عنوان محدث")
-        )
+        val testDeal = createTestDeal(DealStage.WON)
+        val command = UpdateDealCommand(facilityName = "New Name")
         whenever(dealRepository.findById(testDeal.id)) doReturn Optional.of(testDeal)
 
-        // When/Then
         assertThrows(IllegalArgumentException::class.java) {
             dealService.updateDeal(testDeal.id, command)
         }
     }
 
     @Test
-    fun `deleteDeal should delete LEAD deals`() {
-        // Given
-        val testDeal = createTestDeal(status = DealStatus.LEAD)
+    fun `updateDeal should update open deal`() {
+        val testDeal = createTestDeal()
+        val command = UpdateDealCommand(facilityName = "Updated Gym")
         whenever(dealRepository.findById(testDeal.id)) doReturn Optional.of(testDeal)
+        whenever(dealRepository.save(any<Deal>())) doReturn testDeal
 
-        // When
-        dealService.deleteDeal(testDeal.id)
+        val result = dealService.updateDeal(testDeal.id, command)
+        assertNotNull(result)
+        assertEquals("Updated Gym", testDeal.facilityName)
+    }
 
-        // Then
-        verify(dealRepository).deleteById(testDeal.id)
+    // ============================================
+    // Stage Transitions
+    // ============================================
+
+    @Test
+    fun `changeDealStage should transition from LEAD to CONTACTED`() {
+        val testDeal = createTestDeal()
+        val command = ChangeStageCommand(newStage = DealStage.CONTACTED)
+        whenever(dealRepository.findById(testDeal.id)) doReturn Optional.of(testDeal)
+        whenever(dealRepository.save(any<Deal>())) doReturn testDeal
+        whenever(dealActivityRepository.save(any<DealActivity>())) doReturn DealActivity(
+            dealId = testDeal.id,
+            type = DealActivityType.STATUS_CHANGE,
+            content = "Stage changed from LEAD to CONTACTED",
+            createdBy = testUserId
+        )
+
+        val result = dealService.changeDealStage(testDeal.id, command)
+        assertEquals(DealStage.CONTACTED, result.stage)
+        verify(dealActivityRepository).save(any<DealActivity>()) // Auto-creates activity
     }
 
     @Test
-    fun `deleteDeal should throw when deal is not LEAD or LOST`() {
-        // Given
-        val testDeal = createTestDeal(status = DealStatus.QUALIFIED)
+    fun `changeDealStage should set lostReason when losing`() {
+        val testDeal = createTestDeal()
+        val command = ChangeStageCommand(newStage = DealStage.LOST, reason = "Budget constraints")
         whenever(dealRepository.findById(testDeal.id)) doReturn Optional.of(testDeal)
+        whenever(dealRepository.save(any<Deal>())) doReturn testDeal
+        whenever(dealActivityRepository.save(any<DealActivity>())) doReturn DealActivity(
+            dealId = testDeal.id,
+            type = DealActivityType.STATUS_CHANGE,
+            content = "Stage changed",
+            createdBy = testUserId
+        )
 
-        // When/Then
-        assertThrows(IllegalArgumentException::class.java) {
-            dealService.deleteDeal(testDeal.id)
-        }
-
-        verify(dealRepository, never()).deleteById(any())
+        val result = dealService.changeDealStage(testDeal.id, command)
+        assertEquals(DealStage.LOST, result.stage)
+        assertEquals("Budget constraints", result.lostReason)
     }
 
-    private fun createTestDeal(
-        id: UUID = UUID.randomUUID(),
-        title: LocalizedText = LocalizedText(en = "Test Deal", ar = "صفقة اختبار"),
-        source: DealSource = DealSource.WEBSITE,
-        status: DealStatus = DealStatus.LEAD,
-        salesRepId: UUID = testSalesRepId
-    ) = Deal.create(
-        title = title,
-        source = source,
-        contactName = "John Doe",
-        contactEmail = "john@example.com",
-        salesRepId = salesRepId
-    ).apply {
-        // Set status via reflection for testing different states
-        when (status) {
-            DealStatus.QUALIFIED -> this.qualify()
-            DealStatus.PROPOSAL -> { this.qualify(); this.sendProposal() }
-            DealStatus.NEGOTIATION -> { this.qualify(); this.sendProposal(); this.startNegotiation() }
-            DealStatus.WON -> { this.qualify(); this.sendProposal(); this.startNegotiation(); this.win(UUID.randomUUID(), null) }
-            DealStatus.LOST -> { this.lose(LocalizedText(en = "Test", ar = "اختبار")) }
+    @Test
+    fun `changeDealStage should reject invalid transition`() {
+        val testDeal = createTestDeal()
+        val command = ChangeStageCommand(newStage = DealStage.WON)
+        whenever(dealRepository.findById(testDeal.id)) doReturn Optional.of(testDeal)
+
+        assertThrows(IllegalArgumentException::class.java) {
+            dealService.changeDealStage(testDeal.id, command)
+        }
+        verify(dealRepository, never()).save(any<Deal>())
+    }
+
+    // ============================================
+    // Activities
+    // ============================================
+
+    @Test
+    fun `addActivity should create activity`() {
+        val dealId = UUID.randomUUID()
+        val command = CreateDealActivityCommand(
+            type = DealActivityType.NOTE,
+            content = "Called and left voicemail"
+        )
+        whenever(dealRepository.existsById(dealId)) doReturn true
+        whenever(dealActivityRepository.save(any<DealActivity>())) doReturn DealActivity(
+            dealId = dealId,
+            type = DealActivityType.NOTE,
+            content = "Called and left voicemail",
+            createdBy = testUserId
+        )
+
+        val result = dealService.addActivity(dealId, command)
+        assertEquals(DealActivityType.NOTE, result.type)
+        assertEquals("Called and left voicemail", result.content)
+    }
+
+    @Test
+    fun `addActivity should throw for non-existent deal`() {
+        val dealId = UUID.randomUUID()
+        whenever(dealRepository.existsById(dealId)) doReturn false
+
+        assertThrows(IllegalArgumentException::class.java) {
+            dealService.addActivity(dealId, CreateDealActivityCommand(DealActivityType.NOTE, "test"))
+        }
+    }
+
+    // ============================================
+    // Pipeline & Metrics
+    // ============================================
+
+    @Test
+    fun `getPipelineCounts should return stage counts`() {
+        val counts = DealStage.entries.associateWith { 5L }
+        whenever(dealRepository.countByStageGrouped()) doReturn counts
+
+        val result = dealService.getPipelineCounts()
+        assertEquals(9, result.size)
+        assertEquals(5L, result[DealStage.LEAD])
+    }
+
+    @Test
+    fun `getMetrics should calculate conversion rate`() {
+        val counts = mapOf(
+            DealStage.LEAD to 10L,
+            DealStage.CONTACTED to 5L,
+            DealStage.DEMO_SCHEDULED to 0L,
+            DealStage.DEMO_DONE to 0L,
+            DealStage.PROPOSAL_SENT to 3L,
+            DealStage.NEGOTIATION to 2L,
+            DealStage.WON to 8L,
+            DealStage.LOST to 2L,
+            DealStage.CHURNED to 0L
+        )
+        whenever(dealRepository.countByStageGrouped()) doReturn counts
+
+        val wonDeals = listOf(createTestDeal(DealStage.WON), createTestDeal(DealStage.WON))
+        whenever(dealRepository.findByStage(DealStage.WON, Pageable.unpaged())) doReturn
+            PageImpl(wonDeals)
+
+        val metrics = dealService.getMetrics()
+        assertEquals(30L, metrics.totalDeals)
+        assertEquals(20L, metrics.openDeals)
+        assertEquals(8L, metrics.wonDeals)
+        assertEquals(2L, metrics.lostDeals)
+        // conversionRate = 8 / (8+2) = 0.8
+        assertEquals(0.8, metrics.conversionRate, 0.01)
+    }
+
+    // ============================================
+    // Full Pipeline Flow
+    // ============================================
+
+    @Test
+    fun `full pipeline flow creates activities at each transition`() {
+        val deal = createTestDeal()
+        whenever(dealRepository.findById(deal.id)) doReturn Optional.of(deal)
+        whenever(dealRepository.save(any<Deal>())) doReturn deal
+        whenever(dealActivityRepository.save(any<DealActivity>())) doReturn DealActivity(
+            dealId = deal.id,
+            type = DealActivityType.STATUS_CHANGE,
+            content = "changed",
+            createdBy = testUserId
+        )
+
+        val stages = listOf(
+            DealStage.CONTACTED,
+            DealStage.DEMO_SCHEDULED,
+            DealStage.DEMO_DONE,
+            DealStage.PROPOSAL_SENT,
+            DealStage.NEGOTIATION,
+            DealStage.WON
+        )
+
+        for (stage in stages) {
+            dealService.changeDealStage(deal.id, ChangeStageCommand(newStage = stage))
+        }
+
+        assertEquals(DealStage.WON, deal.stage)
+        // Each transition creates a STATUS_CHANGE activity
+        verify(dealActivityRepository, org.mockito.kotlin.times(stages.size)).save(any<DealActivity>())
+    }
+
+    // ============================================
+    // Helpers
+    // ============================================
+
+    private fun createTestDeal(stage: DealStage = DealStage.LEAD): Deal {
+        val deal = Deal.create(
+            facilityName = "Test Gym",
+            source = DealSource.WEBSITE,
+            contactName = "John Doe",
+            contactEmail = "john@example.com",
+            assignedTo = testUser,
+            estimatedValue = BigDecimal("10000")
+        )
+        when (stage) {
+            DealStage.CONTACTED -> deal.changeStage(DealStage.CONTACTED)
+            DealStage.DEMO_SCHEDULED -> { deal.changeStage(DealStage.CONTACTED); deal.changeStage(DealStage.DEMO_SCHEDULED) }
+            DealStage.DEMO_DONE -> { deal.changeStage(DealStage.CONTACTED); deal.changeStage(DealStage.DEMO_SCHEDULED); deal.changeStage(DealStage.DEMO_DONE) }
+            DealStage.PROPOSAL_SENT -> { deal.changeStage(DealStage.CONTACTED); deal.changeStage(DealStage.DEMO_SCHEDULED); deal.changeStage(DealStage.DEMO_DONE); deal.changeStage(DealStage.PROPOSAL_SENT) }
+            DealStage.NEGOTIATION -> { deal.changeStage(DealStage.CONTACTED); deal.changeStage(DealStage.DEMO_SCHEDULED); deal.changeStage(DealStage.DEMO_DONE); deal.changeStage(DealStage.PROPOSAL_SENT); deal.changeStage(DealStage.NEGOTIATION) }
+            DealStage.WON -> { deal.changeStage(DealStage.CONTACTED); deal.changeStage(DealStage.DEMO_SCHEDULED); deal.changeStage(DealStage.DEMO_DONE); deal.changeStage(DealStage.PROPOSAL_SENT); deal.changeStage(DealStage.NEGOTIATION); deal.changeStage(DealStage.WON) }
+            DealStage.LOST -> { deal.changeStage(DealStage.LOST) }
+            DealStage.CHURNED -> { deal.changeStage(DealStage.CONTACTED); deal.changeStage(DealStage.DEMO_SCHEDULED); deal.changeStage(DealStage.DEMO_DONE); deal.changeStage(DealStage.PROPOSAL_SENT); deal.changeStage(DealStage.NEGOTIATION); deal.changeStage(DealStage.WON); deal.changeStage(DealStage.CHURNED) }
             else -> {} // LEAD is default
         }
+        return deal
     }
 }

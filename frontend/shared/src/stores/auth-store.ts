@@ -516,6 +516,9 @@ export const useAuthStore = create<AuthState>()(
         // Persist user data and auth state
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        // Persist passwordless login state to survive page reloads
+        passwordlessEmail: state.passwordlessEmail,
+        codeExpiresAt: state.codeExpiresAt,
       }),
       onRehydrateStorage: () => (state) => {
         // Called when hydration is complete

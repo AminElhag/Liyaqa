@@ -1,6 +1,9 @@
 package com.liyaqa.config
 
 import com.liyaqa.auth.infrastructure.security.JwtAuthenticationFilter
+import com.liyaqa.platform.access.filter.ApiKeyAuthenticationFilter
+import com.liyaqa.platform.access.filter.ImpersonationAuditFilter
+import com.liyaqa.platform.monitoring.service.ErrorTrackingFilter
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -22,8 +25,13 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @EnableMethodSecurity(prePostEnabled = true)
 class SecurityConfig(
     private val jwtAuthenticationFilter: JwtAuthenticationFilter,
+    private val apiKeyAuthenticationFilter: ApiKeyAuthenticationFilter,
     private val cookieAuthenticationFilter: CookieAuthenticationFilter,
     private val csrfValidationFilter: CsrfValidationFilter,
+    private val rateLimitFilter: RateLimitFilter,
+    private val scopeIsolationFilter: ScopeIsolationFilter,
+    private val impersonationAuditFilter: ImpersonationAuditFilter,
+    private val errorTrackingFilter: ErrorTrackingFilter,
     @param:Value("\${liyaqa.security.hsts-enabled:false}")
     private val hstsEnabled: Boolean,
     @param:Value("\${liyaqa.security.hsts-max-age-seconds:31536000}")
@@ -71,7 +79,8 @@ class SecurityConfig(
             "X-Auth-Mode",
             "Accept",
             "Accept-Language",
-            "Cache-Control"
+            "Cache-Control",
+            "X-API-Key"
         )
         configuration.exposedHeaders = listOf(
             "X-RateLimit-Limit",
@@ -129,10 +138,18 @@ class SecurityConfig(
                     .requestMatchers("/api/platform/auth/refresh").permitAll()
                     .requestMatchers("/api/platform/auth/send-code").permitAll()
                     .requestMatchers("/api/platform/auth/verify-code").permitAll()
+                    // Versioned platform auth endpoints
+                    .requestMatchers("/api/v1/platform/auth/login").permitAll()
+                    .requestMatchers("/api/v1/platform/auth/refresh").permitAll()
+                    .requestMatchers("/api/v1/platform/auth/send-code").permitAll()
+                    .requestMatchers("/api/v1/platform/auth/verify-code").permitAll()
+                    // Team invite/reset public endpoints
+                    .requestMatchers("/api/v1/platform/auth/accept-invite").permitAll()
+                    .requestMatchers("/api/v1/platform/auth/reset-password-token").permitAll()
 
-                    // Platform API endpoints - require authentication with platform roles
-                    // Role-based access is enforced via @PreAuthorize at method level
+                    // Platform API endpoints - require authentication with platform scope
                     .requestMatchers("/api/platform/**").authenticated()
+                    .requestMatchers("/api/v1/platform/**").authenticated()
 
                     // Payment endpoints - callback is webhook, return is redirect from PayTabs
                     .requestMatchers("/api/payments/callback").permitAll()
@@ -147,13 +164,23 @@ class SecurityConfig(
                     // All other requests require authentication
                     .anyRequest().authenticated()
             }
-            // Add authentication filters
-            // 1. Cookie auth filter (reads JWT from cookie)
-            // 2. CSRF validation filter (validates CSRF token for cookie auth)
-            // 3. JWT auth filter (reads JWT from Authorization header)
+            // Add filters in order
+            // 1. Rate limit filter (check rate limits FIRST before any auth processing)
+            // 2. API key filter (checks X-API-Key header before JWT)
+            // 3. Cookie auth filter (reads JWT from cookie)
+            // 4. CSRF validation filter (validates CSRF token for cookie auth)
+            // 5. JWT auth filter (reads JWT from Authorization header)
+            .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter::class.java)
+            .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
             .addFilterBefore(cookieAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
-            .addFilterAfter(csrfValidationFilter, CookieAuthenticationFilter::class.java)
+            .addFilterBefore(csrfValidationFilter, UsernamePasswordAuthenticationFilter::class.java)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
+            // 6. Scope isolation filter (enforces platform/facility boundary AFTER authentication)
+            .addFilterAfter(scopeIsolationFilter, JwtAuthenticationFilter::class.java)
+            // 7. Impersonation audit filter (enforces read-only + logs actions AFTER scope isolation)
+            .addFilterAfter(impersonationAuditFilter, ScopeIsolationFilter::class.java)
+            // 8. Error tracking filter (records 4xx/5xx responses for monitoring)
+            .addFilterAfter(errorTrackingFilter, ImpersonationAuditFilter::class.java)
             // Security headers
             .headers { headers ->
                 // X-Frame-Options: SAMEORIGIN (prevents clickjacking)

@@ -26,4 +26,5 @@ interface UserRepository {
     fun deleteById(id: UUID)
     fun count(): Long
     fun findByOAuthProviderAndProviderId(oauthProvider: String, oauthProviderId: String): User?
+    fun findFirstByTenantIdAndRoleIn(tenantId: UUID, roles: List<Role>): Optional<User>
 }

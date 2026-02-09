@@ -11,7 +11,6 @@ import { Loading } from "@liyaqa/shared/components/ui/spinner";
 import { ConvertDealWizard } from "@liyaqa/shared/components/platform/convert-deal-wizard";
 import { useDeal, useConvertDeal } from "@liyaqa/shared/queries/platform/use-deals";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
-import { getLocalizedText } from "@liyaqa/shared/utils";
 import { parseApiError, getLocalizedErrorMessage } from "@liyaqa/shared/lib/api/client";
 import type { ConvertDealRequest, DealConversionResult } from "@liyaqa/shared/types/platform/deal";
 
@@ -69,8 +68,8 @@ export default function ConvertDealPage() {
                 <CheckCircle className="h-4 w-4 text-green-500" />
                 <span>
                   {locale === "ar"
-                    ? `تم إنشاء: ${getLocalizedText(result.organizationName, locale)}`
-                    : `Created: ${getLocalizedText(result.organizationName, locale)}`}
+                    ? `تم إنشاء: ${result.organizationName}`
+                    : `Created: ${result.organizationName}`}
                 </span>
               </div>
             ),
@@ -150,7 +149,7 @@ export default function ConvertDealPage() {
         <div>
           <h1 className="text-2xl font-bold">{texts.title}</h1>
           <p className="text-muted-foreground">
-            {getLocalizedText(deal.title, locale)}
+            {deal.facilityName || deal.contactName}
           </p>
         </div>
       </div>

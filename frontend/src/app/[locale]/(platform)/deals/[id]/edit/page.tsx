@@ -11,7 +11,7 @@ import { Loading } from "@/components/ui/spinner";
 import { DealForm, type DealFormData } from "@/components/forms/deal-form";
 import { useDeal, useUpdateDeal } from "@/queries/platform/use-deals";
 import { useAuthStore } from "@/stores/auth-store";
-import { getLocalizedText } from "@/lib/utils";
+import { OPEN_STAGES } from "@/types/platform/deal";
 
 export default function EditDealPage() {
   const params = useParams();
@@ -54,20 +54,13 @@ export default function EditDealPage() {
       {
         id: dealId,
         data: {
-          titleEn: data.titleEn,
-          titleAr: data.titleAr || undefined,
-          source: data.source,
+          facilityName: data.facilityName || undefined,
           contactName: data.contactName,
           contactEmail: data.contactEmail,
           contactPhone: data.contactPhone || undefined,
-          companyName: data.companyName || undefined,
-          estimatedValueAmount: data.estimatedValueAmount,
-          estimatedValueCurrency: data.estimatedValueCurrency,
-          probability: data.probability,
+          notes: data.notes || undefined,
+          estimatedValue: data.estimatedValue,
           expectedCloseDate: data.expectedCloseDate || undefined,
-          interestedPlanId: data.interestedPlanId || undefined,
-          notesEn: data.notesEn || undefined,
-          notesAr: data.notesAr || undefined,
         },
       },
       {
@@ -101,7 +94,7 @@ export default function EditDealPage() {
   }
 
   // Cannot edit closed deals
-  if (!deal.isOpen) {
+  if (!OPEN_STAGES.includes(deal.status)) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
@@ -135,7 +128,7 @@ export default function EditDealPage() {
         <div>
           <h1 className="text-2xl font-bold">{texts.title}</h1>
           <p className="text-muted-foreground">
-            {getLocalizedText(deal.title, locale)}
+            {deal.facilityName || deal.contactName}
           </p>
         </div>
       </div>

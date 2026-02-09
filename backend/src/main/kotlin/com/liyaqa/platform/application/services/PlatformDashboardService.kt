@@ -15,12 +15,13 @@ import com.liyaqa.platform.api.dto.RecentActivityResponse
 import com.liyaqa.platform.api.dto.TopClientResponse
 import com.liyaqa.platform.domain.model.ClientInvoiceStatus
 import com.liyaqa.platform.domain.model.ClientSubscriptionStatus
-import com.liyaqa.platform.domain.model.DealStatus
+import com.liyaqa.platform.domain.model.DealStage
 import com.liyaqa.platform.domain.ports.ClientInvoiceRepository
 import com.liyaqa.platform.domain.ports.ClientPlanRepository
 import com.liyaqa.platform.domain.ports.ClientSubscriptionRepository
 import com.liyaqa.platform.domain.ports.DealRepository
 import com.liyaqa.shared.infrastructure.audit.AuditLogRepository
+import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -54,6 +55,7 @@ class PlatformDashboardService(
 ) {
     companion object {
         private const val DEFAULT_CURRENCY = "SAR"
+        private val logger = LoggerFactory.getLogger(PlatformDashboardService::class.java)
     }
 
     /**
@@ -74,14 +76,82 @@ class PlatformDashboardService(
         startDate: String? = null,
         endDate: String? = null
     ): PlatformDashboardResponse {
+        val summary = try {
+            getSummary()
+        } catch (e: Exception) {
+            logger.error("Dashboard: getSummary failed", e)
+            PlatformSummaryResponse(
+                totalClients = 0, activeClients = 0, pendingClients = 0, suspendedClients = 0,
+                totalSubscriptions = 0, activeSubscriptions = 0, trialSubscriptions = 0, expiringSubscriptions = 0,
+                totalDeals = 0, openDeals = 0, wonDealsThisMonth = 0, lostDealsThisMonth = 0,
+                totalInvoices = 0, unpaidInvoices = 0, overdueInvoices = 0
+            )
+        }
+
+        val revenue = try {
+            getRevenue(timezone, startDate, endDate)
+        } catch (e: Exception) {
+            logger.error("Dashboard: getRevenue failed", e)
+            PlatformRevenueResponse(
+                totalRevenue = BigDecimal.ZERO, revenueThisMonth = BigDecimal.ZERO,
+                revenueLastMonth = BigDecimal.ZERO, revenueThisYear = BigDecimal.ZERO,
+                monthlyRecurringRevenue = BigDecimal.ZERO, averageRevenuePerClient = BigDecimal.ZERO,
+                outstandingAmount = BigDecimal.ZERO, overdueAmount = BigDecimal.ZERO,
+                collectionRate = BigDecimal.ZERO, currency = DEFAULT_CURRENCY
+            )
+        }
+
+        val growth = try {
+            getClientGrowth()
+        } catch (e: Exception) {
+            logger.error("Dashboard: getClientGrowth failed", e)
+            ClientGrowthResponse(
+                newClientsThisMonth = 0, newClientsLastMonth = 0,
+                churnedClientsThisMonth = 0, netGrowthThisMonth = 0,
+                growthRate = BigDecimal.ZERO
+            )
+        }
+
+        val dealPipeline = try {
+            getDealPipeline()
+        } catch (e: Exception) {
+            logger.error("Dashboard: getDealPipeline failed", e)
+            DealPipelineOverviewResponse(
+                counts = emptyMap(),
+                totalValue = BigDecimal.ZERO,
+                currency = DEFAULT_CURRENCY
+            )
+        }
+
+        val expiringSubscriptions = try {
+            getExpiringSubscriptions(30)
+        } catch (e: Exception) {
+            logger.error("Dashboard: getExpiringSubscriptions failed", e)
+            emptyList()
+        }
+
+        val topClients = try {
+            getTopClients(5)
+        } catch (e: Exception) {
+            logger.error("Dashboard: getTopClients failed", e)
+            emptyList()
+        }
+
+        val recentActivity = try {
+            getRecentActivity(10)
+        } catch (e: Exception) {
+            logger.error("Dashboard: getRecentActivity failed", e)
+            emptyList()
+        }
+
         return PlatformDashboardResponse(
-            summary = getSummary(),
-            revenue = getRevenue(timezone, startDate, endDate),
-            growth = getClientGrowth(),
-            dealPipeline = getDealPipeline(),
-            expiringSubscriptions = getExpiringSubscriptions(30),
-            topClients = getTopClients(5),
-            recentActivity = getRecentActivity(10)
+            summary = summary,
+            revenue = revenue,
+            growth = growth,
+            dealPipeline = dealPipeline,
+            expiringSubscriptions = expiringSubscriptions,
+            topClients = topClients,
+            recentActivity = recentActivity
         )
     }
 
@@ -117,12 +187,12 @@ class PlatformDashboardService(
         // Deal counts
         val totalDeals = dealRepository.count()
         val openDeals = dealRepository.getOpenDeals(Pageable.unpaged()).totalElements
-        val wonDealsThisMonth = dealRepository.countByStatusAndCreatedAfter(
-            DealStatus.WON,
+        val wonDealsThisMonth = dealRepository.countByStageAndCreatedAfter(
+            DealStage.WON,
             monthStart.atStartOfDay().toInstant(ZoneOffset.UTC)
         )
-        val lostDealsThisMonth = dealRepository.countByStatusAndCreatedAfter(
-            DealStatus.LOST,
+        val lostDealsThisMonth = dealRepository.countByStageAndCreatedAfter(
+            DealStage.LOST,
             monthStart.atStartOfDay().toInstant(ZoneOffset.UTC)
         )
 
@@ -337,15 +407,13 @@ class PlatformDashboardService(
         cacheManager = "platformDashboardCacheManager"
     )
     fun getDealPipeline(): DealPipelineOverviewResponse {
-        val stats = dealRepository.getDealStats()
+        val counts = dealRepository.countByStageGrouped()
+        val openDeals = dealRepository.findOpen(Pageable.unpaged()).content
+        val totalValue = openDeals.sumOf { it.estimatedValue }
 
         return DealPipelineOverviewResponse(
-            leads = stats.leads,
-            qualified = stats.qualified,
-            proposal = stats.proposal,
-            negotiation = stats.negotiation,
-            totalValue = stats.totalValue,
-            weightedValue = stats.weightedValue,
+            counts = counts,
+            totalValue = totalValue,
             currency = DEFAULT_CURRENCY
         )
     }

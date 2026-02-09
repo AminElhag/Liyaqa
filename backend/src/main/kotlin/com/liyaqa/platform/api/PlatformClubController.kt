@@ -22,7 +22,8 @@ import jakarta.validation.Valid
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
+import com.liyaqa.platform.domain.model.PlatformUserRole
+import com.liyaqa.platform.infrastructure.security.PlatformSecured
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -56,7 +57,7 @@ import java.util.UUID
 @RestController
 @RequestMapping("/api/platform/clubs")
 @Tag(name = "Platform Club Management", description = "Platform admin endpoints for club troubleshooting")
-@PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SALES_REP', 'SUPPORT_REP')")
+@PlatformSecured
 class PlatformClubController(
     private val platformClubService: PlatformClubService
 ) {
@@ -81,7 +82,7 @@ class PlatformClubController(
      * Only PLATFORM_ADMIN can update clubs.
      */
     @PutMapping("/{clubId}")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     @Operation(summary = "Update club", description = "Update club name and description (admin only)")
     fun updateClub(
         @PathVariable clubId: UUID,
@@ -97,7 +98,7 @@ class PlatformClubController(
      * Only PLATFORM_ADMIN can activate clubs.
      */
     @PostMapping("/{clubId}/activate")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     @Operation(summary = "Activate club", description = "Activate a suspended club (admin only)")
     fun activateClub(@PathVariable clubId: UUID): ResponseEntity<PlatformClubDetailResponse> {
         val club = platformClubService.activateClub(clubId)
@@ -110,7 +111,7 @@ class PlatformClubController(
      * Only PLATFORM_ADMIN can suspend clubs.
      */
     @PostMapping("/{clubId}/suspend")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     @Operation(summary = "Suspend club", description = "Suspend an active club (admin only)")
     fun suspendClub(@PathVariable clubId: UUID): ResponseEntity<PlatformClubDetailResponse> {
         val club = platformClubService.suspendClub(clubId)
@@ -170,7 +171,7 @@ class PlatformClubController(
      * Only PLATFORM_ADMIN can reset passwords.
      */
     @PostMapping("/{clubId}/users/{userId}/reset-password")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
     @Operation(summary = "Reset user password", description = "Reset password for a user in the club (admin action)")
     fun resetUserPassword(
         @PathVariable clubId: UUID,

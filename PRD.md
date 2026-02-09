@@ -1,997 +1,991 @@
-# Liyaqa Product Requirements Document
+# Liyaqa Platform Dashboard — Frontend
 
-## Executive Summary
+## Overview
 
-Liyaqa is a comprehensive Gym & Fitness Club Management SaaS Platform designed specifically for the Saudi Arabian market. This PRD outlines the feature roadmap based on competitive analysis against Perfect Gym and other market leaders, prioritized by business impact and implementation complexity.
+Build a world-class Platform Dashboard frontend for Liyaqa, a multi-tenant SaaS platform for sports facility management targeting the Saudi Arabian market. The platform dashboard is the B2B "god view" used by the Liyaqa internal team to manage all facilities, subscriptions, support, and operations.
 
----
+**Tech Stack:** React 18 + TypeScript · Vite · TailwindCSS v4 · Shadcn/UI (new-york style) · Framer Motion · TanStack React Query + React Table · React Router v6 · Zustand · Recharts · React Hook Form + Zod · i18next (AR/EN) · Lucide React · @dnd-kit (drag-and-drop)
 
-## Competitive Analysis Summary
+**Design Direction:** Premium enterprise SaaS — Linear meets Stripe Dashboard. Deep navy (#0A1628) primary, warm amber (#F59E0B) accent. Arabic-first with full RTL. Dark/light mode. No generic AI aesthetics.
 
-### Liyaqa vs Perfect Gym
+**API Base URL:** `http://localhost:8080/api/v1/platform`
 
-| Dimension | Liyaqa | Perfect Gym |
-|-----------|--------|-------------|
-| **Target Market** | Saudi Arabia / GCC | Global (52+ countries) |
-| **Pricing** | TBD | EUR 129/month + onboarding |
-| **Tech Stack** | Spring Boot 4/Kotlin + Next.js 15 | Legacy stack |
-| **Architecture** | Modern multi-tenant SaaS | Cloud-based |
+## Quality Gates
 
-### Where Liyaqa Wins (Competitive Advantages)
+These commands must pass for every user story:
 
-| Feature | Business Value |
-|---------|----------------|
-| **Saudi Payment Integrations** (STC Pay, SADAD, Tamara, Mada) | 70%+ smartphone wallet penetration |
-| **ZATCA E-Invoicing Compliance** | Legal requirement in Saudi Arabia |
-| **Prayer Time Integration** (Umm Al-Qura calendar) | Cultural compliance, required in many Saudi gyms |
-| **Gender-Based Access Control** | Saudi regulatory requirement |
-| **Hijri Calendar Support** | Saudi official calendar |
-| **Full Arabic/RTL Support** | Native Arabic experience |
-| **WhatsApp Business Integration** | 95%+ WhatsApp usage in Saudi |
-| **Multi-tenant B2B Platform** | Platform business model support |
+- `npm run typecheck` — TypeScript type checking
+- `npm run lint` — ESLint linting
+- `npm run build` — Production build succeeds with no errors
 
-### Feature Gaps (What Perfect Gym Has That We Need)
+For UI stories, also include:
 
-| Category | Gap | Impact |
-|----------|-----|--------|
-| **Mobile** | No native member/staff apps | High - Member engagement |
-| **Sales** | No CRM or lead management | High - Sales conversion |
-| **Marketing** | No automation or campaigns | High - Retention |
-| **Analytics** | No ML-powered insights | Medium-High |
-| **Self-Service** | Limited member portal | Medium-High |
-| **Integrations** | No webhooks for partners | Medium |
-| **Hardware** | No turnstile/biometric support | Medium |
+- Verify in browser that the component renders correctly
+- Verify RTL layout when switching to Arabic
+- Verify dark mode renders correctly
+
+## User Stories
 
 ---
 
-## Feature Roadmap
+### US-001: Scaffold Vite + React + TypeScript project
 
-### Tier 1: Critical Features (Next 6 Months)
+**As a** developer
+**I want** a properly scaffolded project with all dependencies installed
+**So that** I have a working foundation to build on
 
-#### 1. Member Mobile App (Kotlin Multiplatform)
-**Priority:** P0 | **Effort:** 3-4 months | **ROI:** 9.5/10
+#### Acceptance Criteria
 
-**Description:**
-Native mobile application for gym members to manage their fitness journey on-the-go.
-
-**Core Features:**
-- [x] Class booking with real-time availability
-- [x] QR code for gym check-in
-- [x] Class schedule view with calendar integration
-- [x] Push notifications for bookings, reminders, promotions
-- [x] Payment for memberships and packages
-- [x] View membership status and expiry
-- [x] Profile management
-- [x] Trainer availability and PT booking
-- [x] Attendance history
-- [x] Prayer time display (Umm Al-Qura)
-
-**Bonus Features Implemented:**
-- [x] Invoice management (view, filter, pay)
-- [x] Wallet/balance management with transaction history
-- [x] Dashboard/home screen with member summary
-- [x] Deep link navigation from push notifications
-- [x] Bilingual support (English/Arabic)
-- [x] RTL layout support
-
-**Technical Requirements:**
-- Kotlin Multiplatform (KMP) with Compose Multiplatform for cross-platform (iOS/Android)
-- Shared business logic in Kotlin common module
-- Native UI with Compose Multiplatform (Material 3)
-- Integration with existing REST API via Ktor client
-- FCM/APNs for push notifications
-- Arabic/English with RTL support (Compose handles RTL natively)
-- Offline capability using SQLDelight for local storage
-- Kotlin Coroutines for async operations
-
-**Success Metrics:**
-- 50% member app adoption within 6 months
-- 30% reduction in reception workload
-- 20% increase in class booking rates
+- [ ] Vite + React 18 + TypeScript project created at project root
+- [ ] All dependencies installed: tailwindcss @tailwindcss/vite, framer-motion, @tanstack/react-query, @tanstack/react-table, react-router-dom@6, zustand, recharts, react-hook-form, @hookform/resolvers, zod, i18next, react-i18next, lucide-react, date-fns, axios, clsx, tailwind-merge, @dnd-kit/core, @dnd-kit/sortable
+- [ ] Shadcn/UI initialized with "new-york" style, slate base color, CSS variables enabled
+- [ ] Path alias `@` mapped to `src/` in tsconfig and vite config
+- [ ] TailwindCSS v4 configured with @tailwindcss/vite plugin
+- [ ] `.env` file with `VITE_API_BASE_URL=http://localhost:8080/api/v1/platform`
+- [ ] `npm run build` completes without errors
 
 ---
 
-#### 2. CRM & Lead Management
-**Priority:** P0 | **Effort:** 2-3 months | **ROI:** 9/10
+### US-002: Create project folder structure
 
-**Description:**
-Complete sales pipeline management for converting prospects into members.
+**As a** developer
+**I want** a well-organized folder structure
+**So that** all feature modules have a clear home
 
-**Core Features:**
-- [x] Lead capture forms (embeddable, standalone)
-- [x] Lead pipeline with customizable stages (New > Contacted > Tour Scheduled > Trial > Negotiation > Won/Lost)
-- [x] Lead scoring based on engagement (backend + frontend rules management)
-- [x] Lead assignment rules (round-robin, location-based, source-based) (backend + frontend rules management)
-- [x] Activity logging (calls, emails, meetings, notes)
-- [x] Follow-up task scheduling with reminders
-- [x] Lead source tracking (referral, walk-in, social, ads)
-- [x] Campaign attribution for marketing ROI
-- [x] Convert lead to member workflow
-- [x] Sales dashboard with conversion metrics
-- [x] Lost lead reasons tracking
+#### Acceptance Criteria
 
-**Technical Requirements:**
-- New Lead entity with full lifecycle
-- Integration with existing Member creation
-- Email integration for activity tracking
-- Notification service integration for reminders
-
-**Success Metrics:**
-- 25% improvement in lead-to-member conversion
-- 50% reduction in lead response time
-- Full visibility into sales pipeline
+- [ ] Folder structure created under `src/`:
+  - `api/` (client.ts, endpoints/, types/)
+  - `assets/fonts/`
+  - `components/` (ui/, layout/, data/, feedback/, forms/)
+  - `features/` (auth/, deals/, tenants/, subscriptions/, tickets/, access/, monitoring/, communication/, analytics/, config/, content/, compliance/)
+  - `hooks/`, `i18n/` (en/, ar/), `lib/`, `stores/`, `styles/`, `types/`
+- [ ] Each feature folder has sub-folders: pages/, components/, hooks/
+- [ ] Index barrel files created for components/ui, components/layout, components/data, components/feedback, components/forms
+- [ ] Typecheck passes
 
 ---
 
-#### 3. Marketing Automation (Basic)
-**Priority:** P0 | **Effort:** 2 months | **ROI:** 8.5/10
+### US-003: Design system — CSS variables, fonts, and theme
 
-**Description:**
-Automated communication workflows to improve member engagement and retention.
+**As a** developer
+**I want** a comprehensive design token system with CSS variables
+**So that** all components use consistent colors, fonts, spacing, and shadows
 
-**Core Features:**
-- [x] Welcome email sequence (Day 1, Day 3, Day 7)
-- [x] Membership expiry reminders (30 days, 7 days, 1 day)
-- [x] Win-back campaigns for expired members (7 days, 30 days, 90 days after expiry)
-- [x] Birthday automated messages
-- [x] Inactivity alerts (no visit in 14 days, 30 days)
-- [x] Class reminder notifications (24h, 1h before)
-- [x] Payment failure follow-ups
-- [x] Member segmentation by activity, plan, status
-- [x] A/B testing for message effectiveness
-- [x] Campaign analytics (open rates, click rates)
+#### Acceptance Criteria
 
-**Technical Requirements:**
-- Workflow engine for triggered campaigns
-- Scheduled job enhancement
-- Template system with variable substitution
-- Multi-channel delivery (Email, SMS, WhatsApp, Push)
-
-**Success Metrics:**
-- 15% improvement in member retention
-- 40% open rate on automated emails
-- Reduced manual outreach by 60%
+- [ ] `src/styles/theme.css` created with full CSS variable set for light mode:
+  - Background: bg-primary (#FAFBFC), bg-secondary (#F1F3F5), bg-tertiary (#FFFFFF), bg-elevated (#FFFFFF), bg-inverse (#0A1628)
+  - Text: text-primary (#0A1628), text-secondary (#4A5568), text-tertiary (#8B95A5), text-inverse (#FFFFFF), text-accent (#F59E0B)
+  - Brand: brand-primary (#0A1628), brand-accent (#F59E0B), brand-accent-hover (#D97706), brand-accent-subtle (#FEF3C7)
+  - Status: success (#10B981), warning (#F59E0B), error (#EF4444), info (#3B82F6)
+  - Shadows (sm, md, lg, glow), border-radius (sm 6px, md 8px, lg 12px, xl 16px), spacing scale (8px base)
+  - Transitions: fast 150ms, base 250ms, slow 400ms, spring 500ms (all cubic-bezier)
+- [ ] Dark mode variables in `[data-theme="dark"]` selector with dark navy palette
+- [ ] RTL selector `[dir="rtl"]` sets font-family to Arabic font
+- [ ] Google Fonts loaded: Plus Jakarta Sans (400,500,600,700), IBM Plex Sans Arabic (400,500,600,700), JetBrains Mono (400,500)
+- [ ] Tailwind theme extended to reference CSS variables
+- [ ] Typecheck passes
 
 ---
 
-#### 4. Member Self-Service Portal
-**Priority:** P0 | **Effort:** 2 months | **ROI:** 8.5/10
+### US-004: Theme provider with dark mode and direction support
 
-**Description:**
-Web-based portal for members to manage their membership independently.
+**As a** user
+**I want** to toggle between dark/light mode and Arabic/English
+**So that** I can use the dashboard in my preferred language and appearance
 
-**Core Features:**
-- [x] Secure member login (magic link or password)
-- [x] View active membership and benefits
-- [x] Class booking and cancellation
-- [x] Booking history and upcoming schedule
-- [x] PT session booking
-- [x] Invoice viewing and payment
-- [x] Payment method management
-- [x] Profile and password update
-- [x] Freeze request submission
-- [x] Document signing (agreements, waivers)
-- [x] Referral link generation
+#### Acceptance Criteria
 
-**Technical Requirements:**
-- Separate Next.js app or route group
-- Member authentication (not staff auth)
-- Integration with payment gateways
-- Mobile-responsive design
-
-**Success Metrics:**
-- 30% reduction in front desk workload
-- 60% of members using self-service
-- 20% increase in online renewals
+- [ ] `ThemeProvider` component created that wraps the app
+- [ ] Dark/light mode toggle sets `data-theme` attribute on `<html>` and persists to localStorage
+- [ ] `DirectionProvider` sets `dir="rtl"` or `dir="ltr"` on `<html>` synced with i18n language
+- [ ] i18next configured with `en` and `ar` namespaces, language detection from localStorage
+- [ ] Basic translation files created: `src/i18n/en/common.json` and `src/i18n/ar/common.json` with keys for navigation, common labels, and status names
+- [ ] `useTheme()` and `useDirection()` hooks exported
+- [ ] Typecheck passes
 
 ---
 
-#### 5. Webhook System
-**Priority:** P0 | **Effort:** 2-3 weeks | **ROI:** 8/10
+### US-005: Framer Motion animation presets
 
-**Description:**
-Event-driven webhook infrastructure for third-party integrations.
+**As a** developer
+**I want** reusable animation presets
+**So that** all pages and components use consistent, direction-aware motion
 
-**Core Features:**
-- [x] Webhook registration endpoint
-- [x] Event types: member.created, member.updated, subscription.created, subscription.expired, subscription.renewed, payment.completed, payment.failed, attendance.checkin, attendance.checkout, booking.created, booking.cancelled, invoice.created, invoice.paid
-- [x] Webhook delivery with retry logic (exponential backoff)
-- [x] Webhook signature verification (HMAC)
-- [x] Webhook logs and debugging UI
-- [x] Webhook testing (send test event)
-- [x] Rate limiting per webhook
+#### Acceptance Criteria
 
-**Technical Requirements:**
-- Async event publishing (Spring Events or Kafka)
-- Webhook entity with endpoint, secret, events
-- Delivery queue with retry logic
-- Signature generation for verification
-
-**Success Metrics:**
-- Enable 5+ partner integrations
-- 99.9% webhook delivery rate
-- Partner ecosystem growth
+- [ ] `src/lib/motion.ts` created with Framer Motion variant objects:
+  - `fadeIn`, `fadeInUp`, `fadeInDown`, `fadeInLeft`, `fadeInRight`
+  - `scaleIn` (for cards, from 0.95 to 1)
+  - `slideIn` (for panels)
+  - `staggerContainer` + `staggerItem` (50ms delay between children)
+  - `pageTransition` (200ms fade-in-up for route changes)
+- [ ] All presets respect `prefers-reduced-motion` media query
+- [ ] Direction-aware: `fadeInLeft` mirrors to `fadeInRight` in RTL (accepts `dir` parameter)
+- [ ] Typecheck passes
 
 ---
 
-### Tier 2: Important Features (6-12 Months)
+### US-006: Axios API client with auth interceptors
 
-#### 6. Referral Program Automation
-**Priority:** P1 | **Effort:** 3-4 weeks | **ROI:** 7.5/10
+**As a** developer
+**I want** a configured Axios instance with JWT interceptors
+**So that** all API calls are authenticated and errors handled consistently
 
-**Description:**
-Automated referral tracking and reward system.
+#### Acceptance Criteria
 
-**Core Features:**
-- [x] Unique referral links per member
-- [x] Referral tracking (clicks, signups, conversions)
-- [x] Configurable reward rules (free days, discount, wallet credit)
-- [x] Automatic reward distribution
-- [x] Referral leaderboard
-- [x] Member referral dashboard
-- [x] Referral program analytics
-
-**Success Metrics:**
-- 20% reduction in member acquisition cost
-- 10% of new members from referrals
+- [ ] `src/api/client.ts` exports configured Axios instance:
+  - Base URL from `VITE_API_BASE_URL` environment variable
+  - Request interceptor: attaches `Authorization: Bearer <token>` from Zustand auth store
+  - Response interceptor: 401 → redirect to `/login`, 403 → toast "Permission denied", network error → toast "Connection lost"
+  - Accept-Language header set from i18n current language
+- [ ] `src/stores/authStore.ts` Zustand store with: token, user, login(), logout(), isAuthenticated computed
+- [ ] Typecheck passes
 
 ---
 
-#### 7. Voucher & Promo Code System
-**Priority:** P1 | **Effort:** 2-3 weeks | **ROI:** 7.5/10
+### US-007: React Router setup with all routes and code splitting
 
-**Description:**
-Flexible promotional code system for marketing campaigns.
+**As a** developer
+**I want** all routes defined with lazy-loaded pages
+**So that** navigation works and bundles are code-split
 
-**Core Features:**
-- [x] Create single-use and multi-use codes
-- [x] Discount types: percentage, fixed amount, free trial
-- [x] Usage limits (total uses, per member)
-- [x] Expiration dates
-- [x] Applicable products/plans restrictions
-- [x] First-time member only option
-- [x] Gift card functionality (prepaid value)
-- [x] Voucher usage tracking and analytics
+#### Acceptance Criteria
 
-**Success Metrics:**
-- Marketing campaign flexibility
-- Track promotion ROI
-
----
-
-#### 8. Enhanced Reporting Suite ✅
-**Priority:** P1 | **Effort:** 1-2 months | **ROI:** 7/10
-
-**Description:**
-Comprehensive reporting and analytics dashboard.
-
-**Additional Reports:**
-- [x] Churn report (cancelled members, reasons)
-- [x] Revenue by plan, location, time period
-- [x] Class utilization and attendance trends
-- [x] Peak hours analysis
-- [x] Trainer performance metrics
-- [x] Payment collection efficiency
-- [x] Member lifetime value (LTV)
-- [x] Member acquisition funnel
-- [x] Retention cohort analysis
-- [x] Sales team performance
-- [x] Comparison across locations/clubs
-
-**Dashboard Enhancements:**
-- [x] Customizable dashboard widgets
-- [x] Saved report filters
-- [x] Scheduled report delivery (email)
-- [x] Export to PDF with branding
-
-**Success Metrics:**
-- 30+ actionable reports
-- Daily usage by management
+- [ ] `App.tsx` sets up React Router with nested routes inside `AppShell` layout
+- [ ] All routes defined with `React.lazy` + `Suspense`:
+  - `/login`, `/dashboard`, `/deals`, `/tenants`, `/tenants/:id`, `/tenants/:id/onboarding`
+  - `/subscriptions`, `/subscriptions/plans`, `/billing/invoices`
+  - `/tickets`, `/tickets/:id`
+  - `/monitoring/health`, `/monitoring/audit`, `/monitoring/system`
+  - `/announcements`, `/notifications`
+  - `/settings/team`, `/settings/api-keys`, `/settings/config`, `/settings/feature-flags`, `/settings/templates`
+  - `/compliance`, `/knowledge-base`, `/analytics`, `/design-system`
+- [ ] Each route renders a placeholder page component with the page title text
+- [ ] Protected route wrapper redirects to `/login` if not authenticated
+- [ ] Typecheck passes
 
 ---
 
-#### 9. Family & Corporate Accounts ✅
-**Priority:** P1 | **Effort:** 1 month | **ROI:** 7/10
+### US-008: Sidebar navigation component
 
-**Description:**
-Support for family memberships and corporate B2B accounts.
+**As a** platform user
+**I want** a collapsible sidebar with grouped navigation links
+**So that** I can navigate between all dashboard sections
 
-**Family Features:**
-- [x] Family group entity linking members
-- [x] Primary/secondary member designation
-- [x] Family discount application
-- [x] Shared benefits (guest passes)
-- [x] Family billing (single invoice)
+#### Acceptance Criteria
 
-**Corporate Features:**
-- [x] Corporate account entity
-- [x] Bulk member import for corporate
-- [x] Corporate billing (invoice to company)
-- [x] Corporate discounts
-- [x] Employee verification workflow
-- [x] Corporate usage reports
-
-**Success Metrics:**
-- Corporate sales channel enabled
-- Family membership uptake
-
----
-
-#### 10. Zone & Facility Booking ✅
-**Priority:** P1 | **Effort:** 1 month | **ROI:** 6.5/10
-
-**Description:**
-Booking system for specific areas, equipment, and facilities.
-
-**Core Features:**
-- [x] Zone/facility definitions (tennis court, swimming pool, sauna, studio)
-- [x] Time slot configuration
-- [x] Capacity per zone
-- [x] Zone booking by members
-- [x] Zone booking calendar view
-- [x] Membership-based access restrictions
-- [x] Zone booking fees
-- [x] Maintenance blocking
-
-**Success Metrics:**
-- Revenue from facility rentals
-- Better resource utilization
+- [ ] `src/components/layout/Sidebar.tsx` renders navigation grouped by sections:
+  - OVERVIEW: Dashboard
+  - SALES: Deal Pipeline
+  - TENANTS: All Facilities, Onboarding
+  - BILLING: Subscriptions, Plans & Pricing, Invoices
+  - SUPPORT: Tickets, Knowledge Base
+  - MONITORING: Facility Health, Audit Logs, System Status
+  - COMMUNICATION: Announcements, Notifications
+  - SETTINGS: Team, API Keys, Configuration, Feature Flags, Compliance
+- [ ] Each nav item has a Lucide icon + label
+- [ ] Active item: amber left border (right in RTL) + subtle amber bg tint
+- [ ] Hover: smooth background transition (150ms)
+- [ ] Section headers: uppercase, 11px, muted text, generous top margin
+- [ ] Collapse/expand toggle: 260px expanded, 72px collapsed with icons-only + tooltips
+- [ ] Collapse state persisted to localStorage
+- [ ] Smooth collapse/expand animation with Framer Motion (250ms)
+- [ ] Bottom section: user avatar + name + role badge, theme toggle, language toggle (AR/EN)
+- [ ] Liyaqa logo at top
+- [ ] Mobile (<768px): sidebar hidden, slide-over drawer triggered by hamburger button
+- [ ] Full RTL support: sidebar on right, borders flip
+- [ ] Verify in browser: navigation works, collapse animates, RTL flips correctly
+- [ ] Typecheck passes
 
 ---
 
-#### 11. Loyalty Points System ✅
-**Priority:** P1 | **Effort:** 1 month | **ROI:** 6.5/10
+### US-009: Header with breadcrumbs and global search trigger
 
-**Description:**
-Points-based rewards program for member engagement.
+**As a** platform user
+**I want** a header bar with breadcrumbs and quick access actions
+**So that** I know where I am and can quickly navigate
 
-**Core Features:**
-- [x] Points earning rules (check-in, class attendance, purchase, referral)
-- [x] Points balance per member
-- [x] Points history and transactions
-- [x] Rewards catalog (free class, discount, merchandise)
-- [x] Points redemption workflow
-- [x] Points expiration policy
-- [x] Tier system (Bronze, Silver, Gold, Platinum)
-- [x] Tier-based benefits
+#### Acceptance Criteria
 
-**Success Metrics:**
-- 10% retention improvement
-- Higher engagement frequency
+- [ ] `src/components/layout/Header.tsx` fixed at top of main content area
+- [ ] Breadcrumb trail auto-generated from current React Router route, with Arabic translations for each crumb
+- [ ] Dynamic segments (e.g., tenant ID) resolve to entity name when available
+- [ ] Global search trigger button: "Search... ⌘K" opens Command Palette
+- [ ] Notification bell icon with unread count badge (animated pulse on new notifications)
+- [ ] User menu dropdown: profile, preferences, logout
+- [ ] Typecheck passes
+- [ ] Verify in browser: breadcrumbs update on navigation
 
 ---
 
-#### 12. Staff Mobile App ✅
-**Priority:** P1 | **Effort:** 2 months | **ROI:** 6.5/10
+### US-010: Command Palette overlay (Cmd+K)
 
-**Description:**
-Mobile app for staff and trainers to manage operations.
+**As a** power user
+**I want** a command palette with fuzzy search
+**So that** I can quickly navigate to any page or action
 
-**Core Features:**
-- [x] Staff check-in for attendance
-- [x] View assigned classes and PT sessions
-- [x] Mark class attendance
-- [x] View member profiles and notes
-- [x] Add member notes
-- [x] Quick member check-in
-- [x] Trainer schedule management
-- [x] Task notifications
-- [x] Push notifications for assignments
+#### Acceptance Criteria
 
-**Technical Requirements:**
-- Kotlin Multiplatform with Compose Multiplatform (same stack as member app)
-- Shared modules with member app where applicable
-- Staff-specific UI components
-
-**Success Metrics:**
-- Trainer adoption
-- Operational efficiency
+- [ ] `src/components/layout/CommandPalette.tsx` opens on `Cmd+K` (or `Ctrl+K`)
+- [ ] Full-screen overlay with frosted glass backdrop and centered search modal
+- [ ] Fuzzy search across: navigation pages (with icons), recent tenants, recent tickets, quick actions
+- [ ] Results grouped by category with section headers
+- [ ] Keyboard navigation: arrow keys, Enter to select, Esc to close
+- [ ] Framer Motion entrance: backdrop fade + modal scale-in (250ms)
+- [ ] Selecting a result navigates and closes the palette
+- [ ] Typecheck passes
+- [ ] Verify in browser: Cmd+K opens, type to filter, arrow keys navigate, Enter selects
 
 ---
 
-### Tier 3: Nice to Have (12-24 Months)
+### US-011: AppShell layout with page transitions
 
-#### 13. Churn Prediction (Machine Learning) ✅
-**Priority:** P2 | **Effort:** 2-3 months | **ROI:** 6/10
+**As a** user
+**I want** smooth page transitions when navigating
+**So that** the app feels polished and responsive
 
-**Description:**
-ML-powered identification of at-risk members.
+#### Acceptance Criteria
 
-**Core Features:**
-- [x] Churn risk scoring (0-100)
-- [x] At-risk member list with reasons
-- [x] Intervention recommendations
-- [x] Automated campaigns for at-risk segments
-- [x] Model training on historical data
-- [x] Prediction accuracy monitoring
-
-**Technical Requirements:**
-- Data pipeline for ML features
-- Model training infrastructure (Python/scikit-learn)
-- Integration with automation engine
+- [ ] `src/components/layout/AppShell.tsx` composes: Sidebar (left, or right in RTL) + main content area (Header + page content)
+- [ ] `<Outlet />` wrapped in Framer Motion `AnimatePresence` for page transitions
+- [ ] Page enter: 200ms fade-in from bottom (translateY 8px → 0)
+- [ ] Page exit: 100ms fade-out
+- [ ] `document.title` updates on route change
+- [ ] Typecheck passes
+- [ ] Verify in browser: sidebar + header visible, page content transitions on navigation
 
 ---
 
-#### 14. Access Control Hardware Integration ✅
-**Priority:** P2 | **Effort:** 2-3 months | **ROI:** 5.5/10
+### US-012: StatCard and KPIGrid components
 
-**Description:**
-Integration with physical access control hardware.
+**As a** user
+**I want** metric cards that show KPIs with trend indicators
+**So that** I can quickly understand key numbers
 
-**Core Features:**
-- [x] Turnstile/speed gate API integration
-- [x] RFID card management
-- [x] Biometric enrollment (fingerprint, face)
-- [x] Access denied reason logging
-- [x] Time-based access rules
-- [x] Zone-based access rules
-- [x] Real-time occupancy tracking
-- [x] Partner hardware certification
+#### Acceptance Criteria
 
-**Hardware Partners to Target:**
-- Gunnebo
-- Boon Edam
-- Suprema (biometrics)
-
----
-
-#### 15. Self-Service Kiosk Mode ✅
-**Priority:** P2 | **Effort:** 1 month | **ROI:** 5.5/10
-
-**Description:**
-Kiosk interface for in-gym self-service.
-
-**Core Features:**
-- [x] Touch-friendly UI
-- [x] Member check-in via card/QR/phone
-- [x] Class booking
-- [x] Membership purchase
-- [x] Payment processing
-- [x] E-signature for agreements
-- [x] Receipt printing
-- [x] Idle timeout and reset
+- [ ] `src/components/data/StatCard.tsx` — Props: label, value, change (%), trend (up/down/neutral), icon, loading
+  - Large bold value (24px), small muted label above (12px)
+  - Trend arrow: green ↑ or red ↓ with percentage, neutral = gray dash
+  - Hover: lift shadow (translateY -2px) + shadow increase
+  - Loading: skeleton pulse animation matching card dimensions
+  - Entrance animation: fadeInUp with configurable stagger delay prop
+- [ ] `src/components/data/KPIGrid.tsx` — Props: items[], loading, columns (default 4)
+  - Responsive grid: 4 cols desktop, 2 tablet, 1 mobile
+  - Staggered entrance: each card 50ms delay
+- [ ] Both support dark mode and RTL
+- [ ] Typecheck passes
+- [ ] Verify in browser: cards render with mock data, animation plays, skeleton shows on loading=true
 
 ---
 
-#### 16. Sales Forecasting ✅
-**Priority:** P2 | **Effort:** 1-2 months | **ROI:** 5/10
+### US-013: DataTable component with TanStack Table
 
-**Description:**
-AI-powered revenue and membership predictions.
+**As a** user
+**I want** a full-featured data table with sorting, search, pagination, and selection
+**So that** I can efficiently browse and manage entity lists
 
-**Core Features:**
-- [x] Revenue forecast (30/60/90 days)
-- [x] Membership count predictions
-- [x] Seasonality analysis (weekly, monthly, quarterly, Ramadan, holidays)
-- [x] What-if scenario modeling
-- [x] Budget vs actual tracking
+#### Acceptance Criteria
 
----
-
-#### 17. Equipment Integration ✅
-**Priority:** P2 | **Effort:** 2-3 months | **ROI:** 4/10
-
-**Description:**
-Integration with gym equipment for workout tracking.
-
-**Target Equipment:**
-- TechnoGym
-- Precor
-- Life Fitness
-- Milon
-
-**Core Features:**
-- [x] Member workout sync
-- [x] Cardio session tracking
-- [x] Strength training logs
-- [x] Equipment usage analytics
-- [x] Provider configuration management
-- [x] OAuth token management for equipment APIs
-- [x] Equipment unit registration and status tracking
+- [ ] `src/components/data/DataTable.tsx` wraps TanStack Table. Props: columns, data, loading, pagination config, onRowClick, searchable, selectable, emptyState component
+  - Column sorting: click header toggles asc/desc, arrow indicator shown
+  - Built-in search bar with debounce (300ms) and clear button
+  - Row selection with checkboxes; selecting rows shows bulk actions toolbar sliding in from bottom
+  - Pagination footer: "Showing 1-10 of 234" + prev/next buttons + page size dropdown (10/25/50)
+  - Loading: shimmer skeleton rows matching column structure
+  - Empty state: centered with icon, title, description, action button
+  - Row hover: subtle background change
+  - Sticky header on vertical scroll
+  - Custom cell renderers support (for status badges, avatars, action menus)
+- [ ] Mobile (<768px): horizontal scroll with frozen first column
+- [ ] RTL: text alignment respects direction
+- [ ] Typecheck passes
+- [ ] Verify in browser: render with mock data, sort columns, search, paginate, select rows
 
 ---
 
-#### 18. Wearable Integration ✅
-**Priority:** P2 | **Effort:** 1-2 months | **ROI:** 4/10
+### US-014: StatusBadge, EmptyState, LoadingSkeleton, ConfirmDialog components
 
-**Description:**
-Sync with popular fitness wearables.
+**As a** developer
+**I want** shared feedback components
+**So that** status display, empty states, loading, and confirmations are consistent everywhere
 
-**Target Devices:**
-- Fitbit
-- Garmin
-- WHOOP
-- Oura Ring
-- Apple Watch (HealthKit)
-- Google Fit
+#### Acceptance Criteria
 
-**Core Features:**
-- [x] OAuth connection flow
-- [x] Activity data sync
-- [x] Step count and calories
-- [x] Heart rate data
-- [x] Sleep tracking
-- [x] Progress dashboard in app
-- [x] Mobile app integration (HealthKit/Google Fit SDK)
-- [x] Daily activity aggregation
-- [x] Workout sync from wearables
+- [ ] `StatusBadge.tsx` — Props: status (string), variant (dot/pill/outline), size (sm/md)
+  - Color map: ACTIVE=green, SUSPENDED=amber, DEACTIVATED=red, TRIAL=blue, PROVISIONING=purple (with pulse), ARCHIVED=gray
+  - Dot variant: small colored circle + text; Pill variant: colored bg + white text; Outline: colored border + text
+- [ ] `EmptyState.tsx` — Props: icon, title, description, action (button config)
+  - Centered layout, 64px muted icon, descriptive text, optional CTA button, fade-in animation
+- [ ] `LoadingSkeleton.tsx` — Props: variant (text/card/table/chart), rows, columns
+  - Smooth shimmer gradient sweep animation
+- [ ] `ConfirmDialog.tsx` — Props: title, description, confirmText, confirmVariant (danger/default), onConfirm, onCancel
+  - Framer Motion: backdrop fade + modal scale-in
+  - Danger variant: red confirm button
+  - Focus trap + Esc to close
+- [ ] All components support dark mode and RTL
+- [ ] Typecheck passes
 
 ---
 
-#### 19. White-Label Mobile Apps ✅
-**Priority:** P2 | **Effort:** 3-4 months | **ROI:** 4/10
+### US-015: Chart wrapper components with Recharts
 
-**Description:**
-Customizable branded mobile apps for enterprise clients.
+**As a** user
+**I want** beautiful, themed chart components
+**So that** data visualizations are consistent and readable
 
-**Core Features:**
-- [x] Custom colors (primary, secondary, accent with dark mode variants)
-- [x] Custom logo support (light/dark mode)
-- [x] Custom app name (English/Arabic)
-- [x] Feature toggles per tenant (classes, facilities, loyalty, wearables, payments)
-- [x] Admin settings page with live preview
-- [x] Dynamic theming via tenant branding API
+#### Acceptance Criteria
 
-**Technical Implementation:**
-- Backend: BrandingConfig entity with V60 migration, REST API endpoints
-- Frontend: Settings > Branding admin page with color pickers and phone preview
-- Mobile: DynamicLiyaqaTheme composable with BrandingTheme data class
-- API: Public /api/mobile/branding endpoint for mobile apps
-- Extends TenantInfo with branding fields for seamless integration
-
----
-
-#### 20. Security & Compliance Management ✅
-**Priority:** P2 | **Effort:** 3-6 months | **ROI:** 3.5/10
-
-**Description:**
-Comprehensive compliance management dashboard and tools for enterprise security certifications.
-
-**Compliance Frameworks:**
-- [x] ISO 27001 (Information Security) - Control tracking and evidence management
-- [x] SOC 2 Type II - Trust service criteria monitoring
-- [x] PCI DSS (Payment Card Industry) - Payment security compliance
-- [x] PDPL Compliance (Saudi Privacy Law) - Full Saudi data protection support
-
-**Core Features:**
-- [x] Compliance dashboard with framework scores and alerts
-- [x] Framework control tracking with status management (NOT_STARTED → IN_PROGRESS → IMPLEMENTED)
-- [x] Evidence management with file upload and verification
-- [x] Risk assessment module with 5x5 likelihood/impact matrix
-- [x] Policy management with workflow (DRAFT → REVIEW → APPROVED → PUBLISHED)
-- [x] Security events log with severity filtering
-
-**PDPL Data Protection Features:**
-- [x] Processing activities register (Article 7)
-- [x] Consent management with withdrawal tracking
-- [x] Data Subject Request (DSR) workflow with 30-day deadline tracking (Articles 15-23, 26)
-- [x] Breach register with 72-hour SDAIA notification tracking (Article 29)
-- [x] Cross-border transfer documentation
-
-**Technical Implementation:**
-- Backend: Compliance domain with full hexagonal architecture
-- Frontend: 14 pages, 6 UI components, 7 column files
-- Database: V61-V62 migrations with framework seeding
-- Bilingual: Full English/Arabic support throughout
-
-**Success Metrics:**
-- Enterprise customer readiness
-- Regulatory compliance automation
-- Audit trail for all compliance activities
+- [ ] `src/components/data/Chart.tsx` exports: AreaChartCard, BarChartCard, PieChartCard
+  - AreaChartCard: gradient fill under curve, smooth curves, responsive container
+  - BarChartCard: rounded corner bars (radius 4px), hover highlights active bar
+  - PieChartCard: donut style with center label, animated segment entrance
+  - All use theme CSS variable colors
+  - Custom tooltip component: frosted glass card style with formatted values
+  - Loading state: skeleton chart placeholder
+  - Responsive: auto-resize with ResponsiveContainer
+- [ ] Dark mode: chart colors adapt, grid lines use muted dark colors, tooltip bg inverts
+- [ ] Typecheck passes
+- [ ] Verify in browser: render each chart type with sample data
 
 ---
 
-#### 21. Agreement Management UI ✅
-**Priority:** P2 | **Effort:** 1-2 weeks | **ROI:** 5/10
+### US-016: Form components — SearchInput, DateRangePicker, FilterBar
 
-**Description:**
-Administrative UI for creating and managing membership agreements, liability waivers, and consent forms across both Club Admin and Platform Admin dashboards.
+**As a** user
+**I want** polished form components for filtering and searching
+**So that** I can efficiently find and filter data
 
-**Core Features:**
-- [x] Agreement template CRUD (create, read, update, delete)
-- [x] Bilingual content support (English/Arabic titles and content)
-- [x] Agreement types: LIABILITY_WAIVER, TERMS_CONDITIONS, HEALTH_DISCLOSURE, PRIVACY_POLICY, PHOTO_CONSENT, MARKETING_CONSENT, RULES_REGULATIONS, CUSTOM
-- [x] Mandatory flag for required agreements during registration
-- [x] Health questions flag for agreements requiring health disclosure
-- [x] Version control with automatic increment on content changes
-- [x] Activate/deactivate workflow
-- [x] Effective date scheduling
-- [x] Sort order for display sequence
+#### Acceptance Criteria
 
-**Club Admin Dashboard:**
-- [x] Settings > Agreements list page with DataTable
-- [x] Create new agreement page with form
-- [x] View/Edit agreement detail page
-- [x] Type-based color badges for quick identification
-- [x] Activate/deactivate actions with toast feedback
-
-**Platform Admin Dashboard:**
-- [x] Agreements tab in Club Details page (view-clubs/[id])
-- [x] Modal dialog for create/edit within tab
-- [x] Cross-tenant agreement management for platform admins
-- [x] Platform-specific API endpoints for club-scoped operations
-
-**Technical Implementation:**
-- Backend: PlatformAgreementController and PlatformAgreementService for cross-tenant access
-- Frontend: agreement-columns.tsx, agreement-form.tsx, ClubAgreementsTab, AgreementFormDialog
-- Extends existing AgreementController API for club admin usage
-- Full bilingual support with RTL-aware layouts
-
-**Success Metrics:**
-- Streamlined agreement creation workflow
-- Consistent agreement management across platform and club admin views
-- Reduced time to publish new agreements
+- [ ] `SearchInput.tsx` — Props: placeholder, value, onChange, onClear, loading, debounceMs (default 300)
+  - Search icon left, clear X button right (positions flip in RTL)
+  - Loading spinner replaces search icon when loading=true
+  - Built-in debounce
+- [ ] `DateRangePicker.tsx` — Props: value (start/end dates), onChange, presets
+  - Calendar popup with range selection (click start → click end)
+  - Preset buttons: Today, Last 7 days, Last 30 days, This month, This quarter, Custom
+  - Display formatted range as text in trigger button
+- [ ] `FilterBar.tsx` — Props: filters (array of {key, label, options}), activeFilters, onChange
+  - Horizontal row of dropdown filter buttons
+  - Active filters shown as removable chip badges below
+  - "Clear all" link when any filter is active
+  - Filter count badge on each dropdown
+- [ ] All support RTL and dark mode
+- [ ] Typecheck passes
 
 ---
 
-#### 22. Platform Operations & Client Success ✅
-**Priority:** P1 | **Effort:** 2-3 months | **ROI:** 8/10
+### US-017: Timeline component for activity logs
 
-**Description:**
-Complete B2B platform operations suite for managing client lifecycle from trial to expansion. Follows Ahmed's journey narrative - from discovering Liyaqa to becoming a successful multi-location gym owner.
+**As a** user
+**I want** a vertical timeline component
+**So that** I can see chronological activity for tenants, tickets, and audit logs
 
-**Onboarding & Trial Management:**
-- [x] Self-service signup flow with plan recommendation
-- [x] Public pricing page with Starter/Professional/Enterprise tiers
-- [x] Gamified onboarding checklist with points system (13 steps, 165 max points)
-- [x] Progress tracking with phase indicators (Getting Started → Core Setup → Operations → Complete)
-- [x] Feature unlocking based on progress (Marketing at 60pts, Reports at 90pts, API at 100%)
-- [x] Trial timeline automation (welcome → check-ins → reminders → conversion)
-- [x] Trial-to-paid conversion with special offers
+#### Acceptance Criteria
 
-**Client Health Scoring:**
-- [x] Automated health score calculation (0-100)
-- [x] Weighted components: Usage (40%), Engagement (25%), Payment (20%), Support (15%)
-- [x] Risk levels: LOW (80-100), MEDIUM (60-79), HIGH (40-59), CRITICAL (0-39)
-- [x] Health trend tracking (IMPROVING, STABLE, DECLINING)
-- [x] Detailed metrics: admin logins, member growth, check-ins, payment success rate
-
-**Proactive Alerts:**
-- [x] Usage limit warnings (80%, 90%, 95% thresholds)
-- [x] Churn risk alerts (health score < 50)
-- [x] Trial ending notifications
-- [x] Payment failure alerts
-- [x] Inactivity warnings
-- [x] Milestone achievements (onboarding, member count)
-- [x] Alert severity levels (INFO, WARNING, CRITICAL, SUCCESS)
-- [x] Acknowledge and resolve workflow
-
-**Usage Limit Enforcement:**
-- [x] Real-time usage tracking (members, staff, clubs, API calls)
-- [x] Soft limits with warnings at 80%, 90%, 95%
-- [x] Hard limit enforcement at 100% (block new creations)
-- [x] Grace period management (7 days to upgrade)
-- [x] Usage status dashboard component
-
-**Smart Dunning (Payment Recovery):**
-- [x] Configurable dunning sequences with notification steps
-- [x] Multi-channel outreach (Email, SMS, WhatsApp, Push, Phone)
-- [x] Automatic retry scheduling with exponential backoff
-- [x] Escalation to CSM for high-value clients
-- [x] Suspension and deactivation timeline
-- [x] Payment recovery tracking and analytics
-
-**Self-Service Support Portal:**
-- [x] Client-facing support center (tickets, help, contact)
-- [x] Ticket creation with category selection
-- [x] Ticket status tracking (OPEN, IN_PROGRESS, WAITING_ON_CLIENT, RESOLVED, CLOSED)
-- [x] Knowledge base with popular articles
-- [x] Multiple contact methods (email, phone, live chat)
-- [x] Full bilingual support (English/Arabic)
-
-**Technical Implementation:**
-- Backend: 5 domain models (OnboardingProgress, ClientHealthScore, ClientUsage, PlatformAlert, DunningSequence)
-- Backend: 5 application services, 5 repositories with JPA implementations
-- Database: V64-V68 migrations for all new tables
-- Frontend: Public layout, pricing page, signup wizard
-- Frontend: 4 dashboard components (health-overview, alert-center, usage-warnings, onboarding-checklist)
-- Frontend: Client support portal with tabs (tickets, help center, contact)
-
-**Success Metrics:**
-- Trial-to-paid conversion rate > 40%
-- Failed payment recovery > 80%
-- Average onboarding time < 7 days
-- Client health score average > 75
+- [ ] `src/components/data/Timeline.tsx` — Props: items[] ({timestamp, icon, title, description, type})
+  - Left: timestamp (small, muted), Right: content card with icon, title, description
+  - Connecting vertical line between items (1px, muted color)
+  - Different icon colors per event type (create=green, update=blue, delete=red, access=amber)
+  - Items animate in with stagger (fadeInUp, 50ms delay each)
+- [ ] RTL: timeline stays vertical, text alignment flips
+- [ ] Dark mode: line and card colors adapt
+- [ ] Typecheck passes
 
 ---
 
-#### 23. Platform Dashboard Redesign ✅
-**Priority:** P1 | **Effort:** 4-5 weeks | **ROI:** 8.5/10
+### US-018: Toast notification system
 
-**Description:**
-Complete redesign of the Platform Dashboard to create a comprehensive client lifecycle management experience. When Liyaqa's internal team opens the dashboard, they immediately understand where each client is in their journey, who needs attention, and what action to take next. Follows Ahmed's journey narrative from gym discovery to successful multi-location expansion.
+**As a** user
+**I want** toast notifications for success, error, warning, and info messages
+**So that** I get feedback on my actions
 
-**Client Lifecycle Funnel:**
-- [x] Visual funnel showing client distribution across stages
-- [x] Five lifecycle stages: Trial → Onboarding → Active → At-Risk → Churned
-- [x] Color-coded stage indicators (blue, amber, green, red, gray)
-- [x] Click-through navigation to filtered client list
-- [x] Real-time stage counts with trend indicators
+#### Acceptance Criteria
 
-**Onboarding Monitor:**
-- [x] Dashboard panel showing clients currently in onboarding
-- [x] Progress bars with percentage completion per client
-- [x] Days since start with stalled indicators (>7 days no activity)
-- [x] Quick actions: Send Reminder, Schedule Call
-- [x] Phase indicators (Getting Started, Core Setup, Operations)
-
-**Health Overview Component:**
-- [x] Health score distribution visualization (bar chart)
-- [x] Risk level breakdown: Healthy, Monitor, At-Risk, Critical
-- [x] At-risk client quick list with scores and trends
-- [x] Click-through to detailed health dashboard
-- [x] Average health score display
-
-**Alert Center:**
-- [x] Unified alert hub on dashboard
-- [x] Severity-based filtering (Critical, Warning, Info, Success)
-- [x] Unacknowledged alert badge counter
-- [x] Quick acknowledge and resolve actions
-- [x] Alert type icons and color coding
-- [x] Relative time display for alert age
-
-**Alert Playbook Dialog:**
-- [x] Recommended actions per alert type
-- [x] 9 alert types with tailored playbooks
-- [x] Severity indicator and impact description
-- [x] Primary and secondary action buttons
-- [x] Step-by-step resolution guidance
-
-**Dunning Status Widget:**
-- [x] Active payment recovery sequences display
-- [x] Timeline progress visualization per sequence
-- [x] Days since failure with severity coloring
-- [x] Quick actions: Retry Payment, Send Link, Escalate
-- [x] Recovery rate and revenue at risk statistics
-- [x] Escalated sequence highlighting
-
-**Health Trend Chart:**
-- [x] Line chart showing health score history
-- [x] 30/60/90 day view toggles
-- [x] Component breakdown (Usage, Engagement, Payment, Support)
-- [x] Trend indicators and annotations
-- [x] Recharts implementation with responsive design
-
-**Quick Action Menu:**
-- [x] Reusable dropdown for context-aware actions
-- [x] 6 context types: client, onboarding, at_risk, dunning, trial, support
-- [x] Grouped action categories with icons
-- [x] Confirmation dialogs for destructive actions
-
-**New Pages:**
-- [x] `/platform/health` - Full-page health management
-- [x] `/platform/alerts` - Alert management with bulk operations
-- [x] `/platform/dunning` - Dunning dashboard with recovery metrics
-- [x] `/clients/[id]/health` - Client health detail with history
-
-**Role-Based Dashboard Enhancements:**
-- [x] Admin Dashboard: Lifecycle funnel, onboarding monitor, health overview, alert center, dunning widget
-- [x] Sales Dashboard: Trial follow-up cards, conversion funnel, upsell opportunities
-- [x] Support Dashboard: Alert center integration, at-risk client list, dunning sequences
-
-**Backend API Endpoints:**
-- [x] `/api/platform/onboarding` - Onboarding management (statistics, active, stalled)
-- [x] `/api/platform/health` - Health scores (overview, at-risk, declining, history)
-- [x] `/api/platform/alerts` - Alert management (CRUD, acknowledge, resolve, bulk)
-- [x] `/api/platform/dunning` - Dunning operations (active, retry, escalate, recover)
-
-**Technical Implementation:**
-- Frontend: 6 new dashboard components with Framer Motion animations
-- Frontend: 4 new pages with comprehensive filtering and actions
-- Frontend: 4 API function files, 4 query hook files
-- Frontend: 3 type definition files for TypeScript safety
-- Backend: 4 new API controllers with full REST endpoints
-- Full RTL support with Arabic translations
-
-**Success Metrics:**
-- Trial-to-paid conversion rate > 40%
-- Average onboarding completion time < 7 days
-- Failed payment recovery rate > 80%
-- At-risk client identification time < 48 hours
-- CSM response to critical alerts < 4 hours
+- [ ] Toast system built with Framer Motion and Zustand store
+  - Variants: success (green border), error (red), warning (amber), info (blue)
+  - Position: bottom-right (bottom-left in RTL)
+  - Stack vertically, auto-dismiss after 5 seconds
+  - Hover pauses auto-dismiss timer
+  - Dismiss X button on each toast
+  - Entrance: slide from right + fade with spring (slide from left in RTL)
+  - Max 5 visible toasts, oldest dismissed when exceeded
+- [ ] `useToast()` hook exported: toast.success(msg), toast.error(msg), toast.warning(msg), toast.info(msg)
+- [ ] Typecheck passes
+- [ ] Verify in browser: trigger each toast type, verify auto-dismiss, verify stacking
 
 ---
 
-## Implementation Roadmap
+### US-019: Kanban deal pipeline page
 
-```
-Q1 2026: Foundation & Quick Wins ✅ COMPLETED
-+--------------------------------------------------+
-| Week 1-2:  Webhook System                    ✅  |
-| Week 3-5:  Referral Program Automation       ✅  |
-| Week 6-7:  Voucher & Promo Code System       ✅  |
-| Week 8-12: Member Self-Service Portal MVP    ✅  |
-+--------------------------------------------------+
+**As an** account manager
+**I want** a drag-and-drop Kanban board for the deal pipeline
+**So that** I can track and move deals through sales stages
 
-Q2 2026: Mobile & Engagement ✅ COMPLETED
-+--------------------------------------------------+
-| Week 1-12: Member Mobile App (KMP)           ✅  |
-|            - iOS + Android via Compose           |
-|            - Shared Kotlin business logic        |
-|            - Class booking, QR check-in          |
-|            - Push notifications                  |
-| Week 8-12: Marketing Automation (Basic)      ✅  |
-|            - Welcome sequences                   |
-|            - Expiry reminders                    |
-+--------------------------------------------------+
+#### Acceptance Criteria
 
-Q3 2026: Sales & Analytics ✅ COMPLETED
-+--------------------------------------------------+
-| Week 1-8:  CRM & Lead Management             ✅  |
-|            - Lead pipeline                       |
-|            - Lead scoring                        |
-|            - Activity tracking                   |
-| Week 4-10: Enhanced Reporting Suite          ✅  |
-|            - 30+ reports                         |
-|            - Dashboard customization             |
-| Week 8-12: Family & Corporate Accounts       ✅  |
-+--------------------------------------------------+
-
-Q4 2026: Advanced Features ✅ COMPLETED
-+--------------------------------------------------+
-| Week 1-4:  Zone & Facility Booking           ✅  |
-| Week 4-8:  Loyalty Points System             ✅  |
-| Week 8-16: Staff Mobile App                  ✅  |
-+--------------------------------------------------+
-
-Q1 2027: Intelligence & Hardware ✅ COMPLETED
-+--------------------------------------------------+
-| Churn Prediction (ML)                        ✅  |
-| Access Control Integration                   ✅  |
-| Self-Service Kiosk Mode                      ✅  |
-| Sales Forecasting                            ✅  |
-| Equipment Integration                        ✅  |
-| Wearable Integration                         ✅  |
-+--------------------------------------------------+
-
-Q2 2027: White-Label ✅ COMPLETED
-+--------------------------------------------------+
-| White-Label Mobile Apps                      ✅  |
-|   - Custom colors (primary/secondary/accent)     |
-|   - Custom logos (light/dark mode)               |
-|   - Custom app names (English/Arabic)            |
-|   - Feature toggles per tenant                   |
-|   - Admin branding settings with live preview    |
-|   - Dynamic theming in mobile apps               |
-+--------------------------------------------------+
-
-Q3 2027: Enterprise & Compliance ✅ COMPLETED
-+--------------------------------------------------+
-| Security & Compliance Management             ✅  |
-|   - Compliance dashboard with framework scores   |
-|   - ISO 27001, SOC 2, PCI DSS control tracking   |
-|   - Evidence management with verification        |
-|   - Risk assessment with 5x5 matrix              |
-|   - Policy workflow management                   |
-|   - Security events logging                      |
-|   - PDPL compliance (Articles 7, 15-23, 26, 29)  |
-|   - DSR workflow with 30-day tracking            |
-|   - Breach register with 72h SDAIA notification  |
-|   - Full bilingual support (English/Arabic)      |
-+--------------------------------------------------+
-| Agreement Management UI                      ✅  |
-|   - Club Admin: Settings > Agreements pages      |
-|   - Platform Admin: Agreements tab in Club View  |
-|   - Agreement CRUD with bilingual content        |
-|   - 8 agreement types with color badges          |
-|   - Version control and activate/deactivate      |
-|   - Health questions and mandatory flags         |
-+--------------------------------------------------+
-
-Q4 2027: Platform Operations ✅ COMPLETED
-+--------------------------------------------------+
-| Platform Operations & Client Success         ✅  |
-|   - Self-service signup with plan recommendation |
-|   - Public pricing page (Starter/Pro/Enterprise) |
-|   - Gamified onboarding checklist (13 steps)     |
-|   - Feature unlocking based on progress          |
-|   - Client health scoring (4 weighted factors)   |
-|   - Risk levels: LOW/MEDIUM/HIGH/CRITICAL        |
-|   - Proactive alerts with severity levels        |
-|   - Usage limit tracking and enforcement         |
-|   - Smart dunning for payment recovery           |
-|   - Multi-channel notification support           |
-|   - Self-service support portal                  |
-|   - Full bilingual support (English/Arabic)      |
-+--------------------------------------------------+
-
-Q1 2028: Dashboard Enhancement ✅ COMPLETED
-+--------------------------------------------------+
-| Platform Dashboard Redesign                  ✅  |
-|   - Client lifecycle funnel (5 stages)           |
-|   - Onboarding monitor with stalled detection    |
-|   - Health overview with at-risk highlighting    |
-|   - Alert center with playbook integration       |
-|   - Dunning status widget with quick actions     |
-|   - Health trend chart (30/60/90 day views)      |
-|   - Quick action menu (6 context types)          |
-|   - 4 new pages (health, alerts, dunning, detail)|
-|   - Role-based enhancements (Admin/Sales/Support)|
-|   - 4 backend API controllers                    |
-|   - Full RTL and Arabic support                  |
-+--------------------------------------------------+
-```
+- [ ] Page at `/deals` renders Kanban board with columns for each stage: LEAD, CONTACTED, DEMO_SCHEDULED, DEMO_DONE, PROPOSAL_SENT, NEGOTIATION, WON, LOST
+- [ ] Column headers show: stage name + deal count + total value formatted as SAR
+- [ ] Horizontal scroll when columns exceed viewport width
+- [ ] Deal cards show: facility name (bold), contact name (small), value in amber, source badge, assigned avatar, days-in-stage indicator
+- [ ] Drag-and-drop with @dnd-kit: dragging card lifts with shadow + slight rotation; drop zone column highlights with dashed border
+- [ ] Dropping card calls PUT /deals/{id}/stage with optimistic update; revert on error with shake animation
+- [ ] View toggle button: Kanban (default) / Table (DataTable with all deal fields)
+- [ ] "New Deal" amber button opens right slide-over panel with form (facilityName, contactName, contactEmail, contactPhone, source select, estimatedValue, expectedCloseDate, notes) using React Hook Form + Zod
+- [ ] 4 StatCards above board: Total Deals, Pipeline Value (SAR), Conversion Rate (%), Avg Cycle Time (days)
+- [ ] Typecheck passes
+- [ ] Verify in browser: cards drag between columns, new deal form submits, metrics display
 
 ---
 
-## Completed Items (Archive)
+### US-020: Tenant list page
 
-### Backend Build Error Fixes (January 2026)
+**As a** platform admin
+**I want** a paginated, filterable list of all facilities
+**So that** I can find and manage any tenant
 
-Fixed 309 compilation errors across Tier 3 modules. All error categories resolved:
+#### Acceptance Criteria
 
-| Category | Files Affected | Fix Applied |
-|----------|----------------|-------------|
-| BaseEntity Import Path | 9 files | Changed `com.liyaqa.shared.domain.model.BaseEntity` → `com.liyaqa.shared.domain.BaseEntity` |
-| TenantContext Import | 6 files | Added correct import `com.liyaqa.shared.domain.TenantContext` |
-| TenantContextHolder Usage | 2 files | Replaced with `TenantContext.getCurrentTenant().value` |
-| Missing CurrentUser Class | 3 files | Created `CurrentUser.kt` with argument resolver |
-| Missing CurrentUserService | 1 file | Created `CurrentUserService.kt` with security methods |
-| JSON Type Mapping | 1 file | Using native Hibernate `@JdbcTypeCode(SqlTypes.JSON)` |
-| Instant vs LocalDateTime | 1 file | Updated DTOs to use `Instant` types |
-| Missing FamilyMemberStatus | 1 file | Added enum to `AccountEnums.kt` |
-| FacilityBookingService Fields | 1 file | Fixed `memberNumber` and `slotDate` references |
-| DTO Entity ID Access | 3 files | Resolved via BaseEntity inheritance |
-| Missing Repository Methods | 2 files | Added `countActiveAtDate`, `countJoinedBetween`, `countChurnedBetween`, `getChurnByPlan` |
-
-**Build Status:** ✅ `BUILD SUCCESSFUL`
+- [ ] Page at `/tenants` renders:
+  - KPI row (4 StatCards): Total Facilities, Active, Trial, Suspended
+  - DataTable with columns: Facility Name (+ Arabic name below in muted), Status (StatusBadge), Plan (pill), Members count, Region/City, Onboarding Progress (mini progress bar "5/7"), Last Admin Login (relative time), Actions (3-dot menu: View, Impersonate, Suspend, Edit)
+  - Filters via FilterBar: status, plan, region
+  - Search by facility name
+  - Row click navigates to `/tenants/:id`
+  - Empty state when no results
+- [ ] Typecheck passes
+- [ ] Verify in browser: table renders, filters work, row click navigates
 
 ---
 
-### Test Suite Fixes (January 2026)
+### US-021: Tenant detail page with tabs
 
-- [x] Fix TestDataFactory.kt: Update Club and MembershipPlan creation to use LocalizedText
-- [x] Fix MembershipPlan constructor in TestDataFactory.kt
-- [x] Fix AuthServiceTest.kt: Add mock for permissionService
-- [x] Fix MemberServiceTest.kt: Add mocks for memberHealthService, agreementService, userRepository, passwordEncoder, permissionService
-- [x] Fix SubscriptionServiceTest.kt: Fix parameter order and add missing mocks
-- [x] Fix InvoiceServiceTest.kt: Add mock for clubRepository
-- [x] Fix PayTabsPaymentServiceTest.kt: Add mock for orderService
-- [x] Fix ClientSubscriptionServiceTest.kt: Add mock for organizationRepository
-- [x] Fix ScheduledJobsTest.kt: Add mock for membershipPlanService
-- [x] Fix AttendanceServiceTest.kt: Update MembershipPlan creation
-- [x] Fix CheckInWorkflowIntegrationTest.kt: Update Club and MembershipPlan creation
-- [x] Fix InvoicePdfIntegrationTest.kt: Update MembershipPlan creation
-- [x] Fix SubscriptionFreezeIntegrationTest.kt: Update Club and MembershipPlan creation
-- [x] Fix MemberControllerIntegrationTest.kt: Update all Club creations
-- [x] Fix MemberRepositoryIntegrationTest.kt: Update Club creation
-- [x] Fix SubscriptionRepositoryIntegrationTest.kt: Update Club and MembershipPlan creation
-- [x] Fix BookingWorkflowIntegrationTest.kt: Update Club and MembershipPlan creation
-- [x] Fix BookingServiceTest.kt: Update MembershipPlan creation
-- [x] Fix DashboardSummaryIntegrationTest.kt: Update MembershipPlan creation
-- [x] Fix ExportServiceTest.kt: Update MembershipPlan creation
-- [x] Create ESLint configuration for frontend
-- [x] Add frontend unit test script (Vitest)
-- [x] Run ./gradlew test - All backend tests pass
-- [x] Run ./gradlew build - Full backend build succeeds
+**As a** platform admin
+**I want** a detailed view of a single facility with organized tabs
+**So that** I can see all information about a tenant in one place
+
+#### Acceptance Criteria
+
+- [ ] Page at `/tenants/:id` renders:
+  - Header: facility name (large) + Arabic name + status badge
+  - Quick stats row: Members | Staff | Branches | Plan | MRR
+  - Action buttons: Impersonate, Edit, Suspend/Activate, Export Data
+  - Breadcrumb: Facilities > [Facility Name]
+- [ ] 6 horizontal pill-style tabs with amber bottom border on active:
+  - OVERVIEW: 2-column — facility info card (name, CR, VAT, contact, address) + subscription card (plan, billing cycle, next billing); recent activity Timeline below
+  - ONBOARDING: stepper checklist with icons, completed=green check, current=amber pulse dot, action button per step, progress percentage
+  - BILLING: DataTable of invoices (number, date, amount, status badge, ZATCA status) + payment history
+  - SUPPORT: DataTable of tickets for this tenant + "Create Ticket" button
+  - ACTIVITY: full audit log Timeline filterable by action type
+  - SETTINGS: feature flag toggle switches per feature, API keys section, danger zone (Suspend, Deactivate, Archive with ConfirmDialog)
+- [ ] Tab content transitions with subtle fade (150ms)
+- [ ] Typecheck passes
+- [ ] Verify in browser: all tabs render content, tab switching animates
 
 ---
 
-## Appendix: Competitive Landscape
+### US-022: Onboarding wizard for new facilities
 
-### Primary Competitor: Perfect Gym
-- **Strength:** Enterprise features, ML analytics, mobile apps, global presence
-- **Weakness:** Expensive, no Saudi-specific features, legacy tech
-- **Pricing:** EUR 129/month + onboarding
+**As an** account manager
+**I want** a guided step-by-step wizard to onboard new facilities
+**So that** provisioning is easy and nothing is missed
 
-### Other Competitors
-| System | Strength | Weakness |
-|--------|----------|----------|
-| Mindbody | Wellness/spa focus, marketplace | Expensive, complex |
-| Glofox | Modern UI, boutique focus | Limited enterprise |
-| GymMaster | Affordable, access control | Dated UI, limited automation |
-| ClubReady | Enterprise, franchise | US-focused, expensive |
+#### Acceptance Criteria
 
-### Liyaqa Positioning
-**"The Saudi Arabia gym management system built for Saudi gyms"**
-- Full ZATCA compliance (e-invoicing)
-- Native Saudi payment integrations (STC Pay, SADAD, Tamara)
-- Prayer time integration
-- Gender-based access control
-- Arabic-first with RTL support
-- Modern SaaS architecture
+- [ ] Page at `/tenants/:id/onboarding` renders a 5-step wizard:
+  - Step 1 FACILITY DETAILS: name, nameAr, subdomain (live preview "x.liyaqa.com"), crNumber, vatNumber, address, city, region
+  - Step 2 ADMIN ACCOUNT: admin name, email, phone, temp password with auto-generate button
+  - Step 3 SUBSCRIPTION PLAN: 3 plan comparison cards side-by-side (highlighted selection), billing cycle toggle Monthly/Annual with savings badge
+  - Step 4 INITIAL CONFIG: default language, timezone, currency, business type, operating hours
+  - Step 5 REVIEW & LAUNCH: summary cards of all entered data + "Launch Facility" button with rocket icon
+- [ ] Horizontal step indicator: numbered circles + connecting lines; completed=green check, current=amber ring pulse, clickable to go back
+- [ ] Form validation per step before allowing next; React Hook Form + Zod
+- [ ] Bottom nav: "Back" ghost button + "Continue" amber button
+- [ ] Launch success: confetti burst animation (2 seconds) + success overlay "🎉 [Name] is Live!" with "View Facility" and "Back to Pipeline" buttons
+- [ ] Progress saves to backend per step
+- [ ] Typecheck passes
+- [ ] Verify in browser: complete all 5 steps, confetti fires on launch
 
 ---
 
-*Last Updated: January 28, 2026*
-*Version: 3.5 - Added Platform Dashboard Redesign (Lifecycle Funnel, Onboarding Monitor, Health Overview, Alert Center, Dunning Widget, Role-Based Enhancements)*
+### US-023: Subscription plan management page
+
+**As a** platform admin
+**I want** to view and manage subscription plans with feature comparison
+**So that** I can configure what each plan tier offers
+
+#### Acceptance Criteria
+
+- [ ] Page at `/subscriptions/plans` renders:
+  - 4 plan cards side-by-side: FREE_TRIAL (gray bg), STARTER (white), PROFESSIONAL (amber gradient border + "Recommended" badge), ENTERPRISE (dark navy bg with light text)
+  - Each card: plan name + Arabic name, monthly price (large) + annual price (small with savings badge), key limits (members, staff, branches, storage), feature checklist (green checks / muted X), "Edit Plan" ghost button, active tenant count badge
+  - "Create Plan" button opens slide-over form
+  - Feature comparison matrix below cards: left column = feature names by category, columns = plans, cells = check/dash, sticky left column on scroll
+- [ ] Typecheck passes
+- [ ] Verify in browser: cards render, comparison matrix scrolls correctly
+
+---
+
+### US-024: Subscription dashboard with revenue metrics
+
+**As a** platform admin
+**I want** a subscription overview with revenue trends and active subscriptions
+**So that** I can track billing health
+
+#### Acceptance Criteria
+
+- [ ] Page at `/subscriptions` renders:
+  - KPI row: MRR (SAR), ARR (SAR), Avg Revenue/Tenant, Active Subscriptions
+  - Revenue trend area chart (last 12 months, gradient fill)
+  - Subscription distribution pie chart (donut, by plan)
+  - Alert bars at top: expiring trials (amber), overdue payments (red), upcoming renewals (blue) — each clickable
+  - DataTable: Tenant, Plan, Status badge, Billing Cycle, Next Billing Date, MRR, Actions (Change Plan, Cancel, Renew)
+- [ ] "Change Plan" opens modal: current plan on left, target plan options on right, proration calculator text, effective date selector, confirm button
+- [ ] Typecheck passes
+- [ ] Verify in browser: charts render, alert bars display, change plan modal opens
+
+---
+
+### US-025: Invoice list page with mark-paid flow
+
+**As a** billing admin
+**I want** to view all invoices and mark them as paid
+**So that** I can track payment status across all tenants
+
+#### Acceptance Criteria
+
+- [ ] Page at `/billing/invoices` renders:
+  - KPI row: Total Outstanding (SAR), Overdue Amount (SAR), Paid This Month, ZATCA Compliance %
+  - FilterBar: status, tenant, dateRange, ZATCA status
+  - DataTable: Invoice # (monospace), Tenant, Amount (SAR, right-aligned), VAT, Total, Status badge (DRAFT=gray, ISSUED=blue, PAID=green, OVERDUE=red with subtle red left border), ZATCA Status badge, Issue Date, Due Date, Actions (View, Mark Paid, Download PDF, Retry ZATCA)
+- [ ] "Mark Paid" opens sub-modal: payment method dropdown (Bank Transfer/Cash/Other), reference number input, date picker; confirm → updates status → success toast
+- [ ] Click row opens slide-over invoice detail: header info, from/to addresses, line items table, subtotal + VAT (15%) + total, payment history, ZATCA status + hash
+- [ ] Typecheck passes
+- [ ] Verify in browser: table renders, filters work, mark-paid flow completes
+
+---
+
+### US-026: Split-panel ticket management page
+
+**As a** support agent
+**I want** a split-panel ticket view with message thread
+**So that** I can manage tickets efficiently without switching pages
+
+#### Acceptance Criteria
+
+- [ ] Page at `/tickets` renders split-panel layout:
+  - Left panel (40%): ticket list with search + filter presets ("My Tickets", "Unassigned", "SLA Breached", "All Open")
+  - Right panel (60%): selected ticket detail
+  - Resizable divider between panels
+- [ ] Ticket list cards: ticket number (monospace), subject (bold, truncated), tenant name (small), priority colored left border (CRITICAL=red, HIGH=orange, MEDIUM=yellow, LOW=gray), status badge, assignee avatar, time ago or SLA countdown in red, unread blue dot; selected row highlighted
+- [ ] Ticket detail panel header: ticket # + subject + status; meta bar with inline-editable dropdowns for priority, status, category, assignee
+- [ ] SLA indicator: "Response due in 2h 15m" countdown or "⚠️ SLA BREACHED" red pulsing text
+- [ ] Message thread: chat bubbles — customer=left, agent=right (swap in RTL); internal notes highlighted with amber border + "🔒 Internal Note" label; each message shows sender avatar, name, timestamp, content
+- [ ] Reply area: basic rich text editor, toggle "Reply"/"Internal Note" (note shows amber styling), "Insert Canned Response" dropdown, attach button, amber Send button, Cmd+Enter shortcut
+- [ ] Action buttons: Assign to Me, Escalate, Change Priority, Close/Reopen
+- [ ] Mobile (<1024px): full-width list, clicking opens detail as separate page
+- [ ] Typecheck passes
+- [ ] Verify in browser: select ticket, messages render, reply sends, SLA shows
+
+---
+
+### US-027: Ticket analytics dashboard
+
+**As a** support lead
+**I want** analytics on ticket performance
+**So that** I can monitor team productivity and SLA compliance
+
+#### Acceptance Criteria
+
+- [ ] Tab or sub-route under `/tickets` with analytics:
+  - Agent performance DataTable: name, open tickets, avg resolution time, satisfaction score (star rating display)
+  - Tickets by category donut chart
+  - Tickets over time area chart (daily/weekly/monthly toggle) with SLA breach overlay
+  - SLA compliance circular gauge: green >90%, amber >70%, red <70%, animated fill on load
+- [ ] Typecheck passes
+- [ ] Verify in browser: all charts render with sample data
+
+---
+
+### US-028: Impersonation flow with safety bar
+
+**As a** support agent
+**I want** to safely impersonate a facility admin's view
+**So that** I can debug issues while being clearly in read-only mode
+
+#### Acceptance Criteria
+
+- [ ] "Impersonate" button (on tenant detail/list) opens confirmation modal:
+  - Text: "You are about to view [Facility Name]'s dashboard as their admin"
+  - Purpose textarea (required)
+  - Warning: "This session is read-only and fully audited"
+  - "Start Session" + "Cancel" buttons
+- [ ] On confirm → POST /access/impersonate → loading "Establishing secure session..." → success redirect
+- [ ] `ImpersonationBar.tsx`: FIXED bar at VERY TOP of viewport (above sidebar/header)
+  - Amber/warning gradient background, white text
+  - "👁️ Viewing as [Facility Name] — Read-only · Expires in 28:42" with live countdown
+  - "End Session" button on right
+  - Bar is impossible to miss — high z-index, 48px height
+- [ ] During impersonation: all mutation buttons (edit, delete, create) disabled with tooltip "Read-only in impersonation mode"
+- [ ] End session → POST /access/impersonate/end → redirect back with success toast
+- [ ] Typecheck passes
+- [ ] Verify in browser: bar renders, countdown ticks, buttons disabled
+
+---
+
+### US-029: Team management and API key management pages
+
+**As a** platform admin
+**I want** to manage team members and tenant API keys
+**So that** I can control access and integrations
+
+#### Acceptance Criteria
+
+- [ ] Team page at `/settings/team`:
+  - "Invite Team Member" button → modal with name, email, role select
+  - DataTable: Name, Email, Role badge, Status (Active/Deactivated), Last Login, Actions (Change Role, Reset Password, Deactivate)
+  - Current user row highlighted with "You" badge
+  - Role hover shows description tooltip
+- [ ] API Keys page at `/settings/api-keys`:
+  - "Generate Key" button → select tenant → modal shows FULL key in monospace large font ONCE
+  - "Copy to Clipboard" button with checkmark success feedback
+  - Warning: "This key will only be shown once"
+  - Checkbox "I've saved this key" required before closing modal
+  - DataTable: Name, Tenant, Prefix (monospace), Permissions, Created, Last Used, Status, Actions (Revoke, Rotate)
+  - Revoke: danger ConfirmDialog
+- [ ] Typecheck passes
+- [ ] Verify in browser: invite flow works, key shows once, copy works
+
+---
+
+### US-030: Audit log viewer page
+
+**As a** platform admin
+**I want** a searchable, filterable audit log viewer
+**So that** I can track all platform actions for accountability
+
+#### Acceptance Criteria
+
+- [ ] Page at `/monitoring/audit` renders:
+  - Filters (horizontal): Actor, Action Type, Resource Type, Tenant, Date Range
+  - Mini bar chart at top showing action frequency over time (last 24h/7d/30d toggle); hovering a bar filters the list
+  - Timeline view (default): each entry is a row with timestamp (monospace), actor avatar + name, action colored badge (green=create, blue=update, red=delete, amber=access), auto-generated description sentence, expand arrow → shows JSON details
+  - Infinite scroll (load more on bottom)
+  - "Auto-refresh" toggle: new entries slide in from top
+  - View toggle: Timeline / Table (DataTable with all columns, export button)
+  - CSV export with current filters
+- [ ] Typecheck passes
+- [ ] Verify in browser: log entries render, filters work, infinite scroll loads, expand shows details
+
+---
+
+### US-031: Facility health dashboard
+
+**As a** platform admin
+**I want** to see health scores for all facilities
+**So that** I can proactively identify at-risk tenants
+
+#### Acceptance Criteria
+
+- [ ] Page at `/monitoring/health` renders:
+  - Health distribution: pie chart by tier (Excellent >80, Good >60, At Risk >40, Critical <40), average health score (large colored number)
+  - View toggle: card grid (default) / table
+  - Health cards: facility name + plan badge, large health score (0-100) with circular progress ring colored by tier, mini sparklines (member trend, login frequency), status indicators (✅ Recent login, ⚠️ Overdue invoice, 🎫 Open tickets), hover shows score breakdown
+  - "At Risk" section (collapsible, expanded default): facilities with score <40, each shows risk factors as text, quick action buttons: "Create Ticket", "Send Notification", "Contact"
+  - Sort by: health score, member count, last activity; Filter by: health tier, plan, region
+- [ ] Typecheck passes
+- [ ] Verify in browser: health rings animate, at-risk section shows flagged tenants
+
+---
+
+### US-032: System status page
+
+**As a** platform admin
+**I want** to see system health at a glance
+**So that** I know if any infrastructure components are degraded
+
+#### Acceptance Criteria
+
+- [ ] Page at `/monitoring/system` renders:
+  - System health banner: "All Systems Operational" (green) or degraded state messages
+  - Component grid cards: API Server (status + response time + uptime %), Database (connections + response time), Cache/Redis (hit rate + memory), Background Jobs (running + failed + queued), Storage (used/total progress bar)
+  - Each component: green/amber/red status dot + label
+  - Active maintenance banner if any maintenance window is active
+- [ ] Typecheck passes
+- [ ] Verify in browser: status cards render with colored dots
+
+---
+
+### US-033: Announcements management page with editor
+
+**As a** communication manager
+**I want** to create and publish announcements with a live preview editor
+**So that** I can broadcast important information to facility admins
+
+#### Acceptance Criteria
+
+- [ ] Page at `/announcements` renders:
+  - KPIs: Total Published, Scheduled, Avg Read Rate
+  - "New Announcement" button → navigates to editor page
+  - Card list (not table): type icon + colored left border (MAINTENANCE=amber, FEATURE_LAUNCH=green, URGENT=red), title + Arabic title, audience badge, status badge, published date, read count, pinned indicator, actions (Edit, Duplicate, Archive)
+- [ ] Announcement editor (full page `/announcements/new` or `/announcements/:id/edit`):
+  - Left (60%): title input + Arabic title input + rich text content (EN) + rich text content (AR) + type selector + audience targeting (All/Specific Plans/Specific Tenants multi-select) + schedule toggle (Now/Schedule with datetime picker) + pin toggle + expiry date
+  - Right (40%): live preview panel — shows how announcement looks, language toggle (EN/AR), desktop/mobile toggle (device frame mock), updates in real-time as content changes
+- [ ] Typecheck passes
+- [ ] Verify in browser: create announcement, see live preview update, publish
+
+---
+
+### US-034: Main platform dashboard page
+
+**As a** platform admin
+**I want** a comprehensive KPI dashboard as the landing page
+**So that** I can see the state of the entire platform at a glance
+
+#### Acceptance Criteria
+
+- [ ] Page at `/dashboard` renders scrollable sections:
+  - SECTION 1: "Good [morning/afternoon], [Name]" greeting + quick action cards (horizontal scroll): "New Deal", "Active Tickets (N)", "Expiring Trials (N)", "SLA Breaches (N)" — each navigates to relevant page
+  - SECTION 2: KPIGrid (4 columns): Total Facilities (with trend), Active Members, MRR (SAR), Ticket Resolution Rate — staggered fadeInUp entrance
+  - SECTION 3 (2-column): Revenue Trend area chart (12 months, MRR/ARR toggle) + Tenant Growth bar chart (stacked new vs churned, net growth line)
+  - SECTION 4 (3-column): Tenants by Plan donut + Revenue by Plan donut + Geographic Distribution horizontal bar chart
+  - SECTION 5 (2-column): Recent Deals table (last 5, "View Pipeline →" link) + Recent Tickets table (last 5, "View All →" link)
+  - SECTION 6: Health alert cards for: at-risk facilities, overdue invoices, SLA breaches, expiring subscriptions — each with icon, count, description, "View →" link; red/amber themed
+- [ ] All charts load with skeleton first, then animate in (fade + grow)
+- [ ] Refresh button in header re-fetches all data
+- [ ] Responsive: sections stack on mobile
+- [ ] Typecheck passes
+- [ ] Verify in browser: all sections render, charts animate, quick actions navigate
+
+---
+
+### US-035: Analytics deep dive page
+
+**As a** platform admin
+**I want** detailed analytics on churn, feature adoption, and benchmarks
+**So that** I can make data-driven decisions about the platform
+
+#### Acceptance Criteria
+
+- [ ] Page at `/analytics` (or tab within dashboard) renders:
+  - Churn Analysis section: churn rate cards (30d, 90d, YTD), at-risk tenant list, churn by plan bar chart, churn reasons pie chart
+  - Feature Adoption section: horizontal bar chart of features by adoption rate, trend over time line chart
+  - Comparative Benchmarks section: stats cards (avg members/facility, median, avg revenue, avg staff count, top features, avg login frequency)
+  - "Export Report" button (PDF/CSV toggle dropdown)
+- [ ] Typecheck passes
+- [ ] Verify in browser: all chart sections render with sample data
+
+---
+
+### US-036: Configuration page with inline editing
+
+**As a** platform admin
+**I want** to view and edit global settings inline
+**So that** I can configure the platform without separate forms
+
+#### Acceptance Criteria
+
+- [ ] Page at `/settings/config` renders:
+  - Settings grouped by category (BILLING, SECURITY, LOCALIZATION, NOTIFICATIONS, SYSTEM, COMPLIANCE) in accordion sections
+  - Each section: header with icon + description, expandable
+  - Settings within: key-value rows; click value to edit inline; type-specific editors (toggle for boolean, number input, text input, JSON editor)
+  - "Last updated by [name] on [date]" hint per setting
+  - Unsaved changes: floating "Save All" button appears at bottom
+- [ ] Maintenance Mode section:
+  - Active maintenance: amber banner with countdown
+  - "Schedule Maintenance" button → modal (title AR/EN, description AR/EN, start/end datetime)
+  - Upcoming maintenance list with cancel buttons
+- [ ] Typecheck passes
+- [ ] Verify in browser: edit a setting inline, save, maintenance modal works
+
+---
+
+### US-037: Feature flag matrix page
+
+**As a** platform admin
+**I want** a visual matrix to toggle feature flags per tenant
+**So that** I can control feature access across all facilities
+
+#### Acceptance Criteria
+
+- [ ] Page at `/settings/feature-flags` renders a matrix:
+  - Rows: tenants (with plan badge) — searchable/filterable
+  - Columns: feature flags grouped by category
+  - Cells: toggle switches (green=enabled, gray=disabled)
+  - Override highlighting: cells overriding plan default have amber border (enabled override) or red border (disabled override)
+  - Hover cell tooltip: "Overridden — plan default is [enabled/disabled]"
+  - Sticky first column (tenant names) and header row (feature names)
+- [ ] Bulk actions: "Enable for all on [Plan]", "Reset overrides for [Tenant]"
+- [ ] Gradual rollout: select feature → "Rollout" button → percentage slider showing affected tenants
+- [ ] Typecheck passes
+- [ ] Verify in browser: toggles work, overrides highlighted, sticky headers on scroll
+
+---
+
+### US-038: Knowledge base page with search
+
+**As a** platform admin
+**I want** a searchable knowledge base with category filtering
+**So that** facility admins can find help articles
+
+#### Acceptance Criteria
+
+- [ ] Page at `/knowledge-base` renders:
+  - Left sidebar: category list (GETTING_STARTED, BILLING, FEATURES, TROUBLESHOOTING, API, FAQ, BEST_PRACTICES) with article counts; click filters list
+  - Main content: article card list (title, 2-line preview, category badge, status badge, view count, helpful/not-helpful ratio)
+  - Search bar: instant search with highlighted matches in results
+  - Sort: newest, popular, most helpful
+  - "New Article" button → full-page markdown editor with split view (edit left / preview right), tabs for EN/AR content, metadata sidebar (slug auto-gen, publish date, stats), "Preview as Facility Admin" button
+- [ ] Typecheck passes
+- [ ] Verify in browser: search filters articles, category sidebar works, editor renders preview
+
+---
+
+### US-039: Compliance dashboard with ZATCA gauge
+
+**As a** compliance officer
+**I want** contract tracking and ZATCA compliance monitoring
+**So that** I can ensure regulatory compliance
+
+#### Acceptance Criteria
+
+- [ ] Page at `/compliance` renders 3 tabs: Contracts | ZATCA | Data Requests
+  - Contracts tab: KPIs (Active, Expiring 30d amber, Expired red, Pending Signature), DataTable (contract #, tenant, type badge, status badge, start/end dates, auto-renew toggle icon, actions), expiring rows highlighted
+  - ZATCA tab: large animated circular compliance gauge (>95%=green, 80-95%=amber, <80%=red), stats row (Submitted, Accepted, Rejected, Pending), issues DataTable (tenant, rejected count, pending count, last issue, "Retry" button per invoice), ZATCA activity area chart
+  - Data Requests tab: pending requests list (tenant, date, type, status), approve/deny actions with confirmation, approved requests show download link + expiry
+- [ ] Typecheck passes
+- [ ] Verify in browser: ZATCA gauge animates on load, tabs switch, contract highlighting works
+
+---
+
+### US-040: Notification center dropdown
+
+**As a** platform user
+**I want** a notification center accessible from the header
+**So that** I can see recent notifications without leaving my current page
+
+#### Acceptance Criteria
+
+- [ ] Clicking bell icon in Header opens dropdown panel (right-aligned, left in RTL)
+- [ ] Notification list: icon + title + description + relative time + read/unread state (unread = bold + blue dot)
+- [ ] Click notification: navigate to relevant page + mark read via API
+- [ ] "Mark All Read" button at top
+- [ ] Grouped by: Today, Earlier This Week, Older
+- [ ] Empty state: "You're all caught up! 🎉"
+- [ ] Badge on bell icon: unread count (max "99+"), spring bounce animation on new arrival
+- [ ] Panel animates in: scale + fade from top-right (top-left in RTL)
+- [ ] Typecheck passes
+- [ ] Verify in browser: bell opens panel, notifications display grouped, marking read works
+
+---
+
+### US-041: Responsive design pass for all pages
+
+**As a** user on tablet or mobile
+**I want** the dashboard to be fully usable on smaller screens
+**So that** I can manage the platform from any device
+
+#### Acceptance Criteria
+
+- [ ] Test and fix all pages at 4 breakpoints: 1440px (wide), 1024px (desktop), 768px (tablet), 375px (mobile)
+- [ ] Sidebar: ≥1024px full, 768-1024px collapsed icons-only, <768px hidden with hamburger drawer
+- [ ] KPI grids: 4→2→1 columns across breakpoints
+- [ ] DataTables: <768px switch to card layout or show expand-on-click row detail for hidden columns
+- [ ] Split panels (tickets): <1024px full-width list, click opens separate detail page
+- [ ] Charts: stack vertically on mobile, use ResponsiveContainer
+- [ ] Forms: multi-column → single column on mobile
+- [ ] Slide-over panels: full-screen on mobile
+- [ ] Typecheck passes
+- [ ] Verify in browser at each breakpoint: no overflow, no cut-off content, all interactions work
+
+---
+
+### US-042: RTL polish pass for all pages
+
+**As an** Arabic-speaking user
+**I want** perfect RTL layout on every page
+**So that** the dashboard feels native in Arabic
+
+#### Acceptance Criteria
+
+- [ ] Switch to Arabic and verify EVERY page:
+  - Sidebar flips to right side; active border on right
+  - All text alignment uses logical properties (start/end, not left/right)
+  - Direction-implying icons (arrows, chevrons) flip
+  - Charts: axis labels render correctly in Arabic
+  - Numbers stay as Western Arabic numerals (1,2,3) — standard for Saudi business software
+  - Currency: "SAR" prefix in EN, "ر.س" suffix in AR
+  - Tables: action buttons move to left side in RTL
+  - Breadcrumb separator direction flips
+  - Slide-over panels open from left in RTL
+  - Search icon position flips
+  - Notification panel opens from left in RTL
+  - All Framer Motion directional animations mirror (fadeInLeft ↔ fadeInRight)
+- [ ] No text overflow or cut-off in Arabic (Arabic text tends to be wider)
+- [ ] Mixed content (Arabic + English like "خطة PROFESSIONAL") renders correctly
+- [ ] Typecheck passes
+- [ ] Verify in browser: full walkthrough in Arabic mode
+
+---
+
+### US-043: Accessibility and performance pass
+
+**As a** user with accessibility needs
+**I want** the dashboard to be keyboard-navigable and screen-reader friendly
+**So that** I can use it regardless of ability
+
+#### Acceptance Criteria
+
+- [ ] Keyboard navigation: logical tab order on all pages; sidebar arrow keys + Enter; DataTable arrow keys between rows; modals have focus trap + Esc close; focus returns to trigger on modal close
+- [ ] Custom focus ring: 2px amber outline with 2px offset, focus-visible only (not on mouse click)
+- [ ] Screen reader: all icons/images have aria-label; status badges have aria-label="Status: Active"; charts provide sr-only text summary; loading states use aria-live="polite"
+- [ ] Color contrast: all text meets WCAG AA (4.5:1 normal, 3:1 large) in both light and dark mode
+- [ ] Status indicators use both color AND icon/shape (not color-only)
+- [ ] All Framer Motion animations check prefers-reduced-motion and disable if set
+- [ ] Performance: React.lazy on all feature routes verified; React Query staleTime configured (dashboard 5min, lists 2min, detail 1min, config 10min); long lists (audit logs) virtualized with @tanstack/react-virtual; search inputs debounced 300ms
+- [ ] `npm run build` produces no chunks >250KB
+- [ ] Typecheck passes
+
+---
+
+### US-044: Global error handling and loading states review
+
+**As a** user
+**I want** consistent error handling and loading feedback across the app
+**So that** I always know the state of operations
+
+#### Acceptance Criteria
+
+- [ ] Every page with data loading has appropriate LoadingSkeleton matching content shape
+- [ ] Every API error shows toast with user-friendly message (localized AR/EN, not raw error)
+- [ ] 401 responses redirect to /login with "Session expired" toast
+- [ ] 403 responses show "You don't have permission" toast
+- [ ] Network disconnect shows persistent top banner: "Connection lost. Retrying..." with countdown
+- [ ] Every list page has EmptyState with contextual message and action button
+- [ ] Every failed API call shows retry button
+- [ ] No layout shift when loading completes (skeletons match content dimensions)
+- [ ] Typecheck passes
+- [ ] Verify in browser: disconnect network to see banner, trigger errors to see toasts
+
+---
+
+### US-045: Design system showcase page
+
+**As a** developer
+**I want** a living design system page
+**So that** I can reference all components, tokens, and patterns in one place
+
+#### Acceptance Criteria
+
+- [ ] Page at `/design-system` renders:
+  - Color palette: all CSS variable colors displayed as swatches with names and hex values (light + dark)
+  - Typography: font families with sample text in both English and Arabic, all sizes
+  - Spacing: visual scale of spacing tokens
+  - Components showcase: StatCard (with mock data, loading state), KPIGrid, DataTable (with sorting/pagination demo), StatusBadge (all variants and statuses), EmptyState, LoadingSkeleton (all variants), ConfirmDialog (trigger button), SearchInput, DateRangePicker, FilterBar, Timeline (with sample events), Toast triggers (all types), Chart examples (area, bar, pie)
+  - Animation showcase: buttons that trigger each motion preset
+- [ ] Page is only accessible in development (hidden from sidebar in production)
+- [ ] Typecheck passes
+- [ ] Verify in browser: all components render correctly, interactive demos work

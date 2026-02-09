@@ -1,5 +1,6 @@
 package com.liyaqa.scheduling.api
 
+import com.liyaqa.auth.infrastructure.security.JwtUserPrincipal
 import com.liyaqa.scheduling.application.services.BookingService
 import com.liyaqa.shared.api.BulkItemResult
 import com.liyaqa.shared.api.BulkItemStatus
@@ -163,15 +164,17 @@ class BookingController(
 
     /**
      * Cancels a booking.
+     * Authorization: User can cancel their own bookings, or admins with bookings_cancel_any permission can cancel any booking.
      */
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAuthority('bookings_view')")
     fun cancelBooking(
         @PathVariable id: UUID,
-        @RequestBody(required = false) request: CancelBookingRequest?
+        @RequestBody(required = false) request: CancelBookingRequest?,
+        @AuthenticationPrincipal principal: JwtUserPrincipal
     ): ResponseEntity<ClassBookingResponse> {
         val command = (request ?: CancelBookingRequest()).toCommand(id)
-        val booking = bookingService.cancelBooking(command)
+        val booking = bookingService.cancelBooking(command, principal.userId)
         return ResponseEntity.ok(ClassBookingResponse.from(booking))
     }
 
