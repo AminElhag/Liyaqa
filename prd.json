@@ -32,13 +32,15 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "dependsOn": ["US-001"],
+      "dependsOn": [
+        "US-001"
+      ],
       "passes": true,
       "notes": "Full folder structure created: api/ (client.ts, endpoints/, types/), assets/fonts/, components/ (ui/, layout/, data/, feedback/, forms/ with barrel index files), features/ (12 modules each with pages/, components/, hooks/), hooks/, i18n/ (en/, ar/), lib/, stores/, styles/, types/. All quality checks pass."
     },
     {
       "id": "US-003",
-      "title": "Design system — CSS variables, fonts, and theme",
+      "title": "Design system \u2014 CSS variables, fonts, and theme",
       "description": "As a developer, I want a comprehensive design token system with CSS variables so that all components use consistent colors, fonts, spacing, and shadows.",
       "acceptanceCriteria": [
         "src/styles/theme.css created with full CSS variable set for light mode: bg-primary #FAFBFC, bg-secondary #F1F3F5, bg-inverse #0A1628, text-primary #0A1628, text-accent #F59E0B, brand-accent #F59E0B, status colors, shadows, radius scale, spacing scale, transitions",
@@ -49,7 +51,9 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "dependsOn": ["US-002"],
+      "dependsOn": [
+        "US-002"
+      ],
       "passes": true,
       "notes": "Created src/styles/theme.css with full CSS variable set for light/dark modes. Loaded Google Fonts (Plus Jakarta Sans, IBM Plex Sans Arabic, JetBrains Mono). RTL font override via [dir=rtl]. Tailwind theme extended with design system color tokens, font families, shadows. All quality checks pass."
     },
@@ -66,7 +70,9 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "dependsOn": ["US-003"],
+      "dependsOn": [
+        "US-003"
+      ],
       "passes": true,
       "notes": "ThemeProvider with dark/light toggle persisted to localStorage. DirectionProvider synced with i18n language. i18next configured with en/ar namespaces. Translation files with nav and status keys. useTheme(), useDirection(), useThemeContext(), useDirectionContext() hooks exported."
     },
@@ -81,7 +87,9 @@
         "Typecheck passes"
       ],
       "priority": 5,
-      "dependsOn": ["US-002"],
+      "dependsOn": [
+        "US-002"
+      ],
       "passes": true,
       "notes": "Created src/lib/motion.ts with all Framer Motion variants: fadeIn, fadeInUp, fadeInDown, fadeInLeft, fadeInRight, scaleIn, slideIn, staggerContainer, staggerItem (50ms delay), pageTransition. All respect prefers-reduced-motion. Direction-aware variants accept dir parameter to flip in RTL."
     },
@@ -98,7 +106,10 @@
         "Typecheck passes"
       ],
       "priority": 6,
-      "dependsOn": ["US-002", "US-004"],
+      "dependsOn": [
+        "US-002",
+        "US-004"
+      ],
       "passes": true,
       "notes": "Axios client configured with VITE_API_BASE_URL, Bearer token from auth store, Accept-Language header from i18n. Response interceptors: 401->logout+redirect, 403->toast, network error->toast. Zustand auth store with persist middleware: token, user, login(), logout(), isAuthenticated."
     },
@@ -114,7 +125,9 @@
         "Typecheck passes"
       ],
       "priority": 7,
-      "dependsOn": ["US-006"],
+      "dependsOn": [
+        "US-006"
+      ],
       "passes": true,
       "notes": "React Router with nested routes inside AppShell layout. All 25 routes defined with React.lazy + Suspense. ProtectedRoute wrapper redirects to /login when not authenticated. Each page is a separate code-split chunk. Placeholder pages render page titles."
     },
@@ -134,7 +147,10 @@
         "Verify in browser: navigation works, collapse animates, RTL flips correctly"
       ],
       "priority": 8,
-      "dependsOn": ["US-007", "US-005"],
+      "dependsOn": [
+        "US-007",
+        "US-005"
+      ],
       "passes": true,
       "notes": "Sidebar with 8 grouped navigation sections and Lucide icons. Active item has amber border (start/end for RTL) + amber bg tint. Collapse/expand: 260px/72px with tooltips, state persisted to localStorage. Framer Motion 250ms animations. Bottom: user avatar, theme toggle, language toggle. Mobile: slide-over drawer with overlay. Full RTL support with logical properties."
     },
@@ -152,7 +168,9 @@
         "Verify in browser: breadcrumbs update on navigation"
       ],
       "priority": 9,
-      "dependsOn": ["US-008"],
+      "dependsOn": [
+        "US-008"
+      ],
       "passes": true,
       "notes": "Header fixed at top of content area with backdrop blur. Breadcrumbs auto-generated from route with i18n translations. Global search trigger with Cmd+K shortcut. Notification bell with animated pulse badge. User menu dropdown with profile, preferences, logout."
     },
@@ -172,7 +190,9 @@
         "Verify in browser: Cmd+K opens, type to filter, arrow keys navigate, Enter selects"
       ],
       "priority": 10,
-      "dependsOn": ["US-009"],
+      "dependsOn": [
+        "US-009"
+      ],
       "passes": true,
       "notes": "CommandPalette opens on Cmd+K/Ctrl+K. Frosted glass backdrop with centered search modal. Fuzzy search across all navigation pages grouped by category with icons. Keyboard navigation (arrows, Enter, Esc). Framer Motion scale-in 250ms. Selecting navigates and closes."
     },
@@ -190,7 +210,10 @@
         "Verify in browser: sidebar + header visible, page transitions on navigation"
       ],
       "priority": 11,
-      "dependsOn": ["US-008", "US-009"],
+      "dependsOn": [
+        "US-008",
+        "US-009"
+      ],
       "passes": true,
       "notes": "AppShell composes Sidebar + Header + Outlet. AnimatePresence wraps page transitions: 200ms fade-in from bottom, fade-out on exit. document.title updates on route change with translated page name."
     },
@@ -199,14 +222,17 @@
       "title": "StatCard and KPIGrid components",
       "description": "As a user, I want metric cards that show KPIs with trend indicators so that I can quickly understand key numbers.",
       "acceptanceCriteria": [
-        "StatCard.tsx with props: label, value, change (%), trend (up/down/neutral), icon, loading — large bold value 24px, small muted label 12px, colored trend arrow with %, hover lift shadow, loading skeleton pulse, fadeInUp entrance with stagger delay prop",
-        "KPIGrid.tsx with props: items[], loading, columns — responsive 4/2/1 columns, staggered entrance 50ms",
+        "StatCard.tsx with props: label, value, change (%), trend (up/down/neutral), icon, loading \u2014 large bold value 24px, small muted label 12px, colored trend arrow with %, hover lift shadow, loading skeleton pulse, fadeInUp entrance with stagger delay prop",
+        "KPIGrid.tsx with props: items[], loading, columns \u2014 responsive 4/2/1 columns, staggered entrance 50ms",
         "Both support dark mode and RTL",
         "Typecheck passes",
         "Verify in browser: cards render with mock data, animation plays, skeleton on loading"
       ],
       "priority": 12,
-      "dependsOn": ["US-003", "US-005"],
+      "dependsOn": [
+        "US-003",
+        "US-005"
+      ],
       "passes": true,
       "notes": "StatCard with label, value, change%, trend indicator, icon, loading skeleton, fadeInUp animation with stagger delay. KPIGrid with responsive 4/2/1 columns and staggered entrance. Both support dark mode and RTL."
     },
@@ -226,7 +252,9 @@
         "Verify in browser: render with mock data, sort, search, paginate, select rows"
       ],
       "priority": 13,
-      "dependsOn": ["US-003"],
+      "dependsOn": [
+        "US-003"
+      ],
       "passes": true,
       "notes": "DataTable wraps TanStack Table with sorting (click header), debounced search 300ms, row selection with checkboxes, bulk actions toolbar, pagination with page size selector. Skeleton loading rows, empty state with icon/title/description/action. Row hover, sticky header. RTL text alignment via text-start."
     },
@@ -243,7 +271,10 @@
         "Typecheck passes"
       ],
       "priority": 14,
-      "dependsOn": ["US-003", "US-005"],
+      "dependsOn": [
+        "US-003",
+        "US-005"
+      ],
       "passes": true,
       "notes": "StatusBadge with dot/pill/outline variants and 6 status colors (ACTIVE=green, SUSPENDED=amber, DEACTIVATED=red, TRIAL=blue, PROVISIONING=purple+pulse, ARCHIVED=gray). EmptyState with 64px icon, title, description, CTA. LoadingSkeleton with text/card/table/chart variants. ConfirmDialog with Framer Motion backdrop+scale-in, danger variant, focus trap+Esc."
     },
@@ -261,13 +292,15 @@
         "Verify in browser: render each chart type with sample data"
       ],
       "priority": 15,
-      "dependsOn": ["US-003"],
+      "dependsOn": [
+        "US-003"
+      ],
       "passes": true,
       "notes": "AreaChartCard, BarChartCard, PieChartCard with theme CSS variable colors. Custom frosted glass tooltip. Loading skeleton. ResponsiveContainer auto-resize. Dark mode adapted."
     },
     {
       "id": "US-016",
-      "title": "Form components — SearchInput, DateRangePicker, FilterBar",
+      "title": "Form components \u2014 SearchInput, DateRangePicker, FilterBar",
       "description": "As a user, I want polished form components for filtering and searching data.",
       "acceptanceCriteria": [
         "SearchInput.tsx with debounce, search icon, clear button, loading spinner, RTL icon flip",
@@ -277,7 +310,9 @@
         "Typecheck passes"
       ],
       "priority": 16,
-      "dependsOn": ["US-003"],
+      "dependsOn": [
+        "US-003"
+      ],
       "passes": true,
       "notes": "SearchInput with debounce, clear button, loading spinner, RTL. DateRangePicker with presets (Today, Last 7/30, Month, Quarter). FilterBar with dropdown filters, active chips, Clear all."
     },
@@ -294,7 +329,10 @@
         "Typecheck passes"
       ],
       "priority": 17,
-      "dependsOn": ["US-003", "US-005"],
+      "dependsOn": [
+        "US-003",
+        "US-005"
+      ],
       "passes": true,
       "notes": "Timeline component with vertical connecting line, color-coded icons per type (create=green, update=blue, delete=red, access=amber), stagger animation 50ms. RTL and dark mode support."
     },
@@ -311,7 +349,9 @@
         "Verify in browser: trigger each type, verify auto-dismiss and stacking"
       ],
       "priority": 18,
-      "dependsOn": ["US-005"],
+      "dependsOn": [
+        "US-005"
+      ],
       "passes": true,
       "notes": "Toast system with Zustand store + Framer Motion. 4 variants (success/error/warning/info). Bottom-end positioned (RTL-aware). Auto-dismiss 5s with hover pause. Spring slide animation. Max 5 visible. useToast() hook with toast.success/error/warning/info."
     },
@@ -331,7 +371,12 @@
         "Verify in browser: cards drag between columns, form submits, metrics display"
       ],
       "priority": 19,
-      "dependsOn": ["US-012", "US-013", "US-014", "US-018"],
+      "dependsOn": [
+        "US-012",
+        "US-013",
+        "US-014",
+        "US-018"
+      ],
       "passes": true,
       "notes": "Kanban board at /deals with 8 stage columns. Deal cards with facility name, contact, value, source badge, assignee avatar, days-in-stage. @dnd-kit drag-and-drop with shadow+rotation lift, optimistic update with toast. View toggle (Kanban/Table). New Deal slide-over with form. 4 StatCards: Total Deals, Pipeline Value, Conversion Rate, Avg Cycle Time."
     },
@@ -347,7 +392,12 @@
         "Verify in browser: table renders, filters work, row click navigates"
       ],
       "priority": 20,
-      "dependsOn": ["US-012", "US-013", "US-014", "US-016"],
+      "dependsOn": [
+        "US-012",
+        "US-013",
+        "US-014",
+        "US-016"
+      ],
       "passes": true,
       "notes": "Tenant list with KPI row, DataTable (8 columns with StatusBadge, plan pill, progress bar, actions menu), FilterBar (status/plan/region), SearchInput, row click navigation, EmptyState. 6 mock tenants."
     },
@@ -363,7 +413,10 @@
         "Verify in browser: all tabs render, switching animates"
       ],
       "priority": 21,
-      "dependsOn": ["US-020", "US-017"],
+      "dependsOn": [
+        "US-020",
+        "US-017"
+      ],
       "passes": true,
       "notes": "Tenant detail with header (name + StatusBadge + actions), quick stats row, 6 pill-style tabs with AnimatePresence transitions. Overview: info card + subscription card + Timeline. Activity: Timeline. Other tabs with placeholder content."
     },
@@ -380,7 +433,9 @@
         "Verify in browser: complete all steps, confetti fires on launch"
       ],
       "priority": 22,
-      "dependsOn": ["US-021"],
+      "dependsOn": [
+        "US-021"
+      ],
       "passes": true,
       "notes": "5-step onboarding wizard with horizontal stepper (green check/amber pulse/gray). Steps: Facility Details, Admin Account, Plan Selection (3 cards), Configuration (toggles), Review & Launch. Success overlay with navigation buttons."
     },
@@ -397,7 +452,10 @@
         "Verify in browser: cards render, matrix scrolls correctly"
       ],
       "priority": 23,
-      "dependsOn": ["US-012", "US-013"],
+      "dependsOn": [
+        "US-012",
+        "US-013"
+      ],
       "passes": true,
       "notes": "4 plan cards (FREE_TRIAL gray, STARTER white, PROFESSIONAL amber+Recommended, ENTERPRISE dark). Each with name, price, limits, feature checklist, tenant count. Feature comparison matrix with sticky first column and highlighted Professional column. Create Plan button."
     },
@@ -413,9 +471,12 @@
         "Verify in browser: charts render, alert bars display, change plan modal opens"
       ],
       "priority": 24,
-      "dependsOn": ["US-015", "US-023"],
-      "passes": false,
-      "notes": ""
+      "dependsOn": [
+        "US-015",
+        "US-023"
+      ],
+      "passes": true,
+      "notes": "Subscription management page with revenue KPIs (MRR, ARR, churn), area/bar/pie charts, DataTable with plan change modal, renewal alerts."
     },
     {
       "id": "US-025",
@@ -429,9 +490,13 @@
         "Verify in browser: table renders, filters work, mark-paid completes"
       ],
       "priority": 25,
-      "dependsOn": ["US-013", "US-014", "US-016"],
-      "passes": false,
-      "notes": ""
+      "dependsOn": [
+        "US-013",
+        "US-014",
+        "US-016"
+      ],
+      "passes": true,
+      "notes": "Invoices page with financial KPIs, FilterBar, DataTable with mark-paid flow, slide-over invoice detail panel."
     },
     {
       "id": "US-026",
@@ -446,9 +511,14 @@
         "Verify in browser: select ticket, messages render, reply sends, SLA shows"
       ],
       "priority": 26,
-      "dependsOn": ["US-013", "US-014", "US-016", "US-018"],
-      "passes": false,
-      "notes": ""
+      "dependsOn": [
+        "US-013",
+        "US-014",
+        "US-016",
+        "US-018"
+      ],
+      "passes": true,
+      "notes": "Support ticket list with split-panel layout, status filters, ticket list with status badges, detail panel with message thread."
     },
     {
       "id": "US-027",
@@ -460,9 +530,12 @@
         "Verify in browser: all charts render with sample data"
       ],
       "priority": 27,
-      "dependsOn": ["US-026", "US-015"],
-      "passes": false,
-      "notes": ""
+      "dependsOn": [
+        "US-026",
+        "US-015"
+      ],
+      "passes": true,
+      "notes": "Ticket detail view with analytics toggle, message thread, internal notes, status progression, response time metrics."
     },
     {
       "id": "US-028",
@@ -471,16 +544,19 @@
       "acceptanceCriteria": [
         "Impersonate button opens confirmation modal: facility name, required purpose textarea, read-only warning, Start/Cancel buttons",
         "POST /access/impersonate on confirm with loading state",
-        "ImpersonationBar.tsx: FIXED at very top, amber gradient, 👁️ icon, facility name, Read-only text, live countdown timer, End Session button, high z-index 48px height",
+        "ImpersonationBar.tsx: FIXED at very top, amber gradient, \ud83d\udc41\ufe0f icon, facility name, Read-only text, live countdown timer, End Session button, high z-index 48px height",
         "During impersonation all mutation buttons disabled with tooltip",
         "End session: POST /access/impersonate/end, redirect back with success toast",
         "Typecheck passes",
         "Verify in browser: bar renders, countdown ticks, buttons disabled"
       ],
       "priority": 28,
-      "dependsOn": ["US-014", "US-018"],
-      "passes": false,
-      "notes": ""
+      "dependsOn": [
+        "US-014",
+        "US-018"
+      ],
+      "passes": true,
+      "notes": "Impersonation bar with amber background, facility name, countdown timer, end session button. ImpersonationBar integrated into AppShell."
     },
     {
       "id": "US-029",
@@ -493,9 +569,12 @@
         "Verify in browser: invite flow works, key shows once, copy works"
       ],
       "priority": 29,
-      "dependsOn": ["US-013", "US-014"],
-      "passes": false,
-      "notes": ""
+      "dependsOn": [
+        "US-013",
+        "US-014"
+      ],
+      "passes": true,
+      "notes": "Team management page with invite modal and role selector. API keys page with generate/copy/revoke flow."
     },
     {
       "id": "US-030",
@@ -510,9 +589,14 @@
         "Verify in browser: entries render, filters work, infinite scroll loads, expand shows details"
       ],
       "priority": 30,
-      "dependsOn": ["US-013", "US-017", "US-015", "US-016"],
-      "passes": false,
-      "notes": ""
+      "dependsOn": [
+        "US-013",
+        "US-017",
+        "US-015",
+        "US-016"
+      ],
+      "passes": true,
+      "notes": "Audit log page with timeline/table toggle, entity type and action filters, user-friendly descriptions, export button."
     },
     {
       "id": "US-031",
@@ -527,7 +611,10 @@
         "Verify in browser: health rings animate, at-risk section shows flagged tenants"
       ],
       "priority": 31,
-      "dependsOn": ["US-012", "US-015"],
+      "dependsOn": [
+        "US-012",
+        "US-015"
+      ],
       "passes": false,
       "notes": ""
     },
@@ -542,7 +629,10 @@
         "Verify in browser: status cards render with colored dots"
       ],
       "priority": 32,
-      "dependsOn": ["US-012", "US-014"],
+      "dependsOn": [
+        "US-012",
+        "US-014"
+      ],
       "passes": false,
       "notes": ""
     },
@@ -557,7 +647,11 @@
         "Verify in browser: create announcement, live preview updates, publish"
       ],
       "priority": 33,
-      "dependsOn": ["US-012", "US-014", "US-016"],
+      "dependsOn": [
+        "US-012",
+        "US-014",
+        "US-016"
+      ],
       "passes": false,
       "notes": ""
     },
@@ -573,7 +667,11 @@
         "Verify in browser: all sections render, charts animate, quick actions navigate"
       ],
       "priority": 34,
-      "dependsOn": ["US-012", "US-013", "US-015"],
+      "dependsOn": [
+        "US-012",
+        "US-013",
+        "US-015"
+      ],
       "passes": false,
       "notes": ""
     },
@@ -587,7 +685,10 @@
         "Verify in browser: all chart sections render with sample data"
       ],
       "priority": 35,
-      "dependsOn": ["US-015", "US-012"],
+      "dependsOn": [
+        "US-015",
+        "US-012"
+      ],
       "passes": false,
       "notes": ""
     },
@@ -602,7 +703,9 @@
         "Verify in browser: inline edit saves, maintenance modal works"
       ],
       "priority": 36,
-      "dependsOn": ["US-014"],
+      "dependsOn": [
+        "US-014"
+      ],
       "passes": false,
       "notes": ""
     },
@@ -617,7 +720,10 @@
         "Verify in browser: toggles work, overrides highlighted, sticky on scroll"
       ],
       "priority": 37,
-      "dependsOn": ["US-013", "US-014"],
+      "dependsOn": [
+        "US-013",
+        "US-014"
+      ],
       "passes": false,
       "notes": ""
     },
@@ -632,7 +738,10 @@
         "Verify in browser: search filters, category sidebar works, editor renders preview"
       ],
       "priority": 38,
-      "dependsOn": ["US-013", "US-016"],
+      "dependsOn": [
+        "US-013",
+        "US-016"
+      ],
       "passes": false,
       "notes": ""
     },
@@ -646,7 +755,11 @@
         "Verify in browser: ZATCA gauge animates on load, tabs switch, highlighting works"
       ],
       "priority": 39,
-      "dependsOn": ["US-013", "US-014", "US-015"],
+      "dependsOn": [
+        "US-013",
+        "US-014",
+        "US-015"
+      ],
       "passes": false,
       "notes": ""
     },
@@ -662,7 +775,10 @@
         "Verify in browser: opens, displays grouped, marking read works"
       ],
       "priority": 40,
-      "dependsOn": ["US-009", "US-018"],
+      "dependsOn": [
+        "US-009",
+        "US-018"
+      ],
       "passes": false,
       "notes": ""
     },
@@ -679,7 +795,11 @@
         "Verify in browser at each breakpoint"
       ],
       "priority": 41,
-      "dependsOn": ["US-034", "US-026", "US-019"],
+      "dependsOn": [
+        "US-034",
+        "US-026",
+        "US-019"
+      ],
       "passes": false,
       "notes": ""
     },
@@ -689,13 +809,15 @@
       "description": "As an Arabic user, I want perfect RTL layout on every page.",
       "acceptanceCriteria": [
         "Switch to Arabic and verify all pages: sidebar flips right, text alignment uses start/end, direction icons flip, charts render Arabic labels, numbers stay Western Arabic",
-        "Currency SAR prefix EN / ر.س suffix AR, tables action buttons left in RTL, breadcrumb separator flips, slide-overs from left, search icon flips, notifications from left",
+        "Currency SAR prefix EN / \u0631.\u0633 suffix AR, tables action buttons left in RTL, breadcrumb separator flips, slide-overs from left, search icon flips, notifications from left",
         "All Framer Motion animations mirror direction, no text overflow in Arabic, mixed AR/EN content renders correctly",
         "Typecheck passes",
         "Verify in browser: full walkthrough in Arabic mode"
       ],
       "priority": 42,
-      "dependsOn": ["US-041"],
+      "dependsOn": [
+        "US-041"
+      ],
       "passes": false,
       "notes": ""
     },
@@ -713,7 +835,9 @@
         "Typecheck passes"
       ],
       "priority": 43,
-      "dependsOn": ["US-042"],
+      "dependsOn": [
+        "US-042"
+      ],
       "passes": false,
       "notes": ""
     },
@@ -730,7 +854,10 @@
         "Verify in browser: disconnect network for banner, trigger errors for toasts"
       ],
       "priority": 44,
-      "dependsOn": ["US-018", "US-014"],
+      "dependsOn": [
+        "US-018",
+        "US-014"
+      ],
       "passes": false,
       "notes": ""
     },
@@ -746,7 +873,15 @@
         "Verify in browser: all components render, demos work"
       ],
       "priority": 45,
-      "dependsOn": ["US-012", "US-013", "US-014", "US-015", "US-016", "US-017", "US-018"],
+      "dependsOn": [
+        "US-012",
+        "US-013",
+        "US-014",
+        "US-015",
+        "US-016",
+        "US-017",
+        "US-018"
+      ],
       "passes": false,
       "notes": ""
     }
