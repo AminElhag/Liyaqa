@@ -67,8 +67,8 @@
       ],
       "priority": 4,
       "dependsOn": ["US-003"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "ThemeProvider with dark/light toggle persisted to localStorage. DirectionProvider synced with i18n language. i18next configured with en/ar namespaces. Translation files with nav and status keys. useTheme(), useDirection(), useThemeContext(), useDirectionContext() hooks exported."
     },
     {
       "id": "US-005",
