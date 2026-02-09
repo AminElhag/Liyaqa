@@ -227,8 +227,8 @@
       ],
       "priority": 13,
       "dependsOn": ["US-003"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "DataTable wraps TanStack Table with sorting (click header), debounced search 300ms, row selection with checkboxes, bulk actions toolbar, pagination with page size selector. Skeleton loading rows, empty state with icon/title/description/action. Row hover, sticky header. RTL text alignment via text-start."
     },
     {
       "id": "US-014",
