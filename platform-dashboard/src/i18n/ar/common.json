@@ -13,7 +13,17 @@
     "content": "المحتوى",
     "compliance": "الامتثال",
     "settings": "الإعدادات",
-    "logout": "تسجيل الخروج"
+    "logout": "تسجيل الخروج",
+    "invoices": "الفواتير",
+    "health": "الصحة",
+    "auditLog": "سجل التدقيق",
+    "systemStatus": "حالة النظام",
+    "announcements": "الإعلانات",
+    "team": "الفريق",
+    "apiKeys": "مفاتيح API",
+    "featureFlags": "إعدادات الميزات",
+    "templates": "القوالب",
+    "knowledgeBase": "قاعدة المعرفة"
   },
   "status": {
     "active": "نشط",

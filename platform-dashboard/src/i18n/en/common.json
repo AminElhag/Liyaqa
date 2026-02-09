@@ -13,7 +13,17 @@
     "content": "Content",
     "compliance": "Compliance",
     "settings": "Settings",
-    "logout": "Logout"
+    "logout": "Logout",
+    "invoices": "Invoices",
+    "health": "Health",
+    "auditLog": "Audit Log",
+    "systemStatus": "System Status",
+    "announcements": "Announcements",
+    "team": "Team",
+    "apiKeys": "API Keys",
+    "featureFlags": "Feature Flags",
+    "templates": "Templates",
+    "knowledgeBase": "Knowledge Base"
   },
   "status": {
     "active": "Active",

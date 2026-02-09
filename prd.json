@@ -135,8 +135,8 @@
       ],
       "priority": 8,
       "dependsOn": ["US-007", "US-005"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Sidebar with 8 grouped navigation sections and Lucide icons. Active item has amber border (start/end for RTL) + amber bg tint. Collapse/expand: 260px/72px with tooltips, state persisted to localStorage. Framer Motion 250ms animations. Bottom: user avatar, theme toggle, language toggle. Mobile: slide-over drawer with overlay. Full RTL support with logical properties."
     },
     {
       "id": "US-009",
