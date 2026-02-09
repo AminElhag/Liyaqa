@@ -173,8 +173,8 @@
       ],
       "priority": 10,
       "dependsOn": ["US-009"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "CommandPalette opens on Cmd+K/Ctrl+K. Frosted glass backdrop with centered search modal. Fuzzy search across all navigation pages grouped by category with icons. Keyboard navigation (arrows, Enter, Esc). Framer Motion scale-in 250ms. Selecting navigates and closes."
     },
     {
       "id": "US-011",
