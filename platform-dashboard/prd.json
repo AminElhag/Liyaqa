@@ -71,8 +71,8 @@
         "No ky imports \u2014 uses axios via api client",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Expanded auth.ts types with User, SendCodeRequest/Response, VerifyCodeRequest, PlatformAuthResponse, RefreshTokenRequest/Response, isPlatformRole helper. Rewrote auth store with OTP flow (sendCode/verifyCode), token refresh, logout, initialize, RBAC helpers (hasPermission, hasAnyPermission, hasAllPermissions, isPlatformUser, isPlatformRole). Updated LoginPage to use OTP two-step flow. Fixed Header/Sidebar to use user.displayName.en for LocalizedText."
     },
     {
       "id": "US-005",

@@ -8,26 +8,31 @@ import { useToast } from '@/stores/toast-store'
 export default function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const login = useAuthStore((s) => s.login)
+  const { sendCode, verifyCode, passwordlessEmail, isLoading, error, clearError } = useAuthStore()
   const toast = useToast()
   const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [code, setCode] = useState('')
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    clearError()
+    try {
+      await sendCode(email)
+    } catch {
+      // error is set in store
+    }
+  }
 
-    // Simulate auth — in production this would call the API
-    setTimeout(() => {
-      login('mock-jwt-token', {
-        id: '1',
-        email,
-        displayName: email.split('@')[0],
-        role: 'PLATFORM_SUPER_ADMIN',
-      })
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault()
+    clearError()
+    try {
+      await verifyCode(email, code)
       toast.success(t('common.loginSuccess', 'Welcome back!'))
       navigate('/dashboard')
-    }, 800)
+    } catch {
+      // error is set in store
+    }
   }
 
   return (
@@ -43,38 +48,82 @@ export default function LoginPage() {
             L
           </div>
           <h1 className="text-xl font-bold text-foreground">Liyaqa Platform</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t('common.loginSubtitle', 'Sign in to your account')}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t('common.loginSubtitle', 'Sign in to your account')}
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="mb-1 block text-sm font-medium text-foreground">
-              {t('common.email', 'Email')}
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@liyaqa.com"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-brand-accent"
-              autoComplete="email"
-            />
+        {error && (
+          <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+            {error}
           </div>
+        )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex w-full items-center justify-center rounded-lg bg-brand-accent px-4 py-2.5 text-sm font-semibold text-bg-inverse transition-colors hover:bg-brand-accent-hover disabled:opacity-60"
-          >
-            {loading ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-bg-inverse border-t-transparent" />
-            ) : (
-              t('common.signIn', 'Sign In')
-            )}
-          </button>
-        </form>
+        {!passwordlessEmail ? (
+          <form onSubmit={handleSendCode} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="mb-1 block text-sm font-medium text-foreground">
+                {t('common.email', 'Email')}
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@liyaqa.com"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-brand-accent"
+                autoComplete="email"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex w-full items-center justify-center rounded-lg bg-brand-accent px-4 py-2.5 text-sm font-semibold text-bg-inverse transition-colors hover:bg-brand-accent-hover disabled:opacity-60"
+            >
+              {isLoading ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-bg-inverse border-t-transparent" />
+              ) : (
+                t('common.sendCode', 'Send Login Code')
+              )}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleVerifyCode} className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {t('common.codeSentTo', 'A login code was sent to')} <strong>{passwordlessEmail}</strong>
+            </p>
+            <div>
+              <label htmlFor="code" className="mb-1 block text-sm font-medium text-foreground">
+                {t('common.verificationCode', 'Verification Code')}
+              </label>
+              <input
+                id="code"
+                type="text"
+                required
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="000000"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-center text-lg font-mono tracking-widest text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-brand-accent"
+                autoComplete="one-time-code"
+                maxLength={6}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex w-full items-center justify-center rounded-lg bg-brand-accent px-4 py-2.5 text-sm font-semibold text-bg-inverse transition-colors hover:bg-brand-accent-hover disabled:opacity-60"
+            >
+              {isLoading ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-bg-inverse border-t-transparent" />
+              ) : (
+                t('common.verifyAndLogin', 'Verify & Sign In')
+              )}
+            </button>
+          </form>
+        )}
       </motion.div>
     </div>
   )

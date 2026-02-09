@@ -117,7 +117,7 @@ function SidebarContent() {
         {user && (
           <div className={cn('flex items-center gap-3', collapsed && 'justify-center')}>
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-accent text-xs font-bold text-bg-inverse">
-              {user.displayName.charAt(0).toUpperCase()}
+              {user.displayName.en.charAt(0).toUpperCase()}
             </div>
             <AnimatePresence>
               {!collapsed && (
@@ -128,7 +128,7 @@ function SidebarContent() {
                   transition={{ duration: 0.25 }}
                   className="min-w-0 overflow-hidden"
                 >
-                  <div className="truncate text-sm font-medium text-foreground">{user.displayName}</div>
+                  <div className="truncate text-sm font-medium text-foreground">{user.displayName.en}</div>
                   <div className="truncate text-xs text-muted-foreground">{user.role}</div>
                 </motion.div>
               )}
