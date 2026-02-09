@@ -1,10 +1,11 @@
 import { useLocation, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Search, Bell, Menu, ChevronRight, LogOut, User, Settings } from 'lucide-react'
+import { Search, Menu, ChevronRight, LogOut, User, Settings } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { useSidebarStore } from '@/stores/sidebar-store'
 import { useAuthStore } from '@/stores/auth-store'
+import { NotificationCenter } from './NotificationCenter'
 
 const routeLabels: Record<string, string> = {
   dashboard: 'nav.dashboard',
@@ -65,12 +66,13 @@ export function Header() {
       <button
         onClick={() => setMobileOpen(true)}
         className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground md:hidden"
+        aria-label={t('common.menu', 'Open menu')}
       >
-        <Menu className="h-5 w-5" />
+        <Menu className="h-5 w-5" aria-hidden="true" />
       </button>
 
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-1 text-sm">
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm">
         {breadcrumbs.map((crumb, i) => (
           <span key={crumb.path} className="flex items-center gap-1">
             {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
@@ -87,26 +89,26 @@ export function Header() {
 
       <div className="ms-auto flex items-center gap-2">
         {/* Search trigger */}
-        <button className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
-          <Search className="h-4 w-4" />
+        <button
+          aria-label={t('common.search', 'Search')}
+          className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <Search className="h-4 w-4" aria-hidden="true" />
           <span className="hidden sm:inline">{t('common.search', 'Search...')}</span>
           <kbd className="hidden rounded bg-muted px-1.5 py-0.5 text-xs font-medium sm:inline">
             {navigator.platform.includes('Mac') ? '\u2318' : 'Ctrl+'}K
           </kbd>
         </button>
 
-        {/* Notification bell */}
-        <button className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:text-foreground">
-          <Bell className="h-5 w-5" />
-          <span className="absolute end-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-accent text-[10px] font-bold text-bg-inverse animate-pulse">
-            3
-          </span>
-        </button>
+        {/* Notification center */}
+        <NotificationCenter />
 
         {/* User menu */}
         <div ref={menuRef} className="relative">
           <button
             onClick={() => setUserMenuOpen(!userMenuOpen)}
+            aria-label={t('common.userMenu', 'User menu')}
+            aria-expanded={userMenuOpen}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-accent text-xs font-bold text-bg-inverse transition-opacity hover:opacity-90"
           >
             {user?.displayName.charAt(0).toUpperCase() ?? 'U'}

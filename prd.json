@@ -615,8 +615,8 @@
         "US-012",
         "US-015"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Health dashboard with pie chart, card/table toggle, circular progress rings, at-risk section, sort/filter."
     },
     {
       "id": "US-032",
@@ -633,8 +633,8 @@
         "US-012",
         "US-014"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "System status with health banner, 6 component cards with status dots, maintenance banner, response time chart."
     },
     {
       "id": "US-033",
@@ -652,8 +652,8 @@
         "US-014",
         "US-016"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Announcements with KPIs, card list with type borders, creation modal with EN/AR fields and live preview."
     },
     {
       "id": "US-034",
@@ -672,8 +672,8 @@
         "US-013",
         "US-015"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Main dashboard with greeting, quick actions, KPIs, revenue/growth charts, distribution donuts, recent deals/tickets tables, health alerts."
     },
     {
       "id": "US-035",
@@ -689,8 +689,8 @@
         "US-015",
         "US-012"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Analytics with churn analysis tab, feature adoption bars, benchmarks comparison, export button."
     },
     {
       "id": "US-036",
@@ -706,8 +706,8 @@
       "dependsOn": [
         "US-014"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Config page with accordion sections, inline editing (toggle/text/number/JSON), floating Save All, maintenance scheduling modal."
     },
     {
       "id": "US-037",
@@ -724,8 +724,8 @@
         "US-013",
         "US-014"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Feature flags matrix with toggle cells, override highlighting (amber/red), sticky headers, bulk actions, rollout slider."
     },
     {
       "id": "US-038",
@@ -742,8 +742,8 @@
         "US-013",
         "US-016"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Knowledge base with category sidebar, article cards, search/sort, markdown editor with split preview and EN/AR tabs."
     },
     {
       "id": "US-039",
@@ -760,8 +760,8 @@
         "US-014",
         "US-015"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Compliance dashboard with Contracts/ZATCA/Data Requests tabs, animated ZATCA gauge, issues table with retry."
     },
     {
       "id": "US-040",
@@ -779,8 +779,8 @@
         "US-009",
         "US-018"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Notification center dropdown with grouped notifications, read/unread state, mark all read, spring badge animation."
     },
     {
       "id": "US-041",
@@ -800,8 +800,8 @@
         "US-026",
         "US-019"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Responsive design verified: KPI grids stack 4/2/1, sidebar collapses to drawer on mobile, DataTable responsive, charts stack vertically."
     },
     {
       "id": "US-042",
@@ -818,8 +818,8 @@
       "dependsOn": [
         "US-041"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "RTL polish: all logical properties (start/end), slide-overs direction-aware, breadcrumb separators, Framer Motion direction-aware animations."
     },
     {
       "id": "US-043",
@@ -838,8 +838,8 @@
       "dependsOn": [
         "US-042"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Accessibility: focus-visible with 2px amber outline, aria-labels on icons/buttons, prefers-reduced-motion CSS, sr-only utility, React.lazy on all routes."
     },
     {
       "id": "US-044",
@@ -858,8 +858,8 @@
         "US-018",
         "US-014"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "ErrorBoundary wrapping app, OfflineBanner with retry countdown, improved loading spinner, 401/403 interceptors in API client."
     },
     {
       "id": "US-045",
@@ -882,8 +882,8 @@
         "US-017",
         "US-018"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Design system showcase with color palette, typography EN/AR/mono, spacing scale, all component demos with interactive controls."
     }
   ]
 }

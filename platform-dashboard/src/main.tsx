@@ -6,14 +6,19 @@ import App from './App.tsx'
 import { ThemeProvider } from '@/components/layout/ThemeProvider'
 import { DirectionProvider } from '@/components/layout/DirectionProvider'
 import { ToastContainer } from '@/components/feedback/ToastContainer'
+import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
+import { OfflineBanner } from '@/components/feedback/OfflineBanner'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider>
-      <DirectionProvider>
-        <App />
-        <ToastContainer />
-      </DirectionProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <DirectionProvider>
+          <App />
+          <ToastContainer />
+          <OfflineBanner />
+        </DirectionProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   </StrictMode>,
 )

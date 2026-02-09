@@ -32,7 +32,10 @@ const DesignSystemPage = lazy(() => import('@/features/content/pages/DesignSyste
 function LoadingFallback() {
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <div className="text-muted-foreground">Loading...</div>
+      <div className="flex flex-col items-center gap-3">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-brand-accent" />
+        <span className="text-sm text-muted-foreground">Loading...</span>
+      </div>
     </div>
   )
 }
