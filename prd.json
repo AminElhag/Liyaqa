@@ -262,8 +262,8 @@
       ],
       "priority": 15,
       "dependsOn": ["US-003"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "AreaChartCard, BarChartCard, PieChartCard with theme CSS variable colors. Custom frosted glass tooltip. Loading skeleton. ResponsiveContainer auto-resize. Dark mode adapted."
     },
     {
       "id": "US-016",
@@ -278,8 +278,8 @@
       ],
       "priority": 16,
       "dependsOn": ["US-003"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "SearchInput with debounce, clear button, loading spinner, RTL. DateRangePicker with presets (Today, Last 7/30, Month, Quarter). FilterBar with dropdown filters, active chips, Clear all."
     },
     {
       "id": "US-017",
@@ -295,8 +295,8 @@
       ],
       "priority": 17,
       "dependsOn": ["US-003", "US-005"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Timeline component with vertical connecting line, color-coded icons per type (create=green, update=blue, delete=red, access=amber), stagger animation 50ms. RTL and dark mode support."
     },
     {
       "id": "US-018",
@@ -312,8 +312,8 @@
       ],
       "priority": 18,
       "dependsOn": ["US-005"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Toast system with Zustand store + Framer Motion. 4 variants (success/error/warning/info). Bottom-end positioned (RTL-aware). Auto-dismiss 5s with hover pause. Spring slide animation. Max 5 visible. useToast() hook with toast.success/error/warning/info."
     },
     {
       "id": "US-019",

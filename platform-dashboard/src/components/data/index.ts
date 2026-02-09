@@ -1,3 +1,5 @@
 export { StatCard } from './StatCard'
 export { KPIGrid, type KPIItem } from './KPIGrid'
 export { DataTable } from './DataTable'
+export { AreaChartCard, BarChartCard, PieChartCard } from './Chart'
+export { Timeline } from './Timeline'
