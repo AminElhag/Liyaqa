@@ -1,0 +1,1678 @@
+{
+  "project": "Liyaqa Platform Dashboard",
+  "description": "Standalone Vite + React platform dashboard with real Spring Boot backend integration",
+  "version": "2.0.0",
+  "totalStories": 109,
+  "userStories": [
+    {
+      "id": "US-001",
+      "phase": 0,
+      "title": "Update design system to Coral/MD3 palette",
+      "description": "Replace navy/amber theme with Sunset Coral (#FF6B4A) + MD3 design system. Update theme.css with new light/dark CSS variables, update index.css Shadcn oklch values to match the coral palette from frontend/src/app/globals.css, add MD3 surface/outline/elevation variables, gradients, and component utility classes.",
+      "acceptanceCriteria": [
+        "theme.css uses Coral #FF6B4A as brand-accent instead of amber #F59E0B",
+        "index.css :root --primary matches oklch equivalent of HSL 11 100% 64%",
+        "Dark mode variables updated for coral palette",
+        "MD3 surface container variables (lowest through highest) present in both modes",
+        "MD3 component utility classes (md3-card, md3-btn-filled, md3-chip, etc.) available",
+        "Gradient variables (--gradient-primary, --gradient-platform, etc.) defined",
+        "Platform metric accent color variables defined",
+        "MD3 typography scale classes available",
+        "Focus-visible uses coral primary instead of amber",
+        "Build passes with no CSS errors"
+      ],
+      "passes": true,
+      "notes": "Replaced navy/amber with Coral #FF6B4A + MD3 design system. Updated theme.css with brand scale, MD3 surfaces, outlines, shadows, gradients, platform metric colors, typography scale, and component utility classes. Updated index.css oklch values for coral primary. Focus-visible uses coral."
+    },
+    {
+      "id": "US-002",
+      "phase": 0,
+      "title": "Port TypeScript type definitions from Next.js",
+      "description": "Copy and adapt all 16 type definition files from frontend/src/types/platform/ to platform-dashboard/src/types/. Remove any Next.js-specific imports. Ensure all types compile under strict TypeScript.",
+      "acceptanceCriteria": [
+        "src/types/ contains: api.ts, auth.ts, deal.ts, client.ts, client-plan.ts, client-subscription.ts, client-invoice.ts, client-note.ts, client-health.ts, club-detail.ts, dashboard.ts, support.ts, support-ticket.ts, platform-user.ts, onboarding.ts, alerts.ts, dunning.ts, index.ts",
+        "No Next.js imports remain (no next/navigation, next-intl, etc.)",
+        "All types exported via index.ts barrel file",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "phase": 0,
+      "title": "Upgrade API client with token refresh and interceptors",
+      "description": "Replace the existing minimal axios client in src/api/client.ts with a full-featured version that supports: Bearer token injection, 401 token refresh with retry queue, platform mode headers, session expiry handling, and configurable base URL from VITE_API_BASE_URL env var.",
+      "acceptanceCriteria": [
+        "Axios instance created with baseURL from import.meta.env.VITE_API_BASE_URL",
+        "Request interceptor adds Authorization: Bearer header from auth store",
+        "Response interceptor catches 401, attempts token refresh, retries original request",
+        "Concurrent 401s queue behind a single refresh attempt (no duplicate refreshes)",
+        "On refresh failure, clears auth state and redirects to /login",
+        "Exports named api instance for use by endpoint modules",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "phase": 0,
+      "title": "Port auth store with OTP flow and RBAC",
+      "description": "Replace the placeholder auth store with a full Zustand store ported from frontend/src/stores/auth-store.ts. Adapt from ky to axios. Include: user state, OTP flow management, token storage, permission checking (hasPermission, hasAnyPermission, hasAllPermissions), role checking, and persistent hydration.",
+      "acceptanceCriteria": [
+        "Auth store manages: user, accessToken, refreshToken, isAuthenticated, platformRole, permissions",
+        "sendCode(email) and verifyCode(email, code) actions for OTP flow",
+        "refreshToken action that calls /api/platform/auth/refresh",
+        "logout action that calls /api/platform/auth/logout and clears state",
+        "hasPermission(permission), hasAnyPermission(permissions), hasAllPermissions(permissions) methods",
+        "isPlatformUser and isPlatformRole(role) helper methods",
+        "Persistent hydration via zustand/persist with localStorage",
+        "No ky imports \u2014 uses axios via api client",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "phase": 0,
+      "title": "Update .env and backend CORS for Vite dev server",
+      "description": "Update platform-dashboard/.env to set VITE_API_BASE_URL=http://localhost:8080. Update backend application-local.yml to add http://localhost:5173 to allowed CORS origins.",
+      "acceptanceCriteria": [
+        "platform-dashboard/.env contains VITE_API_BASE_URL=http://localhost:8080",
+        "backend/src/main/resources/application-local.yml cors allowed-origins includes http://localhost:5173",
+        "Existing origins (localhost:3000, localhost:3001) preserved"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "phase": 0,
+      "title": "Update Sidebar and Header brand colors to Coral",
+      "description": "Update the Sidebar and Header layout components to use the new Coral brand colors instead of navy/amber. Update any hardcoded color references, logo styling, and active state indicators.",
+      "acceptanceCriteria": [
+        "Sidebar active item uses coral primary color, not amber",
+        "Header brand/logo area uses coral accent",
+        "No hardcoded amber (#F59E0B) or navy (#0A1628) hex values in layout components",
+        "All color references use CSS variables or Tailwind semantic classes",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "phase": 1,
+      "title": "Create auth API endpoint module",
+      "description": "Create src/api/endpoints/auth.ts with functions for all PlatformAuthController endpoints: sendCode, verifyCode, refreshToken, getMe, logout. Each function uses the shared axios api instance.",
+      "acceptanceCriteria": [
+        "sendCode(email: string) \u2192 POST /api/platform/auth/send-code",
+        "verifyCode(email: string, code: string) \u2192 POST /api/platform/auth/verify-code returns { accessToken, refreshToken, user }",
+        "refreshToken(token: string) \u2192 POST /api/platform/auth/refresh",
+        "getMe() \u2192 GET /api/platform/auth/me",
+        "logout() \u2192 POST /api/platform/auth/logout",
+        "All functions properly typed with request/response types",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "phase": 1,
+      "title": "Create dashboard API endpoint module",
+      "description": "Create src/api/endpoints/dashboard.ts with functions for all PlatformDashboardController endpoints: getDashboard, getSummary, getRevenue, getMonthlyRevenue, getClientGrowth, getDealPipeline, getExpiringSubscriptions, getTopClients, getRecentActivity, getHealth, getSupportStats, and all export endpoints.",
+      "acceptanceCriteria": [
+        "All 16 dashboard endpoints mapped with correct HTTP methods and paths",
+        "Export endpoints (CSV/PDF) return Blob types for file download",
+        "Query parameters supported (e.g., daysAhead for expiring subscriptions, limit for top clients)",
+        "All functions properly typed",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "phase": 1,
+      "title": "Create deals API endpoint module",
+      "description": "Create src/api/endpoints/deals.ts with functions for all DealController endpoints: CRUD, stage changes, activities, pipeline summary, and metrics.",
+      "acceptanceCriteria": [
+        "createDeal, listDeals, getDeal, updateDeal, changeDealStage, addActivity, getActivities, getPipeline, getMetrics mapped",
+        "listDeals supports pagination + filter params (stage, source, search)",
+        "All 10 endpoints mapped with correct types",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "phase": 1,
+      "title": "Create clients API endpoint module",
+      "description": "Create src/api/endpoints/clients.ts with functions for all ClientController endpoints: onboard, list, get, stats, activate, suspend, setup-admin, clubs, create-club, health.",
+      "acceptanceCriteria": [
+        "All 10 client endpoints mapped",
+        "onboardClient uses proper request body type (organization + club + admin + subscription data)",
+        "List supports pagination and status filter",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "phase": 1,
+      "title": "Create client-subscriptions API endpoint module",
+      "description": "Create src/api/endpoints/client-subscriptions.ts with functions for all ClientSubscriptionController endpoints: CRUD, activate, suspend, cancel, renew, change-plan, stats, expiring, trials.",
+      "acceptanceCriteria": [
+        "All 15 subscription endpoints mapped",
+        "List supports pagination + filters (status, organization, salesRep)",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "phase": 1,
+      "title": "Create client-plans API endpoint module",
+      "description": "Create src/api/endpoints/client-plans.ts with functions for all ClientPlanController endpoints: CRUD, activate, deactivate, active plans list.",
+      "acceptanceCriteria": [
+        "All 9 plan endpoints mapped",
+        "getActivePlansOrdered returns non-paginated list (for dropdowns)",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "phase": 1,
+      "title": "Create client-invoices API endpoint module",
+      "description": "Create src/api/endpoints/client-invoices.ts with functions for all ClientInvoiceController endpoints: CRUD, generate from subscription, issue, record-payment, cancel, PDF download, stats, overdue.",
+      "acceptanceCriteria": [
+        "All 14 invoice endpoints mapped",
+        "downloadPdf returns Blob for file download",
+        "generateFromSubscription endpoint included",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "phase": 1,
+      "title": "Create client-notes API endpoint module",
+      "description": "Create src/api/endpoints/client-notes.ts with functions for all ClientNoteController endpoints: CRUD, toggle-pin, pinned notes, categories.",
+      "acceptanceCriteria": [
+        "All 8 note endpoints mapped",
+        "URLs correctly nested under /api/platform/clients/{organizationId}/notes",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "phase": 1,
+      "title": "Create support-tickets API endpoint module",
+      "description": "Create src/api/endpoints/support-tickets.ts with functions for all SupportTicketController endpoints: CRUD, status, assign/unassign, messages, stats.",
+      "acceptanceCriteria": [
+        "All 11 ticket endpoints mapped",
+        "Message endpoints (get/add) correctly nested under ticket ID",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-016",
+      "phase": 1,
+      "title": "Create platform-support API endpoint module",
+      "description": "Create src/api/endpoints/platform-support.ts with functions for all PlatformSupportController endpoints: client overview, members, member detail, subscriptions, invoices, users.",
+      "acceptanceCriteria": [
+        "All 6 support endpoints mapped",
+        "URLs correctly nested under /api/platform/support/clients/{organizationId}/...",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-017",
+      "phase": 1,
+      "title": "Create clubs API endpoint module",
+      "description": "Create src/api/endpoints/clubs.ts with functions for all PlatformClubController endpoints: detail, update, activate/suspend, users, employees, subscriptions, audit-logs, locations, membership-plans. Also include PlatformAgreementController endpoints for club agreements.",
+      "acceptanceCriteria": [
+        "All 15 club endpoints + 7 agreement endpoints mapped",
+        "Audit log endpoint supports pagination and action filter",
+        "Agreement endpoints correctly nested under /api/platform/clubs/{clubId}/agreements",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-018",
+      "phase": 1,
+      "title": "Create platform-users API endpoint module",
+      "description": "Create src/api/endpoints/platform-users.ts with functions for all PlatformUserController endpoints: CRUD, status change, password reset, activities, stats.",
+      "acceptanceCriteria": [
+        "All 9 user endpoints mapped",
+        "Activities endpoint supports pagination",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-019",
+      "phase": 1,
+      "title": "Create health API endpoint module",
+      "description": "Create src/api/endpoints/health.ts with functions for all PlatformHealthController endpoints: overview, at-risk, healthy, declining, by-risk-level, by-org, history, report, recalculate.",
+      "acceptanceCriteria": [
+        "All 9 health endpoints mapped",
+        "History supports pagination and daysBack parameter",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-020",
+      "phase": 1,
+      "title": "Create alerts and dunning API endpoint modules",
+      "description": "Create src/api/endpoints/alerts.ts (13 endpoints) and src/api/endpoints/dunning.ts (16 endpoints) for PlatformAlertController and PlatformDunningController respectively.",
+      "acceptanceCriteria": [
+        "All 13 alert endpoints mapped (active, statistics, by-type, by-severity, acknowledge, resolve, dismiss, bulk ops)",
+        "All 16 dunning endpoints mapped (active, escalated, retry, payment-link, escalate, pause, resume, cancel, recover, notes)",
+        "Bulk operations accept array of IDs",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-021",
+      "phase": 2,
+      "title": "Create useDeals React Query hooks",
+      "description": "Create src/hooks/use-deals.ts with React Query hooks for all deal operations: useDeals, useDeal, useDealStats, useDealPipeline, useDealMetrics, useCreateDeal, useUpdateDeal, useDeleteDeal, useChangeDealStage, useAddDealActivity, and all stage-specific mutation hooks.",
+      "acceptanceCriteria": [
+        "Query key factory: dealKeys with lists, detail, stats, pipeline, metrics, activities patterns",
+        "useDeals supports pagination and filter parameters",
+        "All mutations invalidate related queries on success",
+        "staleTime: 2min for lists, 1min for detail",
+        "Error handling with toast notifications",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-022",
+      "phase": 2,
+      "title": "Create useClients React Query hooks",
+      "description": "Create src/hooks/use-clients.ts with hooks for: useClients, useClient, useClientStats, useOnboardClient, useActivateClient, useSuspendClient, useSetupAdmin, useClientClubs, useCreateClientClub, useClientHealth.",
+      "acceptanceCriteria": [
+        "Query key factory: clientKeys",
+        "useClients supports pagination and status filter",
+        "Onboard mutation invalidates client lists",
+        "staleTime: 2min for lists, 1min for detail",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-023",
+      "phase": 2,
+      "title": "Create useClientSubscriptions React Query hooks",
+      "description": "Create src/hooks/use-client-subscriptions.ts with hooks for all subscription operations: list, detail, create, update, activate, suspend, cancel, renew, change-plan, stats, expiring, trials.",
+      "acceptanceCriteria": [
+        "Query key factory: subscriptionKeys",
+        "All 15 operations covered as queries or mutations",
+        "Mutations invalidate relevant queries",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-024",
+      "phase": 2,
+      "title": "Create useClientPlans React Query hooks",
+      "description": "Create src/hooks/use-client-plans.ts with hooks for plan operations: list, detail, active plans, create, update, activate, deactivate, delete.",
+      "acceptanceCriteria": [
+        "Query key factory: planKeys",
+        "useActivePlansOrdered for dropdown usage",
+        "All mutations invalidate plan lists",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-025",
+      "phase": 2,
+      "title": "Create useClientInvoices React Query hooks",
+      "description": "Create src/hooks/use-client-invoices.ts with hooks for all invoice operations: list, detail, create, generate, issue, record-payment, cancel, delete, stats, overdue, download PDF.",
+      "acceptanceCriteria": [
+        "Query key factory: invoiceKeys",
+        "useDownloadInvoicePdf returns blob for file download",
+        "All mutations invalidate invoice lists and stats",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-026",
+      "phase": 2,
+      "title": "Create useClientNotes React Query hooks",
+      "description": "Create src/hooks/use-client-notes.ts with hooks for note operations: list, detail, pinned, create, update, toggle-pin, delete, categories.",
+      "acceptanceCriteria": [
+        "Query key factory: noteKeys (scoped by organizationId)",
+        "useToggleNotePin optimistically updates pin state",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-027",
+      "phase": 2,
+      "title": "Create useSupportTickets React Query hooks",
+      "description": "Create src/hooks/use-support-tickets.ts with hooks for ticket operations: list, detail, create, update, change-status, assign, unassign, delete, messages, add-message, stats.",
+      "acceptanceCriteria": [
+        "Query key factory: ticketKeys",
+        "useTicketMessages scoped to ticket ID",
+        "useAddTicketMessage invalidates message list",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-028",
+      "phase": 2,
+      "title": "Create usePlatformSupport React Query hooks",
+      "description": "Create src/hooks/use-platform-support.ts with hooks for client support drill-down: useClientSupportOverview, useClientMembers, useMemberDetail, useClientSubscriptions (support view), useClientInvoices (support view), useClientUsers.",
+      "acceptanceCriteria": [
+        "Query key factory: supportKeys (scoped by organizationId, clubId)",
+        "All hooks support pagination where applicable",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-029",
+      "phase": 2,
+      "title": "Create useClubs React Query hooks",
+      "description": "Create src/hooks/use-clubs.ts with hooks for club detail operations: useClubDetail, useUpdateClub, useClubUsers, useClubEmployees, useClubSubscriptions, useClubAuditLogs, useClubLocations, useClubMembershipPlans, useClubAgreements, agreement CRUD hooks.",
+      "acceptanceCriteria": [
+        "Query key factory: clubKeys (scoped by clubId)",
+        "Agreement hooks nested under club context",
+        "useClubAuditLogs supports action filter",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-030",
+      "phase": 2,
+      "title": "Create usePlatformUsers React Query hooks",
+      "description": "Create src/hooks/use-platform-users.ts with hooks for user management: list, detail, create, update, change-status, reset-password, delete, activities, stats.",
+      "acceptanceCriteria": [
+        "Query key factory: platformUserKeys",
+        "useUserActivities scoped to user ID with pagination",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-031",
+      "phase": 2,
+      "title": "Create usePlatformDashboard React Query hooks",
+      "description": "Create src/hooks/use-platform-dashboard.ts with hooks for dashboard data: useDashboardSummary, useRevenue, useMonthlyRevenue, useClientGrowth, useDealPipelineOverview, useExpiringSubscriptions, useTopClients, useRecentActivity, usePlatformHealth, useSupportStats, and export hooks.",
+      "acceptanceCriteria": [
+        "Query key factory: dashboardKeys",
+        "staleTime: 5min for all dashboard queries",
+        "Export hooks return Blob and trigger download",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-032",
+      "phase": 2,
+      "title": "Create useHealth React Query hooks",
+      "description": "Create src/hooks/use-health.ts with hooks for health monitoring: useHealthOverview, useAtRiskClients, useHealthyClients, useDecliningClients, useClientsByRiskLevel, useClientHealthScore, useClientHealthHistory, useClientHealthReport, useRecalculateHealth.",
+      "acceptanceCriteria": [
+        "Query key factory: healthKeys",
+        "Paginated hooks support page/size params",
+        "useRecalculateHealth is a mutation that invalidates health queries",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-033",
+      "phase": 2,
+      "title": "Create useAlerts React Query hooks",
+      "description": "Create src/hooks/use-alerts.ts with hooks for alert management: useActiveAlerts, useAlertStatistics, useUnacknowledgedAlerts, useCriticalAlerts, useAlertsByType, useAlertsBySeverity, useOrganizationAlerts, useAlert, useAcknowledgeAlert, useResolveAlert, useDismissAlert, useBulkAcknowledge, useBulkResolve.",
+      "acceptanceCriteria": [
+        "Query key factory: alertKeys",
+        "Acknowledge/resolve mutations invalidate alert lists and statistics",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-034",
+      "phase": 2,
+      "title": "Create useDunning React Query hooks",
+      "description": "Create src/hooks/use-dunning.ts with hooks for dunning management: useActiveDunning, useDunningStatistics, useEscalatedDunning, useDunningByStatus, useOrganizationDunning, useDunning, useRetryPayment, useSendPaymentLink, useEscalateToCsm, useAssignCsm, usePauseDunning, useResumeDunning, useCancelDunning, useMarkRecovered, useAddDunningNotes.",
+      "acceptanceCriteria": [
+        "Query key factory: dunningKeys",
+        "All action mutations invalidate relevant queries",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-035",
+      "phase": 2,
+      "title": "Create useOnboarding React Query hooks",
+      "description": "Create src/hooks/use-onboarding.ts with hooks for onboarding: useIncompleteOnboarding, useOnboardingStatistics, useActiveOnboarding, useStalledOnboarding, useOnboardingByPhase, useOrganizationOnboarding, useOnboardingSummary, useCompleteOnboardingStep, useUncompleteOnboardingStep, useUnlockFeature, useSendOnboardingReminder.",
+      "acceptanceCriteria": [
+        "Query key factory: onboardingKeys",
+        "Step completion mutations invalidate onboarding queries",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-036",
+      "phase": 2,
+      "title": "Create useClientAudit React Query hooks",
+      "description": "Create src/hooks/use-client-audit.ts with hooks for audit log viewing: useClubAuditLogs with pagination, action filter, and date range support. Include useAuditActions for the action type list.",
+      "acceptanceCriteria": [
+        "useClubAuditLogs supports page, size, actionFilter params",
+        "useAuditActions returns available action types",
+        "staleTime: 2min",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-037",
+      "phase": 2,
+      "title": "Create useClubAgreements React Query hooks",
+      "description": "Create src/hooks/use-club-agreements.ts with hooks for agreement management: useClubAgreements, useAgreement, useCreateAgreement, useUpdateAgreement, useActivateAgreement, useDeactivateAgreement, useDeleteAgreement.",
+      "acceptanceCriteria": [
+        "Query key factory: agreementKeys (scoped by clubId)",
+        "All mutations invalidate agreement list",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-038",
+      "phase": 2,
+      "title": "Create API endpoints index and hooks index barrels",
+      "description": "Create src/api/endpoints/index.ts exporting all endpoint modules and src/hooks/index.ts exporting all hook modules for clean imports.",
+      "acceptanceCriteria": [
+        "src/api/endpoints/index.ts re-exports all 14 endpoint modules",
+        "src/hooks/index.ts re-exports all 18 hook modules",
+        "Import paths work: import { useDeals } from '@/hooks'",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-039",
+      "phase": 3,
+      "title": "Port status badge components",
+      "description": "Port all status badge components from frontend/src/components/platform/ to platform-dashboard/src/components/platform/: deal-status-badge, client-status-badge, plan-status-badge, subscription-status-badge, ticket-status-badge, ticket-priority-badge, invoice-status-badge, platform-user-status-badge, platform-user-role-badge, note-category-badge.",
+      "acceptanceCriteria": [
+        "All 10 badge components ported and adapted for Vite",
+        "No Next.js imports remain",
+        "Badges use coral/MD3 design system colors",
+        "All use i18next t() for label text",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-040",
+      "phase": 3,
+      "title": "Port DataTable column definitions",
+      "description": "Port all column definition files from frontend/src/components/platform/: deal-columns, client-columns, plan-columns, subscription-columns, ticket-columns, invoice-columns, platform-user-columns.",
+      "acceptanceCriteria": [
+        "All 7 column definition files ported",
+        "Column definitions use TanStack React Table ColumnDef type",
+        "Status badges, actions, and formatters correctly referenced",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-041",
+      "phase": 3,
+      "title": "Port deal pipeline components (Kanban)",
+      "description": "Port kanban-board, kanban-column, and deal-card components. Adapt from Next.js to Vite (useNavigate instead of useRouter, etc.). Ensure @dnd-kit integration works for drag-and-drop stage transitions.",
+      "acceptanceCriteria": [
+        "KanbanBoard renders columns for each deal stage",
+        "KanbanColumn displays deal cards with drop zone",
+        "DealCard shows deal summary with status badge",
+        "Drag-and-drop moves deals between stages (calls changeDealStage mutation)",
+        "No Next.js imports remain",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-042",
+      "phase": 3,
+      "title": "Port deal form and deal conversion wizard",
+      "description": "Port the deal creation/edit form and the multi-step deal-to-client conversion wizard (convert-deal-wizard, convert-deal-form, and all convert-deal-steps/). Adapt React Hook Form + Zod validation for Vite.",
+      "acceptanceCriteria": [
+        "Deal form supports create and edit modes",
+        "Conversion wizard has steps: Organization \u2192 Club \u2192 Admin \u2192 Subscription \u2192 Review",
+        "Each step validates independently with Zod",
+        "Wizard uses stepper UI component",
+        "Form submission calls appropriate mutations",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-043",
+      "phase": 3,
+      "title": "Port deal action dialogs",
+      "description": "Port lose-deal-dialog and any other deal action dialogs. Adapt for Vite/React Router navigation.",
+      "acceptanceCriteria": [
+        "LoseDealDialog captures loss reason and competitor info",
+        "Dialog uses Shadcn/UI Dialog component",
+        "Submit calls loseDeal mutation",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-044",
+      "phase": 3,
+      "title": "Port client management components",
+      "description": "Port client-edit-form, client-onboarding-form, client-onboarding-wizard (with all client-onboarding-steps/), onboarding-success-dialog, client-health-card, client-activity-tab, client-support-tab, client-notes-tab.",
+      "acceptanceCriteria": [
+        "Client edit form with React Hook Form + Zod",
+        "Onboarding wizard: Organization \u2192 Club \u2192 Admin \u2192 Subscription \u2192 Review",
+        "Health card displays score with color indicators",
+        "Tab components work within client detail page layout",
+        "All use useNavigate instead of useRouter",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-045",
+      "phase": 3,
+      "title": "Port client note components",
+      "description": "Port client-note-card and client-note-form components for the notes tab on client detail.",
+      "acceptanceCriteria": [
+        "NoteCard displays note content with pin toggle, category badge, timestamps",
+        "NoteForm supports create and edit modes with category selection",
+        "Pin toggle calls toggleNotePin mutation",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-046",
+      "phase": 3,
+      "title": "Port subscription management components",
+      "description": "Port subscription-form, renew-subscription-dialog, change-plan-dialog, quick-create-plan-dialog.",
+      "acceptanceCriteria": [
+        "Subscription form supports create and edit modes",
+        "Renew dialog pre-fills current plan details",
+        "Change plan dialog shows plan comparison",
+        "Quick create plan dialog for inline plan creation",
+        "All forms use React Hook Form + Zod",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-047",
+      "phase": 3,
+      "title": "Port invoice management components",
+      "description": "Port invoice-form, record-payment-dialog, and invoice-related action components.",
+      "acceptanceCriteria": [
+        "Invoice form supports manual creation",
+        "Record payment dialog captures amount, method, reference",
+        "All forms validate with Zod",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-048",
+      "phase": 3,
+      "title": "Port plan management components",
+      "description": "Port plan-form for creating and editing client subscription plans.",
+      "acceptanceCriteria": [
+        "Plan form handles all plan fields (name, description, price, duration, features, limits)",
+        "Supports create and edit modes",
+        "Validates with Zod (price > 0, required fields)",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-049",
+      "phase": 3,
+      "title": "Port support ticket components",
+      "description": "Port ticket-form, ticket-messages, assign-ticket-dialog, change-status-dialog.",
+      "acceptanceCriteria": [
+        "Ticket form supports create and edit",
+        "Ticket messages renders thread with sender info and timestamps",
+        "Assign dialog shows platform user dropdown",
+        "Change status dialog shows available status transitions",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-050",
+      "phase": 3,
+      "title": "Port platform user management components",
+      "description": "Port platform-user-form and reset-password-dialog.",
+      "acceptanceCriteria": [
+        "User form supports create and edit with role selection",
+        "Reset password dialog with confirmation",
+        "Role selection limited to allowed roles based on current user",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-051",
+      "phase": 3,
+      "title": "Port club detail components",
+      "description": "Port all club-detail/ components: club-locations-tab, club-edit-dialog, club-membership-plans-tab, club-agreements-tab, agreement-form-dialog.",
+      "acceptanceCriteria": [
+        "Each tab component displays paginated data from club hooks",
+        "Club edit dialog with form validation",
+        "Agreement form dialog supports create and edit",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-052",
+      "phase": 3,
+      "title": "Port dashboard chart components",
+      "description": "Port client-growth-chart, revenue-chart, deal-pipeline-stats, health-trend-chart, client-lifecycle-funnel. All charts use Recharts wrapped in ResponsiveContainer.",
+      "acceptanceCriteria": [
+        "All charts render inside <ResponsiveContainer width='100%' height={N}>",
+        "Charts use coral/MD3 color palette",
+        "Charts respect dark mode (axis colors, tooltip background)",
+        "Reduced motion: disable chart animations",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-053",
+      "phase": 3,
+      "title": "Port dashboard summary and feed components",
+      "description": "Port summary-cards, platform-hero-stats, top-clients-leaderboard, top-clients-table, recent-activity-feed, platform-activity-feed, health-indicators, dashboard-export-menu, date-range-picker, quick-action-menu.",
+      "acceptanceCriteria": [
+        "Summary cards display KPIs with trend indicators",
+        "Hero stats use gradient backgrounds",
+        "Activity feed shows timeline with icons and timestamps",
+        "Export menu triggers CSV/PDF download via hooks",
+        "All use coral/MD3 design system",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-054",
+      "phase": 3,
+      "title": "Port role-specific dashboard components",
+      "description": "Port role-dashboards/: admin-dashboard, sales-dashboard, support-dashboard.",
+      "acceptanceCriteria": [
+        "Admin dashboard shows full metrics (revenue, growth, pipeline, health)",
+        "Sales dashboard focuses on deals, pipeline, personal stats",
+        "Support dashboard focuses on tickets, response times, queue",
+        "Each conditionally rendered based on user role",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-055",
+      "phase": 3,
+      "title": "Port health monitoring components",
+      "description": "Port health-overview, client-health-matrix, onboarding-monitor, usage-warnings, dunning-status-widget, alert-center, alert-playbook-dialog.",
+      "acceptanceCriteria": [
+        "Health overview displays score distribution",
+        "Client health matrix shows grid of health indicators",
+        "Alert center shows critical/unacknowledged counts",
+        "Dunning widget shows active dunning summary",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-056",
+      "phase": 3,
+      "title": "Port skeleton loading components",
+      "description": "Port shared/ skeleton components: stat-card-skeleton, table-skeleton, chart-skeleton, form-skeleton, detail-skeleton.",
+      "acceptanceCriteria": [
+        "All 5 skeleton components ported",
+        "Skeletons use shimmer animation",
+        "Skeletons match layout dimensions of real components",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-057",
+      "phase": 3,
+      "title": "Port wizard stepper component",
+      "description": "Port wizard-stepper component used by onboarding and deal conversion wizards.",
+      "acceptanceCriteria": [
+        "Stepper shows numbered steps with active/completed/upcoming states",
+        "Supports horizontal layout",
+        "RTL-aware step connector lines",
+        "Accessible with aria-current on active step",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-058",
+      "phase": 3,
+      "title": "Port platform notification center and command palette",
+      "description": "Port platform-notification-center and platform-command-palette if not already present in the Vite app. Ensure they work with the Vite router and auth store.",
+      "acceptanceCriteria": [
+        "Notification center shows alerts and system notifications",
+        "Command palette opens with Cmd+K, searches pages/actions",
+        "Command palette navigates using react-router-dom",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-059",
+      "phase": 3,
+      "title": "Port platform revenue dashboard component",
+      "description": "Port platform-revenue-dashboard with revenue chart, monthly breakdown, and top clients table.",
+      "acceptanceCriteria": [
+        "Revenue metrics displayed with trend indicators",
+        "Monthly revenue chart with Recharts",
+        "Integrates with dashboard hooks",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-060",
+      "phase": 3,
+      "title": "Enhance existing DataTable component for production use",
+      "description": "Enhance the existing src/components/data/DataTable.tsx to support: server-side pagination, column visibility toggling, row selection, bulk actions toolbar, empty state, loading skeleton, and integration with TanStack React Table column definitions from ported components.",
+      "acceptanceCriteria": [
+        "Server-side pagination with page/size/total props",
+        "Column visibility toggle dropdown",
+        "Row selection with checkbox column",
+        "Bulk actions toolbar appears when rows selected",
+        "Empty state component when no data",
+        "Loading skeleton matches table layout",
+        "Compatible with all 7 column definition files",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-061",
+      "phase": 3,
+      "title": "Create components barrel exports",
+      "description": "Create index.ts barrel files in src/components/platform/ and each subdirectory for clean imports.",
+      "acceptanceCriteria": [
+        "src/components/platform/index.ts exports all platform components",
+        "Subdirectory index files where applicable",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-062",
+      "phase": 3,
+      "title": "Install required Shadcn/UI primitives",
+      "description": "Install any missing Shadcn/UI components needed by ported components. Check components.json config and install via npx shadcn@latest add. Likely needed: dialog, select, tabs, dropdown-menu, popover, calendar, tooltip, badge, skeleton, separator, sheet, scroll-area, textarea, switch, checkbox, radio-group, avatar, progress, command.",
+      "acceptanceCriteria": [
+        "All Shadcn/UI primitives required by ported components are installed in src/components/ui/",
+        "components.json properly configured",
+        "No import errors for any ui/ component",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-063",
+      "phase": 3,
+      "title": "Add FilterBar component for list pages",
+      "description": "Enhance or create src/components/forms/FilterBar.tsx to support: status filter chips, search input, date range picker, and clear all filters button. Used by all list pages.",
+      "acceptanceCriteria": [
+        "Renders configurable filter chips from a schema",
+        "Search input with debounce",
+        "Date range picker integration",
+        "Clear all button resets filters",
+        "Responsive layout (wraps on mobile)",
+        "npm run typecheck passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-064",
+      "phase": 4,
+      "title": "Implement Login page with OTP flow",
+      "description": "Replace the placeholder LoginPage with a real implementation: email input \u2192 send code \u2192 enter OTP \u2192 verify \u2192 redirect to dashboard. Use auth store and auth API endpoints.",
+      "acceptanceCriteria": [
+        "Step 1: Email input with coral-branded form",
+        "Step 2: 6-digit OTP input with resend timer",
+        "sendCode calls /api/platform/auth/send-code",
+        "verifyCode calls /api/platform/auth/verify-code",
+        "On success: stores tokens in auth store, redirects to /dashboard",
+        "Error states for invalid code, expired code, network errors",
+        "Liyaqa branding with coral gradient",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-065",
+      "phase": 4,
+      "title": "Implement Dashboard page with role-based views",
+      "description": "Replace placeholder DashboardPage with real implementation using dashboard hooks. Show role-appropriate dashboard (admin/sales/support) based on user role from auth store.",
+      "acceptanceCriteria": [
+        "Admin role sees full dashboard: summary cards, revenue chart, client growth, deal pipeline, top clients, recent activity, health indicators",
+        "Sales role sees sales-focused dashboard",
+        "Support role sees support-focused dashboard",
+        "Dashboard export menu (CSV/PDF) for admin/super admin",
+        "Data fetched via usePlatformDashboard hooks",
+        "Loading skeletons while data loads",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-066",
+      "phase": 4,
+      "title": "Implement Deals list page with Kanban and Table views",
+      "description": "Replace placeholder DealsPage with real implementation showing deal pipeline as both Kanban board and data table with view toggle.",
+      "acceptanceCriteria": [
+        "Toggle between Kanban and Table views",
+        "Kanban: drag-and-drop deal cards between stage columns",
+        "Table: sortable/filterable with DataTable and deal columns",
+        "Filter bar with stage, source, search filters",
+        "Create deal button navigates to /deals/new",
+        "Deal pipeline stats summary at top",
+        "Data from useDeals hook",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-067",
+      "phase": 4,
+      "title": "Implement Deal detail, create, edit, and convert pages",
+      "description": "Create all deal sub-pages: /deals/new (create form), /deals/:id (detail with activities timeline), /deals/:id/edit (edit form), /deals/:id/convert (conversion wizard).",
+      "acceptanceCriteria": [
+        "Deal detail shows all fields, activity timeline, stage indicator, action buttons",
+        "Create page with deal form",
+        "Edit page with pre-filled deal form",
+        "Convert page with multi-step wizard",
+        "Action buttons: advance stage, lose deal, reopen, reassign",
+        "All pages use React Router params and navigate",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-068",
+      "phase": 4,
+      "title": "Implement Clients list page",
+      "description": "Replace placeholder TenantsPage with Clients list at /clients route. Show paginated client list with status filters, search, and stats summary.",
+      "acceptanceCriteria": [
+        "Route is /clients (not /tenants)",
+        "DataTable with client columns",
+        "Filter bar with status filter, search",
+        "Client stats summary cards at top",
+        "Create button navigates to /clients/new",
+        "Row click navigates to /clients/:id",
+        "Data from useClients hook",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-069",
+      "phase": 4,
+      "title": "Implement Client detail page with tabs",
+      "description": "Create /clients/:id page showing client overview with tabbed sections: Overview, Clubs, Subscriptions, Invoices, Notes, Support, Activity, Health.",
+      "acceptanceCriteria": [
+        "Client header with name, status badge, action buttons (activate/suspend)",
+        "Tabs: Overview (org info), Clubs (list), Subscriptions, Invoices, Notes, Support, Activity (audit log), Health",
+        "Each tab loads data lazily when selected",
+        "Action buttons respect user permissions",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-070",
+      "phase": 4,
+      "title": "Implement Client onboarding and edit pages",
+      "description": "Create /clients/new (onboarding wizard) and /clients/:id/edit (edit form) pages.",
+      "acceptanceCriteria": [
+        "Onboarding wizard: Organization \u2192 Club \u2192 Admin \u2192 Subscription \u2192 Review \u2192 Success",
+        "Each step validates before advancing",
+        "Success dialog shows created resources",
+        "Edit page pre-fills client data",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-071",
+      "phase": 4,
+      "title": "Implement Client health detail page",
+      "description": "Create /clients/:id/health page showing detailed health information: current score, score history chart, risk indicators, recommendations.",
+      "acceptanceCriteria": [
+        "Current health score with color indicator (green/yellow/red)",
+        "Score history chart (line chart over time)",
+        "Risk level badge",
+        "Health report with recommendations",
+        "Recalculate button (admin only)",
+        "Data from useHealth hooks",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-072",
+      "phase": 4,
+      "title": "Implement Client Subscriptions list page",
+      "description": "Create /client-subscriptions page showing all subscriptions with filters and stats.",
+      "acceptanceCriteria": [
+        "DataTable with subscription columns",
+        "Filter bar with status filter, search",
+        "Stats summary (active, expiring, trial counts)",
+        "Create button navigates to /client-subscriptions/new",
+        "Row click navigates to /client-subscriptions/:id",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-073",
+      "phase": 4,
+      "title": "Implement Subscription detail, create, and edit pages",
+      "description": "Create /client-subscriptions/:id (detail), /client-subscriptions/new (create), /client-subscriptions/:id/edit (edit) pages.",
+      "acceptanceCriteria": [
+        "Detail page shows subscription info, plan details, invoice history",
+        "Action buttons: activate, suspend, cancel, renew, change plan",
+        "Renew and change-plan open respective dialogs",
+        "Create/edit forms with plan selection dropdown (from useActivePlansOrdered)",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-074",
+      "phase": 4,
+      "title": "Implement Client Plans list and CRUD pages",
+      "description": "Create /client-plans (list), /client-plans/new, /client-plans/:id (detail), /client-plans/:id/edit pages.",
+      "acceptanceCriteria": [
+        "List page with DataTable and plan columns",
+        "Detail page shows plan features, pricing, active subscribers count",
+        "Create/edit forms with all plan fields",
+        "Activate/deactivate actions on detail page",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-075",
+      "phase": 4,
+      "title": "Implement Client Invoices list and CRUD pages",
+      "description": "Create /client-invoices (list), /client-invoices/new, /client-invoices/:id (detail), /client-invoices/:id/edit pages.",
+      "acceptanceCriteria": [
+        "List page with DataTable, status filter, overdue filter, search",
+        "Invoice stats summary (total, paid, overdue amounts)",
+        "Detail page shows invoice line items, status timeline",
+        "Action buttons: issue, record payment, cancel, download PDF",
+        "Record payment opens dialog",
+        "PDF download works via blob",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-076",
+      "phase": 4,
+      "title": "Implement Support Tickets list page",
+      "description": "Replace placeholder TicketsPage with Support page at /support route.",
+      "acceptanceCriteria": [
+        "Route is /support (not /tickets)",
+        "DataTable with ticket columns",
+        "Filter bar with status, priority, assignee filters",
+        "Ticket stats summary",
+        "Create button navigates to /support/new",
+        "Row click navigates to /support/:id",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-077",
+      "phase": 4,
+      "title": "Implement Support Ticket detail, create, and edit pages",
+      "description": "Create /support/:id (detail with message thread), /support/new (create), /support/:id/edit (edit) pages.",
+      "acceptanceCriteria": [
+        "Detail page shows ticket info, message thread, action buttons",
+        "Message thread with sender avatars, timestamps, rich text",
+        "Reply input at bottom of thread",
+        "Action buttons: assign, change status, close",
+        "Assign opens dialog with user selection",
+        "Create/edit forms with Zod validation",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-078",
+      "phase": 4,
+      "title": "Implement Health Overview page",
+      "description": "Create /health page showing platform-wide client health dashboard.",
+      "acceptanceCriteria": [
+        "Health overview stats (healthy, at-risk, declining counts)",
+        "Health distribution chart",
+        "At-risk clients list with scores",
+        "Declining clients list with trend indicators",
+        "Click on client navigates to /clients/:id/health",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-079",
+      "phase": 4,
+      "title": "Implement Alerts page",
+      "description": "Create /alerts page showing active platform alerts with severity filtering and bulk actions.",
+      "acceptanceCriteria": [
+        "Alert list with severity/type filters",
+        "Alert statistics summary",
+        "Critical alerts highlighted",
+        "Actions: acknowledge, resolve, dismiss",
+        "Bulk acknowledge/resolve for admin",
+        "Alert detail expandable inline or in dialog",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-080",
+      "phase": 4,
+      "title": "Implement Dunning page",
+      "description": "Create /dunning page showing active payment dunning cases with actions.",
+      "acceptanceCriteria": [
+        "Dunning list with status filters",
+        "Dunning statistics summary",
+        "Actions per case: retry payment, send link, escalate, pause/resume/cancel",
+        "CSM assignment for escalated cases",
+        "Notes input for dunning cases",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-081",
+      "phase": 4,
+      "title": "Implement Onboarding Monitor page",
+      "description": "Create /onboarding page showing client onboarding progress tracking.",
+      "acceptanceCriteria": [
+        "Onboarding statistics (active, stalled, completed counts)",
+        "Active onboarding list with progress indicators",
+        "Stalled onboarding list (7+ days) highlighted",
+        "Filter by onboarding phase",
+        "Step completion toggling for admin",
+        "Send reminder action",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-082",
+      "phase": 4,
+      "title": "Implement Platform Users list and CRUD pages",
+      "description": "Replace placeholder TeamPage with Platform Users at /platform-users route. Create list, detail, create, edit pages.",
+      "acceptanceCriteria": [
+        "Route is /platform-users (not /settings/team)",
+        "List page with DataTable and user columns",
+        "Filter by role, status",
+        "User stats summary (by role, by status)",
+        "Detail page shows user info, activity log",
+        "Create/edit forms with role selection",
+        "Action buttons: change status, reset password, delete",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-083",
+      "phase": 4,
+      "title": "Implement Club Detail page",
+      "description": "Create /clubs/:id page showing comprehensive club information with tabs.",
+      "acceptanceCriteria": [
+        "Club header with name, status, organization",
+        "Tabs: Overview, Users, Employees, Subscriptions, Locations, Membership Plans, Agreements, Audit Logs",
+        "Each tab loads paginated data from club hooks",
+        "Club edit dialog for admin",
+        "Activate/suspend actions",
+        "User password reset action",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-084",
+      "phase": 4,
+      "title": "Implement Analytics page",
+      "description": "Create /analytics page with advanced analytics: revenue trends, client growth, deal conversion, subscription metrics.",
+      "acceptanceCriteria": [
+        "Revenue trend chart (monthly)",
+        "Client growth chart",
+        "Deal conversion funnel",
+        "Subscription churn rate",
+        "Date range selection",
+        "Data from dashboard hooks",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-085",
+      "phase": 4,
+      "title": "Implement Audit Log page",
+      "description": "Create /monitoring/audit page showing filterable audit log viewer.",
+      "acceptanceCriteria": [
+        "Audit log table with timestamps, action, user, details",
+        "Filter by action type (from useAuditActions)",
+        "Club selection filter",
+        "Pagination",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-086",
+      "phase": 4,
+      "title": "Implement System Status page",
+      "description": "Create /monitoring/system page showing basic system status information.",
+      "acceptanceCriteria": [
+        "Status indicators for API, database, services",
+        "Can be placeholder/static until backend health endpoint exists",
+        "Matches design system",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-087",
+      "phase": 4,
+      "title": "Implement placeholder pages for future features",
+      "description": "Create placeholder pages for: /announcements, /notifications, /settings/config, /settings/feature-flags, /settings/templates, /compliance, /knowledge-base. Each shows a consistent 'Coming Soon' state.",
+      "acceptanceCriteria": [
+        "All 7 placeholder pages render with title, description, and coming-soon illustration",
+        "Consistent placeholder component reused across all",
+        "Pages accessible via sidebar navigation",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-088",
+      "phase": 4,
+      "title": "Implement Design System reference page",
+      "description": "Create /design-system page showing color palette, typography, component examples for internal reference.",
+      "acceptanceCriteria": [
+        "Color palette swatches (primary, semantic, metrics)",
+        "Typography scale examples",
+        "Button variants (MD3 filled, tonal, outlined, text)",
+        "Card variants (elevated, filled, outlined)",
+        "Component examples (badges, chips, inputs)",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-089",
+      "phase": 4,
+      "title": "Update App.tsx with consolidated route map",
+      "description": "Update src/App.tsx to use the new consolidated route map from PRD section 5. Add all new routes, remove old /tenants routes (replaced by /clients), update lazy imports for all new pages.",
+      "acceptanceCriteria": [
+        "All routes from PRD route map present",
+        "/tenants routes replaced with /clients",
+        "/tickets replaced with /support",
+        "/settings/team replaced with /platform-users",
+        "/billing/invoices replaced with /client-invoices",
+        "/subscriptions replaced with /client-subscriptions",
+        "/subscriptions/plans replaced with /client-plans",
+        "New routes: /alerts, /dunning, /onboarding, /health, /clubs/:id, /clients/:id/health",
+        "All page components lazy-loaded",
+        "Catch-all redirects to /dashboard",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-090",
+      "phase": 4,
+      "title": "Update Sidebar navigation to match new routes",
+      "description": "Update Sidebar component navigation items to reflect the new route structure with proper grouping and icons.",
+      "acceptanceCriteria": [
+        "Navigation groups: Dashboard, Sales, Clients, Billing, Support, Monitoring, Settings",
+        "Dashboard: /dashboard",
+        "Sales: /deals",
+        "Clients: /clients, /health, /onboarding",
+        "Billing: /client-subscriptions, /client-plans, /client-invoices, /dunning",
+        "Support: /support, /alerts",
+        "Monitoring: /monitoring/audit, /monitoring/system, /analytics",
+        "Settings: /platform-users, /settings/config, /settings/feature-flags, /settings/templates",
+        "Active state highlights current route",
+        "Permission-based visibility (hide items user can't access)",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-091",
+      "phase": 4,
+      "title": "Update ProtectedRoute with RBAC permission checks",
+      "description": "Update ProtectedRoute component to support route-level permission requirements. Check auth store for required permissions before rendering route.",
+      "acceptanceCriteria": [
+        "ProtectedRoute checks isAuthenticated from auth store",
+        "Supports optional requiredPermission and requiredRole props",
+        "Unauthenticated users redirected to /login",
+        "Unauthorized users shown 403 forbidden page",
+        "Token expiry triggers redirect to /login",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-092",
+      "phase": 4,
+      "title": "Create 404 and 403 error pages",
+      "description": "Create NotFoundPage (404) and ForbiddenPage (403) components for invalid routes and unauthorized access.",
+      "acceptanceCriteria": [
+        "404 page with illustration, message, and link back to dashboard",
+        "403 page with message explaining insufficient permissions",
+        "Both use coral/MD3 design system",
+        "404 used in App.tsx catch-all route",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-093",
+      "phase": 4,
+      "title": "Add breadcrumb navigation to all pages",
+      "description": "Add a Breadcrumb component that shows navigation context on all pages (e.g., Dashboard > Clients > Client Detail).",
+      "acceptanceCriteria": [
+        "Breadcrumb shows current location hierarchy",
+        "Links navigate to parent pages",
+        "RTL-aware separator direction",
+        "Works with dynamic route params (client name instead of ID)",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-094",
+      "phase": 4,
+      "title": "Add page transition animations",
+      "description": "Add Framer Motion page transition animations between routes via the PageTransition component or AnimatePresence.",
+      "acceptanceCriteria": [
+        "Smooth fade/slide transition between pages",
+        "Respects prefers-reduced-motion",
+        "RTL-aware slide direction",
+        "No layout shift during transition",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-095",
+      "phase": 4,
+      "title": "Update Command Palette with new routes",
+      "description": "Update the CommandPalette component to index all new pages and actions in the consolidated route map.",
+      "acceptanceCriteria": [
+        "All pages searchable by name",
+        "Quick actions: create deal, create client, create ticket, etc.",
+        "Navigation uses react-router-dom",
+        "Grouped by section (Sales, Clients, Billing, Support, etc.)",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-096",
+      "phase": 4,
+      "title": "Run full build verification for Phase 4",
+      "description": "Run all quality checks to verify the complete Phase 4 implementation compiles and builds correctly.",
+      "acceptanceCriteria": [
+        "npm run typecheck passes with zero errors",
+        "npm run lint passes with zero errors",
+        "npm run build produces dist/ directory successfully",
+        "npm run dev starts and renders login page",
+        "No console errors on page load"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-097",
+      "phase": 5,
+      "title": "Expand i18n translations for all pages",
+      "description": "Expand src/i18n/en/common.json and src/i18n/ar/common.json with translations for all page titles, form labels, button text, status labels, error messages, and placeholder text across all features.",
+      "acceptanceCriteria": [
+        "All user-facing strings use t() function (no hardcoded English)",
+        "Arabic translations provided for all keys",
+        "Translation keys organized by feature namespace",
+        "Date/number formatting uses locale-appropriate format",
+        "Currency displays as SAR",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-098",
+      "phase": 5,
+      "title": "Full RTL layout support",
+      "description": "Verify and fix RTL layout across all pages. Ensure logical properties are used throughout, animations flip correctly, and Arabic font (Cairo) loads properly.",
+      "acceptanceCriteria": [
+        "All margin/padding uses logical properties (ms-/me-/ps-/pe- not ml-/mr-)",
+        "Flexbox/grid layouts adapt to RTL direction",
+        "Icons that imply direction (arrows, chevrons) flip in RTL",
+        "Charts render correctly in RTL",
+        "Sidebar collapses to correct side in RTL",
+        "Kanban board columns order correctly in RTL",
+        "Cairo font loads for Arabic content",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-099",
+      "phase": 5,
+      "title": "Responsive layout for tablet and mobile",
+      "description": "Ensure all pages work well on tablet (768px) and mobile (375px) breakpoints. Sidebar collapses to hamburger menu, tables become cards, dialogs become full-screen sheets.",
+      "acceptanceCriteria": [
+        "Sidebar: overlay mode on mobile, collapsible on tablet",
+        "DataTables: responsive (hide non-essential columns, or switch to card layout)",
+        "Forms: single column on mobile",
+        "Dialogs: full-screen on mobile via Sheet component",
+        "Charts: maintain readability at smaller sizes",
+        "No horizontal scroll on mobile",
+        "Touch-friendly tap targets (48px minimum)",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-100",
+      "phase": 5,
+      "title": "Accessibility audit and fixes",
+      "description": "Perform accessibility audit on all pages and fix any issues. Ensure WCAG AA compliance.",
+      "acceptanceCriteria": [
+        "All interactive elements keyboard-navigable",
+        "Tab order follows visual order",
+        "Skip navigation link works",
+        "All images have alt text",
+        "Color contrast meets WCAG AA (4.5:1 for text, 3:1 for large text)",
+        "Form inputs have associated labels",
+        "Error messages announced to screen readers",
+        "Focus management in dialogs (trap focus, restore on close)",
+        "ARIA landmarks on all pages (main, nav, banner, etc.)",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-101",
+      "phase": 5,
+      "title": "Performance optimization",
+      "description": "Optimize bundle size and runtime performance: code splitting, lazy loading, React Query caching, virtual scrolling for large lists.",
+      "acceptanceCriteria": [
+        "All route pages lazy-loaded (React.lazy + Suspense)",
+        "Bundle size analysis with vite-plugin-visualizer or similar",
+        "No single chunk larger than 250KB gzipped",
+        "React Query deduplication working (no duplicate requests)",
+        "Large lists (1000+ items) don't cause jank",
+        "Lighthouse performance score > 80",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-102",
+      "phase": 5,
+      "title": "Error boundary and global error handling",
+      "description": "Add error boundaries around route sections and global error handling for uncaught errors and API failures.",
+      "acceptanceCriteria": [
+        "Error boundary wraps each route section",
+        "Error boundary shows friendly error message with retry button",
+        "Unhandled promise rejections caught and logged",
+        "Network errors show offline indicator",
+        "API errors display user-friendly messages",
+        "npm run build passes"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-103",
+      "phase": 6,
+      "title": "Environment configuration for production",
+      "description": "Create .env.production with production API URL. Add Vite environment type definitions. Ensure all env vars are properly typed and used.",
+      "acceptanceCriteria": [
+        ".env.production contains VITE_API_BASE_URL pointing to production API",
+        "src/vite-env.d.ts declares ImportMetaEnv with all VITE_ variables",
+        "No hardcoded URLs in source code",
+        "Environment detection (dev/prod) available via import.meta.env.MODE",
+        "npm run build uses production env by default"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-104",
+      "phase": 6,
+      "title": "Production build pipeline",
+      "description": "Configure Vite for optimized production builds: minification, tree shaking, chunk splitting, asset hashing.",
+      "acceptanceCriteria": [
+        "vite.config.ts has production build optimizations",
+        "Manual chunk splitting for large vendor libraries (react, recharts, framer-motion)",
+        "Asset filenames include content hash for cache busting",
+        "Source maps generated for production debugging",
+        "Build output under 2MB total (gzipped)",
+        "npm run build succeeds and dist/ is servable"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-105",
+      "phase": 6,
+      "title": "Docker configuration for platform dashboard",
+      "description": "Create Dockerfile and nginx.conf for containerized deployment of the platform dashboard.",
+      "acceptanceCriteria": [
+        "Multi-stage Dockerfile: build stage (node) + serve stage (nginx)",
+        "nginx.conf with SPA fallback (try_files $uri /index.html)",
+        "Gzip compression enabled",
+        "Security headers (X-Frame-Options, X-Content-Type-Options, etc.)",
+        "Health check endpoint",
+        "docker build succeeds",
+        "docker run serves the app correctly"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-106",
+      "phase": 6,
+      "title": "Update backend CORS for production domain",
+      "description": "Add production platform dashboard domain to backend CORS configuration.",
+      "acceptanceCriteria": [
+        "Production domain added to CORS allowed-origins in application.yml or application-prod.yml",
+        "CORS allows credentials (for cookie-based auth fallback)",
+        "CORS allows required headers (Authorization, Content-Type, X-Tenant-ID)"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-107",
+      "phase": 6,
+      "title": "End-to-end integration verification",
+      "description": "Verify the complete platform dashboard works against the local backend with real data.",
+      "acceptanceCriteria": [
+        "Backend starts: cd backend && ./gradlew bootRun --args='--spring.profiles.active=local'",
+        "Frontend starts: cd platform-dashboard && npm run dev",
+        "Login flow works with liyaqasaas@gmail.com",
+        "Dashboard loads with real data from API",
+        "Navigate to deals, clients, subscriptions \u2014 data renders",
+        "Create a deal, edit it, move stages \u2014 mutations work",
+        "Toggle dark mode \u2014 UI adapts",
+        "Switch to Arabic \u2014 RTL layout works",
+        "Kanban drag-and-drop works",
+        "Form validation works (submit invalid data, see errors)",
+        "Logout works and redirects to login"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-108",
+      "phase": 6,
+      "title": "Update CLAUDE.md for platform-dashboard",
+      "description": "Create or update platform-dashboard/CLAUDE.md with project-specific instructions for AI assistants working on this codebase.",
+      "acceptanceCriteria": [
+        "CLAUDE.md in platform-dashboard/ root",
+        "Documents tech stack, project structure, design system",
+        "Documents coding conventions (i18n, RTL, MD3, React Query patterns)",
+        "Documents quality checks (typecheck, lint, build)",
+        "Documents PRD workflow (prd.json story tracking)",
+        "Lists common gotchas specific to this project"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-109",
+      "phase": 6,
+      "title": "Final quality gate \u2014 all checks pass",
+      "description": "Run all quality checks one final time to confirm everything passes.",
+      "acceptanceCriteria": [
+        "npm run typecheck \u2014 zero errors",
+        "npm run lint \u2014 zero errors",
+        "npm run build \u2014 succeeds",
+        "All 109 stories have passes: true",
+        "Output: <promise>COMPLETE</promise>"
+      ],
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
