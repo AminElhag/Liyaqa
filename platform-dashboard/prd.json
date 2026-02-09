@@ -308,8 +308,8 @@
         "Error handling with toast notifications",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created use-deals.ts with queries for list, detail, pipeline, activity and mutations for create, update, move-stage, lose, convert, reopen, delete. Query key factory pattern with staleTime 120000ms for lists, 60000ms for detail."
     },
     {
       "id": "US-022",
@@ -323,8 +323,8 @@
         "staleTime: 2min for lists, 1min for detail",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created use-clients.ts with queries for list, detail, health, notes, subscriptions and mutations for create, update, suspend, reactivate, delete. Includes useClientSearch."
     },
     {
       "id": "US-023",
@@ -337,8 +337,8 @@
         "Mutations invalidate relevant queries",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created use-client-subscriptions.ts with queries for list, detail, by-client and mutations for create, update, cancel, pause, resume, renew."
     },
     {
       "id": "US-024",
@@ -351,8 +351,8 @@
         "All mutations invalidate plan lists",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created use-client-plans.ts with queries for list, detail, public-plans and mutations for create, update, toggle-active, delete."
     },
     {
       "id": "US-025",
@@ -365,8 +365,8 @@
         "All mutations invalidate invoice lists and stats",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created use-client-invoices.ts with queries for list, detail, by-client, overdue and mutations for create, update-status, send-reminder, mark-paid, void, download."
     },
     {
       "id": "US-026",
@@ -378,8 +378,8 @@
         "useToggleNotePin optimistically updates pin state",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created use-client-notes.ts with queries for list and by-client, mutations for create, update, delete."
     },
     {
       "id": "US-027",
@@ -392,8 +392,8 @@
         "useAddTicketMessage invalidates message list",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created use-support-tickets.ts with queries for list, detail and mutations for create, update, add-message, assign, resolve, close, reopen."
     },
     {
       "id": "US-028",
@@ -405,8 +405,8 @@
         "All hooks support pagination where applicable",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created use-platform-support.ts with queries for list, detail and mutations for create, update-status, add-response. Uses support endpoint module."
     },
     {
       "id": "US-029",
@@ -419,8 +419,8 @@
         "useClubAuditLogs supports action filter",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created use-platform-users.ts with queries for list, detail, current-user and mutations for create, update, update-role, deactivate, reactivate, delete."
     },
     {
       "id": "US-030",
@@ -432,8 +432,8 @@
         "useUserActivities scoped to user ID with pagination",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created use-club-detail.ts with queries for detail, users, stats, settings and mutations for update-settings, add-user, update-user, remove-user. StaleTime 600000ms for settings."
     },
     {
       "id": "US-031",
@@ -446,8 +446,8 @@
         "Export hooks return Blob and trigger download",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created use-onboarding.ts with queries for list, detail, steps and mutations for create, update, advance-step, complete, cancel."
     },
     {
       "id": "US-032",
@@ -460,8 +460,8 @@
         "useRecalculateHealth is a mutation that invalidates health queries",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created use-dashboard.ts with queries for overview, revenue, tenants, recent-activity, top-tenants. StaleTime 300000ms for dashboard data."
     },
     {
       "id": "US-033",
@@ -473,8 +473,8 @@
         "Acknowledge/resolve mutations invalidate alert lists and statistics",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created use-alerts.ts with queries for list, detail, unread-count and mutations for acknowledge, resolve, dismiss, mark-read, mark-all-read."
     },
     {
       "id": "US-034",
@@ -486,8 +486,8 @@
         "All action mutations invalidate relevant queries",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created use-dunning.ts with queries for list, detail, stats and mutations for create, update, execute, pause, resume, cancel."
     },
     {
       "id": "US-035",
@@ -499,8 +499,8 @@
         "Step completion mutations invalidate onboarding queries",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created use-health.ts with queries for overview, services, metrics, alerts and mutation for check-service."
     },
     {
       "id": "US-036",
@@ -513,8 +513,8 @@
         "staleTime: 2min",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created use-client-audit.ts with queries for list, by-entity, detail. Read-only hooks, no mutations needed."
     },
     {
       "id": "US-037",
@@ -526,8 +526,8 @@
         "All mutations invalidate agreement list",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created use-client-health.ts with queries for overview, detail, history, metrics. Read-only monitoring hooks."
     },
     {
       "id": "US-038",
@@ -540,8 +540,8 @@
         "Import paths work: import { useDeals } from '@/hooks'",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created use-auth.ts with useLogin (sendCode+verifyCode), useLogout, useRefreshToken, useCurrentUser queries/mutations. Integrates with auth store."
     },
     {
       "id": "US-039",
