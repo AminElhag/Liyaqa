@@ -82,8 +82,8 @@
       ],
       "priority": 5,
       "dependsOn": ["US-002"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created src/lib/motion.ts with all Framer Motion variants: fadeIn, fadeInUp, fadeInDown, fadeInLeft, fadeInRight, scaleIn, slideIn, staggerContainer, staggerItem (50ms delay), pageTransition. All respect prefers-reduced-motion. Direction-aware variants accept dir parameter to flip in RTL."
     },
     {
       "id": "US-006",
