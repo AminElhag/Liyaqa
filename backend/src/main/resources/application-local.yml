@@ -5,7 +5,7 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
-      - org.springframework.session.data.redis.config.annotation.web.http.RedisHttpSessionConfiguration
+      - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
 
   # Use PostgreSQL from Docker
   datasource:
@@ -13,9 +13,12 @@ spring:
     username: liyaqa
     password: liyaqa_dev_password
 
+  liquibase:
+    enabled: false
+
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: false
 
   # Session management without Redis
@@ -24,6 +27,8 @@ spring:
 
 # Disable external services for local development
 liyaqa:
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:3001,http://localhost:5173
   cache:
     redis:
       enabled: false

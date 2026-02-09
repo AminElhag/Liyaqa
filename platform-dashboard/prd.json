@@ -84,8 +84,8 @@
         "backend/src/main/resources/application-local.yml cors allowed-origins includes http://localhost:5173",
         "Existing origins (localhost:3000, localhost:3001) preserved"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Updated .env base URL from /api/v1/platform to root. Added localhost:5173 to CORS origins preserving existing 3000/3001."
     },
     {
       "id": "US-006",
