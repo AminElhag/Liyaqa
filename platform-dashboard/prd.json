@@ -52,8 +52,8 @@
         "Exports named api instance for use by endpoint modules",
         "npm run typecheck passes"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Upgraded API client with axios interceptors: Bearer token injection from localStorage, 401 refresh with queue (concurrent 401s share single refresh), session expiry redirect to /login, 403 toast, network error toast, parseApiError/getLocalizedErrorMessage helpers. Exports named api + default."
     },
     {
       "id": "US-004",
