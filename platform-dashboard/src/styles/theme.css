@@ -1,0 +1,121 @@
+/* ============================================================
+   Liyaqa Design System — Theme Variables
+   ============================================================ */
+
+/* --- Light Mode (default) --- */
+:root {
+  /* Background */
+  --bg-primary: #FAFBFC;
+  --bg-secondary: #F1F3F5;
+  --bg-tertiary: #E9ECEF;
+  --bg-inverse: #0A1628;
+
+  /* Text */
+  --text-primary: #0A1628;
+  --text-secondary: #495057;
+  --text-tertiary: #868E96;
+  --text-inverse: #FAFBFC;
+  --text-accent: #F59E0B;
+
+  /* Brand */
+  --brand-accent: #F59E0B;
+  --brand-accent-hover: #D97706;
+  --brand-accent-light: #FEF3C7;
+
+  /* Status */
+  --status-success: #10B981;
+  --status-success-bg: #D1FAE5;
+  --status-warning: #F59E0B;
+  --status-warning-bg: #FEF3C7;
+  --status-error: #EF4444;
+  --status-error-bg: #FEE2E2;
+  --status-info: #3B82F6;
+  --status-info-bg: #DBEAFE;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(10, 22, 40, 0.05);
+  --shadow-sm: 0 1px 3px rgba(10, 22, 40, 0.1), 0 1px 2px rgba(10, 22, 40, 0.06);
+  --shadow-md: 0 4px 6px rgba(10, 22, 40, 0.1), 0 2px 4px rgba(10, 22, 40, 0.06);
+  --shadow-lg: 0 10px 15px rgba(10, 22, 40, 0.1), 0 4px 6px rgba(10, 22, 40, 0.05);
+  --shadow-xl: 0 20px 25px rgba(10, 22, 40, 0.1), 0 10px 10px rgba(10, 22, 40, 0.04);
+  --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.3);
+
+  /* Radius */
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Spacing scale */
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Fonts */
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-arabic: 'IBM Plex Sans Arabic', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* --- Dark Mode --- */
+[data-theme="dark"] {
+  /* Background */
+  --bg-primary: #0A1628;
+  --bg-secondary: #111D32;
+  --bg-tertiary: #1A2942;
+  --bg-inverse: #FAFBFC;
+
+  /* Text */
+  --text-primary: #F1F3F5;
+  --text-secondary: #ADB5BD;
+  --text-tertiary: #6C757D;
+  --text-inverse: #0A1628;
+  --text-accent: #F59E0B;
+
+  /* Brand */
+  --brand-accent: #F59E0B;
+  --brand-accent-hover: #FBBF24;
+  --brand-accent-light: #78350F;
+
+  /* Status */
+  --status-success: #34D399;
+  --status-success-bg: #064E3B;
+  --status-warning: #FBBF24;
+  --status-warning-bg: #78350F;
+  --status-error: #F87171;
+  --status-error-bg: #7F1D1D;
+  --status-info: #60A5FA;
+  --status-info-bg: #1E3A5F;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4), 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.5), 0 10px 10px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.4);
+}
+
+/* --- RTL font override --- */
+[dir="rtl"] {
+  font-family: var(--font-arabic);
+}
