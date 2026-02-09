@@ -348,8 +348,8 @@
       ],
       "priority": 20,
       "dependsOn": ["US-012", "US-013", "US-014", "US-016"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Tenant list with KPI row, DataTable (8 columns with StatusBadge, plan pill, progress bar, actions menu), FilterBar (status/plan/region), SearchInput, row click navigation, EmptyState. 6 mock tenants."
     },
     {
       "id": "US-021",
@@ -364,8 +364,8 @@
       ],
       "priority": 21,
       "dependsOn": ["US-020", "US-017"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Tenant detail with header (name + StatusBadge + actions), quick stats row, 6 pill-style tabs with AnimatePresence transitions. Overview: info card + subscription card + Timeline. Activity: Timeline. Other tabs with placeholder content."
     },
     {
       "id": "US-022",
@@ -381,8 +381,8 @@
       ],
       "priority": 22,
       "dependsOn": ["US-021"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "5-step onboarding wizard with horizontal stepper (green check/amber pulse/gray). Steps: Facility Details, Admin Account, Plan Selection (3 cards), Configuration (toggles), Review & Launch. Success overlay with navigation buttons."
     },
     {
       "id": "US-023",
@@ -398,8 +398,8 @@
       ],
       "priority": 23,
       "dependsOn": ["US-012", "US-013"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "4 plan cards (FREE_TRIAL gray, STARTER white, PROFESSIONAL amber+Recommended, ENTERPRISE dark). Each with name, price, limits, feature checklist, tenant count. Feature comparison matrix with sticky first column and highlighted Professional column. Create Plan button."
     },
     {
       "id": "US-024",
