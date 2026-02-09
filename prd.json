@@ -99,8 +99,8 @@
       ],
       "priority": 6,
       "dependsOn": ["US-002", "US-004"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Axios client configured with VITE_API_BASE_URL, Bearer token from auth store, Accept-Language header from i18n. Response interceptors: 401->logout+redirect, 403->toast, network error->toast. Zustand auth store with persist middleware: token, user, login(), logout(), isAuthenticated."
     },
     {
       "id": "US-007",
