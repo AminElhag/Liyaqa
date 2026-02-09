@@ -332,8 +332,8 @@
       ],
       "priority": 19,
       "dependsOn": ["US-012", "US-013", "US-014", "US-018"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Kanban board at /deals with 8 stage columns. Deal cards with facility name, contact, value, source badge, assignee avatar, days-in-stage. @dnd-kit drag-and-drop with shadow+rotation lift, optimistic update with toast. View toggle (Kanban/Table). New Deal slide-over with form. 4 StatCards: Total Deals, Pipeline Value, Conversion Rate, Avg Cycle Time."
     },
     {
       "id": "US-020",
