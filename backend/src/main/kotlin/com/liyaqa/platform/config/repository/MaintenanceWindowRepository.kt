@@ -8,6 +8,7 @@ import java.util.UUID
 interface MaintenanceWindowRepository {
     fun save(window: MaintenanceWindow): MaintenanceWindow
     fun findById(id: UUID): Optional<MaintenanceWindow>
+    fun findAll(): List<MaintenanceWindow>
     fun findByIsActiveTrueAndStartAtBeforeAndEndAtAfter(startBefore: Instant, endAfter: Instant): List<MaintenanceWindow>
     fun findByIsActiveTrue(): List<MaintenanceWindow>
 }

@@ -17,11 +17,7 @@ export { PlatformActivityFeed, PlatformActivityFeedSkeleton } from "./platform-a
 
 // Command palette and notifications
 export { PlatformCommandPalette, useCommandPalette } from "./platform-command-palette";
-export {
-  PlatformNotificationCenter,
-  demoNotifications,
-  type PlatformNotification,
-} from "./platform-notification-center";
+export { PlatformNotificationCenter } from "./platform-notification-center";
 
 // Role-based dashboards
 export { AdminDashboard, SalesDashboard, SupportDashboard } from "./role-dashboards";

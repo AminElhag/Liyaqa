@@ -43,6 +43,7 @@ class AnnouncementService(
             targetAudience = command.targetAudience,
             targetTenantIds = command.targetTenantIds.toMutableList(),
             targetPlanTier = command.targetPlanTier,
+            targetStatus = command.targetStatus,
             createdBy = createdBy,
             priority = command.priority
         )
@@ -60,6 +61,7 @@ class AnnouncementService(
         command.targetAudience?.let { announcement.targetAudience = it }
         command.targetTenantIds?.let { announcement.targetTenantIds = it.toMutableList() }
         command.targetPlanTier?.let { announcement.targetPlanTier = it }
+        command.targetStatus?.let { announcement.targetStatus = it }
         command.priority?.let { announcement.priority = it }
         return announcementRepository.save(announcement)
     }
@@ -124,7 +126,8 @@ class AnnouncementService(
                     .map { it.tenantId }
             }
             TargetAudience.BY_STATUS -> {
-                tenantRepository.findByStatus(TenantStatus.ACTIVE, Pageable.unpaged())
+                val status = announcement.targetStatus ?: TenantStatus.ACTIVE
+                tenantRepository.findByStatus(status, Pageable.unpaged())
                     .content.map { it.id }
             }
         }

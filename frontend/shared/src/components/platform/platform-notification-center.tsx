@@ -8,11 +8,10 @@ import {
   Bell,
   Check,
   CheckCheck,
-  Building2,
-  Handshake,
-  CreditCard,
-  Receipt,
+  CheckCircle,
   AlertTriangle,
+  AlertCircle,
+  Settings,
   Info,
   X,
 } from "lucide-react";
@@ -24,44 +23,29 @@ import {
   PopoverTrigger,
 } from "@liyaqa/shared/components/ui/popover";
 import { ScrollArea } from "@liyaqa/shared/components/ui/scroll-area";
-import { Separator } from "@liyaqa/shared/components/ui/separator";
 import { cn } from "@liyaqa/shared/utils";
+import {
+  useNotifications,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+  useDeleteNotification,
+} from "@liyaqa/shared/queries/platform/use-notifications";
+import type { PlatformNotificationItem, NotificationType } from "@liyaqa/shared/types/platform/notifications";
 
-export interface PlatformNotification {
-  id: string;
-  type: "client" | "deal" | "subscription" | "invoice" | "alert" | "info";
-  title: string;
-  titleAr?: string;
-  message: string;
-  messageAr?: string;
-  read: boolean;
-  timestamp: string;
-  actionUrl?: string;
-}
-
-interface PlatformNotificationCenterProps {
-  notifications: PlatformNotification[];
-  onMarkAsRead?: (id: string) => void;
-  onMarkAllAsRead?: () => void;
-  onDismiss?: (id: string) => void;
-}
-
-const notificationIcons: Record<string, React.ElementType> = {
-  client: Building2,
-  deal: Handshake,
-  subscription: CreditCard,
-  invoice: Receipt,
-  alert: AlertTriangle,
-  info: Info,
+const notificationIcons: Record<NotificationType, React.ElementType> = {
+  INFO: Info,
+  SUCCESS: CheckCircle,
+  WARNING: AlertTriangle,
+  ERROR: AlertCircle,
+  SYSTEM: Settings,
 };
 
-const notificationColors: Record<string, string> = {
-  client: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-  deal: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  subscription: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
-  invoice: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
-  alert: "bg-red-500/10 text-red-600 dark:text-red-400",
-  info: "bg-slate-500/10 text-slate-600 dark:text-slate-400",
+const notificationColors: Record<NotificationType, string> = {
+  INFO: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+  SUCCESS: "bg-green-500/10 text-green-600 dark:text-green-400",
+  WARNING: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  ERROR: "bg-red-500/10 text-red-600 dark:text-red-400",
+  SYSTEM: "bg-slate-500/10 text-slate-600 dark:text-slate-400",
 };
 
 function formatTimeAgo(timestamp: string, locale: string): string {
@@ -87,15 +71,18 @@ function formatTimeAgo(timestamp: string, locale: string): string {
   return date.toLocaleDateString("en-SA");
 }
 
-export function PlatformNotificationCenter({
-  notifications,
-  onMarkAsRead,
-  onMarkAllAsRead,
-  onDismiss,
-}: PlatformNotificationCenterProps) {
+export function PlatformNotificationCenter() {
   const locale = useLocale();
   const isRtl = locale === "ar";
   const [open, setOpen] = React.useState(false);
+
+  const { data } = useNotifications();
+  const notifications = Array.isArray(data) ? data : [];
+  const markReadMutation = useMarkNotificationRead();
+  const markAllReadMutation = useMarkAllNotificationsRead();
+  const deleteMutation = useDeleteNotification();
+
+  const isMutating = markReadMutation.isPending || markAllReadMutation.isPending || deleteMutation.isPending;
 
   const texts = {
     notifications: locale === "ar" ? "الإشعارات" : "Notifications",
@@ -153,9 +140,8 @@ export function PlatformNotificationCenter({
               variant="ghost"
               size="sm"
               className="h-7 text-xs gap-1"
-              onClick={() => {
-                onMarkAllAsRead?.();
-              }}
+              disabled={isMutating}
+              onClick={() => markAllReadMutation.mutate()}
             >
               <CheckCheck className="h-3 w-3" />
               {texts.markAllRead}
@@ -179,8 +165,9 @@ export function PlatformNotificationCenter({
                     notification={notification}
                     locale={locale}
                     isRtl={isRtl}
-                    onMarkAsRead={onMarkAsRead}
-                    onDismiss={onDismiss}
+                    disabled={isMutating}
+                    onMarkAsRead={(id) => markReadMutation.mutate(id)}
+                    onDismiss={(id) => deleteMutation.mutate(id)}
                     onClose={() => setOpen(false)}
                   />
                 ))}
@@ -210,11 +197,12 @@ export function PlatformNotificationCenter({
 }
 
 interface NotificationItemProps {
-  notification: PlatformNotification;
+  notification: PlatformNotificationItem;
   locale: string;
   isRtl: boolean;
-  onMarkAsRead?: (id: string) => void;
-  onDismiss?: (id: string) => void;
+  disabled: boolean;
+  onMarkAsRead: (id: string) => void;
+  onDismiss: (id: string) => void;
   onClose: () => void;
 }
 
@@ -222,17 +210,18 @@ function NotificationItem({
   notification,
   locale,
   isRtl,
+  disabled,
   onMarkAsRead,
   onDismiss,
   onClose,
 }: NotificationItemProps) {
   const Icon = notificationIcons[notification.type] || Info;
-  const colorClass = notificationColors[notification.type] || notificationColors.info;
+  const colorClass = notificationColors[notification.type] || notificationColors.INFO;
 
   const title =
-    locale === "ar" && notification.titleAr ? notification.titleAr : notification.title;
+    locale === "ar" && notification.titleAr ? notification.titleAr : notification.titleEn;
   const message =
-    locale === "ar" && notification.messageAr ? notification.messageAr : notification.message;
+    locale === "ar" && notification.descriptionAr ? notification.descriptionAr : notification.descriptionEn;
 
   const content = (
     <motion.div
@@ -263,7 +252,7 @@ function NotificationItem({
         </div>
         <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{message}</p>
         <p className="text-[10px] text-muted-foreground mt-1">
-          {formatTimeAgo(notification.timestamp, locale)}
+          {formatTimeAgo(notification.createdAt, locale)}
         </p>
       </div>
 
@@ -274,11 +263,12 @@ function NotificationItem({
           isRtl ? "left-2" : "right-2"
         )}
       >
-        {!notification.read && onMarkAsRead && (
+        {!notification.read && (
           <Button
             variant="ghost"
             size="icon"
             className="h-6 w-6"
+            disabled={disabled}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -288,27 +278,26 @@ function NotificationItem({
             <Check className="h-3 w-3" />
           </Button>
         )}
-        {onDismiss && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDismiss(notification.id);
-            }}
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6"
+          disabled={disabled}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDismiss(notification.id);
+          }}
+        >
+          <X className="h-3 w-3" />
+        </Button>
       </div>
     </motion.div>
   );
 
-  if (notification.actionUrl) {
+  if (notification.link) {
     return (
-      <Link href={notification.actionUrl} onClick={onClose}>
+      <Link href={notification.link} onClick={onClose}>
         {content}
       </Link>
     );
@@ -316,61 +305,3 @@ function NotificationItem({
 
   return content;
 }
-
-// Demo notifications for development
-export const demoNotifications: PlatformNotification[] = [
-  {
-    id: "1",
-    type: "deal",
-    title: "Deal won: Fitness Pro",
-    titleAr: "صفقة مربوحة: Fitness Pro",
-    message: "The deal with Fitness Pro worth SAR 25,000 has been won.",
-    messageAr: "تم الفوز بالصفقة مع Fitness Pro بقيمة 25,000 ريال",
-    read: false,
-    timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-    actionUrl: "/deals/1",
-  },
-  {
-    id: "2",
-    type: "subscription",
-    title: "Subscription expiring",
-    titleAr: "اشتراك ينتهي قريباً",
-    message: "GymWorld subscription expires in 7 days. Contact them for renewal.",
-    messageAr: "اشتراك GymWorld ينتهي خلال 7 أيام. تواصل معهم للتجديد.",
-    read: false,
-    timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-    actionUrl: "/client-subscriptions/2",
-  },
-  {
-    id: "3",
-    type: "invoice",
-    title: "Invoice overdue",
-    titleAr: "فاتورة متأخرة",
-    message: "Invoice #INV-2024-0045 for Iron Gym is 15 days overdue.",
-    messageAr: "الفاتورة #INV-2024-0045 لـ Iron Gym متأخرة 15 يوماً.",
-    read: false,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    actionUrl: "/client-invoices/3",
-  },
-  {
-    id: "4",
-    type: "client",
-    title: "New client onboarded",
-    titleAr: "عميل جديد",
-    message: "Elite Fitness has completed onboarding and is now active.",
-    messageAr: "Elite Fitness أكمل عملية التسجيل وهو نشط الآن.",
-    read: true,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    actionUrl: "/clients/4",
-  },
-  {
-    id: "5",
-    type: "alert",
-    title: "System maintenance",
-    titleAr: "صيانة النظام",
-    message: "Scheduled maintenance on Sunday 2 AM - 4 AM SAT.",
-    messageAr: "صيانة مجدولة يوم الأحد 2 - 4 صباحاً بتوقيت السعودية.",
-    read: true,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-  },
-];

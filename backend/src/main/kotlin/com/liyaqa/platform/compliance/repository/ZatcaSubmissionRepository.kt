@@ -2,6 +2,7 @@ package com.liyaqa.platform.compliance.repository
 
 import com.liyaqa.platform.compliance.model.ZatcaSubmission
 import com.liyaqa.platform.compliance.model.ZatcaSubmissionStatus
+import java.time.Instant
 import java.util.Optional
 import java.util.UUID
 
@@ -16,4 +17,6 @@ interface ZatcaSubmissionRepository {
     fun countAll(): Long
     fun countByTenantId(tenantId: UUID): Long
     fun findDistinctTenantIds(): List<UUID>
+    fun findByStatusInOrderByCreatedAtDesc(statuses: List<ZatcaSubmissionStatus>, limit: Int): List<ZatcaSubmission>
+    fun countByStatusAndCreatedAtAfter(status: ZatcaSubmissionStatus, after: Instant): Long
 }

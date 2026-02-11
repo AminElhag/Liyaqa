@@ -64,8 +64,10 @@ class JpaPlatformAuditLogRepository(
         cq.orderBy(cb.desc(root.get<Instant>("createdAt")))
 
         val query = entityManager.createQuery(cq)
-        query.firstResult = pageable.offset.toInt()
-        query.maxResults = pageable.pageSize
+        if (pageable.isPaged) {
+            query.firstResult = pageable.offset.toInt()
+            query.maxResults = pageable.pageSize
+        }
         val results = query.resultList
 
         return PageImpl(results, pageable, total)

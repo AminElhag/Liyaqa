@@ -47,6 +47,15 @@ interface SpringDataSupportTicketRepository : JpaRepository<SupportTicket, UUID>
 
     @Query("SELECT COALESCE(MAX(CAST(SUBSTRING(t.ticketNumber, 14) AS int)), 0) FROM SupportTicket t WHERE t.ticketNumber LIKE :prefix%")
     fun getMaxSequenceForPrefix(@Param("prefix") prefix: String): Int
+
+    @Query("""
+        SELECT t FROM SupportTicket t
+        LEFT JOIN FETCH t.organization
+        LEFT JOIN FETCH t.assignedTo
+        LEFT JOIN FETCH t.createdBy
+        WHERE t.id = :id
+    """)
+    fun findByIdWithRelations(@Param("id") id: UUID): Optional<SupportTicket>
 }
 
 /**
@@ -54,7 +63,15 @@ interface SpringDataSupportTicketRepository : JpaRepository<SupportTicket, UUID>
  */
 interface SpringDataTicketMessageRepository : JpaRepository<TicketMessage, UUID> {
     fun findByTicketId(ticketId: UUID): List<TicketMessage>
-    fun findByTicketIdOrderByCreatedAtAsc(ticketId: UUID): List<TicketMessage>
+
+    @Query("""
+        SELECT m FROM TicketMessage m
+        JOIN FETCH m.ticket
+        JOIN FETCH m.author
+        WHERE m.ticket.id = :ticketId
+        ORDER BY m.createdAt ASC
+    """)
+    fun findByTicketIdOrderByCreatedAtAsc(@Param("ticketId") ticketId: UUID): List<TicketMessage>
 }
 
 /**
@@ -72,7 +89,7 @@ class JpaSupportTicketRepository(
         springDataRepository.save(ticket)
 
     override fun findById(id: UUID): Optional<SupportTicket> =
-        springDataRepository.findById(id)
+        springDataRepository.findByIdWithRelations(id)
 
     override fun findAll(pageable: Pageable): Page<SupportTicket> =
         springDataRepository.findAll(pageable)
@@ -107,6 +124,11 @@ class JpaSupportTicketRepository(
         val cb = entityManager.criteriaBuilder
         val cq = cb.createQuery(SupportTicket::class.java)
         val root = cq.from(SupportTicket::class.java)
+
+        // Note: fetch joins removed here because Hibernate @Filter on Club entity
+        // causes "UnknownFilterException: No filter named 'organizationFilter'" when
+        // generating the fetch. Lazy relationships are initialized in the service layer
+        // via Hibernate.initialize() instead.
 
         val predicates = mutableListOf<jakarta.persistence.criteria.Predicate>()
 

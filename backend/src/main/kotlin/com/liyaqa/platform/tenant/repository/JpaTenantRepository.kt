@@ -47,4 +47,7 @@ class JpaTenantRepository(
 
     override fun count(): Long =
         springDataRepository.count()
+
+    override fun findAllById(ids: Iterable<UUID>): List<Tenant> =
+        springDataRepository.findAllById(ids)
 }

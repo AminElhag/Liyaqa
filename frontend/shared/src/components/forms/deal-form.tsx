@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -33,10 +34,9 @@ const dealFormSchema = z.object({
   source: z.enum([
     "WEBSITE",
     "REFERRAL",
-    "COLD_CALL",
-    "MARKETING_CAMPAIGN",
-    "EVENT",
-    "PARTNER",
+    "COLD_OUTREACH",
+    "SOCIAL_MEDIA",
+    "PARTNERSHIP",
     "OTHER",
   ]),
   notes: z.string().optional(),
@@ -65,10 +65,9 @@ interface DealFormProps {
 const SOURCE_OPTIONS: Array<{ value: DealSource; labelEn: string; labelAr: string }> = [
   { value: "WEBSITE", labelEn: "Website", labelAr: "الموقع" },
   { value: "REFERRAL", labelEn: "Referral", labelAr: "إحالة" },
-  { value: "COLD_CALL", labelEn: "Cold Call", labelAr: "اتصال بارد" },
-  { value: "MARKETING_CAMPAIGN", labelEn: "Marketing Campaign", labelAr: "حملة تسويقية" },
-  { value: "EVENT", labelEn: "Event", labelAr: "حدث" },
-  { value: "PARTNER", labelEn: "Partner", labelAr: "شريك" },
+  { value: "COLD_OUTREACH", labelEn: "Cold Outreach", labelAr: "تواصل بارد" },
+  { value: "SOCIAL_MEDIA", labelEn: "Social Media", labelAr: "وسائل التواصل" },
+  { value: "PARTNERSHIP", labelEn: "Partnership", labelAr: "شراكة" },
   { value: "OTHER", labelEn: "Other", labelAr: "أخرى" },
 ];
 
@@ -86,6 +85,7 @@ export function DealForm({
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors },
   } = useForm<DealFormData>({
     resolver: zodResolver(dealFormSchema),
@@ -102,6 +102,23 @@ export function DealForm({
       notes: deal?.notes || "",
     },
   });
+
+  useEffect(() => {
+    if (deal) {
+      reset({
+        facilityName: deal.facilityName || "",
+        source: deal.source || "WEBSITE",
+        contactName: deal.contactName || "",
+        contactEmail: deal.contactEmail || "",
+        contactPhone: deal.contactPhone || "",
+        estimatedValue: deal.estimatedValue || 0,
+        currency: deal.currency || "SAR",
+        expectedCloseDate: deal.expectedCloseDate || "",
+        assignedToId: deal.assignedTo?.id || "",
+        notes: deal.notes || "",
+      });
+    }
+  }, [deal, reset]);
 
   const texts = {
     basicInfo: locale === "ar" ? "معلومات الصفقة" : "Deal Information",

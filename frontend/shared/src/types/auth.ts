@@ -5,10 +5,12 @@ import type { UUID, LocalizedText } from "./api";
  */
 export type UserRole =
   // Platform roles (internal Liyaqa team)
+  | "PLATFORM_SUPER_ADMIN"
   | "PLATFORM_ADMIN"
-  | "SALES_REP"
-  | "MARKETING"
-  | "SUPPORT"
+  | "ACCOUNT_MANAGER"
+  | "SUPPORT_LEAD"
+  | "SUPPORT_AGENT"
+  | "PLATFORM_VIEWER"
   // Client roles (organization users)
   | "SUPER_ADMIN"
   | "CLUB_ADMIN"
@@ -20,10 +22,12 @@ export type UserRole =
  * Platform roles array for type checking
  */
 export const PLATFORM_ROLES: UserRole[] = [
+  "PLATFORM_SUPER_ADMIN",
   "PLATFORM_ADMIN",
-  "SALES_REP",
-  "MARKETING",
-  "SUPPORT",
+  "ACCOUNT_MANAGER",
+  "SUPPORT_LEAD",
+  "SUPPORT_AGENT",
+  "PLATFORM_VIEWER",
 ];
 
 /**

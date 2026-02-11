@@ -165,6 +165,16 @@ class ClientInvoiceService(
     }
 
     /**
+     * Gets an invoice by ID with lineItems eagerly loaded.
+     * Use this for endpoints that return ClientInvoiceResponse (which accesses lineItems).
+     */
+    @Transactional(readOnly = true)
+    fun getInvoiceWithDetails(id: UUID): ClientInvoice {
+        return invoiceRepository.findByIdWithLineItems(id)
+            .orElseThrow { NoSuchElementException("Client invoice not found: $id") }
+    }
+
+    /**
      * Gets an invoice by invoice number.
      */
     @Transactional(readOnly = true)

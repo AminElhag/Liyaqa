@@ -400,7 +400,19 @@
       "support": "Support",
       "impersonatingAs": "Impersonating as",
       "endImpersonation": "End Session",
-      "impersonationExpired": "Impersonation session expired"
+      "impersonationExpired": "Impersonation session expired",
+      "health": "Health",
+      "systemStatus": "System Status",
+      "auditLog": "Audit Log",
+      "analytics": "Analytics",
+      "announcements": "Announcements",
+      "knowledgeBase": "Knowledge Base",
+      "notifications": "Notifications",
+      "featureFlags": "Feature Flags",
+      "configuration": "Configuration",
+      "apiKeys": "API Keys",
+      "templates": "Templates",
+      "compliance": "Compliance"
     },
     "dashboard": {
       "title": "Platform Dashboard",

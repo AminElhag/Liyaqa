@@ -87,6 +87,13 @@ class PlatformConfigController(
     // Maintenance Windows
     // ========================================
 
+    @GetMapping("/maintenance")
+    @PlatformSecured(permissions = [PlatformPermission.CONFIG_VIEW])
+    @Operation(summary = "Get all maintenance windows")
+    fun getAllMaintenanceWindows(): ResponseEntity<List<MaintenanceWindowResponse>> {
+        return ResponseEntity.ok(maintenanceWindowService.getAllMaintenanceWindows())
+    }
+
     @PostMapping("/maintenance")
     @PlatformSecured(permissions = [PlatformPermission.MAINTENANCE_MANAGE])
     @Operation(summary = "Create a maintenance window")

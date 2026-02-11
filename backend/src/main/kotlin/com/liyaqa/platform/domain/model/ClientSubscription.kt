@@ -186,8 +186,8 @@ class ClientSubscription(
      * Renews the subscription for another contract period.
      */
     fun renew(newEndDate: LocalDate, newAgreedPrice: Money? = null) {
-        require(status in listOf(ClientSubscriptionStatus.ACTIVE, ClientSubscriptionStatus.EXPIRED)) {
-            "Can only renew from ACTIVE or EXPIRED status, current: $status"
+        require(status in listOf(ClientSubscriptionStatus.ACTIVE, ClientSubscriptionStatus.SUSPENDED, ClientSubscriptionStatus.EXPIRED)) {
+            "Can only renew from ACTIVE, SUSPENDED, or EXPIRED status, current: $status"
         }
         require(newEndDate.isAfter(endDate)) {
             "New end date must be after current end date"

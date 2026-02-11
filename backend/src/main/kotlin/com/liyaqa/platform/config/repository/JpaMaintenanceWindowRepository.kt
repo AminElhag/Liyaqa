@@ -23,6 +23,9 @@ class JpaMaintenanceWindowRepository(
     override fun findById(id: UUID): Optional<MaintenanceWindow> =
         springDataRepository.findById(id)
 
+    override fun findAll(): List<MaintenanceWindow> =
+        springDataRepository.findAll()
+
     override fun findByIsActiveTrueAndStartAtBeforeAndEndAtAfter(startBefore: Instant, endAfter: Instant): List<MaintenanceWindow> =
         springDataRepository.findByIsActiveTrueAndStartAtBeforeAndEndAtAfter(startBefore, endAfter)
 

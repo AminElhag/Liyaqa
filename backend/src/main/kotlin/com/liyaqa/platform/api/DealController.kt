@@ -1,15 +1,19 @@
 package com.liyaqa.platform.api
 
 import com.liyaqa.platform.api.dto.ChangeStageRequest
+import com.liyaqa.platform.api.dto.ConvertDealRequest
 import com.liyaqa.platform.api.dto.CreateDealActivityRequest
 import com.liyaqa.platform.api.dto.DealActivityResponse
+import com.liyaqa.platform.api.dto.DealConversionResponse
 import com.liyaqa.platform.api.dto.DealCreateRequest
 import com.liyaqa.platform.api.dto.DealMetricsResponse
 import com.liyaqa.platform.api.dto.DealPipelineResponse
 import com.liyaqa.platform.api.dto.DealResponse
 import com.liyaqa.platform.api.dto.DealSummaryResponse
 import com.liyaqa.platform.api.dto.DealUpdateRequest
+import com.liyaqa.platform.api.dto.LoseDealRequest
 import com.liyaqa.platform.api.dto.PageResponse
+import com.liyaqa.platform.api.dto.ReassignDealRequest
 import com.liyaqa.platform.application.services.DealService
 import com.liyaqa.platform.domain.model.DealSource
 import com.liyaqa.platform.domain.model.DealStage
@@ -149,6 +153,118 @@ class DealController(
         @Valid @RequestBody request: ChangeStageRequest
     ): ResponseEntity<DealResponse> {
         val deal = dealService.changeDealStage(id, request.toCommand())
+        return ResponseEntity.ok(DealResponse.from(deal))
+    }
+
+    @Operation(summary = "Qualify a deal", description = "Transitions a deal from LEAD to CONTACTED stage. Requires PLATFORM_ADMIN or ACCOUNT_MANAGER role.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Deal qualified successfully"),
+        ApiResponse(responseCode = "404", description = "Deal not found"),
+        ApiResponse(responseCode = "422", description = "Deal is not in LEAD stage")
+    ])
+    @PostMapping("/{id}/qualify")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.ACCOUNT_MANAGER])
+    fun qualifyDeal(@PathVariable id: UUID): ResponseEntity<DealResponse> {
+        val deal = dealService.qualifyDeal(id)
+        return ResponseEntity.ok(DealResponse.from(deal))
+    }
+
+    @Operation(summary = "Send proposal for a deal", description = "Transitions a deal from CONTACTED/DEMO_DONE to PROPOSAL_SENT stage. Requires PLATFORM_ADMIN or ACCOUNT_MANAGER role.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Proposal sent successfully"),
+        ApiResponse(responseCode = "404", description = "Deal not found"),
+        ApiResponse(responseCode = "422", description = "Invalid stage transition")
+    ])
+    @PostMapping("/{id}/proposal")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.ACCOUNT_MANAGER])
+    fun sendProposal(@PathVariable id: UUID): ResponseEntity<DealResponse> {
+        val deal = dealService.sendProposal(id)
+        return ResponseEntity.ok(DealResponse.from(deal))
+    }
+
+    @Operation(summary = "Start negotiation for a deal", description = "Transitions a deal from PROPOSAL_SENT to NEGOTIATION stage. Requires PLATFORM_ADMIN or ACCOUNT_MANAGER role.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Negotiation started successfully"),
+        ApiResponse(responseCode = "404", description = "Deal not found"),
+        ApiResponse(responseCode = "422", description = "Invalid stage transition")
+    ])
+    @PostMapping("/{id}/negotiate")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.ACCOUNT_MANAGER])
+    fun startNegotiation(@PathVariable id: UUID): ResponseEntity<DealResponse> {
+        val deal = dealService.startNegotiation(id)
+        return ResponseEntity.ok(DealResponse.from(deal))
+    }
+
+    @Operation(summary = "Convert deal to client", description = "Converts a deal in NEGOTIATION stage to a client by creating an organization, club, admin user, and optional subscription. Marks the deal as WON.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Deal converted successfully"),
+        ApiResponse(responseCode = "400", description = "Invalid request body"),
+        ApiResponse(responseCode = "404", description = "Deal not found"),
+        ApiResponse(responseCode = "422", description = "Deal is not in NEGOTIATION stage")
+    ])
+    @PostMapping("/{id}/convert")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.ACCOUNT_MANAGER])
+    fun convertDeal(
+        @PathVariable id: UUID,
+        @Valid @RequestBody request: ConvertDealRequest
+    ): ResponseEntity<DealConversionResponse> {
+        val result = dealService.convertDeal(id, request.toCommand())
+        return ResponseEntity.ok(
+            DealConversionResponse(
+                deal = DealResponse.from(result.deal),
+                organizationId = result.organizationId,
+                organizationName = result.organizationName,
+                clubId = result.clubId,
+                clubName = result.clubName,
+                adminUserId = result.adminUserId,
+                adminEmail = result.adminEmail,
+                subscriptionId = result.subscriptionId,
+                subscriptionStatus = result.subscriptionStatus
+            )
+        )
+    }
+
+    @Operation(summary = "Mark deal as lost", description = "Transitions a deal to LOST stage with a reason. Requires PLATFORM_ADMIN or ACCOUNT_MANAGER role.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Deal marked as lost"),
+        ApiResponse(responseCode = "404", description = "Deal not found"),
+        ApiResponse(responseCode = "422", description = "Invalid stage transition")
+    ])
+    @PostMapping("/{id}/lose")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.ACCOUNT_MANAGER])
+    fun loseDeal(
+        @PathVariable id: UUID,
+        @Valid @RequestBody request: LoseDealRequest
+    ): ResponseEntity<DealResponse> {
+        val deal = dealService.loseDeal(id, request.reasonEn)
+        return ResponseEntity.ok(DealResponse.from(deal))
+    }
+
+    @Operation(summary = "Reopen a lost deal", description = "Transitions a LOST or CHURNED deal back to LEAD stage. Requires PLATFORM_ADMIN or ACCOUNT_MANAGER role.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Deal reopened successfully"),
+        ApiResponse(responseCode = "404", description = "Deal not found"),
+        ApiResponse(responseCode = "422", description = "Invalid stage transition")
+    ])
+    @PostMapping("/{id}/reopen")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.ACCOUNT_MANAGER])
+    fun reopenDeal(@PathVariable id: UUID): ResponseEntity<DealResponse> {
+        val deal = dealService.reopenDeal(id)
+        return ResponseEntity.ok(DealResponse.from(deal))
+    }
+
+    @Operation(summary = "Reassign a deal", description = "Reassigns a deal to a different sales rep. Requires PLATFORM_ADMIN role.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Deal reassigned successfully"),
+        ApiResponse(responseCode = "404", description = "Deal or target user not found")
+    ])
+    @PostMapping("/{id}/reassign")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
+    fun reassignDeal(
+        @PathVariable id: UUID,
+        @Valid @RequestBody request: ReassignDealRequest
+    ): ResponseEntity<DealResponse> {
+        val deal = dealService.reassignDeal(id, request.newSalesRepId)
         return ResponseEntity.ok(DealResponse.from(deal))
     }
 

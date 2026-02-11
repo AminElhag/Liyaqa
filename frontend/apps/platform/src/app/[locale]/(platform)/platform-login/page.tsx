@@ -306,7 +306,7 @@ export default function PlatformLoginPage() {
                 width={320}
                 height={120}
                 className={cn(
-                  "relative h-auto w-[320px] drop-shadow-2xl transition-all duration-1000 delay-200",
+                  "relative h-auto w-auto max-w-[320px] drop-shadow-2xl transition-all duration-1000 delay-200",
                   mounted ? "opacity-100 scale-100" : "opacity-0 scale-90"
                 )}
                 priority

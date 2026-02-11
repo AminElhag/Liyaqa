@@ -1,6 +1,7 @@
 package com.liyaqa.platform.communication.model
 
 import com.liyaqa.platform.subscription.model.PlanTier
+import com.liyaqa.platform.tenant.model.TenantStatus
 import com.liyaqa.shared.domain.OrganizationLevelEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -42,6 +43,10 @@ class Announcement(
     @Enumerated(EnumType.STRING)
     @Column(name = "target_plan_tier")
     var targetPlanTier: PlanTier? = null,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "target_status")
+    var targetStatus: TenantStatus? = null,
 
     @Column(name = "scheduled_at")
     var scheduledAt: Instant? = null,
@@ -88,6 +93,7 @@ class Announcement(
             targetAudience: TargetAudience = TargetAudience.ALL,
             targetTenantIds: MutableList<UUID> = mutableListOf(),
             targetPlanTier: PlanTier? = null,
+            targetStatus: TenantStatus? = null,
             createdBy: UUID,
             priority: Int = 3
         ): Announcement {
@@ -100,6 +106,7 @@ class Announcement(
                 targetAudience = targetAudience,
                 targetTenantIds = targetTenantIds,
                 targetPlanTier = targetPlanTier,
+                targetStatus = targetStatus,
                 createdBy = createdBy,
                 priority = priority
             )

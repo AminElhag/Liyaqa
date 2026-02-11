@@ -2,9 +2,12 @@ package com.liyaqa.platform.compliance.repository
 
 import com.liyaqa.platform.compliance.model.ZatcaSubmission
 import com.liyaqa.platform.compliance.model.ZatcaSubmissionStatus
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
+import java.time.Instant
 import java.util.Optional
 import java.util.UUID
 
@@ -21,6 +24,21 @@ interface SpringDataZatcaSubmissionRepository : JpaRepository<ZatcaSubmission, U
 
     @Query("SELECT DISTINCT z.tenantId FROM ZatcaSubmission z")
     fun findDistinctTenantIds(): List<UUID>
+
+    fun findByStatusIn(statuses: List<ZatcaSubmissionStatus>, pageable: org.springframework.data.domain.Pageable): List<ZatcaSubmission>
+
+    fun countByStatusAndCreatedAtAfter(status: ZatcaSubmissionStatus, after: Instant): Long
+
+    @Query("""
+        SELECT FUNCTION('TO_CHAR', z.createdAt, 'YYYY-MM') as month,
+               z.status as status,
+               COUNT(z) as cnt
+        FROM ZatcaSubmission z
+        WHERE z.createdAt >= :after
+        GROUP BY FUNCTION('TO_CHAR', z.createdAt, 'YYYY-MM'), z.status
+        ORDER BY month
+    """)
+    fun findMonthlyStatusCounts(after: Instant): List<Array<Any>>
 }
 
 @Repository
@@ -57,4 +75,15 @@ class JpaZatcaSubmissionRepository(
 
     override fun findDistinctTenantIds(): List<UUID> =
         springDataRepository.findDistinctTenantIds()
+
+    override fun findByStatusInOrderByCreatedAtDesc(statuses: List<ZatcaSubmissionStatus>, limit: Int): List<ZatcaSubmission> {
+        val pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"))
+        return springDataRepository.findByStatusIn(statuses, pageable)
+    }
+
+    override fun countByStatusAndCreatedAtAfter(status: ZatcaSubmissionStatus, after: Instant): Long =
+        springDataRepository.countByStatusAndCreatedAtAfter(status, after)
+
+    fun findMonthlyStatusCounts(after: Instant): List<Array<Any>> =
+        springDataRepository.findMonthlyStatusCounts(after)
 }

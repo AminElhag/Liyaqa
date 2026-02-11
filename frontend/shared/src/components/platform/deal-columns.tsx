@@ -25,13 +25,12 @@ interface DealColumnsOptions {
   canEdit?: boolean;
 }
 
-const SOURCE_LABELS: Record<DealSource, { en: string; ar: string }> = {
+const SOURCE_LABELS: Record<string, { en: string; ar: string }> = {
   WEBSITE: { en: "Website", ar: "الموقع" },
   REFERRAL: { en: "Referral", ar: "إحالة" },
-  COLD_CALL: { en: "Cold Call", ar: "اتصال بارد" },
-  MARKETING_CAMPAIGN: { en: "Marketing", ar: "تسويق" },
-  EVENT: { en: "Event", ar: "حدث" },
-  PARTNER: { en: "Partner", ar: "شريك" },
+  COLD_OUTREACH: { en: "Cold Outreach", ar: "تواصل بارد" },
+  SOCIAL_MEDIA: { en: "Social Media", ar: "وسائل التواصل" },
+  PARTNERSHIP: { en: "Partnership", ar: "شراكة" },
   OTHER: { en: "Other", ar: "أخرى" },
 };
 
@@ -76,13 +75,14 @@ export function getDealColumns(options: DealColumnsOptions): ColumnDef<DealSumma
     {
       accessorKey: "source",
       header: texts.source,
-      cell: ({ row }) => (
-        <span className="text-sm">
-          {locale === "ar"
-            ? SOURCE_LABELS[row.original.source].ar
-            : SOURCE_LABELS[row.original.source].en}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const label = SOURCE_LABELS[row.original.source];
+        return (
+          <span className="text-sm">
+            {label ? (locale === "ar" ? label.ar : label.en) : row.original.source}
+          </span>
+        );
+      },
     },
     {
       accessorKey: "companyName",

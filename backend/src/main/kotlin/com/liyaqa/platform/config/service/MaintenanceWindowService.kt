@@ -39,6 +39,12 @@ class MaintenanceWindowService(
     }
 
     @Transactional(readOnly = true)
+    fun getAllMaintenanceWindows(): List<MaintenanceWindowResponse> {
+        return maintenanceWindowRepository.findAll()
+            .map { MaintenanceWindowResponse.from(it) }
+    }
+
+    @Transactional(readOnly = true)
     fun getActiveMaintenanceStatus(): MaintenanceStatusResponse {
         val now = Instant.now()
         val activeWindows = maintenanceWindowRepository

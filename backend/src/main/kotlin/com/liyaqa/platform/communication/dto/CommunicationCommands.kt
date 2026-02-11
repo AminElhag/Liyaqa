@@ -4,6 +4,7 @@ import com.liyaqa.platform.communication.model.AnnouncementType
 import com.liyaqa.platform.communication.model.CommunicationChannel
 import com.liyaqa.platform.communication.model.TargetAudience
 import com.liyaqa.platform.subscription.model.PlanTier
+import com.liyaqa.platform.tenant.model.TenantStatus
 import java.time.Instant
 import java.util.UUID
 
@@ -14,6 +15,7 @@ data class CreateAnnouncementCommand(
     val targetAudience: TargetAudience = TargetAudience.ALL,
     val targetTenantIds: List<UUID> = emptyList(),
     val targetPlanTier: PlanTier? = null,
+    val targetStatus: TenantStatus? = null,
     val priority: Int = 3
 )
 
@@ -24,6 +26,7 @@ data class UpdateAnnouncementCommand(
     val targetAudience: TargetAudience? = null,
     val targetTenantIds: List<UUID>? = null,
     val targetPlanTier: PlanTier? = null,
+    val targetStatus: TenantStatus? = null,
     val priority: Int? = null
 )
 

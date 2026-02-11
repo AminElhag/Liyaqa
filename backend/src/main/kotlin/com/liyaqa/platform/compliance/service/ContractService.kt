@@ -10,6 +10,8 @@ import com.liyaqa.platform.compliance.exception.DuplicateContractNumberException
 import com.liyaqa.platform.compliance.model.ContractStatus
 import com.liyaqa.platform.compliance.model.TenantContract
 import com.liyaqa.platform.compliance.repository.TenantContractRepository
+import com.liyaqa.platform.tenant.model.Tenant
+import com.liyaqa.platform.tenant.repository.TenantRepository
 import com.liyaqa.shared.domain.AuditAction
 import com.liyaqa.shared.infrastructure.audit.AuditService
 import org.springframework.data.domain.Page
@@ -23,9 +25,20 @@ import java.util.UUID
 @Service("platformContractService")
 class ContractService(
     private val contractRepository: TenantContractRepository,
+    private val tenantRepository: TenantRepository,
     private val auditService: AuditService,
     private val objectMapper: ObjectMapper
 ) {
+
+    private fun resolveTenantNames(tenantIds: Collection<UUID>): Map<UUID, Tenant> {
+        if (tenantIds.isEmpty()) return emptyMap()
+        return tenantRepository.findAllById(tenantIds.toSet()).associateBy { it.id }
+    }
+
+    private fun toResponse(contract: TenantContract, tenantMap: Map<UUID, Tenant>): ContractResponse {
+        val tenant = tenantMap[contract.tenantId]
+        return ContractResponse.from(contract, tenant?.facilityName, tenant?.facilityNameAr)
+    }
 
     @Transactional
     fun createContract(request: CreateContractRequest): ContractResponse {
@@ -41,6 +54,8 @@ class ContractService(
             endDate = request.endDate,
             autoRenew = request.autoRenew,
             documentUrl = request.documentUrl,
+            value = request.value,
+            currency = request.currency,
             terms = request.terms.toMutableMap()
         )
 
@@ -53,19 +68,23 @@ class ContractService(
             description = "Contract created: ${saved.contractNumber}"
         )
 
-        return ContractResponse.from(saved)
+        val tenantMap = resolveTenantNames(listOf(saved.tenantId))
+        return toResponse(saved, tenantMap)
     }
 
     @Transactional(readOnly = true)
     fun getContract(id: UUID): ContractResponse {
         val contract = contractRepository.findById(id)
             .orElseThrow { ContractNotFoundException(id) }
-        return ContractResponse.from(contract)
+        val tenantMap = resolveTenantNames(listOf(contract.tenantId))
+        return toResponse(contract, tenantMap)
     }
 
     @Transactional(readOnly = true)
     fun listContracts(pageable: Pageable): Page<ContractResponse> {
-        return contractRepository.findAll(pageable).map { ContractResponse.from(it) }
+        val page = contractRepository.findAll(pageable)
+        val tenantMap = resolveTenantNames(page.content.map { it.tenantId })
+        return page.map { toResponse(it, tenantMap) }
     }
 
     @Transactional
@@ -81,10 +100,13 @@ class ContractService(
         request.endDate?.let { contract.endDate = it }
         request.autoRenew?.let { contract.autoRenew = it }
         request.documentUrl?.let { contract.documentUrl = it }
+        request.value?.let { contract.value = it }
+        request.currency?.let { contract.currency = it }
         request.terms?.let { contract.terms = it.toMutableMap() }
 
         val saved = contractRepository.save(contract)
-        val newValue = objectMapper.writeValueAsString(ContractResponse.from(saved))
+        val tenantMap = resolveTenantNames(listOf(saved.tenantId))
+        val newValue = objectMapper.writeValueAsString(toResponse(saved, tenantMap))
 
         auditService.logAsync(
             action = AuditAction.UPDATE,
@@ -95,7 +117,7 @@ class ContractService(
             newValue = newValue
         )
 
-        return ContractResponse.from(saved)
+        return toResponse(saved, tenantMap)
     }
 
     @Transactional
@@ -117,8 +139,9 @@ class ContractService(
     fun getExpiringContracts(days: Int, pageable: Pageable): Page<ContractResponse> {
         val start = LocalDate.now()
         val end = start.plusDays(days.toLong())
-        return contractRepository.findByEndDateBetweenAndStatus(start, end, ContractStatus.ACTIVE, pageable)
-            .map { ContractResponse.from(it) }
+        val page = contractRepository.findByEndDateBetweenAndStatus(start, end, ContractStatus.ACTIVE, pageable)
+        val tenantMap = resolveTenantNames(page.content.map { it.tenantId })
+        return page.map { toResponse(it, tenantMap) }
     }
 
     @Transactional
@@ -141,6 +164,7 @@ class ContractService(
             description = "Contract renewed: ${saved.contractNumber}, new end date: $newEndDate"
         )
 
-        return ContractResponse.from(saved)
+        val tenantMap = resolveTenantNames(listOf(saved.tenantId))
+        return toResponse(saved, tenantMap)
     }
 }

@@ -18,6 +18,7 @@ import com.liyaqa.platform.domain.ports.TicketMessageRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
+import org.hibernate.Hibernate
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
@@ -107,8 +108,14 @@ class SupportTicketService(
      */
     @Transactional(readOnly = true)
     fun getTicket(id: UUID): SupportTicket {
-        return ticketRepository.findById(id)
+        val ticket = ticketRepository.findById(id)
             .orElseThrow { NoSuchElementException("Support ticket not found: $id") }
+        // Force-initialize lazy relationships (no-op if already fetched via JOIN FETCH)
+        Hibernate.initialize(ticket.organization)
+        Hibernate.initialize(ticket.club)
+        Hibernate.initialize(ticket.assignedTo)
+        Hibernate.initialize(ticket.createdBy)
+        return ticket
     }
 
     /**
@@ -124,7 +131,7 @@ class SupportTicketService(
         search: String? = null,
         pageable: Pageable
     ): Page<SupportTicket> {
-        return ticketRepository.findByFilters(
+        val page = ticketRepository.findByFilters(
             status = status,
             priority = priority,
             category = category,
@@ -133,6 +140,14 @@ class SupportTicketService(
             search = search,
             pageable = pageable
         )
+        // Force-initialize lazy relationships (no-op if already fetched via JOIN FETCH)
+        page.content.forEach { ticket ->
+            Hibernate.initialize(ticket.organization)
+            Hibernate.initialize(ticket.club)
+            Hibernate.initialize(ticket.assignedTo)
+            Hibernate.initialize(ticket.createdBy)
+        }
+        return page
     }
 
     /**
@@ -168,7 +183,13 @@ class SupportTicketService(
             TicketStatus.CLOSED -> ticket.close()
         }
 
-        return ticketRepository.save(ticket)
+        val saved = ticketRepository.save(ticket)
+        // Initialize lazy associations for response serialization (OSIV is disabled)
+        Hibernate.initialize(saved.organization)
+        Hibernate.initialize(saved.club)
+        Hibernate.initialize(saved.assignedTo)
+        Hibernate.initialize(saved.createdBy)
+        return saved
     }
 
     /**
@@ -183,7 +204,12 @@ class SupportTicketService(
 
         ticket.assignTo(assignee)
 
-        return ticketRepository.save(ticket)
+        val saved = ticketRepository.save(ticket)
+        Hibernate.initialize(saved.organization)
+        Hibernate.initialize(saved.club)
+        Hibernate.initialize(saved.assignedTo)
+        Hibernate.initialize(saved.createdBy)
+        return saved
     }
 
     /**
@@ -195,7 +221,12 @@ class SupportTicketService(
 
         ticket.unassign()
 
-        return ticketRepository.save(ticket)
+        val saved = ticketRepository.save(ticket)
+        Hibernate.initialize(saved.organization)
+        Hibernate.initialize(saved.club)
+        Hibernate.initialize(saved.assignedTo)
+        Hibernate.initialize(saved.createdBy)
+        return saved
     }
 
     /**

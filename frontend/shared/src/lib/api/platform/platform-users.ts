@@ -23,7 +23,7 @@ const USE_MOCK = false;
 // ============================================================================
 
 function generateMockUsers(): PlatformUserSummary[] {
-  const roles: PlatformUserRole[] = ["PLATFORM_ADMIN", "SALES_REP", "SUPPORT_REP"];
+  const roles: PlatformUserRole[] = ["PLATFORM_SUPER_ADMIN", "PLATFORM_ADMIN", "ACCOUNT_MANAGER", "SUPPORT_LEAD", "SUPPORT_AGENT", "PLATFORM_VIEWER"];
   const statuses: PlatformUserStatus[] = ["ACTIVE", "ACTIVE", "ACTIVE", "INACTIVE", "SUSPENDED"];
 
   const mockUsers: PlatformUserSummary[] = [
@@ -42,7 +42,7 @@ function generateMockUsers(): PlatformUserSummary[] {
       email: "sarah.sales@liyaqa.com",
       displayNameEn: "Sarah Johnson",
       displayNameAr: "سارة جونسون",
-      role: "SALES_REP",
+      role: "ACCOUNT_MANAGER",
       status: "ACTIVE",
       lastLoginAt: new Date(Date.now() - 3600000).toISOString(),
       createdAt: "2024-02-20T14:30:00Z",
@@ -52,7 +52,7 @@ function generateMockUsers(): PlatformUserSummary[] {
       email: "omar.support@liyaqa.com",
       displayNameEn: "Omar Khalid",
       displayNameAr: "عمر خالد",
-      role: "SUPPORT_REP",
+      role: "SUPPORT_AGENT",
       status: "ACTIVE",
       lastLoginAt: new Date(Date.now() - 86400000).toISOString(),
       createdAt: "2024-03-10T09:15:00Z",
@@ -62,7 +62,7 @@ function generateMockUsers(): PlatformUserSummary[] {
       email: "fatima.sales@liyaqa.com",
       displayNameEn: "Fatima Hassan",
       displayNameAr: "فاطمة حسن",
-      role: "SALES_REP",
+      role: "ACCOUNT_MANAGER",
       status: "INACTIVE",
       createdAt: "2024-04-05T11:45:00Z",
     },
@@ -81,7 +81,7 @@ function generateMockUsers(): PlatformUserSummary[] {
       email: "noor.support@liyaqa.com",
       displayNameEn: "Noor Ahmed",
       displayNameAr: "نور أحمد",
-      role: "SUPPORT_REP",
+      role: "SUPPORT_LEAD",
       status: "SUSPENDED",
       createdAt: "2024-05-12T16:20:00Z",
     },
@@ -90,7 +90,7 @@ function generateMockUsers(): PlatformUserSummary[] {
       email: "ali.sales@liyaqa.com",
       displayNameEn: "Ali Mohammed",
       displayNameAr: "علي محمد",
-      role: "SALES_REP",
+      role: "ACCOUNT_MANAGER",
       status: "ACTIVE",
       lastLoginAt: new Date(Date.now() - 172800000).toISOString(),
       createdAt: "2024-06-01T10:30:00Z",
@@ -100,7 +100,7 @@ function generateMockUsers(): PlatformUserSummary[] {
       email: "layla.support@liyaqa.com",
       displayNameEn: "Layla Ibrahim",
       displayNameAr: "ليلى إبراهيم",
-      role: "SUPPORT_REP",
+      role: "SUPPORT_AGENT",
       status: "ACTIVE",
       lastLoginAt: new Date(Date.now() - 43200000).toISOString(),
       createdAt: "2024-06-15T13:00:00Z",
@@ -131,9 +131,12 @@ function getMockStats(): PlatformUserStats {
     inactive: 1,
     suspended: 2,
     byRole: {
-      PLATFORM_ADMIN: 2,
-      SALES_REP: 3,
-      SUPPORT_REP: 3,
+      PLATFORM_SUPER_ADMIN: 1,
+      PLATFORM_ADMIN: 1,
+      ACCOUNT_MANAGER: 3,
+      SUPPORT_LEAD: 1,
+      SUPPORT_AGENT: 2,
+      PLATFORM_VIEWER: 0,
     },
   };
 }

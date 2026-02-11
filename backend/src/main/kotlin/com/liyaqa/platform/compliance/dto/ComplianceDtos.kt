@@ -7,6 +7,7 @@ import com.liyaqa.platform.compliance.model.DataExportRequestStatus
 import com.liyaqa.platform.compliance.model.TenantContract
 import com.liyaqa.platform.compliance.model.ZatcaSubmission
 import com.liyaqa.platform.compliance.model.ZatcaSubmissionStatus
+import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
@@ -23,6 +24,8 @@ data class CreateContractRequest(
     val endDate: LocalDate,
     val autoRenew: Boolean = false,
     val documentUrl: String? = null,
+    val value: BigDecimal? = null,
+    val currency: String = "SAR",
     val terms: Map<String, String> = emptyMap()
 )
 
@@ -33,6 +36,8 @@ data class UpdateContractRequest(
     val endDate: LocalDate? = null,
     val autoRenew: Boolean? = null,
     val documentUrl: String? = null,
+    val value: BigDecimal? = null,
+    val currency: String? = null,
     val terms: Map<String, String>? = null
 )
 
@@ -43,12 +48,16 @@ data class RenewContractRequest(
 data class ContractResponse(
     val id: UUID,
     val tenantId: UUID,
+    val tenantName: String? = null,
+    val tenantNameAr: String? = null,
     val contractNumber: String,
     val type: ContractType,
     val status: ContractStatus,
     val startDate: LocalDate,
     val endDate: LocalDate,
     val autoRenew: Boolean,
+    val value: BigDecimal? = null,
+    val currency: String? = null,
     val documentUrl: String?,
     val signedAt: Instant?,
     val signedBy: UUID?,
@@ -57,15 +66,23 @@ data class ContractResponse(
     val updatedAt: Instant
 ) {
     companion object {
-        fun from(contract: TenantContract) = ContractResponse(
+        fun from(
+            contract: TenantContract,
+            tenantName: String? = null,
+            tenantNameAr: String? = null
+        ) = ContractResponse(
             id = contract.id,
             tenantId = contract.tenantId,
+            tenantName = tenantName,
+            tenantNameAr = tenantNameAr,
             contractNumber = contract.contractNumber,
             type = contract.type,
             status = contract.status,
             startDate = contract.startDate,
             endDate = contract.endDate,
             autoRenew = contract.autoRenew,
+            value = contract.value,
+            currency = contract.currency,
             documentUrl = contract.documentUrl,
             signedAt = contract.signedAt,
             signedBy = contract.signedBy,
@@ -94,6 +111,7 @@ data class ZatcaComplianceStatusResponse(
 data class ZatcaTenantIssue(
     val tenantId: UUID,
     val tenantName: String?,
+    val tenantNameAr: String? = null,
     val rejectedCount: Long,
     val failedCount: Long,
     val pendingCount: Long
@@ -144,6 +162,26 @@ data class ZatcaSubmissionResponse(
         )
     }
 }
+
+data class ZatcaMonthlyTrendPoint(
+    val month: String,
+    val compliant: Long,
+    val failed: Long
+)
+
+data class ZatcaIssueResponse(
+    val id: UUID,
+    val invoiceId: UUID,
+    val invoiceNumber: String,
+    val tenantId: UUID,
+    val tenantName: String? = null,
+    val tenantNameAr: String? = null,
+    val status: ZatcaSubmissionStatus,
+    val responseMessage: String?,
+    val responseCode: String?,
+    val submittedAt: Instant?,
+    val createdAt: Instant
+)
 
 // ============================================
 // Data Export DTOs

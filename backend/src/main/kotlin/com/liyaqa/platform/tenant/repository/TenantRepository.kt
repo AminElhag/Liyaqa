@@ -17,4 +17,5 @@ interface TenantRepository {
     fun existsBySubdomain(subdomain: String): Boolean
     fun existsById(id: UUID): Boolean
     fun count(): Long
+    fun findAllById(ids: Iterable<UUID>): List<Tenant>
 }

@@ -133,11 +133,12 @@ export async function getClientHealthHistory(
   organizationId: string,
   days: number = 30
 ): Promise<HealthHistoryPoint[]> {
-  return api
+  const page = await api
     .get(`${BASE_URL}/${organizationId}/history`, {
-      searchParams: { days: String(days) },
+      searchParams: { days: String(days), size: "100", page: "0" },
     })
-    .json<HealthHistoryPoint[]>();
+    .json<{ content: HealthHistoryPoint[] }>();
+  return page.content;
 }
 
 /**
@@ -147,12 +148,16 @@ export async function getAtRiskClients(
   riskLevel?: RiskLevel,
   limit: number = 50
 ): Promise<ClientHealthScore[]> {
-  const searchParams: Record<string, string> = { limit: String(limit) };
+  const searchParams: Record<string, string> = {
+    size: String(limit),
+    page: "0",
+  };
   if (riskLevel) searchParams.riskLevel = riskLevel;
 
-  return api
+  const page = await api
     .get(`${BASE_URL}/at-risk`, { searchParams })
-    .json<ClientHealthScore[]>();
+    .json<{ content: ClientHealthScore[] }>();
+  return page.content;
 }
 
 /**

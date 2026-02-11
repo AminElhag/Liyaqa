@@ -61,6 +61,24 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalStateException::class)
     fun handleConflict(ex: IllegalStateException, request: HttpServletRequest): ResponseEntity<LocalizedErrorResponse> {
+        // Authentication-related state errors should be 401, not 409
+        if (ex.message?.contains("not authenticated") == true || ex.message?.contains("No authenticated") == true) {
+            logger.debug("Authentication required: ${ex.message}")
+            return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(
+                    LocalizedErrorResponse(
+                        status = HttpStatus.UNAUTHORIZED.value(),
+                        error = "Unauthorized",
+                        errorAr = "غير مصرح",
+                        message = ex.message ?: "Authentication required",
+                        messageAr = "يجب تسجيل الدخول أولاً",
+                        timestamp = Instant.now(),
+                        path = request.requestURI
+                    )
+                )
+        }
+
         logger.debug("Conflict: ${ex.message}")
         return ResponseEntity
             .status(HttpStatus.CONFLICT)

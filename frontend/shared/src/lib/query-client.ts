@@ -5,6 +5,8 @@ export function makeQueryClient() {
   return new QueryClient({
     queryCache: new QueryCache({
       onError: (error) => {
+        // SessionExpiredError is expected when token expires — suppress it
+        if (error instanceof SessionExpiredError) return;
         // Only log in development
         if (process.env.NODE_ENV === "development") {
           console.error("[React Query Error]", error);
@@ -17,6 +19,8 @@ export function makeQueryClient() {
     }),
     mutationCache: new MutationCache({
       onError: (error) => {
+        // SessionExpiredError is expected when token expires — suppress it
+        if (error instanceof SessionExpiredError) return;
         // Only log in development
         if (process.env.NODE_ENV === "development") {
           console.error("[React Query Mutation Error]", error);

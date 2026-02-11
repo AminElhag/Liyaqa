@@ -25,8 +25,9 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import com.liyaqa.platform.domain.model.PlatformUserRole
 import com.liyaqa.platform.infrastructure.security.PlatformSecured
+import com.liyaqa.auth.infrastructure.security.JwtUserPrincipal
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -57,14 +58,13 @@ class SupportTicketController(
     @PostMapping
     fun createTicket(
         @Valid @RequestBody request: CreateSupportTicketRequest,
-        @AuthenticationPrincipal userDetails: UserDetails?
+        @AuthenticationPrincipal principal: JwtUserPrincipal?
     ): ResponseEntity<SupportTicketResponse> {
-        val createdById = getCurrentUserId(userDetails)
-            ?: throw IllegalStateException("User not authenticated")
-        val createdByEmail = userDetails?.username
-
+        if (principal == null) {
+            throw AccessDeniedException("Authentication required")
+        }
         val ticket = supportTicketService.createTicket(
-            request.toCommand(createdById, createdByEmail)
+            request.toCommand(principal.userId, principal.email)
         )
         return ResponseEntity.status(HttpStatus.CREATED).body(SupportTicketResponse.from(ticket))
     }
@@ -235,14 +235,14 @@ class SupportTicketController(
     fun addMessage(
         @PathVariable id: UUID,
         @Valid @RequestBody request: CreateTicketMessageRequest,
-        @AuthenticationPrincipal userDetails: UserDetails?
+        @AuthenticationPrincipal principal: JwtUserPrincipal?
     ): ResponseEntity<TicketMessageResponse> {
-        val authorId = getCurrentUserId(userDetails)
-            ?: throw IllegalStateException("User not authenticated")
-
+        if (principal == null) {
+            throw AccessDeniedException("Authentication required")
+        }
         val message = supportTicketService.addMessage(
             id,
-            request.toCommand(authorId)
+            request.toCommand(principal.userId)
         )
         return ResponseEntity.status(HttpStatus.CREATED).body(TicketMessageResponse.from(message))
     }
@@ -258,14 +258,4 @@ class SupportTicketController(
         return ResponseEntity.ok(TicketStatsResponse.from(stats))
     }
 
-    /**
-     * Helper to get current user ID from authentication.
-     */
-    private fun getCurrentUserId(userDetails: UserDetails?): UUID? {
-        return try {
-            userDetails?.username?.let { UUID.fromString(it) }
-        } catch (e: IllegalArgumentException) {
-            null
-        }
-    }
 }

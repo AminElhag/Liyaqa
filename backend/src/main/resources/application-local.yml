@@ -61,6 +61,13 @@ aws:
 server:
   port: 8080
 
+# Platform Auth - relaxed rate limits for development
+platform:
+  auth:
+    rate-limit:
+      max-requests: 20
+      window-minutes: 5
+
 # Logging
 logging:
   level:

@@ -20,6 +20,18 @@ import {
   LogOut,
   AlertTriangle,
   Command,
+  Activity,
+  Server,
+  FileText,
+  BarChart3,
+  Megaphone,
+  BookOpen,
+  Bell,
+  Flag,
+  Settings,
+  Key,
+  FileCheck,
+  Shield,
 } from "lucide-react";
 import { cn } from "@liyaqa/shared/utils";
 import { Button } from "@liyaqa/shared/components/ui/button";
@@ -39,15 +51,12 @@ import { useUIStore } from "@liyaqa/shared/stores/ui-store";
 import { useImpersonationStore } from "@liyaqa/shared/stores/impersonation-store";
 import { getInitials } from "@liyaqa/shared/utils";
 import type { UserRole } from "@liyaqa/shared/types/auth";
-import {
-  PlatformNotificationCenter,
-  demoNotifications,
-  type PlatformNotification,
-} from "@/components/platform/platform-notification-center";
+import { PlatformNotificationCenter } from "@/components/platform/platform-notification-center";
 import {
   PlatformCommandPalette,
   useCommandPalette,
 } from "@/components/platform/platform-command-palette";
+import { OfflineBanner } from "@liyaqa/shared/components/platform/offline-banner";
 
 interface NavItem {
   href: string;
@@ -56,58 +65,171 @@ interface NavItem {
   roles: UserRole[];
 }
 
+interface NavSection {
+  titleKey?: string;
+  titleEn?: string;
+  titleAr?: string;
+  items: NavItem[];
+}
+
 /**
- * Navigation items for the platform shell.
- * Each item specifies which roles can see it.
+ * Navigation sections for the platform shell.
+ * Organized into logical groups with section headers.
  */
-const navItems: NavItem[] = [
+const navSections: NavSection[] = [
   {
-    href: "/platform-dashboard",
-    labelKey: "dashboard",
-    icon: LayoutDashboard,
-    roles: ["PLATFORM_ADMIN", "SALES_REP", "MARKETING", "SUPPORT"],
+    items: [
+      {
+        href: "/platform-dashboard",
+        labelKey: "dashboard",
+        icon: LayoutDashboard,
+        roles: ["PLATFORM_SUPER_ADMIN", "PLATFORM_ADMIN", "ACCOUNT_MANAGER", "SUPPORT_LEAD", "SUPPORT_AGENT", "PLATFORM_VIEWER"],
+      },
+      {
+        href: "/deals",
+        labelKey: "deals",
+        icon: Briefcase,
+        roles: ["PLATFORM_SUPER_ADMIN", "PLATFORM_ADMIN", "ACCOUNT_MANAGER", "SUPPORT_LEAD", "SUPPORT_AGENT", "PLATFORM_VIEWER"],
+      },
+      {
+        href: "/clients",
+        labelKey: "clients",
+        icon: Building2,
+        roles: ["PLATFORM_SUPER_ADMIN", "PLATFORM_ADMIN", "ACCOUNT_MANAGER"],
+      },
+      {
+        href: "/client-plans",
+        labelKey: "plans",
+        icon: Package,
+        roles: ["PLATFORM_ADMIN"],
+      },
+      {
+        href: "/client-subscriptions",
+        labelKey: "subscriptions",
+        icon: CreditCard,
+        roles: ["PLATFORM_SUPER_ADMIN", "PLATFORM_ADMIN", "ACCOUNT_MANAGER"],
+      },
+      {
+        href: "/client-invoices",
+        labelKey: "invoices",
+        icon: Receipt,
+        roles: ["PLATFORM_SUPER_ADMIN", "PLATFORM_ADMIN", "ACCOUNT_MANAGER"],
+      },
+      {
+        href: "/platform-users",
+        labelKey: "platformUsers",
+        icon: Users,
+        roles: ["PLATFORM_ADMIN"],
+      },
+      {
+        href: "/support",
+        labelKey: "support",
+        icon: HeadphonesIcon,
+        roles: ["PLATFORM_ADMIN", "SUPPORT"],
+      },
+    ],
   },
   {
-    href: "/deals",
-    labelKey: "deals",
-    icon: Briefcase,
-    roles: ["PLATFORM_ADMIN", "SALES_REP", "MARKETING", "SUPPORT"],
+    titleEn: "Monitoring",
+    titleAr: "المراقبة",
+    items: [
+      {
+        href: "/health",
+        labelKey: "health",
+        icon: Activity,
+        roles: ["PLATFORM_ADMIN"],
+      },
+      {
+        href: "/monitoring/system",
+        labelKey: "systemStatus",
+        icon: Server,
+        roles: ["PLATFORM_ADMIN"],
+      },
+      {
+        href: "/monitoring/audit",
+        labelKey: "auditLog",
+        icon: FileText,
+        roles: ["PLATFORM_ADMIN"],
+      },
+    ],
   },
   {
-    href: "/clients",
-    labelKey: "clients",
-    icon: Building2,
-    roles: ["PLATFORM_ADMIN", "SALES_REP"],
+    titleEn: "Analytics",
+    titleAr: "التحليلات",
+    items: [
+      {
+        href: "/analytics",
+        labelKey: "analytics",
+        icon: BarChart3,
+        roles: ["PLATFORM_ADMIN", "MARKETING"],
+      },
+    ],
   },
   {
-    href: "/client-plans",
-    labelKey: "plans",
-    icon: Package,
-    roles: ["PLATFORM_ADMIN"],
+    titleEn: "Communication",
+    titleAr: "التواصل",
+    items: [
+      {
+        href: "/announcements",
+        labelKey: "announcements",
+        icon: Megaphone,
+        roles: ["PLATFORM_ADMIN", "MARKETING"],
+      },
+      {
+        href: "/knowledge-base",
+        labelKey: "knowledgeBase",
+        icon: BookOpen,
+        roles: ["PLATFORM_ADMIN", "SUPPORT"],
+      },
+      {
+        href: "/notifications",
+        labelKey: "notifications",
+        icon: Bell,
+        roles: ["PLATFORM_ADMIN"],
+      },
+    ],
   },
   {
-    href: "/client-subscriptions",
-    labelKey: "subscriptions",
-    icon: CreditCard,
-    roles: ["PLATFORM_ADMIN", "SALES_REP"],
+    titleEn: "Settings",
+    titleAr: "الإعدادات",
+    items: [
+      {
+        href: "/settings/feature-flags",
+        labelKey: "featureFlags",
+        icon: Flag,
+        roles: ["PLATFORM_ADMIN"],
+      },
+      {
+        href: "/settings/config",
+        labelKey: "configuration",
+        icon: Settings,
+        roles: ["PLATFORM_ADMIN"],
+      },
+      {
+        href: "/settings/api-keys",
+        labelKey: "apiKeys",
+        icon: Key,
+        roles: ["PLATFORM_ADMIN"],
+      },
+      {
+        href: "/settings/templates",
+        labelKey: "templates",
+        icon: FileCheck,
+        roles: ["PLATFORM_ADMIN"],
+      },
+    ],
   },
   {
-    href: "/client-invoices",
-    labelKey: "invoices",
-    icon: Receipt,
-    roles: ["PLATFORM_ADMIN", "SALES_REP"],
-  },
-  {
-    href: "/platform-users",
-    labelKey: "platformUsers",
-    icon: Users,
-    roles: ["PLATFORM_ADMIN"],
-  },
-  {
-    href: "/support",
-    labelKey: "support",
-    icon: HeadphonesIcon,
-    roles: ["PLATFORM_ADMIN", "SUPPORT"],
+    titleEn: "Compliance",
+    titleAr: "الامتثال",
+    items: [
+      {
+        href: "/compliance",
+        labelKey: "compliance",
+        icon: Shield,
+        roles: ["PLATFORM_ADMIN"],
+      },
+    ],
   },
 ];
 
@@ -131,25 +253,6 @@ export function PlatformShell({ children }: PlatformShellProps) {
   // Command palette state
   const { open: commandPaletteOpen, setOpen: setCommandPaletteOpen } = useCommandPalette();
 
-  // Notification state (using demo data for now)
-  const [notifications, setNotifications] = React.useState<PlatformNotification[]>(
-    demoNotifications
-  );
-
-  const handleMarkAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-  };
-
-  const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  };
-
-  const handleDismissNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  };
-
   // Get display name from user
   const userDisplayName =
     locale === "ar"
@@ -167,10 +270,15 @@ export function PlatformShell({ children }: PlatformShellProps) {
     router.push(`/${locale}/support`);
   };
 
-  // Filter nav items by user role
-  const filteredNavItems = navItems.filter((item) =>
-    user?.role ? item.roles.includes(user.role) : false
-  );
+  // Filter nav sections by user role
+  const filteredSections = navSections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) =>
+        user?.role ? item.roles.includes(user.role) : false
+      ),
+    }))
+    .filter((section) => section.items.length > 0);
 
   // Check if a nav item is active
   const isActive = (href: string) => {
@@ -222,6 +330,9 @@ export function PlatformShell({ children }: PlatformShellProps) {
           </Button>
         </div>
       )}
+
+      {/* Offline Banner */}
+      <OfflineBanner />
 
       {/* Mobile sidebar overlay */}
       {mobileMenuOpen && (
@@ -289,27 +400,41 @@ export function PlatformShell({ children }: PlatformShellProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="p-2 space-y-1">
-          {filteredNavItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={`/${locale}${item.href}`}
-                onClick={() => setMobileMenuOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                  active
-                    ? "bg-primary text-white"
-                    : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
-                )}
-              >
-                <Icon className="h-5 w-5 shrink-0" />
-                {!sidebarCollapsed && <span>{t(item.labelKey)}</span>}
-              </Link>
-            );
-          })}
+        <nav className="p-2 space-y-1 overflow-y-auto" style={{ maxHeight: "calc(100vh - 4rem)" }}>
+          {filteredSections.map((section, sectionIdx) => (
+            <div key={sectionIdx}>
+              {section.titleEn && !sidebarCollapsed && (
+                <div className="mt-4 mb-1 px-3">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
+                    {isRtl ? section.titleAr : section.titleEn}
+                  </span>
+                </div>
+              )}
+              {section.titleEn && sidebarCollapsed && (
+                <div className="my-2 mx-3 border-t border-neutral-700" />
+              )}
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={`/${locale}${item.href}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                      active
+                        ? "bg-primary text-white"
+                        : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                    )}
+                  >
+                    <Icon className="h-5 w-5 shrink-0" />
+                    {!sidebarCollapsed && <span>{t(item.labelKey)}</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
       </aside>
 
@@ -352,12 +477,7 @@ export function PlatformShell({ children }: PlatformShellProps) {
             <ThemeToggle />
 
             {/* Notifications */}
-            <PlatformNotificationCenter
-              notifications={notifications}
-              onMarkAsRead={handleMarkAsRead}
-              onMarkAllAsRead={handleMarkAllAsRead}
-              onDismiss={handleDismissNotification}
-            />
+            <PlatformNotificationCenter />
 
             <LanguageToggle />
 

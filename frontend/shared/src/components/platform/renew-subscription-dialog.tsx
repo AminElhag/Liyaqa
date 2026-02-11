@@ -16,6 +16,7 @@ import { Input } from "@liyaqa/shared/components/ui/input";
 import { Label } from "@liyaqa/shared/components/ui/label";
 import { useRenewSubscription } from "@liyaqa/shared/queries/platform/use-client-subscriptions";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
+import { parseApiError, getLocalizedErrorMessage } from "@liyaqa/shared/lib/api/client";
 import type { ClientSubscription } from "@liyaqa/shared/types/platform/client-subscription";
 
 interface RenewSubscriptionDialogProps {
@@ -93,10 +94,12 @@ export function RenewSubscriptionDialog({
           });
           onOpenChange(false);
         },
-        onError: (error) => {
+        onError: async (error) => {
+          const apiError = await parseApiError(error);
+          const errorMessage = getLocalizedErrorMessage(apiError, locale);
           toast({
             title: texts.errorTitle,
-            description: error.message,
+            description: errorMessage,
             variant: "destructive",
           });
         },

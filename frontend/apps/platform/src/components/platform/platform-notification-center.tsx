@@ -88,11 +88,11 @@ function formatTimeAgo(timestamp: string, locale: string): string {
 }
 
 export function PlatformNotificationCenter({
-  notifications,
+  notifications = [],
   onMarkAsRead,
   onMarkAllAsRead,
   onDismiss,
-}: PlatformNotificationCenterProps) {
+}: Partial<PlatformNotificationCenterProps>) {
   const locale = useLocale();
   const isRtl = locale === "ar";
   const [open, setOpen] = React.useState(false);

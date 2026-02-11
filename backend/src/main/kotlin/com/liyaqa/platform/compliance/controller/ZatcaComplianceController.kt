@@ -1,6 +1,8 @@
 package com.liyaqa.platform.compliance.controller
 
 import com.liyaqa.platform.compliance.dto.ZatcaComplianceStatusResponse
+import com.liyaqa.platform.compliance.dto.ZatcaIssueResponse
+import com.liyaqa.platform.compliance.dto.ZatcaMonthlyTrendPoint
 import com.liyaqa.platform.compliance.dto.ZatcaSubmissionResponse
 import com.liyaqa.platform.compliance.dto.ZatcaTenantDetailResponse
 import com.liyaqa.platform.compliance.service.ZatcaComplianceService
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
@@ -43,6 +46,26 @@ class ZatcaComplianceController(
     )
     fun getTenantDetail(@PathVariable tenantId: UUID): ResponseEntity<ZatcaTenantDetailResponse> {
         return ResponseEntity.ok(zatcaComplianceService.getTenantDetail(tenantId))
+    }
+
+    @GetMapping("/trend")
+    @PlatformSecured(permissions = [PlatformPermission.COMPLIANCE_VIEW])
+    @Operation(summary = "Get monthly ZATCA trend", description = "Retrieve monthly compliant vs failed counts")
+    @ApiResponse(responseCode = "200", description = "ZATCA trend data retrieved successfully")
+    fun getMonthlyTrend(
+        @RequestParam(defaultValue = "6") months: Int
+    ): ResponseEntity<List<ZatcaMonthlyTrendPoint>> {
+        return ResponseEntity.ok(zatcaComplianceService.getMonthlyTrend(months))
+    }
+
+    @GetMapping("/issues")
+    @PlatformSecured(permissions = [PlatformPermission.COMPLIANCE_VIEW])
+    @Operation(summary = "Get recent ZATCA issues", description = "Retrieve recent failed/rejected ZATCA submissions")
+    @ApiResponse(responseCode = "200", description = "ZATCA issues retrieved successfully")
+    fun getRecentIssues(
+        @RequestParam(defaultValue = "20") limit: Int
+    ): ResponseEntity<List<ZatcaIssueResponse>> {
+        return ResponseEntity.ok(zatcaComplianceService.getRecentIssues(limit))
     }
 
     @PostMapping("/retry/{invoiceId}")

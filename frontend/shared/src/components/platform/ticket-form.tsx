@@ -24,9 +24,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@liyaqa/shared/components/ui/card";
-import { usePlatformClients } from "@liyaqa/shared/queries/platform/use-platform-clients";
+import { usePlatformClients, useClientClubs } from "@liyaqa/shared/queries/platform/use-platform-clients";
 import { usePlatformUsers } from "@liyaqa/shared/queries/platform/use-platform-users";
-import { useOrganizationClubs } from "@liyaqa/shared/queries/use-clubs";
 import type {
   SupportTicket,
   TicketCategory,
@@ -134,7 +133,7 @@ export function TicketForm({
   const watchIsInternal = watch("isInternal");
 
   // Fetch clubs for selected organization
-  const { data: clubsData } = useOrganizationClubs(watchOrgId, { size: 100 });
+  const { data: clubsData } = useClientClubs(watchOrgId, { size: 100 });
   const clubs = clubsData?.content || [];
 
   const texts = {

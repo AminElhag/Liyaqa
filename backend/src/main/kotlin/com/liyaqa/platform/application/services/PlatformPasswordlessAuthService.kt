@@ -11,6 +11,7 @@ import com.liyaqa.platform.domain.model.PlatformLoginToken
 import com.liyaqa.platform.domain.ports.PlatformLoginTokenRepository
 import com.liyaqa.platform.domain.ports.PlatformUserRepository
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -34,9 +35,13 @@ class PlatformPasswordlessAuthService(
     // In-memory rate limiting cache: email -> list of request timestamps
     private val rateLimitCache = ConcurrentHashMap<String, MutableList<Instant>>()
 
+    @Value("\${platform.auth.rate-limit.max-requests:3}")
+    private var maxRequestsPerWindow: Int = 3
+
+    @Value("\${platform.auth.rate-limit.window-minutes:15}")
+    private var rateLimitWindowMinutes: Long = 15
+
     companion object {
-        private const val MAX_REQUESTS_PER_WINDOW = 3
-        private const val RATE_LIMIT_WINDOW_MINUTES = 15L
         private const val CODE_VALIDITY_MINUTES = 10L
     }
 
@@ -52,9 +57,12 @@ class PlatformPasswordlessAuthService(
         val normalizedEmail = email.trim().lowercase()
 
         // Check rate limiting (in-memory for now)
-        if (isRateLimited(normalizedEmail)) {
+        val waitMinutes = getRateLimitWaitMinutes(normalizedEmail)
+        if (waitMinutes != null) {
             logger.warn("Rate limit exceeded for email: $normalizedEmail")
-            throw IllegalStateException("Too many requests. Please wait before requesting another code.")
+            throw IllegalStateException(
+                "You hit the limit. Please wait for $waitMinutes minute${if (waitMinutes > 1) "s" else ""} and try again."
+            )
         }
 
         // Verify user exists and is a platform user
@@ -219,10 +227,11 @@ class PlatformPasswordlessAuthService(
 
     /**
      * Check if an email is currently rate limited.
+     * Returns null if not limited, or the number of minutes to wait if limited.
      */
-    private fun isRateLimited(email: String): Boolean {
+    private fun getRateLimitWaitMinutes(email: String): Long? {
         val now = Instant.now()
-        val windowStart = now.minusSeconds(RATE_LIMIT_WINDOW_MINUTES * 60)
+        val windowStart = now.minusSeconds(rateLimitWindowMinutes * 60)
 
         // Get or create request list
         val requests = rateLimitCache.getOrPut(email) { mutableListOf() }
@@ -230,8 +239,13 @@ class PlatformPasswordlessAuthService(
         // Remove old requests outside the window
         requests.removeIf { it.isBefore(windowStart) }
 
-        // Check if limit exceeded
-        return requests.size >= MAX_REQUESTS_PER_WINDOW
+        // Not rate limited
+        if (requests.size < maxRequestsPerWindow) return null
+
+        // Earliest request in window — wait until it expires
+        val earliest = requests.min()
+        val waitSeconds = java.time.Duration.between(now, earliest.plusSeconds(rateLimitWindowMinutes * 60)).seconds
+        return maxOf((waitSeconds + 59) / 60, 1) // ceiling to whole minutes, minimum 1
     }
 
     /**
@@ -248,7 +262,7 @@ class PlatformPasswordlessAuthService(
      */
     fun cleanupRateLimitCache() {
         val now = Instant.now()
-        val windowStart = now.minusSeconds(RATE_LIMIT_WINDOW_MINUTES * 60)
+        val windowStart = now.minusSeconds(rateLimitWindowMinutes * 60)
 
         rateLimitCache.entries.removeIf { (_, requests) ->
             requests.removeIf { it.isBefore(windowStart) }

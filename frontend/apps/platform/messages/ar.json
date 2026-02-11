@@ -400,7 +400,19 @@
       "support": "الدعم",
       "impersonatingAs": "تنتحل شخصية",
       "endImpersonation": "إنهاء الجلسة",
-      "impersonationExpired": "انتهت جلسة الانتحال"
+      "impersonationExpired": "انتهت جلسة الانتحال",
+      "health": "الصحة",
+      "systemStatus": "حالة النظام",
+      "auditLog": "سجل التدقيق",
+      "analytics": "التحليلات",
+      "announcements": "الإعلانات",
+      "knowledgeBase": "قاعدة المعرفة",
+      "notifications": "الإشعارات",
+      "featureFlags": "أعلام الميزات",
+      "configuration": "الإعدادات",
+      "apiKeys": "مفاتيح API",
+      "templates": "القوالب",
+      "compliance": "الامتثال"
     },
     "dashboard": {
       "title": "لوحة تحكم المنصة",

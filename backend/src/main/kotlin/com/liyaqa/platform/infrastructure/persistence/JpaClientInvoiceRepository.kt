@@ -18,6 +18,9 @@ interface SpringDataClientInvoiceRepository : JpaRepository<ClientInvoice, UUID>
 
     fun findByInvoiceNumber(invoiceNumber: String): Optional<ClientInvoice>
 
+    @Query("SELECT ci FROM ClientInvoice ci LEFT JOIN FETCH ci.lineItems WHERE ci.id = :id")
+    fun findByIdWithLineItems(@Param("id") id: UUID): Optional<ClientInvoice>
+
     fun findByOrganizationId(organizationId: UUID, pageable: Pageable): Page<ClientInvoice>
 
     fun findBySubscriptionId(subscriptionId: UUID, pageable: Pageable): Page<ClientInvoice>
@@ -169,6 +172,9 @@ class JpaClientInvoiceRepository(
 
     override fun findById(id: UUID): Optional<ClientInvoice> =
         springDataRepository.findById(id)
+
+    override fun findByIdWithLineItems(id: UUID): Optional<ClientInvoice> =
+        springDataRepository.findByIdWithLineItems(id)
 
     override fun findByInvoiceNumber(invoiceNumber: String): Optional<ClientInvoice> =
         springDataRepository.findByInvoiceNumber(invoiceNumber)

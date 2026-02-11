@@ -12,9 +12,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@liyaqa/shared/components/ui/dialog";
-import { Input } from "@liyaqa/shared/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@liyaqa/shared/components/ui/select";
 import { Label } from "@liyaqa/shared/components/ui/label";
 import { useAssignTicket } from "@liyaqa/shared/queries/platform/use-support-tickets";
+import { usePlatformUsers } from "@liyaqa/shared/queries/platform/use-platform-users";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import type { SupportTicketSummary } from "@liyaqa/shared/types/platform/support-ticket";
 
@@ -32,6 +39,8 @@ export function AssignTicketDialog({
   const locale = useLocale();
   const { toast } = useToast();
   const assignTicket = useAssignTicket();
+  const { data: usersData } = usePlatformUsers({ size: 100 });
+  const platformUsers = usersData?.content || [];
   const [assigneeId, setAssigneeId] = useState("");
 
   const texts = {
@@ -40,11 +49,11 @@ export function AssignTicketDialog({
       locale === "ar"
         ? "إسناد هذه التذكرة إلى أحد أعضاء فريق المنصة"
         : "Assign this ticket to a platform team member",
-    assigneeId: locale === "ar" ? "معرف المسؤول" : "Assignee ID",
-    assigneePlaceholder:
+    assignee: locale === "ar" ? "المسؤول" : "Assignee",
+    selectAssignee:
       locale === "ar"
-        ? "أدخل معرف المستخدم"
-        : "Enter user ID",
+        ? "اختر عضو الفريق"
+        : "Select team member",
     cancel: locale === "ar" ? "إلغاء" : "Cancel",
     assign: locale === "ar" ? "إسناد" : "Assign",
     assigning: locale === "ar" ? "جاري الإسناد..." : "Assigning...",
@@ -94,13 +103,22 @@ export function AssignTicketDialog({
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="assigneeId">{texts.assigneeId}</Label>
-            <Input
-              id="assigneeId"
+            <Label htmlFor="assigneeId">{texts.assignee}</Label>
+            <Select
               value={assigneeId}
-              onChange={(e) => setAssigneeId(e.target.value)}
-              placeholder={texts.assigneePlaceholder}
-            />
+              onValueChange={(value) => setAssigneeId(value)}
+            >
+              <SelectTrigger id="assigneeId">
+                <SelectValue placeholder={texts.selectAssignee} />
+              </SelectTrigger>
+              <SelectContent>
+                {platformUsers.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {locale === "ar" ? user.displayNameAr || user.displayNameEn : user.displayNameEn}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

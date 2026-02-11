@@ -1,9 +1,20 @@
 package com.liyaqa.platform.application.services
 
+import com.liyaqa.auth.application.commands.CreateUserCommand
+import com.liyaqa.auth.application.services.UserService
+import com.liyaqa.auth.domain.model.Role
+import com.liyaqa.organization.application.commands.CreateClubCommand
+import com.liyaqa.organization.application.commands.CreateOrganizationCommand
+import com.liyaqa.organization.application.services.ClubService
+import com.liyaqa.organization.application.services.OrganizationService
+import com.liyaqa.organization.domain.model.OrganizationType
 import com.liyaqa.platform.application.commands.ChangeStageCommand
+import com.liyaqa.platform.application.commands.ConvertDealCommand
+import com.liyaqa.platform.application.commands.CreateClientSubscriptionCommand
 import com.liyaqa.platform.application.commands.CreateDealActivityCommand
 import com.liyaqa.platform.application.commands.CreateDealCommand
 import com.liyaqa.platform.application.commands.UpdateDealCommand
+import com.liyaqa.platform.domain.model.BillingCycle
 import com.liyaqa.platform.domain.model.Deal
 import com.liyaqa.platform.domain.model.DealActivity
 import com.liyaqa.platform.domain.model.DealActivityType
@@ -13,6 +24,10 @@ import com.liyaqa.platform.domain.ports.DealActivityRepository
 import com.liyaqa.platform.domain.ports.DealRepository
 import com.liyaqa.platform.domain.ports.PlatformUserRepository
 import com.liyaqa.platform.events.model.PlatformEvent
+import com.liyaqa.shared.domain.LocalizedText
+import com.liyaqa.shared.domain.Money
+import com.liyaqa.shared.domain.TenantContext
+import com.liyaqa.shared.domain.TenantId
 import com.liyaqa.shared.infrastructure.security.SecurityService
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
@@ -33,7 +48,11 @@ class DealService(
     private val dealActivityRepository: DealActivityRepository,
     private val platformUserRepository: PlatformUserRepository,
     private val securityService: SecurityService,
-    private val eventPublisher: ApplicationEventPublisher
+    private val eventPublisher: ApplicationEventPublisher,
+    private val organizationService: OrganizationService,
+    private val clubService: ClubService,
+    private val userService: UserService,
+    private val clientSubscriptionService: ClientSubscriptionService
 ) {
     private val logger = LoggerFactory.getLogger(DealService::class.java)
 
@@ -159,6 +178,148 @@ class DealService(
         return saved
     }
 
+    fun qualifyDeal(id: UUID): Deal {
+        return changeDealStage(id, ChangeStageCommand(newStage = DealStage.CONTACTED))
+    }
+
+    fun sendProposal(id: UUID): Deal {
+        return changeDealStage(id, ChangeStageCommand(newStage = DealStage.PROPOSAL_SENT))
+    }
+
+    fun startNegotiation(id: UUID): Deal {
+        return changeDealStage(id, ChangeStageCommand(newStage = DealStage.NEGOTIATION))
+    }
+
+    fun loseDeal(id: UUID, reason: String): Deal {
+        return changeDealStage(id, ChangeStageCommand(newStage = DealStage.LOST, reason = reason))
+    }
+
+    fun reopenDeal(id: UUID): Deal {
+        return changeDealStage(id, ChangeStageCommand(newStage = DealStage.LEAD))
+    }
+
+    fun reassignDeal(id: UUID, newSalesRepId: UUID): Deal {
+        val deal = getDeal(id)
+        val newAssignee = platformUserRepository.findById(newSalesRepId)
+            .orElseThrow { NoSuchElementException("Platform user not found: $newSalesRepId") }
+        deal.assignedTo = newAssignee
+        logger.info("Deal ${deal.id} reassigned to ${newAssignee.email}")
+        return dealRepository.save(deal)
+    }
+
+    // ============================================
+    // Conversion (Deal → Client)
+    // ============================================
+
+    fun convertDeal(dealId: UUID, command: ConvertDealCommand): DealConversionResult {
+        val deal = getDeal(dealId)
+        require(deal.stage == DealStage.NEGOTIATION) {
+            "Deal must be in NEGOTIATION stage to convert. Current stage: ${deal.stage}"
+        }
+
+        // 1. Create Organization
+        val org = organizationService.createOrganization(
+            CreateOrganizationCommand(
+                name = LocalizedText(en = command.organizationNameEn, ar = command.organizationNameAr),
+                tradeName = if (command.organizationTradeNameEn != null) {
+                    LocalizedText(en = command.organizationTradeNameEn, ar = command.organizationTradeNameAr)
+                } else null,
+                organizationType = command.organizationType ?: OrganizationType.OTHER,
+                email = command.organizationEmail,
+                phone = command.organizationPhone,
+                website = command.organizationWebsite,
+                vatRegistrationNumber = command.vatRegistrationNumber,
+                commercialRegistrationNumber = command.commercialRegistrationNumber
+            )
+        )
+
+        // 2. Activate Organization
+        organizationService.activateOrganization(org.id)
+
+        // 3. Create Club
+        val club = clubService.createClub(
+            CreateClubCommand(
+                organizationId = org.id,
+                name = LocalizedText(en = command.clubNameEn, ar = command.clubNameAr),
+                description = if (command.clubDescriptionEn != null) {
+                    LocalizedText(en = command.clubDescriptionEn, ar = command.clubDescriptionAr)
+                } else null
+            )
+        )
+
+        // 4. Set tenant context (club.id IS the tenantId)
+        TenantContext.setCurrentTenant(TenantId(club.id))
+
+        try {
+            // 5. Create admin user
+            val adminUser = userService.createUser(
+                CreateUserCommand(
+                    email = command.adminEmail,
+                    password = command.adminPassword,
+                    displayName = LocalizedText(en = command.adminDisplayNameEn, ar = command.adminDisplayNameAr),
+                    role = Role.SUPER_ADMIN
+                )
+            )
+
+            // 6. Create subscription if plan provided
+            var subscriptionId: UUID? = null
+            var subscriptionStatus: String? = null
+            if (command.clientPlanId != null) {
+                val subscription = clientSubscriptionService.createSubscription(
+                    CreateClientSubscriptionCommand(
+                        organizationId = org.id,
+                        clientPlanId = command.clientPlanId,
+                        agreedPrice = Money.of(
+                            command.agreedPriceAmount ?: BigDecimal.ZERO,
+                            command.agreedPriceCurrency ?: "SAR"
+                        ),
+                        billingCycle = command.billingCycle ?: BillingCycle.MONTHLY,
+                        contractMonths = command.contractMonths ?: 12,
+                        startWithTrial = command.startWithTrial ?: false,
+                        trialDays = command.trialDays ?: 14,
+                        discountPercentage = command.discountPercentage,
+                        dealId = deal.id,
+                        salesRepId = deal.assignedTo.id
+                    )
+                )
+                subscriptionId = subscription.id
+                subscriptionStatus = subscription.status.name
+            }
+
+            // 7. Mark deal as WON
+            deal.changeStage(DealStage.WON)
+            val savedDeal = dealRepository.save(deal)
+
+            recordStageChange(savedDeal.id, DealStage.NEGOTIATION, DealStage.WON)
+
+            eventPublisher.publishEvent(
+                PlatformEvent.DealWon(
+                    dealId = savedDeal.id,
+                    facilityName = savedDeal.facilityName,
+                    contactName = savedDeal.contactName,
+                    contactEmail = savedDeal.contactEmail,
+                    estimatedValue = savedDeal.estimatedValue
+                )
+            )
+
+            logger.info("Deal ${deal.id} converted: org=${org.id}, club=${club.id}, admin=${adminUser.id}")
+
+            return DealConversionResult(
+                deal = savedDeal,
+                organizationId = org.id,
+                organizationName = org.name.en,
+                clubId = club.id,
+                clubName = club.name.en,
+                adminUserId = adminUser.id,
+                adminEmail = adminUser.email,
+                subscriptionId = subscriptionId,
+                subscriptionStatus = subscriptionStatus
+            )
+        } finally {
+            TenantContext.clear()
+        }
+    }
+
     // ============================================
     // Activities
     // ============================================
@@ -272,4 +433,16 @@ data class DealMetrics(
     val avgDealValue: BigDecimal,
     val avgDaysToClose: Double,
     val stageDistribution: Map<DealStage, Long>
+)
+
+data class DealConversionResult(
+    val deal: Deal,
+    val organizationId: UUID,
+    val organizationName: String,
+    val clubId: UUID,
+    val clubName: String,
+    val adminUserId: UUID,
+    val adminEmail: String,
+    val subscriptionId: UUID?,
+    val subscriptionStatus: String?
 )

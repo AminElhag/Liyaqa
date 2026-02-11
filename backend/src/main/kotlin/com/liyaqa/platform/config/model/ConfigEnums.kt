@@ -1,6 +1,7 @@
 package com.liyaqa.platform.config.model
 
 enum class SettingCategory {
+    GENERAL,
     BILLING,
     SECURITY,
     LOCALIZATION,

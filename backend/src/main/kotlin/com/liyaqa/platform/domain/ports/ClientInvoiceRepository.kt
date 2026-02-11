@@ -17,6 +17,7 @@ import java.util.UUID
 interface ClientInvoiceRepository {
     fun save(invoice: ClientInvoice): ClientInvoice
     fun findById(id: UUID): Optional<ClientInvoice>
+    fun findByIdWithLineItems(id: UUID): Optional<ClientInvoice>
     fun findByInvoiceNumber(invoiceNumber: String): Optional<ClientInvoice>
     fun findAll(pageable: Pageable): Page<ClientInvoice>
 

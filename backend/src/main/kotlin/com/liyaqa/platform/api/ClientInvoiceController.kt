@@ -123,7 +123,7 @@ class ClientInvoiceController(
     )
     @GetMapping("/{id}")
     fun getInvoice(@PathVariable id: UUID): ResponseEntity<ClientInvoiceResponse> {
-        val invoice = invoiceService.getInvoice(id)
+        val invoice = invoiceService.getInvoiceWithDetails(id)
         return ResponseEntity.ok(ClientInvoiceResponse.from(invoice))
     }
 
@@ -146,7 +146,7 @@ class ClientInvoiceController(
         @RequestParam(required = false) organizationId: UUID?,
         @RequestParam(required = false) dateFrom: LocalDate?,
         @RequestParam(required = false) dateTo: LocalDate?
-    ): ResponseEntity<PageResponse<ClientInvoiceResponse>> {
+    ): ResponseEntity<PageResponse<ClientInvoiceSummaryResponse>> {
         val sort = Sort.by(Sort.Direction.valueOf(sortDirection.uppercase()), sortBy)
         val pageable = PageRequest.of(page, size, sort)
 
@@ -156,7 +156,7 @@ class ClientInvoiceController(
 
         return ResponseEntity.ok(
             PageResponse(
-                content = invoicesPage.content.map { ClientInvoiceResponse.from(it) },
+                content = invoicesPage.content.map { ClientInvoiceSummaryResponse.from(it) },
                 page = invoicesPage.number,
                 size = invoicesPage.size,
                 totalElements = invoicesPage.totalElements,
@@ -290,7 +290,8 @@ class ClientInvoiceController(
         @PathVariable id: UUID,
         @Valid @RequestBody request: UpdateClientInvoiceRequest
     ): ResponseEntity<ClientInvoiceResponse> {
-        val invoice = invoiceService.updateInvoice(id, request.toCommand())
+        invoiceService.updateInvoice(id, request.toCommand())
+        val invoice = invoiceService.getInvoiceWithDetails(id)
         return ResponseEntity.ok(ClientInvoiceResponse.from(invoice))
     }
 
@@ -314,7 +315,8 @@ class ClientInvoiceController(
         @PathVariable id: UUID,
         @Valid @RequestBody request: IssueClientInvoiceRequest
     ): ResponseEntity<ClientInvoiceResponse> {
-        val invoice = invoiceService.issueInvoice(id, request.toCommand())
+        invoiceService.issueInvoice(id, request.toCommand())
+        val invoice = invoiceService.getInvoiceWithDetails(id)
         return ResponseEntity.ok(ClientInvoiceResponse.from(invoice))
     }
 
@@ -338,7 +340,8 @@ class ClientInvoiceController(
         @PathVariable id: UUID,
         @Valid @RequestBody request: RecordClientPaymentRequest
     ): ResponseEntity<ClientInvoiceResponse> {
-        val invoice = invoiceService.recordPayment(id, request.toCommand())
+        invoiceService.recordPayment(id, request.toCommand())
+        val invoice = invoiceService.getInvoiceWithDetails(id)
         return ResponseEntity.ok(ClientInvoiceResponse.from(invoice))
     }
 
@@ -359,7 +362,8 @@ class ClientInvoiceController(
     @PostMapping("/{id}/cancel")
     @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN, PlatformUserRole.ACCOUNT_MANAGER])
     fun cancelInvoice(@PathVariable id: UUID): ResponseEntity<ClientInvoiceResponse> {
-        val invoice = invoiceService.cancelInvoice(id)
+        invoiceService.cancelInvoice(id)
+        val invoice = invoiceService.getInvoiceWithDetails(id)
         return ResponseEntity.ok(ClientInvoiceResponse.from(invoice))
     }
 
@@ -399,7 +403,7 @@ class ClientInvoiceController(
         @PathVariable id: UUID,
         @RequestParam(defaultValue = "en") locale: String
     ): ResponseEntity<ByteArray> {
-        val invoice = invoiceService.getInvoice(id)
+        val invoice = invoiceService.getInvoiceWithDetails(id)
         val pdfBytes = pdfGenerator.generatePdf(invoice, locale)
 
         return ResponseEntity.ok()

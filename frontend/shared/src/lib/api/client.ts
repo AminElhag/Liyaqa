@@ -162,6 +162,20 @@ export function setRefreshTokenFn(fn: () => Promise<boolean>) {
   refreshTokenFn = fn;
 }
 
+// Mutex for token refresh — prevents concurrent refresh attempts from revoking each other's tokens
+let refreshPromise: Promise<boolean> | null = null;
+
+async function refreshWithMutex(): Promise<boolean> {
+  if (!refreshTokenFn) return false;
+  // If a refresh is already in progress, wait for it
+  if (refreshPromise) return refreshPromise;
+  // Start new refresh and share the promise
+  refreshPromise = refreshTokenFn().finally(() => {
+    refreshPromise = null;
+  });
+  return refreshPromise;
+}
+
 /**
  * Get the API base URL dynamically.
  * - In browser: derives from window.location.origin (same host as frontend)
@@ -207,11 +221,6 @@ function createApiClient(): KyInstance {
           // Get token (restores from localStorage if needed)
           const token = getAccessToken();
 
-          console.log("[API Client] Request URL:", request.url);
-          console.log("[API Client] accessToken:", token ? `${token.substring(0, 20)}...` : "null");
-          console.log("[API Client] currentTenantId:", currentTenantId);
-          console.log("[API Client] isPlatformMode:", isPlatformMode);
-
           // Add Authorization header
           if (token) {
             request.headers.set("Authorization", `Bearer ${token}`);
@@ -234,16 +243,14 @@ function createApiClient(): KyInstance {
           if (!request.headers.has("Content-Type")) {
             request.headers.set("Content-Type", "application/json");
           }
-
-          console.log("[API Client] Final headers:", Object.fromEntries(request.headers.entries()));
         },
       ],
       afterResponse: [
         async (request, options, response) => {
           // Handle 401 Unauthorized - attempt token refresh
-          // Note: 403 Forbidden means permission denied (user lacks authority), not session expiry
+          // Uses mutex to prevent concurrent refresh attempts from revoking each other's tokens
           if (response.status === 401 && refreshTokenFn) {
-            const refreshed = await refreshTokenFn();
+            const refreshed = await refreshWithMutex();
             if (refreshed) {
               // Retry the original request with new token
               const newRequest = new Request(request, {
@@ -256,7 +263,6 @@ function createApiClient(): KyInstance {
               return ky(newRequest, options as Options);
             }
             // Refresh failed - user is being logged out
-            // Throw custom error to prevent error UI from showing
             throw new SessionExpiredError();
           }
           return response;

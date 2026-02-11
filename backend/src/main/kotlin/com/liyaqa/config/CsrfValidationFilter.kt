@@ -67,11 +67,23 @@ class CsrfValidationFilter(
             return false
         }
 
+        // Bearer tokens are inherently CSRF-safe (browsers cannot auto-attach
+        // custom headers), so skip CSRF when the client explicitly sends one —
+        // even if the access_token cookie is also present as a side-effect.
+        if (hasBearerToken(request)) {
+            return false
+        }
+
         if (isCookieAuthRequest(request) && !isExemptPath(request)) {
             return true
         }
 
         return false
+    }
+
+    private fun hasBearerToken(request: HttpServletRequest): Boolean {
+        val authHeader = request.getHeader("Authorization") ?: return false
+        return authHeader.startsWith("Bearer ", ignoreCase = true)
     }
 
     private fun isCookieAuthRequest(request: HttpServletRequest): Boolean {

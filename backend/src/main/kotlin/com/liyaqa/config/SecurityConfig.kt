@@ -4,6 +4,7 @@ import com.liyaqa.auth.infrastructure.security.JwtAuthenticationFilter
 import com.liyaqa.platform.access.filter.ApiKeyAuthenticationFilter
 import com.liyaqa.platform.access.filter.ImpersonationAuditFilter
 import com.liyaqa.platform.monitoring.service.ErrorTrackingFilter
+import jakarta.servlet.http.HttpServletResponse
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -12,6 +13,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter
@@ -101,6 +103,13 @@ class SecurityConfig(
             .cors { it.configurationSource(corsConfigurationSource()) }
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+            .exceptionHandling { exceptions ->
+                exceptions.authenticationEntryPoint(AuthenticationEntryPoint { _, response, _ ->
+                    response.status = HttpServletResponse.SC_UNAUTHORIZED
+                    response.contentType = "application/json"
+                    response.writer.write("""{"status":401,"error":"Unauthorized","message":"Authentication required"}""")
+                })
+            }
             .authorizeHttpRequests { auth ->
                 auth
                     // Allow all OPTIONS requests (CORS preflight)
@@ -111,6 +120,8 @@ class SecurityConfig(
                     .requestMatchers("/api/health/**").permitAll()
                     .requestMatchers("/actuator/**").permitAll()
                     .requestMatchers("/h2-console/**").permitAll()
+                    // Spring Boot error endpoint (prevents 403 on error forwarding)
+                    .requestMatchers("/error").permitAll()
 
                     // Swagger/OpenAPI documentation
                     .requestMatchers("/swagger-ui/**").permitAll()

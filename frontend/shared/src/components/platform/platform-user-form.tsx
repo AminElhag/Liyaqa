@@ -40,7 +40,7 @@ const platformUserFormSchema = z
     phoneNumber: z.string().optional(),
 
     // Role
-    role: z.enum(["PLATFORM_ADMIN", "SALES_REP", "SUPPORT_REP"] as const),
+    role: z.enum(["PLATFORM_SUPER_ADMIN", "PLATFORM_ADMIN", "ACCOUNT_MANAGER", "SUPPORT_LEAD", "SUPPORT_AGENT", "PLATFORM_VIEWER"] as const),
   })
   .refine(
     (data) => {
@@ -88,7 +88,7 @@ export function PlatformUserForm({
       displayNameEn: user?.displayNameEn || "",
       displayNameAr: user?.displayNameAr || "",
       phoneNumber: user?.phoneNumber || "",
-      role: user?.role || "SUPPORT_REP",
+      role: user?.role || "SUPPORT_AGENT",
       ...defaultValues,
     },
   });
@@ -135,21 +135,36 @@ export function PlatformUserForm({
     selectRole: locale === "ar" ? "اختر الدور" : "Select role",
 
     // Role options
+    platformSuperAdmin: locale === "ar" ? "مدير أعلى" : "Super Admin",
+    platformSuperAdminDesc:
+      locale === "ar"
+        ? "وصول كامل شامل إعدادات النظام"
+        : "Full access including system settings",
     platformAdmin: locale === "ar" ? "مدير المنصة" : "Platform Admin",
     platformAdminDesc:
       locale === "ar"
         ? "وصول كامل لجميع ميزات المنصة"
         : "Full access to all platform features",
-    salesRep: locale === "ar" ? "مندوب مبيعات" : "Sales Rep",
-    salesRepDesc:
+    accountManager: locale === "ar" ? "مدير حسابات" : "Account Manager",
+    accountManagerDesc:
       locale === "ar"
-        ? "إدارة الصفقات والعملاء"
-        : "Manage deals and clients",
-    supportRep: locale === "ar" ? "مندوب دعم" : "Support Rep",
-    supportRepDesc:
+        ? "إدارة العملاء والاشتراكات والصفقات"
+        : "Manage clients, subscriptions, and deals",
+    supportLead: locale === "ar" ? "مشرف الدعم" : "Support Lead",
+    supportLeadDesc:
       locale === "ar"
-        ? "إدارة تذاكر الدعم"
-        : "Manage support tickets",
+        ? "إدارة التذاكر والتصعيد والإشراف"
+        : "Manage tickets, escalation, and oversight",
+    supportAgent: locale === "ar" ? "وكيل دعم" : "Support Agent",
+    supportAgentDesc:
+      locale === "ar"
+        ? "إدارة تذاكر الدعم وعرض العملاء"
+        : "Handle support tickets and view clients",
+    platformViewer: locale === "ar" ? "مشاهد" : "Viewer",
+    platformViewerDesc:
+      locale === "ar"
+        ? "عرض فقط لجميع بيانات المنصة"
+        : "Read-only access to all platform data",
 
     // Buttons
     submit:
@@ -164,9 +179,12 @@ export function PlatformUserForm({
   };
 
   const roleOptions: { value: PlatformUserRole; label: string; description: string }[] = [
+    { value: "PLATFORM_SUPER_ADMIN", label: texts.platformSuperAdmin, description: texts.platformSuperAdminDesc },
     { value: "PLATFORM_ADMIN", label: texts.platformAdmin, description: texts.platformAdminDesc },
-    { value: "SALES_REP", label: texts.salesRep, description: texts.salesRepDesc },
-    { value: "SUPPORT_REP", label: texts.supportRep, description: texts.supportRepDesc },
+    { value: "ACCOUNT_MANAGER", label: texts.accountManager, description: texts.accountManagerDesc },
+    { value: "SUPPORT_LEAD", label: texts.supportLead, description: texts.supportLeadDesc },
+    { value: "SUPPORT_AGENT", label: texts.supportAgent, description: texts.supportAgentDesc },
+    { value: "PLATFORM_VIEWER", label: texts.platformViewer, description: texts.platformViewerDesc },
   ];
 
   return (

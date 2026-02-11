@@ -16,3 +16,8 @@ export * from "./use-onboarding";
 export * from "./use-health";
 export * from "./use-alerts";
 export * from "./use-dunning";
+export * from "./use-analytics";
+export * from "./use-announcements";
+export * from "./use-knowledge-base";
+export * from "./use-feature-flags";
+export * from "./use-templates";

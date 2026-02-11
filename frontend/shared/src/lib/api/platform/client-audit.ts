@@ -77,7 +77,7 @@ export async function getClientAuditLogs(
   if (params.endDate) searchParams.set("endDate", params.endDate);
 
   return api
-    .get(`api/audit/organization/${organizationId}`, { searchParams })
+    .get(`api/v1/platform/client-audit/organization/${organizationId}`, { searchParams })
     .json<PageResponse<AuditLog>>();
 }
 

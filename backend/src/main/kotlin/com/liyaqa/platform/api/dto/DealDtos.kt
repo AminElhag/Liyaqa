@@ -1,9 +1,12 @@
 package com.liyaqa.platform.api.dto
 
 import com.liyaqa.platform.application.commands.ChangeStageCommand
+import com.liyaqa.platform.application.commands.ConvertDealCommand
 import com.liyaqa.platform.application.commands.CreateDealActivityCommand
 import com.liyaqa.platform.application.commands.CreateDealCommand
 import com.liyaqa.platform.application.commands.UpdateDealCommand
+import com.liyaqa.organization.domain.model.OrganizationType
+import com.liyaqa.platform.domain.model.BillingCycle
 import com.liyaqa.platform.application.services.DealMetrics
 import com.liyaqa.platform.domain.model.Deal
 import com.liyaqa.platform.domain.model.DealActivity
@@ -107,6 +110,90 @@ data class CreateDealActivityRequest(
     fun toCommand() = CreateDealActivityCommand(
         type = type,
         content = content
+    )
+}
+
+data class LoseDealRequest(
+    @field:NotBlank(message = "Reason is required")
+    val reasonEn: String,
+    val reasonAr: String? = null
+)
+
+data class ReassignDealRequest(
+    val newSalesRepId: UUID
+)
+
+data class ConvertDealRequest(
+    // Organization details
+    @field:NotBlank(message = "Organization name (EN) is required")
+    val organizationNameEn: String,
+    val organizationNameAr: String? = null,
+    val organizationTradeNameEn: String? = null,
+    val organizationTradeNameAr: String? = null,
+    val organizationType: OrganizationType? = null,
+    @field:Email(message = "Invalid organization email format")
+    val organizationEmail: String? = null,
+    val organizationPhone: String? = null,
+    val organizationWebsite: String? = null,
+    val vatRegistrationNumber: String? = null,
+    val commercialRegistrationNumber: String? = null,
+
+    // First club details
+    @field:NotBlank(message = "Club name (EN) is required")
+    val clubNameEn: String,
+    val clubNameAr: String? = null,
+    val clubDescriptionEn: String? = null,
+    val clubDescriptionAr: String? = null,
+
+    // Admin user details
+    @field:NotBlank(message = "Admin email is required")
+    @field:Email(message = "Invalid admin email format")
+    val adminEmail: String,
+    @field:NotBlank(message = "Admin password is required")
+    val adminPassword: String,
+    @field:NotBlank(message = "Admin display name (EN) is required")
+    val adminDisplayNameEn: String,
+    val adminDisplayNameAr: String? = null,
+
+    // Subscription details (optional)
+    val clientPlanId: UUID? = null,
+    @field:PositiveOrZero(message = "Agreed price must be zero or positive")
+    val agreedPriceAmount: BigDecimal? = null,
+    val agreedPriceCurrency: String? = null,
+    val billingCycle: BillingCycle? = null,
+    val contractMonths: Int? = null,
+    val startWithTrial: Boolean? = null,
+    val trialDays: Int? = null,
+    @field:PositiveOrZero(message = "Discount percentage must be zero or positive")
+    val discountPercentage: BigDecimal? = null
+) {
+    fun toCommand() = ConvertDealCommand(
+        organizationNameEn = organizationNameEn,
+        organizationNameAr = organizationNameAr,
+        organizationTradeNameEn = organizationTradeNameEn,
+        organizationTradeNameAr = organizationTradeNameAr,
+        organizationType = organizationType,
+        organizationEmail = organizationEmail,
+        organizationPhone = organizationPhone,
+        organizationWebsite = organizationWebsite,
+        vatRegistrationNumber = vatRegistrationNumber,
+        commercialRegistrationNumber = commercialRegistrationNumber,
+        clubNameEn = clubNameEn,
+        clubNameAr = clubNameAr,
+        clubDescriptionEn = clubDescriptionEn,
+        clubDescriptionAr = clubDescriptionAr,
+        adminEmail = adminEmail,
+        adminPassword = adminPassword,
+        adminDisplayNameEn = adminDisplayNameEn,
+        adminDisplayNameAr = adminDisplayNameAr,
+        clientPlanId = clientPlanId,
+        agreedPriceAmount = agreedPriceAmount,
+        agreedPriceCurrency = agreedPriceCurrency,
+        billingCycle = billingCycle,
+        contractMonths = contractMonths,
+        startWithTrial = startWithTrial,
+        trialDays = trialDays,
+        discountPercentage = discountPercentage
     )
 }
 
@@ -234,4 +321,16 @@ data class PlatformUserSummary(
     val id: UUID,
     val displayName: String,
     val email: String
+)
+
+data class DealConversionResponse(
+    val deal: DealResponse,
+    val organizationId: UUID,
+    val organizationName: String,
+    val clubId: UUID,
+    val clubName: String,
+    val adminUserId: UUID,
+    val adminEmail: String,
+    val subscriptionId: UUID? = null,
+    val subscriptionStatus: String? = null
 )

@@ -25,10 +25,9 @@ export const OPEN_STAGES: DealStatus[] = [
 export type DealSource =
   | "WEBSITE"
   | "REFERRAL"
-  | "COLD_CALL"
-  | "MARKETING_CAMPAIGN"
-  | "EVENT"
-  | "PARTNER"
+  | "COLD_OUTREACH"
+  | "SOCIAL_MEDIA"
+  | "PARTNERSHIP"
   | "OTHER";
 
 /**

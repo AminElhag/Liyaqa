@@ -3,7 +3,13 @@ import type { UUID, PageResponse } from "../api";
 /**
  * Platform user roles for internal B2B dashboard access.
  */
-export type PlatformUserRole = "PLATFORM_ADMIN" | "SALES_REP" | "SUPPORT_REP";
+export type PlatformUserRole =
+  | "PLATFORM_SUPER_ADMIN"
+  | "PLATFORM_ADMIN"
+  | "ACCOUNT_MANAGER"
+  | "SUPPORT_LEAD"
+  | "SUPPORT_AGENT"
+  | "PLATFORM_VIEWER";
 
 /**
  * Platform user account status.
@@ -52,9 +58,12 @@ export interface PlatformUserStats {
   inactive: number;
   suspended: number;
   byRole: {
+    PLATFORM_SUPER_ADMIN: number;
     PLATFORM_ADMIN: number;
-    SALES_REP: number;
-    SUPPORT_REP: number;
+    ACCOUNT_MANAGER: number;
+    SUPPORT_LEAD: number;
+    SUPPORT_AGENT: number;
+    PLATFORM_VIEWER: number;
   };
 }
 

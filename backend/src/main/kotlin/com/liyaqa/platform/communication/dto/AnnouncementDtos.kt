@@ -5,6 +5,7 @@ import com.liyaqa.platform.communication.model.AnnouncementStatus
 import com.liyaqa.platform.communication.model.AnnouncementType
 import com.liyaqa.platform.communication.model.TargetAudience
 import com.liyaqa.platform.subscription.model.PlanTier
+import com.liyaqa.platform.tenant.model.TenantStatus
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
@@ -20,6 +21,7 @@ data class CreateAnnouncementRequest(
     val targetAudience: TargetAudience = TargetAudience.ALL,
     val targetTenantIds: List<UUID> = emptyList(),
     val targetPlanTier: PlanTier? = null,
+    val targetStatus: TenantStatus? = null,
     @field:Min(1) @field:Max(5)
     val priority: Int = 3
 ) {
@@ -30,6 +32,7 @@ data class CreateAnnouncementRequest(
         targetAudience = targetAudience,
         targetTenantIds = targetTenantIds,
         targetPlanTier = targetPlanTier,
+        targetStatus = targetStatus,
         priority = priority
     )
 }
@@ -41,6 +44,7 @@ data class UpdateAnnouncementRequest(
     val targetAudience: TargetAudience? = null,
     val targetTenantIds: List<UUID>? = null,
     val targetPlanTier: PlanTier? = null,
+    val targetStatus: TenantStatus? = null,
     @field:Min(1) @field:Max(5)
     val priority: Int? = null
 ) {
@@ -51,6 +55,7 @@ data class UpdateAnnouncementRequest(
         targetAudience = targetAudience,
         targetTenantIds = targetTenantIds,
         targetPlanTier = targetPlanTier,
+        targetStatus = targetStatus,
         priority = priority
     )
 }
@@ -68,6 +73,7 @@ data class AnnouncementResponse(
     val targetAudience: TargetAudience,
     val targetTenantIds: List<UUID>,
     val targetPlanTier: PlanTier?,
+    val targetStatus: TenantStatus?,
     val scheduledAt: Instant?,
     val publishedAt: Instant?,
     val createdBy: UUID,
@@ -85,6 +91,7 @@ data class AnnouncementResponse(
             targetAudience = a.targetAudience,
             targetTenantIds = a.targetTenantIds.toList(),
             targetPlanTier = a.targetPlanTier,
+            targetStatus = a.targetStatus,
             scheduledAt = a.scheduledAt,
             publishedAt = a.publishedAt,
             createdBy = a.createdBy,

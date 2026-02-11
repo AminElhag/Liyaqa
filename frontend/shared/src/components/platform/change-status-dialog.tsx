@@ -28,6 +28,14 @@ import type {
   TicketStatus,
 } from "@liyaqa/shared/types/platform/support-ticket";
 
+const validTransitions: Record<TicketStatus, TicketStatus[]> = {
+  OPEN: ["IN_PROGRESS", "WAITING_ON_CLIENT", "RESOLVED", "CLOSED"],
+  IN_PROGRESS: ["WAITING_ON_CLIENT", "RESOLVED", "CLOSED"],
+  WAITING_ON_CLIENT: ["IN_PROGRESS", "RESOLVED", "CLOSED"],
+  RESOLVED: ["OPEN", "CLOSED"],
+  CLOSED: ["OPEN"],
+};
+
 interface ChangeStatusDialogProps {
   ticket: SupportTicketSummary | null;
   open: boolean;
@@ -73,6 +81,14 @@ export function ChangeStatusDialog({
     waitingOnClient: locale === "ar" ? "بانتظار العميل" : "Waiting on Client",
     resolved: locale === "ar" ? "تم الحل" : "Resolved",
     closed: locale === "ar" ? "مغلقة" : "Closed",
+  };
+
+  const statusLabels: Record<TicketStatus, string> = {
+    OPEN: texts.open,
+    IN_PROGRESS: texts.inProgress,
+    WAITING_ON_CLIENT: texts.waitingOnClient,
+    RESOLVED: texts.resolved,
+    CLOSED: texts.closed,
   };
 
   const handleChangeStatus = () => {
@@ -135,13 +151,13 @@ export function ChangeStatusDialog({
                 <SelectValue placeholder={texts.selectStatus} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="OPEN">{texts.open}</SelectItem>
-                <SelectItem value="IN_PROGRESS">{texts.inProgress}</SelectItem>
-                <SelectItem value="WAITING_ON_CLIENT">
-                  {texts.waitingOnClient}
-                </SelectItem>
-                <SelectItem value="RESOLVED">{texts.resolved}</SelectItem>
-                <SelectItem value="CLOSED">{texts.closed}</SelectItem>
+                {(ticket ? validTransitions[ticket.status] ?? [] : []).map(
+                  (status) => (
+                    <SelectItem key={status} value={status}>
+                      {statusLabels[status]}
+                    </SelectItem>
+                  )
+                )}
               </SelectContent>
             </Select>
           </div>

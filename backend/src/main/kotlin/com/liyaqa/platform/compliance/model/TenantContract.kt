@@ -8,6 +8,7 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
+import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -49,6 +50,12 @@ class TenantContract(
 
     @Column(name = "signed_by")
     var signedBy: UUID? = null,
+
+    @Column(name = "value")
+    var value: BigDecimal? = null,
+
+    @Column(name = "currency")
+    var currency: String = "SAR",
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "terms", columnDefinition = "jsonb")
@@ -103,6 +110,8 @@ class TenantContract(
             endDate: LocalDate,
             autoRenew: Boolean = false,
             documentUrl: String? = null,
+            value: BigDecimal? = null,
+            currency: String = "SAR",
             terms: MutableMap<String, String> = mutableMapOf()
         ): TenantContract {
             return TenantContract(
@@ -113,6 +122,8 @@ class TenantContract(
                 endDate = endDate,
                 autoRenew = autoRenew,
                 documentUrl = documentUrl,
+                value = value,
+                currency = currency,
                 terms = terms
             )
         }

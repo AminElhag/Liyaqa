@@ -6,6 +6,7 @@ import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.reflect.MethodSignature
+import org.slf4j.LoggerFactory
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
@@ -21,6 +22,8 @@ import org.springframework.stereotype.Component
 @Aspect
 @Component
 class PlatformSecuredAspect {
+
+    private val log = LoggerFactory.getLogger(PlatformSecuredAspect::class.java)
 
     @Around("@within(com.liyaqa.platform.infrastructure.security.PlatformSecured) || @annotation(com.liyaqa.platform.infrastructure.security.PlatformSecured)")
     fun checkPlatformAccess(joinPoint: ProceedingJoinPoint): Any? {
@@ -47,8 +50,11 @@ class PlatformSecuredAspect {
         // Check permissions if specified
         if (annotation.permissions.isNotEmpty()) {
             val rolePermissions = PlatformRolePermissions.permissionsFor(platformRole)
+            log.debug("Platform access check: role={}, required={}, granted={}",
+                platformRole, annotation.permissions.map { it.name }, rolePermissions.size)
             val missing = annotation.permissions.filter { it !in rolePermissions }
             if (missing.isNotEmpty()) {
+                log.warn("Platform access denied: role={}, missing={}", platformRole, missing.map { it.name })
                 throw AccessDeniedException("Missing permissions: ${missing.joinToString { it.name }}")
             }
         }
