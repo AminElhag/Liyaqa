@@ -15,14 +15,17 @@
  */
 
 import dynamic from "next/dynamic"
-import { ChartSkeleton } from "@/components/platform/shared/chart-skeleton"
+
+function ChartLoading() {
+  return <div className="h-[300px] w-full animate-pulse rounded-lg bg-muted" />
+}
 
 // Admin Charts
 export const RevenueChart = dynamic(
   () => import("@/components/admin/revenue-chart").then(mod => ({ default: mod.RevenueChart })),
   {
     ssr: false,
-    loading: () => <ChartSkeleton />
+    loading: () => <ChartLoading />
   }
 )
 
@@ -30,7 +33,7 @@ export const AttendanceChart = dynamic(
   () => import("@/components/admin/attendance-chart").then(mod => ({ default: mod.AttendanceChart })),
   {
     ssr: false,
-    loading: () => <ChartSkeleton />
+    loading: () => <ChartLoading />
   }
 )
 
@@ -38,7 +41,7 @@ export const MemberGrowthChart = dynamic(
   () => import("@/components/admin/member-growth-chart").then(mod => ({ default: mod.MemberGrowthChart })),
   {
     ssr: false,
-    loading: () => <ChartSkeleton />
+    loading: () => <ChartLoading />
   }
 )
 
@@ -46,7 +49,7 @@ export const ConversionFunnelChart = dynamic(
   () => import("@/components/admin/conversion-funnel-chart").then(mod => ({ default: mod.ConversionFunnelChart })),
   {
     ssr: false,
-    loading: () => <ChartSkeleton />
+    loading: () => <ChartLoading />
   }
 )
 
@@ -54,7 +57,7 @@ export const LeadSourceChart = dynamic(
   () => import("@/components/admin/lead-source-chart").then(mod => ({ default: mod.LeadSourceChart })),
   {
     ssr: false,
-    loading: () => <ChartSkeleton />
+    loading: () => <ChartLoading />
   }
 )
 
@@ -62,32 +65,7 @@ export const CampaignTimelineChart = dynamic(
   () => import("@/components/admin/campaign-timeline-chart").then(mod => ({ default: mod.CampaignTimelineChart })),
   {
     ssr: false,
-    loading: () => <ChartSkeleton />
-  }
-)
-
-// Platform Charts
-export const PlatformRevenueChart = dynamic(
-  () => import("@/components/platform/revenue-chart").then(mod => ({ default: mod.RevenueChart })),
-  {
-    ssr: false,
-    loading: () => <ChartSkeleton />
-  }
-)
-
-export const ClientGrowthChart = dynamic(
-  () => import("@/components/platform/client-growth-chart").then(mod => ({ default: mod.ClientGrowthChart })),
-  {
-    ssr: false,
-    loading: () => <ChartSkeleton />
-  }
-)
-
-export const HealthTrendChart = dynamic(
-  () => import("@/components/platform/health-trend-chart").then(mod => ({ default: mod.HealthTrendChart })),
-  {
-    ssr: false,
-    loading: () => <ChartSkeleton />
+    loading: () => <ChartLoading />
   }
 )
 
