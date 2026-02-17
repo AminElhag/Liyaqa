@@ -1,5 +1,7 @@
 package com.liyaqa.auth.api
 
+import com.liyaqa.auth.application.commands.ForgotPasswordCommand
+import com.liyaqa.auth.application.services.AuthService
 import com.liyaqa.auth.application.services.UserService
 import com.liyaqa.auth.domain.model.Role
 import com.liyaqa.auth.domain.model.UserStatus
@@ -24,7 +26,8 @@ import java.util.UUID
 @RestController
 @RequestMapping("/api/users")
 class UserController(
-    private val userService: UserService
+    private val userService: UserService,
+    private val authService: AuthService
 ) {
     /**
      * Creates a new user.
@@ -212,5 +215,42 @@ class UserController(
     fun unlinkMember(@PathVariable id: UUID): ResponseEntity<UserResponse> {
         val user = userService.unlinkMember(id)
         return ResponseEntity.ok(UserResponse.from(user))
+    }
+
+    /**
+     * Admin-initiated password reset (sets new password directly).
+     * Requires users_update permission.
+     */
+    @PostMapping("/{id}/reset-password")
+    @PreAuthorize("hasAuthority('users_update')")
+    fun adminResetPassword(
+        @PathVariable id: UUID,
+        @Valid @RequestBody request: AdminResetPasswordRequest
+    ): ResponseEntity<MessageResponse> {
+        userService.adminResetPassword(id, request.newPassword)
+        return ResponseEntity.ok(MessageResponse(
+            message = "Password reset successfully",
+            messageAr = "تم إعادة تعيين كلمة المرور بنجاح"
+        ))
+    }
+
+    /**
+     * Sends a password reset email to the user.
+     * Requires users_update permission.
+     */
+    @PostMapping("/{id}/send-reset-email")
+    @PreAuthorize("hasAuthority('users_update')")
+    fun sendResetEmail(@PathVariable id: UUID): ResponseEntity<MessageResponse> {
+        val user = userService.getUser(id)
+        authService.forgotPassword(
+            ForgotPasswordCommand(
+                email = user.email,
+                tenantId = user.tenantId
+            )
+        )
+        return ResponseEntity.ok(MessageResponse(
+            message = "Password reset email sent",
+            messageAr = "تم إرسال بريد إعادة تعيين كلمة المرور"
+        ))
     }
 }

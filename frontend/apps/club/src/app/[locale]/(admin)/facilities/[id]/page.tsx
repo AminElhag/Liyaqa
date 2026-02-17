@@ -28,11 +28,22 @@ import {
   useGenerateSlots,
 } from "@liyaqa/shared/queries/use-facilities";
 import { useLocalizedText } from "@liyaqa/shared/components/ui/localized-text";
-import type { FacilitySlot, SlotStatus } from "@liyaqa/shared/types/facility";
+import { BookingManageDialog } from "@/components/facilities";
+import type { FacilitySlot, SlotStatus, OperatingHours } from "@liyaqa/shared/types/facility";
+
+const DAY_NAMES: Record<number, { en: string; ar: string }> = {
+  1: { en: "Mon", ar: "الاثنين" },
+  2: { en: "Tue", ar: "الثلاثاء" },
+  3: { en: "Wed", ar: "الأربعاء" },
+  4: { en: "Thu", ar: "الخميس" },
+  5: { en: "Fri", ar: "الجمعة" },
+  6: { en: "Sat", ar: "السبت" },
+  7: { en: "Sun", ar: "الأحد" },
+};
 
 const slotStatusConfig: Record<SlotStatus, { color: string; labelEn: string; labelAr: string }> = {
   AVAILABLE: { color: "bg-green-100 text-green-800 hover:bg-green-200", labelEn: "Available", labelAr: "متاح" },
-  BOOKED: { color: "bg-blue-100 text-blue-800", labelEn: "Booked", labelAr: "محجوز" },
+  BOOKED: { color: "bg-blue-100 text-blue-800 hover:bg-blue-200", labelEn: "Booked", labelAr: "محجوز" },
   BLOCKED: { color: "bg-gray-100 text-gray-800", labelEn: "Blocked", labelAr: "محظور" },
   MAINTENANCE: { color: "bg-orange-100 text-orange-800", labelEn: "Maintenance", labelAr: "صيانة" },
 };
@@ -43,6 +54,8 @@ export default function FacilityDetailPage() {
   const facilityId = params.id as string;
 
   const [weekOffset, setWeekOffset] = useState(0);
+  const [managedSlot, setManagedSlot] = useState<FacilitySlot | null>(null);
+  const [manageDialogOpen, setManageDialogOpen] = useState(false);
   const weekStart = startOfWeek(addWeeks(new Date(), weekOffset), { weekStartsOn: 0 });
 
   const { data: facility, isLoading: facilityLoading } = useFacility(facilityId);
@@ -56,7 +69,20 @@ export default function FacilityDetailPage() {
   const name = useLocalizedText(facility?.name);
   const description = useLocalizedText(facility?.description);
 
+  const hasOperatingHours =
+    facility?.operatingHours &&
+    facility.operatingHours.some((h) => !h.isClosed);
+
   const handleGenerateSlots = () => {
+    if (!hasOperatingHours) {
+      toast.warning(
+        locale === "ar"
+          ? "يرجى تعيين ساعات العمل أولاً من صفحة التعديل"
+          : "Please configure operating hours first via the Edit page"
+      );
+      return;
+    }
+
     const startDate = format(weekStart, "yyyy-MM-dd");
     const endDate = format(addDays(weekStart, 13), "yyyy-MM-dd");
 
@@ -64,11 +90,19 @@ export default function FacilityDetailPage() {
       { facilityId, data: { startDate, endDate } },
       {
         onSuccess: (generated) => {
-          toast.success(
-            locale === "ar"
-              ? `تم إنشاء ${generated.length} فترة زمنية`
-              : `Generated ${generated.length} slots`
-          );
+          if (generated.length === 0) {
+            toast.info(
+              locale === "ar"
+                ? "لم يتم إنشاء فترات جديدة — قد تكون الفترات موجودة بالفعل أو جميع الأيام مغلقة"
+                : "No new slots generated — slots may already exist for these dates or all days are marked closed"
+            );
+          } else {
+            toast.success(
+              locale === "ar"
+                ? `تم إنشاء ${generated.length} فترة زمنية`
+                : `Generated ${generated.length} slots`
+            );
+          }
         },
         onError: () => {
           toast.error(
@@ -217,6 +251,64 @@ export default function FacilityDetailPage() {
         </Card>
       </div>
 
+      {/* Operating Hours */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            {locale === "ar" ? "ساعات العمل" : "Operating Hours"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!facility.operatingHours?.length ? (
+            <div className="text-center py-4">
+              <p className="text-sm text-muted-foreground">
+                {locale === "ar"
+                  ? "لم يتم تعيين ساعات العمل بعد. يرجى تعديل المرفق لإضافتها."
+                  : "No operating hours configured. Edit the facility to add them."}
+              </p>
+              <Link href={`/${locale}/facilities/${facilityId}/edit`}>
+                <Button variant="link" size="sm" className="mt-2">
+                  {locale === "ar" ? "تعديل المرفق" : "Edit Facility"}
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
+              {facility.operatingHours
+                .sort((a, b) => {
+                  const order = [7, 1, 2, 3, 4, 5, 6];
+                  return order.indexOf(a.dayOfWeek) - order.indexOf(b.dayOfWeek);
+                })
+                .map((h) => {
+                  const dayName = DAY_NAMES[h.dayOfWeek];
+                  return (
+                    <div
+                      key={h.dayOfWeek}
+                      className={`flex items-center justify-between rounded-md border px-3 py-2 text-sm ${
+                        h.isClosed ? "opacity-50" : ""
+                      }`}
+                    >
+                      <span className="font-medium">
+                        {locale === "ar" ? dayName?.ar : dayName?.en}
+                      </span>
+                      {h.isClosed ? (
+                        <Badge variant="secondary">
+                          {locale === "ar" ? "مغلق" : "Closed"}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground">
+                          {h.openTime.slice(0, 5)} — {h.closeTime.slice(0, 5)}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Calendar View */}
       <Card>
         <CardHeader>
@@ -299,16 +391,28 @@ export default function FacilityDetailPage() {
                           .sort((a, b) => a.startTime.localeCompare(b.startTime))
                           .map((slot) => {
                             const config = slotStatusConfig[slot.status];
+                            const isClickable = slot.status === "AVAILABLE" || (slot.status === "BOOKED" && !!slot.booking);
                             return (
                               <div
                                 key={slot.id}
-                                className={`text-xs p-2 rounded ${config.color} ${
-                                  slot.status === "AVAILABLE" ? "cursor-pointer" : ""
+                                className={`text-xs p-2 rounded transition-colors ${config.color} ${
+                                  isClickable ? "cursor-pointer" : ""
                                 }`}
+                                onClick={() => {
+                                  if (slot.status === "BOOKED" && slot.booking) {
+                                    setManagedSlot(slot);
+                                    setManageDialogOpen(true);
+                                  }
+                                }}
                               >
                                 <p className="font-medium">
                                   {slot.startTime.slice(0, 5)} - {slot.endTime.slice(0, 5)}
                                 </p>
+                                {slot.status === "BOOKED" && slot.booking && (
+                                  <p className="text-[10px] opacity-75 truncate mt-0.5">
+                                    {slot.booking.memberId.slice(0, 8)}...
+                                  </p>
+                                )}
                               </div>
                             );
                           })
@@ -333,6 +437,15 @@ export default function FacilityDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Booking Manage Dialog */}
+      <BookingManageDialog
+        open={manageDialogOpen}
+        onOpenChange={setManageDialogOpen}
+        slot={managedSlot}
+        facilityId={facilityId}
+        facilityName={name}
+      />
     </div>
   );
 }

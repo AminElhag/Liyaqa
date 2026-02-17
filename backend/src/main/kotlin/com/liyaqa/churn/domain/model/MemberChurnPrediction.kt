@@ -4,7 +4,9 @@ import com.liyaqa.shared.domain.BaseEntity
 import jakarta.persistence.*
 import org.hibernate.annotations.Filter
 import org.hibernate.annotations.FilterDef
+import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.ParamDef
+import org.hibernate.type.SqlTypes
 import java.time.Instant
 import java.util.*
 
@@ -27,9 +29,11 @@ class MemberChurnPrediction(
     @Column(name = "risk_level", nullable = false, length = 20)
     val riskLevel: RiskLevel,
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "top_risk_factors", columnDefinition = "JSONB")
     val topRiskFactors: String? = null,
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "recommended_interventions", columnDefinition = "JSONB")
     val recommendedInterventions: String? = null,
 

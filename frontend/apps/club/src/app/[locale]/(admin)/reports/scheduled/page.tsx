@@ -46,6 +46,7 @@ import {
   useDisableScheduledReport,
 } from "@liyaqa/shared/queries/use-reports";
 import type { ScheduledReport, ReportType, ReportFrequency } from "@liyaqa/shared/types/report";
+import { CreateScheduledReportDialog } from "@/components/admin/create-scheduled-report-dialog";
 
 const reportTypeLabels: Record<ReportType, { en: string; ar: string }> = {
   REVENUE: { en: "Revenue", ar: "الإيرادات" },
@@ -67,6 +68,7 @@ const frequencyLabels: Record<ReportFrequency, { en: string; ar: string }> = {
 
 export default function ScheduledReportsPage() {
   const locale = useLocale();
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const { data, isLoading } = useScheduledReports();
   const deleteMutation = useDeleteScheduledReport();
   const enableMutation = useEnableScheduledReport();
@@ -133,8 +135,8 @@ export default function ScheduledReportsPage() {
               : "Manage automated reports sent via email"}
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
+        <Button onClick={() => setIsCreateOpen(true)}>
+          <Plus className="me-2 h-4 w-4" />
           {locale === "ar" ? "تقرير جديد" : "New Report"}
         </Button>
       </div>
@@ -284,6 +286,11 @@ export default function ScheduledReportsPage() {
           )}
         </CardContent>
       </Card>
+
+      <CreateScheduledReportDialog
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+      />
     </div>
   );
 }

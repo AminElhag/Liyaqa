@@ -1,12 +1,18 @@
 package com.liyaqa.scheduling.application.services
 
 import com.liyaqa.scheduling.domain.model.ClassPack
+import com.liyaqa.scheduling.domain.model.ClassPackAllocationMode
 import com.liyaqa.scheduling.domain.model.ClassPackBalanceStatus
+import com.liyaqa.scheduling.domain.model.ClassPackCategoryAllocation
 import com.liyaqa.scheduling.domain.model.ClassPackStatus
 import com.liyaqa.scheduling.domain.model.GymClass
+import com.liyaqa.scheduling.domain.model.MemberCategoryBalance
 import com.liyaqa.scheduling.domain.model.MemberClassPackBalance
+import com.liyaqa.scheduling.domain.ports.ClassCategoryRepository
+import com.liyaqa.scheduling.domain.ports.ClassPackCategoryAllocationRepository
 import com.liyaqa.scheduling.domain.ports.ClassPackRepository
 import com.liyaqa.scheduling.domain.ports.GymClassRepository
+import com.liyaqa.scheduling.domain.ports.MemberCategoryBalanceRepository
 import com.liyaqa.scheduling.domain.ports.MemberClassPackBalanceRepository
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.Money
@@ -23,6 +29,11 @@ import java.util.UUID
 /**
  * Commands for class pack operations.
  */
+data class CategoryAllocationInput(
+    val categoryId: UUID,
+    val creditCount: Int
+)
+
 data class CreateClassPackCommand(
     val name: LocalizedText,
     val description: LocalizedText? = null,
@@ -33,7 +44,9 @@ data class CreateClassPackCommand(
     val validClassTypes: List<String>? = null,
     val validClassIds: List<UUID>? = null,
     val sortOrder: Int = 0,
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val allocationMode: ClassPackAllocationMode = ClassPackAllocationMode.FLAT,
+    val categoryAllocations: List<CategoryAllocationInput>? = null
 )
 
 data class UpdateClassPackCommand(
@@ -46,7 +59,9 @@ data class UpdateClassPackCommand(
     val validClassTypes: List<String>? = null,
     val validClassIds: List<UUID>? = null,
     val sortOrder: Int? = null,
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val allocationMode: ClassPackAllocationMode? = null,
+    val categoryAllocations: List<CategoryAllocationInput>? = null
 )
 
 /**
@@ -57,7 +72,10 @@ data class UpdateClassPackCommand(
 class ClassPackService(
     private val classPackRepository: ClassPackRepository,
     private val balanceRepository: MemberClassPackBalanceRepository,
-    private val gymClassRepository: GymClassRepository
+    private val gymClassRepository: GymClassRepository,
+    private val allocationRepository: ClassPackCategoryAllocationRepository,
+    private val categoryBalanceRepository: MemberCategoryBalanceRepository,
+    private val classCategoryRepository: ClassCategoryRepository
 ) {
     private val logger = LoggerFactory.getLogger(ClassPackService::class.java)
 
@@ -68,7 +86,28 @@ class ClassPackService(
      */
     fun createClassPack(command: CreateClassPackCommand): ClassPack {
         require(command.classCount > 0) { "Class count must be positive" }
-        require(command.price.amount > BigDecimal.ZERO) { "Price must be positive" }
+        require(command.price.amount >= BigDecimal.ZERO) { "Price cannot be negative" }
+
+        // Validate PER_CATEGORY allocations
+        if (command.allocationMode == ClassPackAllocationMode.PER_CATEGORY) {
+            val allocations = command.categoryAllocations
+            require(!allocations.isNullOrEmpty()) { "Category allocations are required for PER_CATEGORY mode" }
+            val sum = allocations.sumOf { it.creditCount }
+            require(sum == command.classCount) {
+                "Category allocation sum ($sum) must equal class count (${command.classCount})"
+            }
+            // Validate all categories exist
+            allocations.forEach { alloc ->
+                require(classCategoryRepository.existsById(alloc.categoryId)) {
+                    "Category not found: ${alloc.categoryId}"
+                }
+            }
+            // No duplicate categories
+            val distinctCategories = allocations.map { it.categoryId }.distinct()
+            require(distinctCategories.size == allocations.size) {
+                "Duplicate categories in allocations"
+            }
+        }
 
         val classPack = ClassPack(
             name = command.name,
@@ -80,11 +119,27 @@ class ClassPackService(
             validClassTypes = command.validClassTypes?.joinToString(","),
             validClassIds = command.validClassIds?.joinToString(",") { it.toString() },
             sortOrder = command.sortOrder,
-            imageUrl = command.imageUrl
+            imageUrl = command.imageUrl,
+            allocationMode = command.allocationMode
         )
 
-        logger.info("Created class pack: ${classPack.name.en} with ${classPack.classCount} classes")
-        return classPackRepository.save(classPack)
+        val savedPack = classPackRepository.save(classPack)
+
+        // Save category allocations if PER_CATEGORY
+        if (command.allocationMode == ClassPackAllocationMode.PER_CATEGORY) {
+            command.categoryAllocations!!.forEach { alloc ->
+                allocationRepository.save(
+                    ClassPackCategoryAllocation(
+                        classPackId = savedPack.id,
+                        categoryId = alloc.categoryId,
+                        creditCount = alloc.creditCount
+                    )
+                )
+            }
+        }
+
+        logger.info("Created class pack: ${savedPack.name.en} with ${savedPack.classCount} classes (${savedPack.allocationMode})")
+        return savedPack
     }
 
     /**
@@ -120,6 +175,16 @@ class ClassPackService(
         return classPackRepository.findByStatus(status, pageable)
     }
 
+    @Transactional(readOnly = true)
+    fun getClassPacksByServiceType(serviceType: com.liyaqa.scheduling.domain.model.ServiceType, pageable: Pageable): Page<ClassPack> {
+        return classPackRepository.findByServiceType(serviceType, pageable)
+    }
+
+    @Transactional(readOnly = true)
+    fun getClassPacksByStatusAndServiceType(status: ClassPackStatus, serviceType: com.liyaqa.scheduling.domain.model.ServiceType, pageable: Pageable): Page<ClassPack> {
+        return classPackRepository.findByStatusAndServiceType(status, serviceType, pageable)
+    }
+
     /**
      * Updates a class pack.
      */
@@ -134,7 +199,7 @@ class ClassPackService(
             classPack.classCount = it
         }
         command.price?.let {
-            require(it.amount > BigDecimal.ZERO) { "Price must be positive" }
+            require(it.amount >= BigDecimal.ZERO) { "Price cannot be negative" }
             classPack.price = it
         }
         command.taxRate?.let { classPack.taxRate = it }
@@ -143,6 +208,41 @@ class ClassPackService(
         command.validClassIds?.let { classPack.validClassIds = it.joinToString(",") { uuid -> uuid.toString() } }
         command.sortOrder?.let { classPack.sortOrder = it }
         command.imageUrl?.let { classPack.imageUrl = it }
+        command.allocationMode?.let { classPack.allocationMode = it }
+
+        // Update category allocations if provided
+        if (command.categoryAllocations != null) {
+            val effectiveClassCount = command.classCount ?: classPack.classCount
+            val effectiveMode = command.allocationMode ?: classPack.allocationMode
+
+            if (effectiveMode == ClassPackAllocationMode.PER_CATEGORY) {
+                val allocations = command.categoryAllocations
+                val sum = allocations.sumOf { it.creditCount }
+                require(sum == effectiveClassCount) {
+                    "Category allocation sum ($sum) must equal class count ($effectiveClassCount)"
+                }
+                allocations.forEach { alloc ->
+                    require(classCategoryRepository.existsById(alloc.categoryId)) {
+                        "Category not found: ${alloc.categoryId}"
+                    }
+                }
+
+                // Replace existing allocations
+                allocationRepository.deleteByClassPackId(id)
+                allocations.forEach { alloc ->
+                    allocationRepository.save(
+                        ClassPackCategoryAllocation(
+                            classPackId = id,
+                            categoryId = alloc.categoryId,
+                            creditCount = alloc.creditCount
+                        )
+                    )
+                }
+            } else {
+                // Switching to FLAT — remove allocations
+                allocationRepository.deleteByClassPackId(id)
+            }
+        }
 
         logger.info("Updated class pack: $id")
         return classPackRepository.save(classPack)
@@ -212,7 +312,8 @@ class ClassPackService(
 
     /**
      * Gets valid balances for a specific class.
-     * Filters balances to only those valid for the given class type/ID.
+     * For FLAT packs, filters by class type/ID restrictions.
+     * For PER_CATEGORY packs, checks if the class has a category with remaining credits.
      */
     @Transactional(readOnly = true)
     fun getValidBalancesForClass(memberId: UUID, classId: UUID): List<MemberClassPackBalance> {
@@ -222,8 +323,17 @@ class ClassPackService(
         val activeBalances = balanceRepository.findActiveByMemberId(memberId)
 
         return activeBalances.filter { balance ->
-            val classPack = classPackRepository.findById(balance.classPackId).orElse(null)
-            classPack?.isValidForClass(gymClass) ?: false
+            val classPack = classPackRepository.findById(balance.classPackId).orElse(null) ?: return@filter false
+            when (classPack.allocationMode) {
+                ClassPackAllocationMode.FLAT -> classPack.isValidForClass(gymClass)
+                ClassPackAllocationMode.PER_CATEGORY -> {
+                    val categoryId = gymClass.categoryId ?: return@filter false
+                    val categoryBalance = categoryBalanceRepository
+                        .findByBalanceIdAndCategoryId(balance.id, categoryId)
+                        .orElse(null)
+                    categoryBalance?.hasCredits() ?: false
+                }
+            }
         }
     }
 
@@ -238,24 +348,47 @@ class ClassPackService(
 
     /**
      * Uses a credit from a balance.
-     * Called when booking a class with a class pack.
+     * For PER_CATEGORY packs, categoryId is required and the specific category balance is decremented.
+     * Returns the category balance ID if applicable (for tracking on the booking).
      */
-    fun useCredit(balanceId: UUID): MemberClassPackBalance {
+    fun useCredit(balanceId: UUID, categoryId: UUID? = null): Pair<MemberClassPackBalance, UUID?> {
         val balance = balanceRepository.findById(balanceId)
             .orElseThrow { NoSuchElementException("Balance not found: $balanceId") }
 
+        val pack = classPackRepository.findById(balance.classPackId)
+            .orElseThrow { NoSuchElementException("Class pack not found: ${balance.classPackId}") }
+
+        var categoryBalanceId: UUID? = null
+
+        if (pack.allocationMode == ClassPackAllocationMode.PER_CATEGORY) {
+            requireNotNull(categoryId) { "categoryId is required for PER_CATEGORY packs" }
+            val categoryBalance = categoryBalanceRepository.findByBalanceIdAndCategoryId(balanceId, categoryId)
+                .orElseThrow { NoSuchElementException("No category balance for category $categoryId in balance $balanceId") }
+            categoryBalance.useCredit()
+            categoryBalanceRepository.save(categoryBalance)
+            categoryBalanceId = categoryBalance.id
+        }
+
         balance.useClass()
         logger.info("Used credit from balance $balanceId for member ${balance.memberId}. Remaining: ${balance.classesRemaining}")
-        return balanceRepository.save(balance)
+        return Pair(balanceRepository.save(balance), categoryBalanceId)
     }
 
     /**
      * Refunds a credit back to a balance.
-     * Called when a booking is cancelled.
+     * For PER_CATEGORY packs, categoryBalanceId is used to refund the specific category.
      */
-    fun refundCredit(balanceId: UUID): MemberClassPackBalance {
+    fun refundCredit(balanceId: UUID, categoryBalanceId: UUID? = null): MemberClassPackBalance {
         val balance = balanceRepository.findById(balanceId)
             .orElseThrow { NoSuchElementException("Balance not found: $balanceId") }
+
+        // Refund category balance if applicable
+        if (categoryBalanceId != null) {
+            val categoryBalance = categoryBalanceRepository.findById(categoryBalanceId)
+                .orElseThrow { NoSuchElementException("Category balance not found: $categoryBalanceId") }
+            categoryBalance.refundCredit()
+            categoryBalanceRepository.save(categoryBalance)
+        }
 
         balance.refundClass()
         logger.info("Refunded credit to balance $balanceId for member ${balance.memberId}. Remaining: ${balance.classesRemaining}")
@@ -271,8 +404,13 @@ class ClassPackService(
             .orElseThrow { NoSuchElementException("Class pack not found: $classPackId") }
 
         val balance = MemberClassPackBalance.grantComplimentary(memberId, classPack)
+        val savedBalance = balanceRepository.save(balance)
+
+        // Create category balances for PER_CATEGORY packs
+        createCategoryBalancesIfNeeded(savedBalance, classPack)
+
         logger.info("Granted class pack $classPackId (${classPack.classCount} classes) to member $memberId")
-        return balanceRepository.save(balance)
+        return savedBalance
     }
 
     /**
@@ -283,8 +421,29 @@ class ClassPackService(
             .orElseThrow { NoSuchElementException("Class pack not found: $classPackId") }
 
         val balance = MemberClassPackBalance.fromPurchase(memberId, classPack, orderId)
+        val savedBalance = balanceRepository.save(balance)
+
+        // Create category balances for PER_CATEGORY packs
+        createCategoryBalancesIfNeeded(savedBalance, classPack)
+
         logger.info("Created class pack balance for member $memberId from order $orderId")
-        return balanceRepository.save(balance)
+        return savedBalance
+    }
+
+    private fun createCategoryBalancesIfNeeded(balance: MemberClassPackBalance, classPack: ClassPack) {
+        if (classPack.allocationMode == ClassPackAllocationMode.PER_CATEGORY) {
+            val allocations = allocationRepository.findByClassPackId(classPack.id)
+            allocations.forEach { alloc ->
+                categoryBalanceRepository.save(
+                    MemberCategoryBalance(
+                        balanceId = balance.id,
+                        categoryId = alloc.categoryId,
+                        creditsAllocated = alloc.creditCount,
+                        creditsRemaining = alloc.creditCount
+                    )
+                )
+            }
+        }
     }
 
     /**
@@ -305,6 +464,22 @@ class ClassPackService(
     @Transactional(readOnly = true)
     fun getTotalRemainingCredits(memberId: UUID): Int {
         return balanceRepository.sumClassesRemainingByMemberIdAndStatus(memberId, ClassPackBalanceStatus.ACTIVE)
+    }
+
+    /**
+     * Gets category balances for a member's class pack balance.
+     */
+    @Transactional(readOnly = true)
+    fun getCategoryBalances(balanceId: UUID): List<MemberCategoryBalance> {
+        return categoryBalanceRepository.findByBalanceId(balanceId)
+    }
+
+    /**
+     * Gets category allocations for a class pack.
+     */
+    @Transactional(readOnly = true)
+    fun getCategoryAllocations(classPackId: UUID): List<ClassPackCategoryAllocation> {
+        return allocationRepository.findByClassPackId(classPackId)
     }
 
     // ==================== VALIDATION HELPERS ====================

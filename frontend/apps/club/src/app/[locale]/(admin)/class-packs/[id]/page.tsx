@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useLocale } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Package, Edit, Play, Pause, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Package, Edit, Play, Pause, Trash2, Gift } from "lucide-react";
 import { cn } from "@liyaqa/shared/utils";
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@liyaqa/shared/components/ui/card";
@@ -36,6 +36,7 @@ import {
   ClassPackForm,
   type ClassPackFormData,
 } from "@/components/admin/class-pack-form";
+import { GrantPackToMemberDialog } from "@/components/admin/grant-pack-to-member-dialog";
 
 const texts = {
   en: {
@@ -66,6 +67,7 @@ const texts = {
     sortOrder: "Sort Order",
     editMode: "Edit Mode",
     viewMode: "View Mode",
+    assignToMember: "Assign to Member",
   },
   ar: {
     back: "العودة لباقات الحصص",
@@ -95,6 +97,7 @@ const texts = {
     sortOrder: "ترتيب العرض",
     editMode: "وضع التعديل",
     viewMode: "وضع العرض",
+    assignToMember: "تعيين لعضو",
   },
 };
 
@@ -109,6 +112,7 @@ export default function ClassPackDetailPage() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [grantDialogOpen, setGrantDialogOpen] = useState(false);
 
   // Fetch pack
   const { data: pack, isLoading, error: loadError } = useClassPack(packId);
@@ -250,6 +254,12 @@ export default function ClassPackDetailPage() {
                 <Edit className="h-4 w-4 me-2" />
                 {t.edit}
               </Button>
+              {pack.status === "ACTIVE" && (
+                <Button variant="outline" onClick={() => setGrantDialogOpen(true)}>
+                  <Gift className="h-4 w-4 me-2" />
+                  {t.assignToMember}
+                </Button>
+              )}
               {pack.status === "ACTIVE" ? (
                 <Button variant="outline" onClick={handleDeactivate}>
                   <Pause className="h-4 w-4 me-2" />
@@ -345,6 +355,16 @@ export default function ClassPackDetailPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Grant Pack to Member Dialog */}
+      {pack && (
+        <GrantPackToMemberDialog
+          open={grantDialogOpen}
+          onOpenChange={setGrantDialogOpen}
+          classPack={pack}
+          locale={locale}
+        />
       )}
     </div>
   );

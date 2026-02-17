@@ -179,13 +179,19 @@ data class OperatingHoursResponse(
     }
 }
 
+data class SlotBookingSummary(
+    val id: UUID,
+    val memberId: UUID
+)
+
 data class FacilitySlotResponse(
     val id: UUID,
     val facilityId: UUID,
     val slotDate: LocalDate,
     val startTime: LocalTime,
     val endTime: LocalTime,
-    val status: SlotStatus
+    val status: SlotStatus,
+    val booking: SlotBookingSummary? = null
 ) {
     companion object {
         fun from(slot: FacilitySlot) = FacilitySlotResponse(
@@ -195,6 +201,16 @@ data class FacilitySlotResponse(
             startTime = slot.startTime,
             endTime = slot.endTime,
             status = slot.status
+        )
+
+        fun from(slot: FacilitySlot, booking: FacilityBooking?) = FacilitySlotResponse(
+            id = slot.id,
+            facilityId = slot.facilityId,
+            slotDate = slot.slotDate,
+            startTime = slot.startTime,
+            endTime = slot.endTime,
+            status = slot.status,
+            booking = booking?.let { SlotBookingSummary(it.id, it.memberId) }
         )
     }
 }

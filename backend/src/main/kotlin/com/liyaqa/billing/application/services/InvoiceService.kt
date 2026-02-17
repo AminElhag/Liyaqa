@@ -10,8 +10,10 @@ import com.liyaqa.billing.domain.model.InvoiceLineItem
 import com.liyaqa.billing.domain.model.InvoiceSequence
 import com.liyaqa.billing.domain.model.InvoiceStatus
 import com.liyaqa.billing.domain.model.LineItemType
+import com.liyaqa.billing.domain.model.Payment
 import com.liyaqa.billing.domain.ports.InvoiceRepository
 import com.liyaqa.billing.domain.ports.InvoiceSequenceRepository
+import com.liyaqa.billing.domain.ports.PaymentRepository
 import com.liyaqa.billing.infrastructure.config.BillingConfig
 import com.liyaqa.billing.infrastructure.zatca.ZatcaService
 import com.liyaqa.membership.domain.model.Member
@@ -19,6 +21,9 @@ import com.liyaqa.membership.domain.model.SubscriptionStatus
 import com.liyaqa.membership.domain.ports.MemberRepository
 import com.liyaqa.membership.domain.ports.MembershipPlanRepository
 import com.liyaqa.membership.domain.ports.SubscriptionRepository
+import com.liyaqa.scheduling.domain.ports.ClassPackRepository
+import com.liyaqa.shared.domain.Money
+import com.liyaqa.shop.domain.ports.ProductRepository
 import com.liyaqa.notification.application.services.NotificationService
 import com.liyaqa.organization.domain.ports.ClubRepository
 import com.liyaqa.notification.domain.model.NotificationPriority
@@ -31,6 +36,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -41,9 +47,12 @@ import java.util.UUID
 class InvoiceService(
     private val invoiceRepository: InvoiceRepository,
     private val invoiceSequenceRepository: InvoiceSequenceRepository,
+    private val paymentRepository: PaymentRepository,
     private val memberRepository: MemberRepository,
     private val subscriptionRepository: SubscriptionRepository,
     private val membershipPlanRepository: MembershipPlanRepository,
+    private val classPackRepository: ClassPackRepository,
+    private val productRepository: ProductRepository,
     private val notificationService: NotificationService,
     private val zatcaService: ZatcaService,
     private val billingConfig: BillingConfig,
@@ -75,7 +84,9 @@ class InvoiceService(
                 quantity = cmd.quantity,
                 unitPrice = cmd.unitPrice,
                 itemType = cmd.itemType,
-                sortOrder = index
+                sortOrder = index,
+                taxRate = cmd.taxRate,
+                vatCategoryCode = cmd.vatCategoryCode
             )
         }
 
@@ -88,6 +99,7 @@ class InvoiceService(
             vatRate = command.vatRate,
             notes = command.notes
         )
+        invoice.invoiceTypeCode = command.invoiceTypeCode
 
         // Set organization context
         invoice.setTenantAndOrganization(
@@ -370,6 +382,7 @@ class InvoiceService(
 
     /**
      * Records a payment on an invoice.
+     * Creates a Payment entity and updates the invoice's computed paidAmount.
      */
     fun recordPayment(id: UUID, command: RecordPaymentCommand): Invoice {
         val invoice = invoiceRepository.findById(id)
@@ -377,6 +390,18 @@ class InvoiceService(
 
         val wasPaid = invoice.status == InvoiceStatus.PAID
         invoice.recordPayment(command.amount, command.paymentMethod, command.reference)
+
+        // Create Payment entity
+        val payment = Payment(
+            invoiceId = invoice.id,
+            amount = command.amount,
+            paymentMethod = command.paymentMethod,
+            paymentReference = command.reference,
+            notes = command.notes
+        )
+        payment.setTenantAndOrganization(invoice.tenantId, invoice.organizationId)
+        paymentRepository.save(payment)
+
         val savedInvoice = invoiceRepository.save(invoice)
 
         // Send payment notification if fully paid
@@ -499,6 +524,86 @@ class InvoiceService(
         val startDate = yearMonth.atDay(1)
         val endDate = yearMonth.atEndOfMonth()
         return invoiceRepository.sumPaidAmountBetween(startDate, endDate)
+    }
+
+    // ==================== PAYMENT QUERIES ====================
+
+    /**
+     * Gets all payments for an invoice, ordered by most recent first.
+     */
+    @Transactional(readOnly = true)
+    fun getPayments(invoiceId: UUID): List<Payment> {
+        // Verify invoice exists
+        invoiceRepository.findById(invoiceId)
+            .orElseThrow { NoSuchElementException("Invoice not found: $invoiceId") }
+        return paymentRepository.findByInvoiceIdOrderByPaidAtDesc(invoiceId)
+    }
+
+    // ==================== CATALOG ====================
+
+    /**
+     * Gets a combined list of sellable items for invoice line item picker.
+     * Returns active membership plans, class packs, and products.
+     */
+    @Transactional(readOnly = true)
+    fun getCatalogItems(): List<CatalogItem> {
+        val items = mutableListOf<CatalogItem>()
+        val unpaged = Pageable.unpaged()
+
+        // Active membership plans
+        try {
+            val plans = membershipPlanRepository.findAll(unpaged).content
+            for (plan in plans) {
+                if (!plan.membershipFee.isZero()) {
+                    items.add(CatalogItem(
+                        id = plan.id,
+                        name = plan.name,
+                        price = plan.membershipFee.getNetAmount(),
+                        taxRate = plan.membershipFee.taxRate,
+                        itemType = LineItemType.SUBSCRIPTION,
+                        description = plan.description
+                    ))
+                }
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to load membership plans for catalog: ${e.message}")
+        }
+
+        // Active class packs
+        try {
+            val packs = classPackRepository.findAllOrderBySortOrder()
+            for (pack in packs) {
+                items.add(CatalogItem(
+                    id = pack.id,
+                    name = pack.name,
+                    price = pack.price,
+                    taxRate = billingConfig.defaultVatRate,
+                    itemType = LineItemType.CLASS_PACKAGE,
+                    description = pack.description
+                ))
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to load class packs for catalog: ${e.message}")
+        }
+
+        // Active products
+        try {
+            val products = productRepository.findAll(unpaged).content
+            for (product in products) {
+                items.add(CatalogItem(
+                    id = product.id,
+                    name = product.name,
+                    price = product.listPrice,
+                    taxRate = product.taxRate,
+                    itemType = LineItemType.MERCHANDISE,
+                    description = product.description
+                ))
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to load products for catalog: ${e.message}")
+        }
+
+        return items
     }
 
     // ==================== NOTIFICATION HELPERS ====================
@@ -686,3 +791,15 @@ class InvoiceService(
         }
     }
 }
+
+/**
+ * Represents a sellable item from the catalog (plan, class pack, or product).
+ */
+data class CatalogItem(
+    val id: UUID,
+    val name: LocalizedText,
+    val price: Money,
+    val taxRate: BigDecimal,
+    val itemType: LineItemType,
+    val description: LocalizedText? = null
+)

@@ -17,6 +17,13 @@ export default function RootLayout({
 }) {
   return (
     <html suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var l=location.pathname.split('/')[1];if(l==='ar'){document.documentElement.lang='ar';document.documentElement.dir='rtl'}else{document.documentElement.lang=l||'en';document.documentElement.dir='ltr'}})()`,
+          }}
+        />
+      </head>
       <body suppressHydrationWarning>{children}</body>
     </html>
   );

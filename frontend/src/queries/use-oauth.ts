@@ -32,6 +32,7 @@ export function useOAuthProviders(
   return useQuery({
     queryKey: oauthKeys.providers(organizationId),
     queryFn: () => oauthApi.fetchOAuthProviders(organizationId),
+    enabled: !!organizationId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     ...options,
   });

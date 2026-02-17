@@ -48,8 +48,16 @@ export default function NewClassPage() {
           : undefined,
         capacity: data.capacity,
         durationMinutes: data.durationMinutes,
+        // Identity fields
+        classType: data.classType || undefined,
+        difficultyLevel: data.difficultyLevel || undefined,
+        colorCode: data.colorCode || undefined,
+        genderRestriction: data.genderRestriction || undefined,
         trainerId: data.trainerId || undefined,
         locationId: data.locationId || undefined,
+        // GX access policy
+        accessPolicy: data.accessPolicy || undefined,
+        eligiblePlanIds: data.eligiblePlanIds?.length ? data.eligiblePlanIds : undefined,
         // Pricing settings
         pricingModel: data.pricingModel,
         dropInPriceAmount: data.dropInPriceAmount || undefined,
@@ -61,6 +69,15 @@ export default function NewClassPage() {
         cancellationDeadlineHours: data.cancellationDeadlineHours,
         lateCancellationFeeAmount: data.lateCancellationFeeAmount || undefined,
         lateCancellationFeeCurrency: data.lateCancellationFeeCurrency || undefined,
+        // No-show fee
+        noShowFeeAmount: data.noShowFeeAmount || undefined,
+        noShowFeeCurrency: data.noShowFeeCurrency || undefined,
+        // Category
+        categoryId: data.categoryId || undefined,
+        // Spot booking
+        onlineBookableSpots: data.onlineBookableSpots || undefined,
+        spotBookingEnabled: data.spotBookingEnabled,
+        roomLayoutId: data.roomLayoutId || undefined,
         schedules: data.schedules,
       });
       router.push(`/${locale}/classes`);

@@ -53,9 +53,9 @@ export function WelcomeBanner({ healthScore, healthTrend, isLoading }: WelcomeBa
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-md3-lg p-6",
+        "relative overflow-hidden rounded-xl p-6",
         "bg-gradient-to-br from-primary/10 via-primary/5 to-transparent",
-        "border border-primary/10"
+        "border border-primary/10 dark:border-primary/20"
       )}
     >
       {/* Background decoration */}

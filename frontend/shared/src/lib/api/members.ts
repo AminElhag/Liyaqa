@@ -2,6 +2,8 @@ import { api } from "./client";
 import type { PaginatedResponse, UUID } from "../../types/api";
 import type {
   Member,
+  MemberActivity,
+  MemberActivityQueryParams,
   CreateMemberRequest,
   UpdateMemberRequest,
   MemberQueryParams,
@@ -132,4 +134,31 @@ export async function createUserForMember(
   return api.post(`${MEMBERS_ENDPOINT}/${memberId}/user`, {
     json: { password },
   }).json();
+}
+
+/**
+ * Get paginated member activities
+ */
+export async function getMemberActivities(
+  memberId: UUID,
+  params: MemberActivityQueryParams = {}
+): Promise<PaginatedResponse<MemberActivity>> {
+  const searchParams = new URLSearchParams();
+  if (params.types?.length) searchParams.set("types", params.types.join(","));
+  if (params.startDate) searchParams.set("startDate", params.startDate);
+  if (params.endDate) searchParams.set("endDate", params.endDate);
+  if (params.page !== undefined) searchParams.set("page", String(params.page));
+  if (params.size !== undefined) searchParams.set("size", String(params.size));
+  const query = searchParams.toString();
+  const url = query
+    ? `${MEMBERS_ENDPOINT}/${memberId}/activities?${query}`
+    : `${MEMBERS_ENDPOINT}/${memberId}/activities`;
+  return api.get(url).json();
+}
+
+/**
+ * Log a profile view (fire-and-forget on page mount)
+ */
+export async function logProfileView(memberId: UUID): Promise<void> {
+  await api.post(`${MEMBERS_ENDPOINT}/${memberId}/view`);
 }

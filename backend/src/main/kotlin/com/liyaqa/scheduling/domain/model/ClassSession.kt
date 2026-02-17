@@ -2,6 +2,7 @@ package com.liyaqa.scheduling.domain.model
 
 import com.liyaqa.shared.domain.BaseEntity
 import com.liyaqa.shared.domain.LocalizedText
+import com.liyaqa.shared.domain.Money
 import jakarta.persistence.AttributeOverride
 import jakarta.persistence.AttributeOverrides
 import jakarta.persistence.Column
@@ -78,7 +79,44 @@ class ClassSession(
     var cancelledAt: Instant? = null,
 
     @Column(name = "cancellation_reason")
-    var cancellationReason: String? = null
+    var cancellationReason: String? = null,
+
+    // ==================== PERSONAL TRAINING ====================
+
+    /**
+     * PT location type — inherited from GymClass or overridden per session.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "pt_location_type", length = 10)
+    var ptLocationType: PTLocationType? = null,
+
+    /**
+     * Client's address for HOME PT sessions.
+     */
+    @Column(name = "client_address", columnDefinition = "TEXT")
+    var clientAddress: String? = null,
+
+    /**
+     * Actual travel fee charged for this session.
+     */
+    @Embedded
+    @AttributeOverrides(
+        AttributeOverride(name = "amount", column = Column(name = "travel_fee_applied_amount")),
+        AttributeOverride(name = "currency", column = Column(name = "travel_fee_applied_currency"))
+    )
+    var travelFeeApplied: com.liyaqa.shared.domain.Money? = null,
+
+    /**
+     * Private notes from trainer about the session.
+     */
+    @Column(name = "trainer_notes", columnDefinition = "TEXT")
+    var trainerNotes: String? = null,
+
+    /**
+     * Notes recorded on session completion.
+     */
+    @Column(name = "completion_notes", columnDefinition = "TEXT")
+    var completionNotes: String? = null
 
 ) : BaseEntity(id) {
 

@@ -10,6 +10,12 @@ import {
   resetPlatformUserPassword,
   deletePlatformUser,
 } from "../../lib/api/platform/platform-users";
+import {
+  inviteMember,
+  changeRole,
+  deactivateTeamUser,
+  resetTeamUserPassword,
+} from "../../lib/api/platform/team";
 import type {
   PlatformUserQueryParams,
   CreatePlatformUserRequest,
@@ -17,6 +23,10 @@ import type {
   ChangeUserStatusRequest,
   ResetUserPasswordRequest,
 } from "../../types/platform/platform-user";
+import type {
+  InviteTeamMemberRequest,
+  ChangeRoleRequest,
+} from "../../types/platform/team";
 
 /**
  * Query keys for platform users.
@@ -167,5 +177,62 @@ export function useDeletePlatformUser() {
       queryClient.invalidateQueries({ queryKey: platformUserKeys.lists() });
       queryClient.invalidateQueries({ queryKey: platformUserKeys.stats() });
     },
+  });
+}
+
+/**
+ * Hook to invite a new team member.
+ */
+export function useInviteMember() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: InviteTeamMemberRequest) => inviteMember(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: platformUserKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: platformUserKeys.stats() });
+    },
+  });
+}
+
+/**
+ * Hook to change a team member's role.
+ */
+export function useChangeRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, data }: { userId: string; data: ChangeRoleRequest }) =>
+      changeRole(userId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: platformUserKeys.detail(variables.userId),
+      });
+      queryClient.invalidateQueries({ queryKey: platformUserKeys.lists() });
+    },
+  });
+}
+
+/**
+ * Hook to deactivate a team user.
+ */
+export function useDeactivateTeamUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: string) => deactivateTeamUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: platformUserKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: platformUserKeys.stats() });
+    },
+  });
+}
+
+/**
+ * Hook to reset a team user's password (admin-initiated).
+ */
+export function useResetTeamUserPassword() {
+  return useMutation({
+    mutationFn: (userId: string) => resetTeamUserPassword(userId),
   });
 }

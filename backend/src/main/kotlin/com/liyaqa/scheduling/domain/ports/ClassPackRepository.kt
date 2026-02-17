@@ -2,6 +2,7 @@ package com.liyaqa.scheduling.domain.ports
 
 import com.liyaqa.scheduling.domain.model.ClassPack
 import com.liyaqa.scheduling.domain.model.ClassPackStatus
+import com.liyaqa.scheduling.domain.model.ServiceType
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import java.util.Optional
@@ -15,6 +16,8 @@ interface ClassPackRepository {
     fun findById(id: UUID): Optional<ClassPack>
     fun findAll(pageable: Pageable): Page<ClassPack>
     fun findByStatus(status: ClassPackStatus, pageable: Pageable): Page<ClassPack>
+    fun findByServiceType(serviceType: ServiceType, pageable: Pageable): Page<ClassPack>
+    fun findByStatusAndServiceType(status: ClassPackStatus, serviceType: ServiceType, pageable: Pageable): Page<ClassPack>
     fun findByStatusOrderBySortOrder(status: ClassPackStatus): List<ClassPack>
     fun findAllOrderBySortOrder(): List<ClassPack>
     fun existsById(id: UUID): Boolean

@@ -23,6 +23,8 @@ import {
   setPrimaryLocation,
   getExpiringCertifications,
   getEmployeeStats,
+  adminResetPassword,
+  adminSendResetEmail,
 } from "../lib/api/employees";
 import type { PaginatedResponse, UUID } from "../types/api";
 import type {
@@ -350,5 +352,26 @@ export function useSetPrimaryLocation() {
         queryKey: employeeKeys.detail(employeeId),
       });
     },
+  });
+}
+
+// ==================== ADMIN PASSWORD RESET MUTATIONS ====================
+
+/**
+ * Hook to admin-reset a user's password
+ */
+export function useAdminResetPassword() {
+  return useMutation({
+    mutationFn: ({ userId, newPassword }: { userId: UUID; newPassword: string }) =>
+      adminResetPassword(userId, newPassword),
+  });
+}
+
+/**
+ * Hook to send password reset email to a user
+ */
+export function useAdminSendResetEmail() {
+  return useMutation({
+    mutationFn: (userId: UUID) => adminSendResetEmail(userId),
   });
 }

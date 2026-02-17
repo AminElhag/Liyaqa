@@ -32,6 +32,9 @@ import {
   Key,
   FileCheck,
   Shield,
+  Warehouse,
+  DollarSign,
+  UserCheck,
 } from "lucide-react";
 import { cn } from "@liyaqa/shared/utils";
 import { Button } from "@liyaqa/shared/components/ui/button";
@@ -127,6 +130,18 @@ const navSections: NavSection[] = [
         icon: HeadphonesIcon,
         roles: ["PLATFORM_ADMIN", "SUPPORT"],
       },
+      {
+        href: "/tenants",
+        labelKey: "tenants",
+        icon: Warehouse,
+        roles: ["PLATFORM_SUPER_ADMIN", "PLATFORM_ADMIN"],
+      },
+      {
+        href: "/billing",
+        labelKey: "billing",
+        icon: DollarSign,
+        roles: ["PLATFORM_SUPER_ADMIN", "PLATFORM_ADMIN", "ACCOUNT_MANAGER"],
+      },
     ],
   },
   {
@@ -150,6 +165,18 @@ const navSections: NavSection[] = [
         labelKey: "auditLog",
         icon: FileText,
         roles: ["PLATFORM_ADMIN"],
+      },
+      {
+        href: "/monitoring/facilities",
+        labelKey: "facilityMonitoring",
+        icon: Building2,
+        roles: ["PLATFORM_SUPER_ADMIN", "PLATFORM_ADMIN"],
+      },
+      {
+        href: "/impersonation",
+        labelKey: "impersonation",
+        icon: UserCheck,
+        roles: ["PLATFORM_SUPER_ADMIN", "PLATFORM_ADMIN", "SUPPORT_LEAD"],
       },
     ],
   },

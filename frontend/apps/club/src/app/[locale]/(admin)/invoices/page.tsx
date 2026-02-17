@@ -10,9 +10,12 @@ import {
   FileText,
   Send,
   XCircle,
-  DollarSign,
-  Calendar,
+  CreditCard,
   Download,
+  Trash2,
+  Clock,
+  AlertTriangle,
+  CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -40,6 +43,7 @@ import { LocalizedText } from "@liyaqa/shared/components/ui/localized-text";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
 import {
   useInvoices,
+  useInvoiceSummary,
   useDeleteInvoice,
   useIssueInvoice,
   useCancelInvoice,
@@ -56,15 +60,20 @@ export default function InvoicesPage() {
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "ALL">(
     "ALL"
   );
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(20);
 
   // Fetch invoices
   const { data, isLoading, error } = useInvoices({
     status: statusFilter !== "ALL" ? statusFilter : undefined,
+    search: search || undefined,
     page,
     size: pageSize,
   });
+
+  // Fetch summary
+  const { data: summary } = useInvoiceSummary();
 
   // Mutations
   const deleteInvoice = useDeleteInvoice();
@@ -72,13 +81,15 @@ export default function InvoicesPage() {
   const cancelInvoice = useCancelInvoice();
   const downloadPdf = useDownloadInvoicePdf();
 
-  const texts = {
+  const t = {
     title: locale === "ar" ? "الفواتير" : "Invoices",
     description:
-      locale === "ar" ? "إدارة فواتير الأعضاء" : "Manage member invoices",
+      locale === "ar"
+        ? "إنشاء وإدارة وتتبع الفواتير"
+        : "Create, manage, and track invoices",
     newInvoice: locale === "ar" ? "فاتورة جديدة" : "New Invoice",
     status: locale === "ar" ? "الحالة" : "Status",
-    all: locale === "ar" ? "الكل" : "All",
+    all: locale === "ar" ? "جميع الحالات" : "All Statuses",
     draft: locale === "ar" ? "مسودة" : "Draft",
     issued: locale === "ar" ? "صادرة" : "Issued",
     paid: locale === "ar" ? "مدفوعة" : "Paid",
@@ -87,8 +98,10 @@ export default function InvoicesPage() {
     cancelled: locale === "ar" ? "ملغاة" : "Cancelled",
     invoiceNumber: locale === "ar" ? "رقم الفاتورة" : "Invoice #",
     member: locale === "ar" ? "العضو" : "Member",
-    amount: locale === "ar" ? "المبلغ" : "Amount",
+    total: locale === "ar" ? "الإجمالي" : "Total",
+    issueDate: locale === "ar" ? "تاريخ الإصدار" : "Issue Date",
     dueDate: locale === "ar" ? "تاريخ الاستحقاق" : "Due Date",
+    remaining: locale === "ar" ? "المتبقي" : "Remaining",
     actions: locale === "ar" ? "الإجراءات" : "Actions",
     view: locale === "ar" ? "عرض" : "View",
     download: locale === "ar" ? "تحميل PDF" : "Download PDF",
@@ -96,11 +109,21 @@ export default function InvoicesPage() {
     cancel: locale === "ar" ? "إلغاء" : "Cancel",
     recordPayment: locale === "ar" ? "تسجيل دفعة" : "Record Payment",
     delete: locale === "ar" ? "حذف" : "Delete",
+    search: locale === "ar" ? "بحث في الفواتير..." : "Search invoices...",
     noInvoices: locale === "ar" ? "لا توجد فواتير" : "No invoices found",
     error:
       locale === "ar"
         ? "حدث خطأ أثناء تحميل الفواتير"
         : "Error loading invoices",
+    paidLabel: locale === "ar" ? "المدفوع:" : "Paid:",
+    confirmCancel:
+      locale === "ar"
+        ? "هل أنت متأكد من إلغاء هذه الفاتورة؟"
+        : "Are you sure you want to cancel this invoice?",
+    confirmDelete:
+      locale === "ar"
+        ? "هل أنت متأكد من حذف هذه الفاتورة؟"
+        : "Are you sure you want to delete this invoice?",
   };
 
   // Table columns
@@ -108,16 +131,19 @@ export default function InvoicesPage() {
     () => [
       {
         accessorKey: "invoiceNumber",
-        header: texts.invoiceNumber,
+        header: t.invoiceNumber,
         cell: ({ row }) => (
-          <span className="font-mono font-medium">
+          <Link
+            href={`/${locale}/invoices/${row.original.id}`}
+            className="font-mono font-medium text-primary hover:underline"
+          >
             {row.original.invoiceNumber}
-          </span>
+          </Link>
         ),
       },
       {
         accessorKey: "memberName",
-        header: texts.member,
+        header: t.member,
         cell: ({ row }) => (
           <Link
             href={`/${locale}/members/${row.original.memberId}`}
@@ -141,8 +167,35 @@ export default function InvoicesPage() {
         ),
       },
       {
+        accessorKey: "status",
+        header: t.status,
+        cell: ({ row }) => (
+          <StatusBadge status={row.original.status} locale={locale} />
+        ),
+      },
+      {
+        accessorKey: "issueDate",
+        header: t.issueDate,
+        cell: ({ row }) =>
+          row.original.issueDate ? (
+            formatDate(row.original.issueDate, locale)
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          ),
+      },
+      {
+        accessorKey: "dueDate",
+        header: t.dueDate,
+        cell: ({ row }) =>
+          row.original.dueDate ? (
+            formatDate(row.original.dueDate, locale)
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          ),
+      },
+      {
         accessorKey: "totalAmount",
-        header: texts.amount,
+        header: t.total,
         cell: ({ row }) => (
           <div>
             <p className="font-medium">
@@ -157,7 +210,7 @@ export default function InvoicesPage() {
               row.original.paidAmount.amount <
                 row.original.totalAmount.amount && (
                 <p className="text-sm text-muted-foreground">
-                  {locale === "ar" ? "المدفوع:" : "Paid:"}{" "}
+                  {t.paidLabel}{" "}
                   {formatCurrency(
                     row.original.paidAmount.amount,
                     row.original.paidAmount.currency,
@@ -169,25 +222,27 @@ export default function InvoicesPage() {
         ),
       },
       {
-        accessorKey: "dueDate",
-        header: texts.dueDate,
-        cell: ({ row }) =>
-          row.original.dueDate ? (
-            formatDate(row.original.dueDate, locale)
-          ) : (
-            <span className="text-muted-foreground">-</span>
-          ),
-      },
-      {
-        accessorKey: "status",
-        header: texts.status,
+        accessorKey: "remainingBalance",
+        header: t.remaining,
         cell: ({ row }) => (
-          <StatusBadge status={row.original.status} locale={locale} />
+          <span
+            className={
+              row.original.remainingBalance.amount > 0
+                ? "font-medium text-amber-600"
+                : "text-muted-foreground"
+            }
+          >
+            {formatCurrency(
+              row.original.remainingBalance.amount,
+              row.original.remainingBalance.currency,
+              locale
+            )}
+          </span>
         ),
       },
       {
         id: "actions",
-        header: texts.actions,
+        header: t.actions,
         cell: ({ row }) => {
           const invoice = row.original;
           return (
@@ -199,14 +254,14 @@ export default function InvoicesPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align={locale === "ar" ? "start" : "end"}>
-                <DropdownMenuLabel>{texts.actions}</DropdownMenuLabel>
+                <DropdownMenuLabel>{t.actions}</DropdownMenuLabel>
                 <DropdownMenuItem
                   onClick={() =>
                     router.push(`/${locale}/invoices/${invoice.id}`)
                   }
                 >
                   <Eye className="me-2 h-4 w-4" />
-                  {texts.view}
+                  {t.view}
                 </DropdownMenuItem>
                 {invoice.status !== "DRAFT" && (
                   <DropdownMenuItem
@@ -214,7 +269,7 @@ export default function InvoicesPage() {
                     disabled={downloadPdf.isPending}
                   >
                     <Download className="me-2 h-4 w-4" />
-                    {texts.download}
+                    {t.download}
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
@@ -223,7 +278,7 @@ export default function InvoicesPage() {
                     onClick={() => issueInvoice.mutate(invoice.id)}
                   >
                     <Send className="me-2 h-4 w-4" />
-                    {texts.issue}
+                    {t.issue}
                   </DropdownMenuItem>
                 )}
                 {(invoice.status === "ISSUED" ||
@@ -231,49 +286,40 @@ export default function InvoicesPage() {
                   invoice.status === "OVERDUE") && (
                   <DropdownMenuItem
                     onClick={() =>
-                      router.push(`/${locale}/invoices/${invoice.id}/pay`)
+                      router.push(`/${locale}/invoices/${invoice.id}`)
                     }
                   >
-                    <DollarSign className="me-2 h-4 w-4" />
-                    {texts.recordPayment}
+                    <CreditCard className="me-2 h-4 w-4" />
+                    {t.recordPayment}
                   </DropdownMenuItem>
                 )}
                 {(invoice.status === "DRAFT" ||
-                  invoice.status === "ISSUED") && (
+                  invoice.status === "ISSUED" ||
+                  invoice.status === "OVERDUE") && (
                   <DropdownMenuItem
                     className="text-destructive"
                     onClick={() => {
-                      if (
-                        confirm(
-                          locale === "ar"
-                            ? "هل أنت متأكد من إلغاء هذه الفاتورة؟"
-                            : "Are you sure you want to cancel this invoice?"
-                        )
-                      ) {
+                      if (confirm(t.confirmCancel)) {
                         cancelInvoice.mutate(invoice.id);
                       }
                     }}
                   >
                     <XCircle className="me-2 h-4 w-4" />
-                    {texts.cancel}
+                    {t.cancel}
                   </DropdownMenuItem>
                 )}
-                {invoice.status === "DRAFT" && (
+                {(invoice.status === "DRAFT" ||
+                  invoice.status === "CANCELLED") && (
                   <DropdownMenuItem
                     className="text-destructive"
                     onClick={() => {
-                      if (
-                        confirm(
-                          locale === "ar"
-                            ? "هل أنت متأكد من حذف هذه الفاتورة؟"
-                            : "Are you sure you want to delete this invoice?"
-                        )
-                      ) {
+                      if (confirm(t.confirmDelete)) {
                         deleteInvoice.mutate(invoice.id);
                       }
                     }}
                   >
-                    {texts.delete}
+                    <Trash2 className="me-2 h-4 w-4" />
+                    {t.delete}
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -284,7 +330,7 @@ export default function InvoicesPage() {
     ],
     [
       locale,
-      texts,
+      t,
       router,
       deleteInvoice,
       issueInvoice,
@@ -297,7 +343,7 @@ export default function InvoicesPage() {
     return (
       <Card>
         <CardContent className="py-10 text-center text-destructive">
-          {texts.error}
+          {t.error}
         </CardContent>
       </Card>
     );
@@ -308,21 +354,92 @@ export default function InvoicesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{texts.title}</h1>
-          <p className="text-muted-foreground">{texts.description}</p>
+          <h1 className="text-2xl font-bold">{t.title}</h1>
+          <p className="text-muted-foreground">{t.description}</p>
         </div>
         <Button asChild>
           <Link href={`/${locale}/invoices/new`}>
             <Plus className="me-2 h-4 w-4" />
-            {texts.newInvoice}
+            {t.newInvoice}
           </Link>
         </Button>
       </div>
+
+      {/* Summary Cards */}
+      {summary && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-muted p-2">
+                  <FileText className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t.draft}</p>
+                  <p className="text-2xl font-bold">{summary.draftCount}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-blue-50 p-2 dark:bg-blue-950">
+                  <Clock className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t.issued}</p>
+                  <p className="text-2xl font-bold">{summary.pendingCount}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-amber-50 p-2 dark:bg-amber-950">
+                  <AlertTriangle className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t.overdue}</p>
+                  <p className="text-2xl font-bold text-amber-600">
+                    {summary.overdueCount}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-green-50 p-2 dark:bg-green-950">
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t.paid}</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {summary.paidCount}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4">
+            <Input
+              placeholder={t.search}
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(0);
+              }}
+              className="w-full sm:w-[280px]"
+            />
             <Select
               value={statusFilter}
               onValueChange={(value) => {
@@ -331,18 +448,18 @@ export default function InvoicesPage() {
               }}
             >
               <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder={texts.status} />
+                <SelectValue placeholder={t.status} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">{texts.all}</SelectItem>
-                <SelectItem value="DRAFT">{texts.draft}</SelectItem>
-                <SelectItem value="ISSUED">{texts.issued}</SelectItem>
-                <SelectItem value="PAID">{texts.paid}</SelectItem>
+                <SelectItem value="ALL">{t.all}</SelectItem>
+                <SelectItem value="DRAFT">{t.draft}</SelectItem>
+                <SelectItem value="ISSUED">{t.issued}</SelectItem>
+                <SelectItem value="PAID">{t.paid}</SelectItem>
                 <SelectItem value="PARTIALLY_PAID">
-                  {texts.partiallyPaid}
+                  {t.partiallyPaid}
                 </SelectItem>
-                <SelectItem value="OVERDUE">{texts.overdue}</SelectItem>
-                <SelectItem value="CANCELLED">{texts.cancelled}</SelectItem>
+                <SelectItem value="OVERDUE">{t.overdue}</SelectItem>
+                <SelectItem value="CANCELLED">{t.cancelled}</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -94,6 +94,7 @@ class SecurityConfig(
 
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/api/**", configuration)
+        source.registerCorsConfiguration("/error", configuration)
         return source
     }
 
@@ -109,6 +110,11 @@ class SecurityConfig(
                     response.contentType = "application/json"
                     response.writer.write("""{"status":401,"error":"Unauthorized","message":"Authentication required"}""")
                 })
+                exceptions.accessDeniedHandler { _, response, _ ->
+                    response.status = HttpServletResponse.SC_FORBIDDEN
+                    response.contentType = "application/json"
+                    response.writer.write("""{"status":403,"error":"Forbidden","message":"Access denied","messageAr":"تم رفض الوصول"}""")
+                }
             }
             .authorizeHttpRequests { auth ->
                 auth
@@ -138,6 +144,7 @@ class SecurityConfig(
                     .requestMatchers("/api/auth/tenant-info").permitAll()
                     .requestMatchers("/api/auth/csrf").permitAll()
                     .requestMatchers("/api/auth/mfa/verify-login").permitAll()
+                    .requestMatchers("/api/auth/select-account-type").permitAll()
 
                     // OAuth endpoints - public for SSO flow
                     .requestMatchers("/api/auth/oauth/providers").permitAll()

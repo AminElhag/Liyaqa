@@ -41,4 +41,9 @@ interface RetentionOfferRepository {
      * Get offer acceptance rate statistics.
      */
     fun getOfferAcceptanceStats(): Map<String, Any>
+
+    /**
+     * Get accepted offer counts grouped by offer type.
+     */
+    fun getAcceptedOfferTypeStats(): List<Array<Any>>
 }

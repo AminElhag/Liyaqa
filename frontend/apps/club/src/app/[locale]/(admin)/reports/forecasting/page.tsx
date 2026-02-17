@@ -294,7 +294,7 @@ export default function ForecastingDashboardPage() {
 
       {/* Quick Links */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Link href={`/${locale}/reports/forecasting/revenue`}>
+        <Link href={`/${locale}/reports/revenue`}>
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">

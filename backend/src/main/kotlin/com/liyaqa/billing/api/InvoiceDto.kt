@@ -6,11 +6,15 @@ import com.liyaqa.billing.application.commands.IssueInvoiceCommand
 import com.liyaqa.billing.application.commands.LineItemCommand
 import com.liyaqa.billing.application.commands.RecordPaymentCommand
 import com.liyaqa.billing.application.commands.UpdateInvoiceCommand
+import com.liyaqa.billing.application.services.CatalogItem
 import com.liyaqa.billing.domain.model.Invoice
 import com.liyaqa.billing.domain.model.InvoiceLineItem
 import com.liyaqa.billing.domain.model.InvoiceStatus
+import com.liyaqa.billing.domain.model.InvoiceTypeCode
 import com.liyaqa.billing.domain.model.LineItemType
+import com.liyaqa.billing.domain.model.Payment
 import com.liyaqa.billing.domain.model.PaymentMethod
+import com.liyaqa.billing.domain.model.VatCategoryCode
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.Money
 import jakarta.validation.Valid
@@ -20,6 +24,7 @@ import jakarta.validation.constraints.Positive
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 
 // Request DTOs
@@ -37,14 +42,17 @@ data class CreateInvoiceRequest(
     val vatRate: BigDecimal = BigDecimal("15.00"),
 
     val notesEn: String? = null,
-    val notesAr: String? = null
+    val notesAr: String? = null,
+
+    val invoiceTypeCode: InvoiceTypeCode = InvoiceTypeCode.SIMPLIFIED
 ) {
     fun toCommand() = CreateInvoiceCommand(
         memberId = memberId,
         subscriptionId = subscriptionId,
         lineItems = lineItems.map { it.toCommand() },
         vatRate = vatRate,
-        notes = if (notesEn != null || notesAr != null) LocalizedText(notesEn ?: "", notesAr) else null
+        notes = if (notesEn != null || notesAr != null) LocalizedText(notesEn ?: "", notesAr) else null,
+        invoiceTypeCode = invoiceTypeCode
     )
 }
 
@@ -63,13 +71,19 @@ data class LineItemRequest(
 
     val currency: String = "SAR",
 
-    val itemType: LineItemType = LineItemType.OTHER
+    val itemType: LineItemType = LineItemType.OTHER,
+
+    val taxRate: BigDecimal = BigDecimal("15.00"),
+
+    val vatCategoryCode: VatCategoryCode = VatCategoryCode.S
 ) {
     fun toCommand() = LineItemCommand(
         description = LocalizedText(descriptionEn, descriptionAr),
         quantity = quantity,
         unitPrice = Money.of(unitPrice, currency),
-        itemType = itemType
+        itemType = itemType,
+        taxRate = taxRate,
+        vatCategoryCode = vatCategoryCode
     )
 }
 
@@ -103,12 +117,15 @@ data class RecordPaymentRequest(
     @field:NotNull(message = "Payment method is required")
     val paymentMethod: PaymentMethod,
 
-    val paymentReference: String? = null
+    val paymentReference: String? = null,
+
+    val notes: String? = null
 ) {
     fun toCommand() = RecordPaymentCommand(
         amount = Money.of(amount, currency ?: "SAR"),  // Default applied here
         paymentMethod = paymentMethod,
-        reference = paymentReference
+        reference = paymentReference,
+        notes = notes
     )
 }
 
@@ -143,7 +160,9 @@ data class InvoiceResponse(
     val notes: LocalizedTextResponse?,
     val paymentMethod: PaymentMethod?,
     val paymentReference: String?,
+    val invoiceTypeCode: InvoiceTypeCode,
     val lineItems: List<LineItemResponse>,
+    val payments: List<PaymentResponse>,
     val createdAt: Instant,
     val updatedAt: Instant
 ) {
@@ -151,7 +170,8 @@ data class InvoiceResponse(
         fun from(
             invoice: Invoice,
             memberName: LocalizedTextResponse? = null,
-            memberEmail: String? = null
+            memberEmail: String? = null,
+            payments: List<Payment> = emptyList()
         ) = InvoiceResponse(
             id = invoice.id,
             invoiceNumber = invoice.invoiceNumber,
@@ -172,7 +192,9 @@ data class InvoiceResponse(
             notes = invoice.notes?.let { LocalizedTextResponse.from(it) },
             paymentMethod = invoice.paymentMethod,
             paymentReference = invoice.paymentReference,
+            invoiceTypeCode = invoice.invoiceTypeCode,
             lineItems = invoice.lineItems.map { LineItemResponse.from(it) },
+            payments = payments.map { PaymentResponse.from(it) },
             createdAt = invoice.createdAt,
             updatedAt = invoice.updatedAt
         )
@@ -185,7 +207,11 @@ data class LineItemResponse(
     val quantity: Int,
     val unitPrice: MoneyResponse,
     val lineTotal: MoneyResponse,
-    val itemType: LineItemType
+    val lineTaxAmount: MoneyResponse,
+    val lineGrossTotal: MoneyResponse,
+    val itemType: LineItemType,
+    val taxRate: BigDecimal,
+    val vatCategoryCode: VatCategoryCode
 ) {
     companion object {
         fun from(item: InvoiceLineItem) = LineItemResponse(
@@ -194,7 +220,59 @@ data class LineItemResponse(
             quantity = item.quantity,
             unitPrice = MoneyResponse.from(item.unitPrice),
             lineTotal = MoneyResponse.from(item.lineTotal()),
-            itemType = item.itemType
+            lineTaxAmount = MoneyResponse.from(item.lineTaxAmount()),
+            lineGrossTotal = MoneyResponse.from(item.lineGrossTotal()),
+            itemType = item.itemType,
+            taxRate = item.taxRate,
+            vatCategoryCode = item.vatCategoryCode
+        )
+    }
+}
+
+data class PaymentResponse(
+    val id: UUID,
+    val invoiceId: UUID,
+    val amount: MoneyResponse,
+    val paymentMethod: PaymentMethod,
+    val paymentReference: String?,
+    val notes: String?,
+    val paidAt: LocalDateTime,
+    val createdBy: UUID?,
+    val gatewayTransactionId: String?,
+    val createdAt: Instant
+) {
+    companion object {
+        fun from(payment: Payment) = PaymentResponse(
+            id = payment.id,
+            invoiceId = payment.invoiceId,
+            amount = MoneyResponse.from(payment.amount),
+            paymentMethod = payment.paymentMethod,
+            paymentReference = payment.paymentReference,
+            notes = payment.notes,
+            paidAt = payment.paidAt,
+            createdBy = payment.createdBy,
+            gatewayTransactionId = payment.gatewayTransactionId,
+            createdAt = payment.createdAt
+        )
+    }
+}
+
+data class CatalogItemResponse(
+    val id: UUID,
+    val name: LocalizedTextResponse,
+    val price: MoneyResponse,
+    val taxRate: BigDecimal,
+    val itemType: LineItemType,
+    val description: LocalizedTextResponse?
+) {
+    companion object {
+        fun from(item: CatalogItem) = CatalogItemResponse(
+            id = item.id,
+            name = LocalizedTextResponse.from(item.name),
+            price = MoneyResponse.from(item.price),
+            taxRate = item.taxRate,
+            itemType = item.itemType,
+            description = item.description?.let { LocalizedTextResponse.from(it) }
         )
     }
 }
@@ -235,7 +313,9 @@ data class InvoicePageResponse(
 
 data class InvoiceSummaryResponse(
     val totalInvoices: Long,
+    val draftCount: Long,
     val pendingCount: Long,
     val overdueCount: Long,
-    val paidCount: Long
+    val paidCount: Long,
+    val partiallyPaidCount: Long
 )

@@ -11,6 +11,7 @@ import {
 } from "@liyaqa/shared/components/platform/subscription-form";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import { useCreateClientSubscription } from "@liyaqa/shared/queries/platform/use-client-subscriptions";
+import { parseApiError, getLocalizedErrorMessage } from "@liyaqa/shared/lib/api";
 import type { CreateClientSubscriptionRequest } from "@liyaqa/shared/types/platform/client-subscription";
 
 export default function NewClientSubscriptionPage() {
@@ -34,7 +35,7 @@ export default function NewClientSubscriptionPage() {
     errorTitle: locale === "ar" ? "خطأ" : "Error",
   };
 
-  const handleSubmit = (data: SubscriptionFormValues) => {
+  const handleSubmit = async (data: SubscriptionFormValues) => {
     const request: CreateClientSubscriptionRequest = {
       organizationId: data.organizationId,
       clientPlanId: data.clientPlanId,
@@ -52,22 +53,21 @@ export default function NewClientSubscriptionPage() {
       notesAr: data.notesAr || undefined,
     };
 
-    createSubscription.mutate(request, {
-      onSuccess: (subscription) => {
-        toast({
-          title: texts.successTitle,
-          description: texts.successDesc,
-        });
-        router.push(`/${locale}/client-subscriptions/${subscription.id}`);
-      },
-      onError: (error) => {
-        toast({
-          title: texts.errorTitle,
-          description: error.message,
-          variant: "destructive",
-        });
-      },
-    });
+    try {
+      const subscription = await createSubscription.mutateAsync(request);
+      toast({
+        title: texts.successTitle,
+        description: texts.successDesc,
+      });
+      router.push(`/${locale}/client-subscriptions/${subscription.id}`);
+    } catch (err) {
+      const apiError = await parseApiError(err);
+      toast({
+        title: texts.errorTitle,
+        description: getLocalizedErrorMessage(apiError, locale),
+        variant: "destructive",
+      });
+    }
   };
 
   return (

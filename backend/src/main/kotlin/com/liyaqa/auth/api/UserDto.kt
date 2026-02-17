@@ -63,3 +63,9 @@ data class LinkMemberRequest(
     @field:NotNull(message = "Member ID is required")
     val memberId: UUID
 )
+
+data class AdminResetPasswordRequest(
+    @field:NotBlank(message = "New password is required")
+    @field:Size(min = 8, message = "Password must be at least 8 characters")
+    val newPassword: String
+)

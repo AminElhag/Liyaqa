@@ -52,6 +52,8 @@ export const facilityKeys = {
   detail: (id: UUID) => [...facilityKeys.details(), id] as const,
   slots: (facilityId: UUID, params?: SlotQueryParams) =>
     [...facilityKeys.all, "slots", facilityId, params] as const,
+  slotsPrefix: (facilityId: UUID) =>
+    [...facilityKeys.all, "slots", facilityId] as const,
   bookings: () => [...facilityKeys.all, "bookings"] as const,
   facilityBookings: (facilityId: UUID, params?: BookingQueryParams) =>
     [...facilityKeys.bookings(), "facility", facilityId, params] as const,
@@ -182,7 +184,7 @@ export function useGenerateSlots() {
     }) => generateSlots(facilityId, data),
     onSuccess: (_, { facilityId }) => {
       queryClient.invalidateQueries({
-        queryKey: facilityKeys.slots(facilityId),
+        queryKey: facilityKeys.slotsPrefix(facilityId),
       });
     },
   });
@@ -241,7 +243,7 @@ export function useCreateBooking() {
     }) => createBooking(facilityId, data),
     onSuccess: (_, { facilityId }) => {
       queryClient.invalidateQueries({
-        queryKey: facilityKeys.slots(facilityId),
+        queryKey: facilityKeys.slotsPrefix(facilityId),
       });
       queryClient.invalidateQueries({
         queryKey: facilityKeys.facilityBookings(facilityId),
@@ -294,7 +296,7 @@ export function useCancelBooking() {
       );
       queryClient.invalidateQueries({ queryKey: facilityKeys.bookings() });
       queryClient.invalidateQueries({
-        queryKey: facilityKeys.slots(updatedBooking.facilityId),
+        queryKey: facilityKeys.slotsPrefix(updatedBooking.facilityId),
       });
     },
   });

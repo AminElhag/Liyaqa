@@ -285,6 +285,8 @@ class GlobalExceptionHandler {
             message.contains("activate from PENDING") -> "يمكن التفعيل فقط من حالة الانتظار"
             message.contains("Invoice already paid") -> "الفاتورة مدفوعة بالفعل"
             message.contains("Invoice must be issued") -> "يجب إصدار الفاتورة أولاً"
+            message.contains("Trainer scheduling conflict") -> "تعارض في جدول المدرب: المدرب لديه جلسة أخرى في نفس الوقت"
+            message.contains("Location scheduling conflict") -> "تعارض في جدول الموقع: الموقع مشغول بجلسة أخرى في نفس الوقت"
             else -> "العملية غير مسموح بها في الحالة الحالية"
         }
     }

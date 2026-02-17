@@ -2,6 +2,7 @@ package com.liyaqa.scheduling.infrastructure.persistence
 
 import com.liyaqa.scheduling.domain.model.ClassPack
 import com.liyaqa.scheduling.domain.model.ClassPackStatus
+import com.liyaqa.scheduling.domain.model.ServiceType
 import com.liyaqa.scheduling.domain.ports.ClassPackRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -12,6 +13,8 @@ import java.util.UUID
 
 interface SpringDataClassPackRepository : JpaRepository<ClassPack, UUID> {
     fun findByStatus(status: ClassPackStatus, pageable: Pageable): Page<ClassPack>
+    fun findByServiceType(serviceType: ServiceType, pageable: Pageable): Page<ClassPack>
+    fun findByStatusAndServiceType(status: ClassPackStatus, serviceType: ServiceType, pageable: Pageable): Page<ClassPack>
     fun findByStatusOrderBySortOrderAsc(status: ClassPackStatus): List<ClassPack>
     fun findAllByOrderBySortOrderAsc(): List<ClassPack>
     fun countByStatus(status: ClassPackStatus): Long
@@ -33,6 +36,12 @@ class JpaClassPackRepository(
 
     override fun findByStatus(status: ClassPackStatus, pageable: Pageable): Page<ClassPack> =
         springDataRepository.findByStatus(status, pageable)
+
+    override fun findByServiceType(serviceType: ServiceType, pageable: Pageable): Page<ClassPack> =
+        springDataRepository.findByServiceType(serviceType, pageable)
+
+    override fun findByStatusAndServiceType(status: ClassPackStatus, serviceType: ServiceType, pageable: Pageable): Page<ClassPack> =
+        springDataRepository.findByStatusAndServiceType(status, serviceType, pageable)
 
     override fun findByStatusOrderBySortOrder(status: ClassPackStatus): List<ClassPack> =
         springDataRepository.findByStatusOrderBySortOrderAsc(status)

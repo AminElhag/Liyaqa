@@ -71,7 +71,7 @@ class Facility(
     @Column(name = "status", nullable = false, length = 20)
     var status: FacilityStatus = FacilityStatus.ACTIVE,
 
-    @OneToMany(mappedBy = "facility", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OneToMany(mappedBy = "facility", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
     val operatingHours: MutableList<FacilityOperatingHours> = mutableListOf()
 ) : BaseEntity(id) {
 

@@ -3,7 +3,7 @@
 import { useLocale } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@liyaqa/shared/components/ui/card";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
-import { Server, Activity, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { Server, Activity, AlertCircle, CheckCircle, Clock, Dumbbell, BarChart3, TrendingUp, TrendingDown } from "lucide-react";
 import {
   useSystemHealth,
   useScheduledJobs,
@@ -32,6 +32,14 @@ export default function MonitoringPage() {
     running: locale === "ar" ? "قيد التشغيل" : "Running",
     idle: locale === "ar" ? "خامل" : "Idle",
     lastRun: locale === "ar" ? "آخر تشغيل" : "Last Run",
+    gxMetrics: locale === "ar" ? "مقاييس التمارين الجماعية" : "Group Exercise Metrics",
+    gxOverview: locale === "ar" ? "نظرة عامة على التمارين الجماعية" : "GX Overview",
+    totalClassesOffered: locale === "ar" ? "إجمالي الحصص المقدمة" : "Total Classes Offered",
+    avgBookingRate: locale === "ar" ? "متوسط معدل الحجز" : "Avg Booking Rate",
+    noShowRate: locale === "ar" ? "معدل عدم الحضور" : "No-Show Rate",
+    activeClassPacks: locale === "ar" ? "حزم الحصص النشطة" : "Active Class Packs",
+    topClassCategories: locale === "ar" ? "أعلى فئات الحصص" : "Top Class Categories",
+    classes: locale === "ar" ? "حصة" : "classes",
   };
 
   const kpiItems: KPIItem[] = [];
@@ -47,6 +55,24 @@ export default function MonitoringPage() {
   if (errors) {
     kpiItems.push({ label: texts.errors24h, value: errors.last24Hours.total, trend: errors.last24Hours.total > 0 ? "down" : "up", icon: AlertCircle });
   }
+
+  // Mock GX metrics data (placeholder until API is available)
+  const gxOverviewData = {
+    totalClassesOffered: 1248,
+    avgBookingRate: 73.5,
+    noShowRate: 8.2,
+    activeClassPacks: 342,
+  };
+
+  const gxTopCategories = [
+    { name: locale === "ar" ? "يوغا" : "YOGA", count: 312, percentage: 100 },
+    { name: locale === "ar" ? "تمارين عالية الكثافة" : "HIIT", count: 276, percentage: 88 },
+    { name: locale === "ar" ? "سبينينغ" : "SPINNING", count: 198, percentage: 63 },
+    { name: locale === "ar" ? "بيلاتس" : "PILATES", count: 164, percentage: 53 },
+    { name: locale === "ar" ? "كروس فت" : "CROSSFIT", count: 148, percentage: 47 },
+    { name: locale === "ar" ? "ملاكمة" : "BOXING", count: 96, percentage: 31 },
+    { name: locale === "ar" ? "زومبا" : "ZUMBA", count: 54, percentage: 17 },
+  ];
 
   if (isLoadingHealth || isLoadingJobs || isLoadingErrors) {
     return (
@@ -146,6 +172,88 @@ export default function MonitoringPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Group Exercise Metrics Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Dumbbell className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-semibold">{texts.gxMetrics}</h2>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              {texts.gxOverview}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-lg border p-4 space-y-1">
+                <p className="text-sm text-muted-foreground">{texts.totalClassesOffered}</p>
+                <p className="text-2xl font-bold">{gxOverviewData.totalClassesOffered.toLocaleString(locale)}</p>
+                <div className="flex items-center gap-1 text-xs text-green-600">
+                  <TrendingUp className="h-3 w-3" />
+                  <span>+12%</span>
+                </div>
+              </div>
+              <div className="rounded-lg border p-4 space-y-1">
+                <p className="text-sm text-muted-foreground">{texts.avgBookingRate}</p>
+                <p className="text-2xl font-bold">{gxOverviewData.avgBookingRate}%</p>
+                <div className="flex items-center gap-1 text-xs text-green-600">
+                  <TrendingUp className="h-3 w-3" />
+                  <span>+3.2%</span>
+                </div>
+              </div>
+              <div className="rounded-lg border p-4 space-y-1">
+                <p className="text-sm text-muted-foreground">{texts.noShowRate}</p>
+                <p className="text-2xl font-bold">{gxOverviewData.noShowRate}%</p>
+                <div className="flex items-center gap-1 text-xs text-destructive">
+                  <TrendingDown className="h-3 w-3" />
+                  <span>+1.1%</span>
+                </div>
+              </div>
+              <div className="rounded-lg border p-4 space-y-1">
+                <p className="text-sm text-muted-foreground">{texts.activeClassPacks}</p>
+                <p className="text-2xl font-bold">{gxOverviewData.activeClassPacks.toLocaleString(locale)}</p>
+                <div className="flex items-center gap-1 text-xs text-green-600">
+                  <TrendingUp className="h-3 w-3" />
+                  <span>+8%</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              {texts.topClassCategories}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {gxTopCategories.map((category) => (
+                <div key={category.name} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{category.name}</span>
+                    <span className="text-muted-foreground">
+                      {category.count} {texts.classes}
+                    </span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-muted">
+                    <div
+                      className="h-2 rounded-full bg-primary transition-all"
+                      style={{ width: `${category.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

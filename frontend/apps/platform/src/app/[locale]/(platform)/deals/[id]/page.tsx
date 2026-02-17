@@ -33,10 +33,10 @@ import { DealStatusBadge } from "@liyaqa/shared/components/platform/deal-status-
 import { LoseDealDialog } from "@liyaqa/shared/components/platform/lose-deal-dialog";
 import {
   useDeal,
-  useAdvanceDeal,
   useQualifyDeal,
   useSendProposal,
   useStartNegotiation,
+  useChangeDealStage,
   useLoseDeal,
   useReopenDeal,
   useDeleteDeal,
@@ -60,10 +60,10 @@ export default function DealDetailPage() {
   const { data: deal, isLoading, error } = useDeal(dealId);
 
   // Mutations
-  const advanceDeal = useAdvanceDeal();
   const qualifyDeal = useQualifyDeal();
   const sendProposal = useSendProposal();
   const startNegotiation = useStartNegotiation();
+  const changeDealStage = useChangeDealStage();
   const loseDeal = useLoseDeal();
   const reopenDeal = useReopenDeal();
   const deleteDeal = useDeleteDeal();
@@ -72,12 +72,14 @@ export default function DealDetailPage() {
     back: locale === "ar" ? "العودة إلى الصفقات" : "Back to Deals",
     edit: locale === "ar" ? "تعديل" : "Edit",
     delete: locale === "ar" ? "حذف" : "Delete",
-    advance: locale === "ar" ? "تقدم للمرحلة التالية" : "Advance to Next Stage",
     qualify: locale === "ar" ? "تأهيل" : "Qualify",
     sendProposal: locale === "ar" ? "إرسال عرض" : "Send Proposal",
+    scheduleDemo: locale === "ar" ? "جدولة عرض" : "Schedule Demo",
+    completeDemo: locale === "ar" ? "إكمال العرض" : "Complete Demo",
     startNegotiation: locale === "ar" ? "بدء التفاوض" : "Start Negotiation",
     convert: locale === "ar" ? "تحويل إلى عميل" : "Convert to Client",
     lose: locale === "ar" ? "تسجيل خسارة" : "Mark as Lost",
+    markAsChurned: locale === "ar" ? "تسجيل انسحاب" : "Mark as Churned",
     reopen: locale === "ar" ? "إعادة فتح" : "Reopen",
     contactInfo: locale === "ar" ? "معلومات الاتصال" : "Contact Information",
     dealDetails: locale === "ar" ? "تفاصيل الصفقة" : "Deal Details",
@@ -107,10 +109,9 @@ export default function DealDetailPage() {
   const SOURCE_LABELS: Record<string, { en: string; ar: string }> = {
     WEBSITE: { en: "Website", ar: "الموقع" },
     REFERRAL: { en: "Referral", ar: "إحالة" },
-    COLD_CALL: { en: "Cold Call", ar: "اتصال بارد" },
-    MARKETING_CAMPAIGN: { en: "Marketing Campaign", ar: "حملة تسويقية" },
-    EVENT: { en: "Event", ar: "حدث" },
-    PARTNER: { en: "Partner", ar: "شريك" },
+    COLD_OUTREACH: { en: "Cold Outreach", ar: "تواصل بارد" },
+    SOCIAL_MEDIA: { en: "Social Media", ar: "وسائل التواصل" },
+    PARTNERSHIP: { en: "Partnership", ar: "شراكة" },
     OTHER: { en: "Other", ar: "أخرى" },
   };
 
@@ -213,6 +214,24 @@ export default function DealDetailPage() {
                   {texts.qualify}
                 </Button>
               )}
+              {deal.status === "CONTACTED" && (
+                <>
+                  <Button onClick={() => changeDealStage.mutate({ id: dealId, stage: "DEMO_SCHEDULED" })}>
+                    <ArrowRight className="me-2 h-4 w-4" />
+                    {texts.scheduleDemo}
+                  </Button>
+                  <Button onClick={() => sendProposal.mutate(dealId)}>
+                    <ArrowRight className="me-2 h-4 w-4" />
+                    {texts.sendProposal}
+                  </Button>
+                </>
+              )}
+              {deal.status === "DEMO_SCHEDULED" && (
+                <Button onClick={() => changeDealStage.mutate({ id: dealId, stage: "DEMO_DONE" })}>
+                  <ArrowRight className="me-2 h-4 w-4" />
+                  {texts.completeDemo}
+                </Button>
+              )}
               {deal.status === "DEMO_DONE" && (
                 <Button onClick={() => sendProposal.mutate(dealId)}>
                   <ArrowRight className="me-2 h-4 w-4" />
@@ -242,7 +261,16 @@ export default function DealDetailPage() {
                   {texts.lose}
                 </Button>
               )}
-              {deal.status === "LOST" && (
+              {deal.status === "WON" && (
+                <Button
+                  variant="destructive"
+                  onClick={() => changeDealStage.mutate({ id: dealId, stage: "CHURNED" })}
+                >
+                  <XCircle className="me-2 h-4 w-4" />
+                  {texts.markAsChurned}
+                </Button>
+              )}
+              {(deal.status === "LOST" || deal.status === "CHURNED") && (
                 <Button onClick={() => reopenDeal.mutate(dealId)}>
                   <RotateCcw className="me-2 h-4 w-4" />
                   {texts.reopen}

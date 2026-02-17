@@ -443,8 +443,8 @@ export interface ContractPricingTier {
   planName: string;
   contractTerm: ContractTerm;
   discountPercentage: number;
-  overrideMonthlyFee?: number;
-  overrideCurrency?: string;
+  overrideMonthlyFeeAmount?: number;
+  overrideMonthlyFeeCurrency?: string;
   isActive: boolean;
   createdAt: string;
 }
@@ -453,7 +453,7 @@ export interface CreatePricingTierRequest {
   planId: UUID;
   contractTerm: ContractTerm;
   discountPercentage?: number;
-  overrideMonthlyFee?: number;
+  overrideMonthlyFeeAmount?: number;
 }
 
 // ==========================================

@@ -119,3 +119,73 @@ export async function renewSubscription(
 export async function getSubscriptionStats(): Promise<SubscriptionStats> {
   return api.get(`${BASE_URL}/stats`).json<SubscriptionStats>();
 }
+
+// Tenant-level subscription endpoints (v1)
+const TENANT_SUB_URL = "api/v1/platform/subscriptions";
+
+/**
+ * Subscribe a tenant to a plan
+ */
+export async function subscribeTenant(data: {
+  tenantId: string;
+  planId: string;
+  billingCycle?: string;
+}): Promise<ClientSubscription> {
+  return api.post(`${TENANT_SUB_URL}/subscribe`, { json: data }).json<ClientSubscription>();
+}
+
+/**
+ * Get tenant subscription
+ */
+export async function getTenantSubscription(tenantId: string): Promise<ClientSubscription> {
+  return api.get(`${TENANT_SUB_URL}/tenant/${tenantId}`).json<ClientSubscription>();
+}
+
+/**
+ * Change tenant plan
+ */
+export async function changeTenantPlan(
+  tenantId: string,
+  data: { newPlanId: string }
+): Promise<ClientSubscription> {
+  return api
+    .post(`${TENANT_SUB_URL}/tenant/${tenantId}/change-plan`, { json: data })
+    .json<ClientSubscription>();
+}
+
+/**
+ * Cancel tenant subscription
+ */
+export async function cancelTenantSubscription(tenantId: string): Promise<void> {
+  await api.post(`${TENANT_SUB_URL}/tenant/${tenantId}/cancel`);
+}
+
+/**
+ * Renew tenant subscription
+ */
+export async function renewTenantSubscription(
+  tenantId: string,
+  data?: { newEndDate?: string }
+): Promise<ClientSubscription> {
+  return api
+    .post(`${TENANT_SUB_URL}/tenant/${tenantId}/renew`, { json: data || {} })
+    .json<ClientSubscription>();
+}
+
+/**
+ * Get tenant invoices
+ */
+export async function getTenantInvoices(tenantId: string): Promise<unknown[]> {
+  return api.get(`${TENANT_SUB_URL}/tenant/${tenantId}/invoices`).json<unknown[]>();
+}
+
+/**
+ * Get expiring subscriptions
+ */
+export async function getExpiringSubscriptions(
+  days: number = 30
+): Promise<ClientSubscriptionSummary[]> {
+  return api
+    .get(`${TENANT_SUB_URL}/expiring`, { searchParams: { days: String(days) } })
+    .json<ClientSubscriptionSummary[]>();
+}

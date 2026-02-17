@@ -51,6 +51,78 @@ export async function processDataRequest(id: string, action: "approve" | "reject
   return api.put(`${BASE_URL}/data-requests/${id}/approve`).json<DataRequest>();
 }
 
+/**
+ * Get single contract by ID
+ */
+export async function getContractById(id: string): Promise<ComplianceContract> {
+  return api.get(`${BASE_URL}/contracts/${id}`).json<ComplianceContract>();
+}
+
+/**
+ * Create a new contract
+ */
+export async function createContract(data: {
+  tenantId: string;
+  type: string;
+  startDate: string;
+  endDate: string;
+  autoRenew?: boolean;
+  value?: number;
+  currency?: string;
+}): Promise<ComplianceContract> {
+  return api.post(`${BASE_URL}/contracts`, { json: data }).json<ComplianceContract>();
+}
+
+/**
+ * Update a contract
+ */
+export async function updateContract(
+  id: string,
+  data: {
+    type?: string;
+    startDate?: string;
+    endDate?: string;
+    autoRenew?: boolean;
+    value?: number;
+    currency?: string;
+  }
+): Promise<ComplianceContract> {
+  return api.put(`${BASE_URL}/contracts/${id}`, { json: data }).json<ComplianceContract>();
+}
+
+/**
+ * Delete a contract
+ */
+export async function deleteContract(id: string): Promise<void> {
+  await api.delete(`${BASE_URL}/contracts/${id}`);
+}
+
+/**
+ * Get expiring contracts
+ */
+export async function getExpiringContracts(days: number = 30): Promise<ComplianceContract[]> {
+  return api
+    .get(`${BASE_URL}/contracts/expiring`, { searchParams: { days: String(days) } })
+    .json<ComplianceContract[]>();
+}
+
+/**
+ * Renew a contract
+ */
+export async function renewContract(
+  id: string,
+  data: { newEndDate: string; newValue?: number }
+): Promise<ComplianceContract> {
+  return api.post(`${BASE_URL}/contracts/${id}/renew`, { json: data }).json<ComplianceContract>();
+}
+
+/**
+ * Get single data request by ID
+ */
+export async function getDataRequestById(id: string): Promise<DataRequest> {
+  return api.get(`${BASE_URL}/data-requests/${id}`).json<DataRequest>();
+}
+
 export type {
   ComplianceContract, ZatcaOverview, ZatcaIssue, ZatcaMonthlyPoint, DataRequest,
 };

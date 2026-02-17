@@ -12,10 +12,12 @@ import {
   Shield,
   UserCog,
   Headset,
+  Mail,
 } from "lucide-react";
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@liyaqa/shared/components/ui/card";
 import { Input } from "@liyaqa/shared/components/ui/input";
+import { Label } from "@liyaqa/shared/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -23,6 +25,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@liyaqa/shared/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@liyaqa/shared/components/ui/dialog";
 import { DataTable } from "@liyaqa/shared/components/ui/data-table";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
 import { getPlatformUserColumns } from "@liyaqa/shared/components/platform/platform-user-columns";
@@ -33,12 +44,15 @@ import {
   usePlatformUserStats,
   useChangePlatformUserStatus,
   useResetPlatformUserPassword,
+  useInviteMember,
 } from "@liyaqa/shared/queries/platform/use-platform-users";
 import type {
   PlatformUserSummary,
   PlatformUserStatus,
   PlatformUserRole,
 } from "@liyaqa/shared/types/platform/platform-user";
+import type { PlatformRole } from "@liyaqa/shared/types/platform/team";
+import { PLATFORM_ROLE_CONFIG } from "@liyaqa/shared/types/platform/team";
 
 type StatusFilter = "ALL" | PlatformUserStatus;
 type RoleFilter = "ALL" | PlatformUserRole;
@@ -55,6 +69,11 @@ export default function PlatformUsersPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<PlatformRole>("SUPPORT_AGENT");
+  const [inviteNameEn, setInviteNameEn] = useState("");
+  const [inviteNameAr, setInviteNameAr] = useState("");
 
   // Permissions - only PLATFORM_ADMIN can edit
   const canEdit = currentUser?.role === "PLATFORM_ADMIN";
@@ -75,6 +94,7 @@ export default function PlatformUsersPage() {
   const { data: stats } = usePlatformUserStats();
   const changeStatus = useChangePlatformUserStatus();
   const resetPassword = useResetPlatformUserPassword();
+  const inviteMutation = useInviteMember();
 
   // Bilingual texts
   const texts = {
@@ -118,6 +138,20 @@ export default function PlatformUsersPage() {
     platformAdmin: locale === "ar" ? "مدير المنصة" : "Platform Admin",
     salesRep: locale === "ar" ? "مندوب مبيعات" : "Sales Rep",
     supportRep: locale === "ar" ? "مندوب دعم" : "Support Rep",
+    inviteMember: locale === "ar" ? "دعوة عضو" : "Invite Member",
+    inviteTitle: locale === "ar" ? "دعوة عضو جديد" : "Invite New Member",
+    inviteDescription:
+      locale === "ar"
+        ? "سيتم إرسال دعوة عبر البريد الإلكتروني للانضمام للمنصة"
+        : "An invitation email will be sent to join the platform",
+    email: locale === "ar" ? "البريد الإلكتروني" : "Email",
+    role: locale === "ar" ? "الدور" : "Role",
+    nameEn: locale === "ar" ? "الاسم (إنجليزي)" : "Name (English)",
+    nameAr: locale === "ar" ? "الاسم (عربي)" : "Name (Arabic)",
+    sendInvite: locale === "ar" ? "إرسال الدعوة" : "Send Invite",
+    sending: locale === "ar" ? "جاري الإرسال..." : "Sending...",
+    inviteSuccess:
+      locale === "ar" ? "تم إرسال الدعوة بنجاح" : "Invitation sent successfully",
   };
 
   // Handlers
@@ -196,6 +230,38 @@ export default function PlatformUsersPage() {
     );
   };
 
+  const handleInvite = () => {
+    if (!inviteEmail) return;
+    inviteMutation.mutate(
+      {
+        email: inviteEmail,
+        role: inviteRole,
+        displayNameEn: inviteNameEn || undefined,
+        displayNameAr: inviteNameAr || undefined,
+      },
+      {
+        onSuccess: () => {
+          toast({
+            title: texts.successTitle,
+            description: texts.inviteSuccess,
+          });
+          setInviteOpen(false);
+          setInviteEmail("");
+          setInviteRole("SUPPORT_AGENT");
+          setInviteNameEn("");
+          setInviteNameAr("");
+        },
+        onError: (error) => {
+          toast({
+            title: texts.errorTitle,
+            description: error.message,
+            variant: "destructive",
+          });
+        },
+      }
+    );
+  };
+
   // Columns
   const columns = useMemo(
     () =>
@@ -234,12 +300,86 @@ export default function PlatformUsersPage() {
           <p className="text-muted-foreground">{texts.description}</p>
         </div>
         {canEdit && (
-          <Button asChild>
-            <Link href={`/${locale}/platform-users/new`}>
-              <Plus className="me-2 h-4 w-4" />
-              {texts.newUser}
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Mail className="me-2 h-4 w-4" />
+                  {texts.inviteMember}
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{texts.inviteTitle}</DialogTitle>
+                  <DialogDescription>{texts.inviteDescription}</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="invite-email">{texts.email}</Label>
+                    <Input
+                      id="invite-email"
+                      type="email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="user@example.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="invite-role">{texts.role}</Label>
+                    <Select
+                      value={inviteRole}
+                      onValueChange={(v) => setInviteRole(v as PlatformRole)}
+                    >
+                      <SelectTrigger id="invite-role">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(PLATFORM_ROLE_CONFIG).map(([key, config]) => (
+                          <SelectItem key={key} value={key}>
+                            {locale === "ar" ? config.labelAr : config.labelEn}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="invite-name-en">{texts.nameEn}</Label>
+                      <Input
+                        id="invite-name-en"
+                        value={inviteNameEn}
+                        onChange={(e) => setInviteNameEn(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="invite-name-ar">{texts.nameAr}</Label>
+                      <Input
+                        id="invite-name-ar"
+                        value={inviteNameAr}
+                        onChange={(e) => setInviteNameAr(e.target.value)}
+                        dir="rtl"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    onClick={handleInvite}
+                    disabled={!inviteEmail || inviteMutation.isPending}
+                  >
+                    <Mail className="me-2 h-4 w-4" />
+                    {inviteMutation.isPending ? texts.sending : texts.sendInvite}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            <Button asChild>
+              <Link href={`/${locale}/platform-users/new`}>
+                <Plus className="me-2 h-4 w-4" />
+                {texts.newUser}
+              </Link>
+            </Button>
+          </div>
         )}
       </div>
 

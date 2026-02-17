@@ -10,6 +10,7 @@ import {
   type LocationFormData,
 } from "@/components/forms/location-form";
 import { useCreateLocation } from "@liyaqa/shared/queries/use-locations";
+import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 
 export default function NewLocationPage() {
@@ -18,7 +19,8 @@ export default function NewLocationPage() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
-  const clubId = searchParams.get("clubId") || undefined;
+  const { user } = useAuthStore();
+  const clubId = searchParams.get("clubId") || user?.tenantId || undefined;
   const createLocation = useCreateLocation();
 
   const handleSubmit = async (data: LocationFormData) => {

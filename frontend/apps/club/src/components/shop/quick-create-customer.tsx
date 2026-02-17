@@ -243,7 +243,7 @@ export function QuickCreateCustomer({
       <div className="grid grid-cols-2 gap-4">
         {/* Gender */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium text-neutral-600">
+          <Label className="text-sm font-medium text-muted-foreground">
             {texts.gender}
           </Label>
           <Select
@@ -268,7 +268,7 @@ export function QuickCreateCustomer({
 
         {/* Date of Birth */}
         <div className="space-y-2">
-          <Label htmlFor="dateOfBirth" className="text-sm font-medium text-neutral-600">
+          <Label htmlFor="dateOfBirth" className="text-sm font-medium text-muted-foreground">
             {texts.dateOfBirth}
           </Label>
           <Input
@@ -281,7 +281,7 @@ export function QuickCreateCustomer({
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 pt-4 border-t border-neutral-100">
+      <div className="flex gap-3 pt-4 border-t border-border">
         <Button
           type="button"
           variant="outline"
@@ -293,7 +293,7 @@ export function QuickCreateCustomer({
         </Button>
         <Button
           type="submit"
-          className="flex-1 h-11 bg-teal-600 hover:bg-teal-700"
+          className="flex-1 h-11 bg-primary hover:bg-[#E85D3A]"
           disabled={isSubmitting}
         >
           {isSubmitting ? (

@@ -1,5 +1,6 @@
 package com.liyaqa.membership.api
 
+import com.liyaqa.auth.domain.ports.UserRepository
 import com.liyaqa.membership.application.commands.CreateMemberCommand
 import com.liyaqa.membership.application.commands.HealthInfoCommand
 import com.liyaqa.membership.application.commands.UpdateMemberCommand
@@ -20,6 +21,8 @@ import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -36,7 +39,8 @@ import java.util.UUID
 @RequestMapping("/api/members")
 @Tag(name = "Members", description = "Member management - create, update, and search gym members")
 class MemberController(
-    private val memberService: MemberService
+    private val memberService: MemberService,
+    private val userRepository: UserRepository
 ) {
 
     @PostMapping
@@ -286,6 +290,23 @@ class MemberController(
     ): ResponseEntity<Map<String, String>> {
         memberService.resetMemberPassword(id, request.newPassword)
         return ResponseEntity.ok(mapOf("message" to "Password reset successfully"))
+    }
+
+    @PostMapping("/{id}/view")
+    @PreAuthorize("hasAnyAuthority('members_view', 'activities_view')")
+    @Operation(summary = "Log profile view", description = "Log that a staff member viewed this member's profile")
+    fun logProfileView(
+        @PathVariable id: UUID,
+        @AuthenticationPrincipal user: UserDetails?
+    ): ResponseEntity<Void> {
+        val staffUserId = user?.let {
+            try { UUID.fromString(it.username) } catch (_: Exception) { null }
+        }
+        val staffUser = staffUserId?.let { userRepository.findById(it).orElse(null) }
+        val staffName = staffUser?.displayName?.en
+
+        memberService.logProfileView(id, staffUserId, staffName)
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 
     // ==================== BULK OPERATIONS ====================

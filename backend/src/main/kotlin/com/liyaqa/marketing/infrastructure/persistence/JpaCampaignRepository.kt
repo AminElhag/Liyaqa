@@ -38,9 +38,9 @@ interface SpringDataCampaignRepository : JpaRepository<Campaign, UUID> {
 
     @Query("""
         SELECT c FROM Campaign c
-        WHERE (:search IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%')))
-        AND (:status IS NULL OR c.status = :status)
-        AND (:campaignType IS NULL OR c.campaignType = :campaignType)
+        WHERE (CAST(:search AS string) IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+        AND (CAST(:status AS string) IS NULL OR c.status = :status)
+        AND (CAST(:campaignType AS string) IS NULL OR c.campaignType = :campaignType)
     """)
     fun search(
         @Param("search") search: String?,

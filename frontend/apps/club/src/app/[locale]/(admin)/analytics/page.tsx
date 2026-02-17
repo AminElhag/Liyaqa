@@ -155,7 +155,7 @@ export default function AnalyticsPage() {
     {
       title: texts.churnAnalysis,
       description: texts.churnDesc,
-      href: "/reports/churn",
+      href: "/analytics/churn",
       icon: TrendingDown,
       color: "bg-red-500",
       badge: texts.aiPowered,

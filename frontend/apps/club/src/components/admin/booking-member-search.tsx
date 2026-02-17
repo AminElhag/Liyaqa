@@ -155,8 +155,15 @@ export function BookingMemberSearch({
         await onBookMember(member.id);
         toast({ title: t.memberAdded });
         // Don't close dialog - allow adding more members
-      } catch {
-        toast({ title: t.error, variant: "destructive" });
+      } catch (err: unknown) {
+        let errorMessage = t.error;
+        if (err && typeof err === "object" && "response" in err) {
+          try {
+            const body = await (err as { response: Response }).response.json();
+            errorMessage = (locale === "ar" ? body.messageAr : body.message) || errorMessage;
+          } catch { /* use default */ }
+        }
+        toast({ title: errorMessage, variant: "destructive" });
       } finally {
         setLoadingMemberId(null);
       }

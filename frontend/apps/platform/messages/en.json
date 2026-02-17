@@ -412,7 +412,11 @@
       "configuration": "Configuration",
       "apiKeys": "API Keys",
       "templates": "Templates",
-      "compliance": "Compliance"
+      "compliance": "Compliance",
+      "tenants": "Tenants",
+      "billing": "Billing",
+      "facilityMonitoring": "Facility Monitoring",
+      "impersonation": "Impersonation"
     },
     "dashboard": {
       "title": "Platform Dashboard",

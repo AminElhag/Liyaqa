@@ -40,11 +40,11 @@ class Trainer(
     id: UUID = UUID.randomUUID(),
 
     /**
-     * Link to the User account. Required - a trainer must have a user account.
-     * The user should have the TRAINER role.
+     * Link to the User account. Optional - a trainer may exist without a user account
+     * (e.g., external instructors who don't need portal access).
      */
-    @Column(name = "user_id", nullable = false)
-    var userId: UUID,
+    @Column(name = "user_id", nullable = true)
+    var userId: UUID? = null,
 
     // ========== Basic Info ==========
 
@@ -195,7 +195,46 @@ class Trainer(
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "preferred_client_gender", length = 20)
-    var preferredClientGender: Gender? = null
+    var preferredClientGender: Gender? = null,
+
+    // ========== PT-Specific Fields ==========
+
+    /**
+     * Whether this trainer offers home PT sessions.
+     */
+    @Column(name = "home_service_available", nullable = false)
+    var homeServiceAvailable: Boolean = false,
+
+    /**
+     * Travel fee surcharge for home PT sessions.
+     */
+    @Column(name = "travel_fee_amount", precision = 10, scale = 2)
+    var travelFeeAmount: BigDecimal? = null,
+
+    /**
+     * Currency for travel fee.
+     */
+    @Column(name = "travel_fee_currency", length = 3)
+    var travelFeeCurrency: String? = null,
+
+    /**
+     * Maximum travel distance in km for home PT.
+     */
+    @Column(name = "travel_radius_km")
+    var travelRadiusKm: Int? = null,
+
+    /**
+     * Maximum concurrent clients for semi-private sessions.
+     * Default 1 (1-on-1), up to 4 for semi-private.
+     */
+    @Column(name = "max_concurrent_clients", nullable = false)
+    var maxConcurrentClients: Int = 1,
+
+    /**
+     * Average rating (0-5 scale).
+     */
+    @Column(name = "rating", precision = 3, scale = 2)
+    var rating: BigDecimal? = null
 
 ) : OrganizationAwareEntity(id) {
 
@@ -317,7 +356,7 @@ class Trainer(
 
     companion object {
         fun create(
-            userId: UUID,
+            userId: UUID? = null,
             organizationId: UUID,
             tenantId: UUID,
             employmentType: TrainerEmploymentType = TrainerEmploymentType.INDEPENDENT_CONTRACTOR,

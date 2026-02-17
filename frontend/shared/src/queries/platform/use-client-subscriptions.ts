@@ -18,6 +18,12 @@ import {
   changeSubscriptionPlan,
   renewSubscription,
   getSubscriptionStats,
+  subscribeTenant,
+  getTenantSubscription,
+  changeTenantPlan,
+  cancelTenantSubscription,
+  renewTenantSubscription,
+  getExpiringSubscriptions,
 } from "../../lib/api/platform/client-subscriptions";
 import type { PageResponse, UUID } from "../../types/api";
 import type {
@@ -42,6 +48,10 @@ export const clientSubscriptionKeys = {
   details: () => [...clientSubscriptionKeys.all, "detail"] as const,
   detail: (id: UUID) => [...clientSubscriptionKeys.details(), id] as const,
   stats: () => [...clientSubscriptionKeys.all, "stats"] as const,
+  tenantSubscription: (tenantId: string) =>
+    [...clientSubscriptionKeys.all, "tenant", tenantId] as const,
+  expiring: (days: number) =>
+    [...clientSubscriptionKeys.all, "expiring", days] as const,
 };
 
 /**
@@ -246,5 +256,108 @@ export function useRenewSubscription() {
       queryClient.invalidateQueries({ queryKey: clientSubscriptionKeys.lists() });
       queryClient.invalidateQueries({ queryKey: clientSubscriptionKeys.stats() });
     },
+  });
+}
+
+// Tenant-level subscription hooks
+
+/**
+ * Hook to get a tenant's subscription
+ */
+export function useTenantSubscription(
+  tenantId: string,
+  options?: Omit<UseQueryOptions<ClientSubscription>, "queryKey" | "queryFn">
+) {
+  return useQuery({
+    queryKey: clientSubscriptionKeys.tenantSubscription(tenantId),
+    queryFn: () => getTenantSubscription(tenantId),
+    enabled: !!tenantId,
+    ...options,
+  });
+}
+
+/**
+ * Hook to subscribe a tenant to a plan
+ */
+export function useSubscribeTenant() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { tenantId: string; planId: string; billingCycle?: string }) =>
+      subscribeTenant(data),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: clientSubscriptionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: clientSubscriptionKeys.stats() });
+    },
+  });
+}
+
+/**
+ * Hook to change a tenant's plan
+ */
+export function useChangeTenantPlan() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ tenantId, newPlanId }: { tenantId: string; newPlanId: string }) =>
+      changeTenantPlan(tenantId, { newPlanId }),
+    onSuccess: (result, { tenantId }) => {
+      queryClient.invalidateQueries({
+        queryKey: clientSubscriptionKeys.tenantSubscription(tenantId),
+      });
+      queryClient.invalidateQueries({ queryKey: clientSubscriptionKeys.lists() });
+    },
+  });
+}
+
+/**
+ * Hook to cancel a tenant's subscription
+ */
+export function useCancelTenantSubscription() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (tenantId: string) => cancelTenantSubscription(tenantId),
+    onSuccess: (_, tenantId) => {
+      queryClient.invalidateQueries({
+        queryKey: clientSubscriptionKeys.tenantSubscription(tenantId),
+      });
+      queryClient.invalidateQueries({ queryKey: clientSubscriptionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: clientSubscriptionKeys.stats() });
+    },
+  });
+}
+
+/**
+ * Hook to renew a tenant's subscription
+ */
+export function useRenewTenantSubscription() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ tenantId, data }: { tenantId: string; data?: { newEndDate?: string } }) =>
+      renewTenantSubscription(tenantId, data),
+    onSuccess: (result, { tenantId }) => {
+      queryClient.invalidateQueries({
+        queryKey: clientSubscriptionKeys.tenantSubscription(tenantId),
+      });
+      queryClient.invalidateQueries({ queryKey: clientSubscriptionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: clientSubscriptionKeys.stats() });
+    },
+  });
+}
+
+/**
+ * Hook to get expiring subscriptions
+ */
+export function useExpiringSubscriptions(
+  days: number = 30,
+  options?: Omit<UseQueryOptions<ClientSubscriptionSummary[]>, "queryKey" | "queryFn">
+) {
+  return useQuery({
+    queryKey: clientSubscriptionKeys.expiring(days),
+    queryFn: () => getExpiringSubscriptions(days),
+    staleTime: 5 * 60 * 1000,
+    ...options,
   });
 }

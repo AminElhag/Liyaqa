@@ -308,7 +308,7 @@ class PersonalTrainingController(
 
     private fun buildSessionResponse(session: PersonalTrainingSession): PTSessionResponse {
         val trainer = trainerRepository.findById(session.trainerId).orElse(null)
-        val trainerUser = trainer?.let { userRepository.findById(it.userId).orElse(null) }
+        val trainerUser = trainer?.userId?.let { userRepository.findById(it).orElse(null) }
         val member = memberRepository.findById(session.memberId).orElse(null)
         val location = session.locationId?.let { locationRepository.findById(it).orElse(null) }
 
@@ -323,7 +323,7 @@ class PersonalTrainingController(
 
     private fun buildSessionSummary(session: PersonalTrainingSession): PTSessionSummaryResponse {
         val trainer = trainerRepository.findById(session.trainerId).orElse(null)
-        val trainerUser = trainer?.let { userRepository.findById(it.userId).orElse(null) }
+        val trainerUser = trainer?.userId?.let { userRepository.findById(it).orElse(null) }
         val member = memberRepository.findById(session.memberId).orElse(null)
 
         return PTSessionSummaryResponse.from(

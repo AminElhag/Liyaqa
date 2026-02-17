@@ -11,6 +11,8 @@ import {
   getClubUsers,
   getClubUserStats,
   resetUserPassword,
+  createClubUser,
+  updateClubUser,
   getClubEmployees,
   getClubEmployeeStats,
   getClubSubscriptions,
@@ -36,6 +38,8 @@ import type {
   ClubDetailQueryParams,
   ClubAuditLogQueryParams,
   ResetPasswordRequest,
+  CreateClubUserRequest,
+  UpdateClubUserRequest,
   ClubLocation,
   ClubMembershipPlan,
   UpdateClubRequest,
@@ -137,6 +141,36 @@ export function useResetUserPassword(clubId: UUID) {
       resetUserPassword(clubId, userId, data),
     onSuccess: () => {
       // Invalidate users list to refresh
+      queryClient.invalidateQueries({ queryKey: platformClubKeys.users(clubId) });
+    },
+  });
+}
+
+/**
+ * Hook to create a new user for a club
+ */
+export function useCreateClubUser(clubId: UUID) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateClubUserRequest) => createClubUser(clubId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: platformClubKeys.users(clubId) });
+      queryClient.invalidateQueries({ queryKey: platformClubKeys.detail(clubId) });
+    },
+  });
+}
+
+/**
+ * Hook to update a user in a club
+ */
+export function useUpdateClubUser(clubId: UUID) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, data }: { userId: UUID; data: UpdateClubUserRequest }) =>
+      updateClubUser(clubId, userId, data),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: platformClubKeys.users(clubId) });
     },
   });

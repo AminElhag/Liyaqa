@@ -57,12 +57,12 @@ export default function CampaignsPage() {
   const { toast } = useToast();
 
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<CampaignStatus | ''>('');
+  const [status, setStatus] = useState<CampaignStatus | 'all'>('all');
   const [page, setPage] = useState(0);
 
   const { data, isLoading } = useCampaigns({
     search: search || undefined,
-    status: status || undefined,
+    status: status === 'all' ? undefined : status,
     page,
     size: 20,
   });
@@ -149,12 +149,12 @@ export default function CampaignsPage() {
             className="pl-10"
           />
         </div>
-        <Select value={status} onValueChange={(value) => setStatus(value as CampaignStatus | '')}>
+        <Select value={status} onValueChange={(value) => setStatus(value as CampaignStatus | 'all')}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder={t('common.status', { defaultValue: 'Status' })} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">{t('common.all', { defaultValue: 'All' })}</SelectItem>
+            <SelectItem value="all">{t('common.all', { defaultValue: 'All' })}</SelectItem>
             {Object.entries(CAMPAIGN_STATUS_LABELS).map(([key, label]) => (
               <SelectItem key={key} value={key}>
                 {label.en}

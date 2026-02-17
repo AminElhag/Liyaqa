@@ -182,3 +182,26 @@ export async function getEmployeeCount(): Promise<number> {
 export async function getEmployeeStats(): Promise<EmployeeStats> {
   return api.get(`${BASE_URL}/stats`).json();
 }
+
+// ==================== ADMIN PASSWORD RESET ====================
+
+/**
+ * Admin-initiated password reset (sets new password directly)
+ */
+export async function adminResetPassword(
+  userId: UUID,
+  newPassword: string
+): Promise<{ message: string }> {
+  return api
+    .post(`api/users/${userId}/reset-password`, { json: { newPassword } })
+    .json();
+}
+
+/**
+ * Send password reset email to user
+ */
+export async function adminSendResetEmail(
+  userId: UUID
+): Promise<{ message: string }> {
+  return api.post(`api/users/${userId}/send-reset-email`).json();
+}

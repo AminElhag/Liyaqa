@@ -15,6 +15,7 @@ import {
   activateClientPlan,
   deactivateClientPlan,
   deleteClientPlan,
+  comparePlans,
 } from "../../lib/api/platform/client-plans";
 import type { PageResponse, UUID } from "../../types/api";
 import type {
@@ -156,5 +157,17 @@ export function useDeleteClientPlan() {
       queryClient.invalidateQueries({ queryKey: clientPlanKeys.lists() });
       queryClient.invalidateQueries({ queryKey: clientPlanKeys.active() });
     },
+  });
+}
+
+/**
+ * Hook to compare multiple plans side-by-side
+ */
+export function useComparePlans(planIds: string[]) {
+  return useQuery({
+    queryKey: [...clientPlanKeys.all, "compare", planIds] as const,
+    queryFn: () => comparePlans(planIds),
+    enabled: planIds.length >= 2,
+    staleTime: 5 * 60 * 1000,
   });
 }

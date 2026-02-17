@@ -4,7 +4,9 @@ import com.liyaqa.shared.domain.BaseEntity
 import jakarta.persistence.*
 import org.hibernate.annotations.Filter
 import org.hibernate.annotations.FilterDef
+import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.ParamDef
+import org.hibernate.type.SqlTypes
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.*
@@ -37,6 +39,7 @@ class ChurnModel(
     @Column(name = "auc_score", precision = 5, scale = 4)
     var aucScore: BigDecimal? = null,
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "feature_weights", columnDefinition = "JSONB")
     var featureWeights: String? = null,
 

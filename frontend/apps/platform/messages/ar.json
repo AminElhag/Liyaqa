@@ -412,7 +412,11 @@
       "configuration": "الإعدادات",
       "apiKeys": "مفاتيح API",
       "templates": "القوالب",
-      "compliance": "الامتثال"
+      "compliance": "الامتثال",
+      "tenants": "المستأجرون",
+      "billing": "الفوترة",
+      "facilityMonitoring": "مراقبة المنشآت",
+      "impersonation": "انتحال الهوية"
     },
     "dashboard": {
       "title": "لوحة تحكم المنصة",

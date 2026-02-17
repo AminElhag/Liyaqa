@@ -24,23 +24,38 @@ let accessToken: string | null = null;
 // Token management functions
 export function setAccessToken(token: string | null) {
   accessToken = token;
-  // Persist to localStorage for page navigation survival
-  // Note: This is a temporary fix. For production, consider using HTTP-only cookies.
   if (typeof window !== "undefined") {
     if (token) {
       localStorage.setItem(ACCESS_TOKEN_KEY, token);
-      // Also set as cookie for middleware access
-      document.cookie = `access_token=${token}; path=/; max-age=3600; SameSite=Lax`;
+      // Set lightweight meta cookie for middleware (full JWT can exceed 4KB cookie limit)
+      try {
+        const payloadB64 = token.split(".")[1];
+        const payload = JSON.parse(atob(payloadB64));
+        const meta = JSON.stringify({
+          exp: payload.exp,
+          scope: payload.scope,
+          role: payload.role,
+          account_type: payload.account_type,
+        });
+        document.cookie = `session_meta=${btoa(meta)}; path=/; max-age=3600; SameSite=Lax`;
+      } catch {
+        // If extraction fails, skip — middleware will redirect to login
+      }
+      // Clear any stale full-JWT cookie from prior versions
+      document.cookie =
+        "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     } else {
       localStorage.removeItem(ACCESS_TOKEN_KEY);
-      // Remove cookie
-      document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie =
+        "session_meta=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie =
+        "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     }
   }
 }
 
 export function getAccessToken(): string | null {
-  // Try memory first, then localStorage, then cookies
+  // Try memory first, then localStorage
   if (accessToken) {
     return accessToken;
   }
@@ -49,12 +64,6 @@ export function getAccessToken(): string | null {
     if (stored) {
       accessToken = stored; // Restore to memory
       return stored;
-    }
-    // Fallback to cookie
-    const cookieMatch = document.cookie.match(/(?:^|;\s*)access_token=([^;]*)/);
-    if (cookieMatch) {
-      accessToken = cookieMatch[1];
-      return cookieMatch[1];
     }
   }
   return null;
@@ -82,8 +91,10 @@ export function clearTokens() {
   if (typeof window !== "undefined") {
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(ACCESS_TOKEN_KEY);
-    // Clear cookie
-    document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie =
+      "session_meta=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie =
+      "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   }
 }
 
@@ -247,24 +258,58 @@ function createApiClient(): KyInstance {
       ],
       afterResponse: [
         async (request, options, response) => {
+          // ky's NormalizedOptions doesn't expose `json` in its type, but
+          // the property exists at runtime. Extract it safely for retries.
+          const jsonPayload = (options as unknown as Record<string, unknown>).json;
+          const retryBody = options.body ?? (jsonPayload != null ? JSON.stringify(jsonPayload) : undefined);
+
+          // Build retry options shared by 401 and 403 handlers.
+          // Explicitly preserves Content-Type so that JSON bodies aren't
+          // downgraded to text/plain by some fetch implementations.
+          const buildRetryOptions = () => {
+            const headers: Record<string, string> = {
+              ...Object.fromEntries(request.headers.entries()),
+              Authorization: `Bearer ${getAccessToken()}`,
+            };
+            const ct = request.headers.get("Content-Type");
+            if (ct) headers["Content-Type"] = ct;
+
+            return {
+              method: request.method,
+              body: retryBody,
+              headers,
+              timeout: 30_000,
+              retry: 0,
+            } as const;
+          };
+
           // Handle 401 Unauthorized - attempt token refresh
           // Uses mutex to prevent concurrent refresh attempts from revoking each other's tokens
           if (response.status === 401 && refreshTokenFn) {
             const refreshed = await refreshWithMutex();
             if (refreshed) {
-              // Retry the original request with new token
-              const newRequest = new Request(request, {
-                headers: new Headers(request.headers),
-              });
-              newRequest.headers.set(
-                "Authorization",
-                `Bearer ${getAccessToken()}`
-              );
-              return ky(newRequest, options as Options);
+              return ky(request.url, buildRetryOptions());
             }
             // Refresh failed - user is being logged out
             throw new SessionExpiredError();
           }
+
+          // Handle 403 Forbidden - may be caused by stale permissions in JWT.
+          // Refresh the token once to pick up updated permissions from the DB.
+          // Only retry if the request hasn't already been retried (prevent loops).
+          if (
+            response.status === 403 &&
+            refreshTokenFn &&
+            !request.headers.get("X-Permission-Retry")
+          ) {
+            const refreshed = await refreshWithMutex();
+            if (refreshed) {
+              const opts = buildRetryOptions();
+              (opts.headers as Record<string, string>)["X-Permission-Retry"] = "1";
+              return ky(request.url, opts);
+            }
+          }
+
           return response;
         },
       ],

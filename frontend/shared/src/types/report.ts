@@ -60,6 +60,7 @@ export interface AttendanceByPeriod {
  */
 export interface AttendanceByHour {
   hour: number; // 0-23
+  day?: number; // 0=Sun, 1=Mon, ..., 6=Sat
   checkIns: number;
 }
 

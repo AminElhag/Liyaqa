@@ -5,8 +5,11 @@ import com.liyaqa.membership.domain.ports.SubscriptionRepository
 import com.liyaqa.scheduling.domain.model.ClassBooking
 import com.liyaqa.scheduling.domain.model.ClassSession
 import com.liyaqa.scheduling.domain.model.GymClass
+import com.liyaqa.scheduling.domain.model.ClassPricingModel
+
 import com.liyaqa.scheduling.domain.ports.ClassBookingRepository
 import com.liyaqa.scheduling.domain.ports.GymClassRepository
+
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -66,7 +69,7 @@ class BookingValidationService(
 
         // Validate subscription if required
         var validatedSubscription: Subscription? = null
-        if (gymClass.requiresSubscription) {
+        if (gymClass.pricingModel == ClassPricingModel.INCLUDED_IN_MEMBERSHIP) {
             try {
                 validatedSubscription = validateSubscriptionForBooking(
                     memberId,

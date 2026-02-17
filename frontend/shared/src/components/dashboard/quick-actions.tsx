@@ -144,7 +144,7 @@ export function QuickActions() {
 
   return (
     <motion.div variants={cardVariants} initial="hidden" animate="visible">
-      <Card>
+      <Card className="dark:border-neutral-800">
         <CardHeader className={cn("pb-3", isRtl && "text-right")}>
           <CardTitle className="text-lg font-semibold">{texts.title}</CardTitle>
         </CardHeader>
@@ -183,7 +183,7 @@ function QuickActionButton({ action, locale, isRtl }: QuickActionButtonProps) {
         whileHover="hover"
         whileTap="tap"
         className={cn(
-          "relative flex flex-col items-center justify-center gap-2 p-4 rounded-md3-md transition-colors cursor-pointer",
+          "relative flex flex-col items-center justify-center gap-2 p-4 rounded-xl transition-colors cursor-pointer",
           "md3-state-layer min-h-touch-target",
           action.bgColor
         )}

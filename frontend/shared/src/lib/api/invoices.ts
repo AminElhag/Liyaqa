@@ -6,6 +6,9 @@ import type {
   CreateInvoiceRequest,
   UpdateInvoiceRequest,
   PayInvoiceRequest,
+  Payment,
+  CatalogItem,
+  InvoiceSummary,
 } from "../../types/billing";
 import type { BulkOperationResult } from "../../types/attendance";
 
@@ -21,12 +24,11 @@ export async function getInvoices(
   if (params.size !== undefined) searchParams.set("size", String(params.size));
   if (params.memberId) searchParams.set("memberId", params.memberId);
   if (params.status) searchParams.set("status", params.status);
-  if (params.issuedAfter) searchParams.set("issuedAfter", params.issuedAfter);
-  if (params.issuedBefore) searchParams.set("issuedBefore", params.issuedBefore);
-  if (params.dueAfter) searchParams.set("dueAfter", params.dueAfter);
-  if (params.dueBefore) searchParams.set("dueBefore", params.dueBefore);
-  if (params.sort) searchParams.set("sort", params.sort);
-  if (params.direction) searchParams.set("direction", params.direction);
+  if (params.search) searchParams.set("search", params.search);
+  if (params.dateFrom) searchParams.set("dateFrom", params.dateFrom);
+  if (params.dateTo) searchParams.set("dateTo", params.dateTo);
+  if (params.sort) searchParams.set("sortBy", params.sort);
+  if (params.direction) searchParams.set("sortDirection", params.direction);
 
   const queryString = searchParams.toString();
   const url = queryString ? `api/invoices?${queryString}` : "api/invoices";
@@ -114,7 +116,9 @@ export async function getMemberInvoices(
 export async function bulkIssueInvoices(
   ids: UUID[]
 ): Promise<BulkOperationResult> {
-  return api.post("api/invoices/bulk/issue", { json: { ids } }).json();
+  return api.post("api/invoices/bulk/status", {
+    json: { invoiceIds: ids, action: "ISSUE" },
+  }).json();
 }
 
 /**
@@ -123,7 +127,9 @@ export async function bulkIssueInvoices(
 export async function bulkCancelInvoices(
   ids: UUID[]
 ): Promise<BulkOperationResult> {
-  return api.post("api/invoices/bulk/cancel", { json: { ids } }).json();
+  return api.post("api/invoices/bulk/status", {
+    json: { invoiceIds: ids, action: "CANCEL" },
+  }).json();
 }
 
 /**
@@ -133,4 +139,27 @@ export async function createInvoiceFromSubscription(
   subscriptionId: UUID
 ): Promise<Invoice> {
   return api.post(`api/subscriptions/${subscriptionId}/invoice`).json();
+}
+
+/**
+ * Get payments for an invoice
+ */
+export async function getInvoicePayments(
+  invoiceId: UUID
+): Promise<Payment[]> {
+  return api.get(`api/invoices/${invoiceId}/payments`).json();
+}
+
+/**
+ * Get catalog items for line item picker
+ */
+export async function getInvoiceCatalog(): Promise<CatalogItem[]> {
+  return api.get("api/invoices/catalog").json();
+}
+
+/**
+ * Get invoice summary stats
+ */
+export async function getInvoiceSummary(): Promise<InvoiceSummary> {
+  return api.get("api/invoices/summary").json();
 }

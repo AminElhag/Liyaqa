@@ -2,26 +2,27 @@
 
 import { useLocale } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@liyaqa/shared/components/ui/button";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import { TrainerForm, type TrainerFormData } from "@/components/forms/trainer-form";
-import { useTrainer, useUpdateTrainerProfile } from "@liyaqa/shared/queries/use-trainers";
+import { useTrainer, useUpdateTrainerProfile, useUpdateTrainerSkills } from "@liyaqa/shared/queries/use-trainers";
 import { getLocalizedText } from "@liyaqa/shared/utils";
 import type { UUID } from "@liyaqa/shared/types/api";
 import type { UpdateTrainerProfileRequest } from "@liyaqa/shared/types/trainer";
 
 export default function EditTrainerPage() {
-  const locale = useLocale();
+  const locale = useLocale() as "en" | "ar";
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
   const id = params.id as UUID;
+  const isRTL = locale === "ar";
 
   const { data: trainer, isLoading, error } = useTrainer(id);
   const updateTrainer = useUpdateTrainerProfile();
+  const updateSkills = useUpdateTrainerSkills();
 
   const texts = {
     title: locale === "ar" ? "تعديل المدرب" : "Edit Trainer",
@@ -52,6 +53,7 @@ export default function EditTrainerPage() {
   }
 
   const name = getLocalizedText(trainer.displayName, locale) || "Trainer";
+  const BackArrow = isRTL ? ArrowRight : ArrowLeft;
 
   const handleSubmit = (data: TrainerFormData) => {
     const request: UpdateTrainerProfileRequest = {
@@ -68,7 +70,29 @@ export default function EditTrainerPage() {
       compensationModel: data.compensationModel,
       phone: data.phone || undefined,
       notes: data.notes.en || data.notes.ar ? data.notes : undefined,
+      // PT-specific fields
+      homeServiceAvailable: data.homeServiceAvailable,
+      travelFeeAmount: data.travelFeeAmount,
+      travelFeeCurrency: data.travelFeeCurrency || undefined,
+      travelRadiusKm: data.travelRadiusKm,
+      maxConcurrentClients: data.maxConcurrentClients,
     };
+
+    // Update skills if changed
+    const currentSkillIds = trainer.skills?.map((s) => s.categoryId).sort() || [];
+    const newSkillIds = (data.skillCategoryIds || []).sort();
+    const skillsChanged =
+      currentSkillIds.length !== newSkillIds.length ||
+      currentSkillIds.some((id, i) => id !== newSkillIds[i]);
+
+    if (skillsChanged) {
+      updateSkills.mutate({
+        id,
+        data: {
+          categoryIds: (data.skillCategoryIds || []) as `${string}-${string}-${string}-${string}-${string}`[],
+        },
+      });
+    }
 
     updateTrainer.mutate(
       { id, data: request },
@@ -92,16 +116,18 @@ export default function EditTrainerPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href={`/${locale}/trainers/${id}`}>
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
+      <div className="space-y-4">
+        <Link
+          href={`/${locale}/trainers/${id}`}
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <BackArrow className="h-4 w-4" />
+          {texts.back}
+        </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{texts.title}</h1>
+          <h1 className="text-2xl font-bold">{texts.title}</h1>
           <p className="text-muted-foreground">{name}</p>
         </div>
       </div>

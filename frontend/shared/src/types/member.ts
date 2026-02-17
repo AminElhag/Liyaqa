@@ -143,6 +143,16 @@ export type SubscriptionType = "UNLIMITED" | "LIMITED";
  */
 export type BillingPeriod = "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" | "ONE_TIME";
 
+/**
+ * Membership plan type
+ */
+export type MembershipPlanType = "RECURRING" | "CLASS_PACK" | "DAY_PASS" | "TRIAL";
+
+/**
+ * Membership plan status (tri-state lifecycle)
+ */
+export type MembershipPlanStatus = "DRAFT" | "ACTIVE" | "ARCHIVED";
+
 // TaxableFee imported from ./api (not re-exported to avoid barrel conflict)
 
 /**
@@ -161,6 +171,10 @@ export interface MembershipPlan {
   id: UUID;
   name: LocalizedText;
   description?: LocalizedText;
+
+  // === PLAN TYPE & STATUS ===
+  planType: MembershipPlanType;
+  status: MembershipPlanStatus;
 
   // === DATE RESTRICTIONS ===
   availableFrom?: string;         // ISO date
@@ -189,6 +203,8 @@ export interface MembershipPlan {
   maxClassesPerPeriod?: number;
   classLimit?: number;            // legacy alias for maxClassesPerPeriod
   hasUnlimitedClasses: boolean;   // computed
+  classAccessLevel?: "UNLIMITED" | "LIMITED" | "NO_ACCESS";
+  eligibleClassCategories?: string;  // comma-separated class categories
 
   // === FEATURES ===
   hasGuestPasses: boolean;
@@ -214,6 +230,18 @@ export interface MembershipPlan {
   earlyTerminationFeeValue?: number;
   coolingOffDays?: number;
 
+  // === PT ACCESS ===
+  ptAccessLevel?: "UNLIMITED" | "LIMITED" | "NO_ACCESS";
+  maxPtSessionsPerPeriod?: number;
+  ptSessionsIncluded?: number;
+
+  // === CLASS PACK FIELDS ===
+  sessionCount?: number;
+  expiryDays?: number;
+
+  // === TRIAL CONVERSION ===
+  convertsToPlanId?: UUID;
+
   // === AUDIT ===
   tenantId: UUID;
   createdAt?: string;
@@ -222,6 +250,16 @@ export interface MembershipPlan {
   // === BACKWARD COMPATIBILITY ===
   price: Money;                   // legacy: maps to membershipFee.amount
   type?: SubscriptionType;        // legacy: based on hasUnlimitedClasses
+}
+
+/**
+ * Plan statistics
+ */
+export interface PlanStats {
+  totalPlans: number;
+  activePlans: number;
+  draftPlans: number;
+  archivedPlans: number;
 }
 
 /**
@@ -247,6 +285,160 @@ export interface Subscription {
   invoiceId?: UUID;
   createdAt: string;
   updatedAt: string;
+}
+
+/**
+ * Cancel subscription with reason request
+ */
+export type CancelReasonCategory =
+  | "FINANCIAL"
+  | "RELOCATION"
+  | "HEALTH"
+  | "DISSATISFACTION"
+  | "USAGE"
+  | "OTHER";
+
+export interface CancelSubscriptionRequest {
+  reason?: string;
+  reasonCategory?: CancelReasonCategory;
+  immediate?: boolean;
+}
+
+/**
+ * Transfer subscription request
+ */
+export interface TransferSubscriptionRequest {
+  targetMemberId: UUID;
+  reason?: string;
+}
+
+/**
+ * Renew subscription request
+ */
+export interface RenewSubscriptionRequest {
+  newEndDate?: string;
+  paidAmount?: number;
+  paidCurrency?: string;
+}
+
+/**
+ * Member activity type — matches backend ActivityType enum (38 values)
+ */
+export type MemberActivityType =
+  // Status
+  | "STATUS_CHANGED"
+  // Subscription lifecycle
+  | "SUBSCRIPTION_CREATED"
+  | "SUBSCRIPTION_RENEWED"
+  | "SUBSCRIPTION_FROZEN"
+  | "SUBSCRIPTION_UNFROZEN"
+  | "SUBSCRIPTION_CANCELLED"
+  | "SUBSCRIPTION_EXPIRED"
+  | "SUBSCRIPTION_UPGRADED"
+  | "SUBSCRIPTION_DOWNGRADED"
+  // Profile
+  | "PROFILE_UPDATED"
+  | "PHOTO_UPDATED"
+  | "HEALTH_INFO_UPDATED"
+  | "PREFERENCES_UPDATED"
+  // Financial
+  | "PAYMENT_RECEIVED"
+  | "PAYMENT_FAILED"
+  | "REFUND_ISSUED"
+  | "WALLET_CREDITED"
+  | "WALLET_DEBITED"
+  | "INVOICE_CREATED"
+  // Access
+  | "CHECK_IN"
+  | "CHECK_OUT"
+  // Communication
+  | "EMAIL_SENT"
+  | "SMS_SENT"
+  | "WHATSAPP_SENT"
+  | "CALL_LOGGED"
+  // Staff
+  | "NOTE_ADDED"
+  | "TASK_CREATED"
+  | "TASK_COMPLETED"
+  | "DOCUMENT_UPLOADED"
+  // Contract
+  | "CONTRACT_SIGNED"
+  | "CONTRACT_TERMINATED"
+  // Onboarding
+  | "ONBOARDING_STEP_COMPLETED"
+  | "ONBOARDING_COMPLETED"
+  // Referral
+  | "REFERRAL_MADE"
+  | "REFERRAL_REWARD_EARNED"
+  // Viewing
+  | "PROFILE_VIEWED"
+  // System
+  | "SYSTEM_ACTION"
+  | "MEMBER_CREATED"
+  | "AGREEMENT_SIGNED";
+
+/**
+ * Member activity category for UI grouping
+ */
+export type MemberActivityCategory =
+  | "membership"
+  | "profile"
+  | "financial"
+  | "access"
+  | "communication"
+  | "staff"
+  | "system";
+
+/**
+ * Member activity — matches backend MemberActivityResponse
+ */
+export interface MemberActivity {
+  id: UUID;
+  memberId: UUID;
+  activityType: MemberActivityType;
+  title: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+  performedByUserId?: UUID;
+  performedByName?: string;
+  createdAt: string;
+}
+
+/**
+ * Query params for member activities
+ */
+export interface MemberActivityQueryParams {
+  types?: MemberActivityType[];
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  size?: number;
+}
+
+/**
+ * Membership history event type
+ */
+export type MembershipHistoryEventType =
+  | "CREATED"
+  | "FROZEN"
+  | "UNFROZEN"
+  | "CANCELLED"
+  | "RENEWED"
+  | "TRANSFERRED_OUT"
+  | "TRANSFERRED_IN"
+  | "PAYMENT_COMPLETED"
+  | "EDITED";
+
+/**
+ * Membership history event
+ */
+export interface MembershipHistoryEvent {
+  id: UUID;
+  subscriptionId: UUID;
+  eventType: MembershipHistoryEventType;
+  timestamp: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
 }
 
 /**

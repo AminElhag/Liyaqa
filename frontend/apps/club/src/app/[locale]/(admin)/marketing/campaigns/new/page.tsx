@@ -86,7 +86,7 @@ export default function NewCampaignPage() {
         campaignType: values.campaignType as CampaignType,
         triggerType: values.triggerType as TriggerType,
         triggerConfig: showDaysInput ? { days: values.triggerDays } : undefined,
-        segmentId: values.segmentId || undefined,
+        segmentId: values.segmentId && values.segmentId !== '__none__' ? values.segmentId : undefined,
         startDate: values.startDate || undefined,
         endDate: values.endDate || undefined,
       });
@@ -260,7 +260,7 @@ export default function NewCampaignPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">{t('marketing.allMembers', { defaultValue: 'All Members' })}</SelectItem>
+                        <SelectItem value="__none__">{t('marketing.allMembers', { defaultValue: 'All Members' })}</SelectItem>
                         {segments?.content.map((segment) => (
                           <SelectItem key={segment.id} value={segment.id}>
                             {segment.name} ({segment.memberCount})

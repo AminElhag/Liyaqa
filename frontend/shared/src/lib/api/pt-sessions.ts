@@ -10,8 +10,16 @@ import type {
   PTSessionQueryParams,
   AvailableSlot,
 } from "../../types/pt-session";
+import type {
+  GymClass,
+  ClassSession,
+  CreatePTClassRequest,
+  PTDashboardStats,
+  PTSessionQueryParams as PTClassQueryParams,
+} from "../../types/scheduling";
 
 const PT_SESSIONS_ENDPOINT = "api/pt-sessions";
+const PT_ADMIN_ENDPOINT = "api/pt";
 
 /**
  * Build query string from params
@@ -186,4 +194,142 @@ export async function getPTTrainerAvailability(
     slotDurationMinutes: String(slotDurationMinutes),
   });
   return api.get(`${PT_SESSIONS_ENDPOINT}/trainers/${trainerId}/availability?${params}`).json();
+}
+
+// ==================== PT Class Template Operations ====================
+
+/**
+ * Create a PT class template
+ */
+export async function createPTClass(data: CreatePTClassRequest): Promise<GymClass> {
+  return api.post(`${PT_ADMIN_ENDPOINT}/classes`, { json: data }).json();
+}
+
+/**
+ * Get paginated list of PT classes
+ */
+export async function getPTClasses(
+  params: PTClassQueryParams = {}
+): Promise<PaginatedResponse<GymClass>> {
+  const searchParams = new URLSearchParams();
+  if (params.trainerId) searchParams.set("trainerId", params.trainerId);
+  if (params.startDate) searchParams.set("startDate", params.startDate);
+  if (params.endDate) searchParams.set("endDate", params.endDate);
+  if (params.page !== undefined) searchParams.set("page", String(params.page));
+  if (params.size !== undefined) searchParams.set("size", String(params.size));
+  const query = searchParams.toString();
+  const url = query
+    ? `${PT_ADMIN_ENDPOINT}/classes?${query}`
+    : `${PT_ADMIN_ENDPOINT}/classes`;
+  return api.get(url).json();
+}
+
+/**
+ * Get a single PT class template by ID
+ */
+export async function getPTClass(id: UUID): Promise<GymClass> {
+  return api.get(`${PT_ADMIN_ENDPOINT}/classes/${id}`).json();
+}
+
+/**
+ * Update a PT class template
+ */
+export async function updatePTClass(
+  id: UUID,
+  data: Partial<CreatePTClassRequest>
+): Promise<GymClass> {
+  return api.put(`${PT_ADMIN_ENDPOINT}/classes/${id}`, { json: data }).json();
+}
+
+// ==================== PT Session Scheduling ====================
+
+/**
+ * Schedule a new PT session from a class template
+ */
+export async function schedulePTSession(data: {
+  gymClassId: UUID;
+  sessionDate: string;
+  startTime: string;
+  endTime: string;
+  clientAddress?: string;
+  notesEn?: string;
+  notesAr?: string;
+  skipAvailabilityCheck?: boolean;
+}): Promise<ClassSession> {
+  return api.post(`${PT_ADMIN_ENDPOINT}/sessions`, { json: data }).json();
+}
+
+/**
+ * Get PT sessions with filters
+ */
+export async function getScheduledPTSessions(
+  params: PTClassQueryParams = {}
+): Promise<PaginatedResponse<ClassSession>> {
+  const searchParams = new URLSearchParams();
+  if (params.trainerId) searchParams.set("trainerId", params.trainerId);
+  if (params.startDate) searchParams.set("startDate", params.startDate);
+  if (params.endDate) searchParams.set("endDate", params.endDate);
+  if (params.page !== undefined) searchParams.set("page", String(params.page));
+  if (params.size !== undefined) searchParams.set("size", String(params.size));
+  const query = searchParams.toString();
+  const url = query
+    ? `${PT_ADMIN_ENDPOINT}/sessions?${query}`
+    : `${PT_ADMIN_ENDPOINT}/sessions`;
+  return api.get(url).json();
+}
+
+/**
+ * Complete a scheduled PT session with notes
+ */
+export async function completeScheduledPTSession(
+  sessionId: UUID,
+  data: { completionNotes?: string; trainerNotes?: string }
+): Promise<ClassSession> {
+  return api.post(`${PT_ADMIN_ENDPOINT}/sessions/${sessionId}/complete`, { json: data }).json();
+}
+
+/**
+ * Cancel a scheduled PT session
+ */
+export async function cancelScheduledPTSession(
+  sessionId: UUID,
+  data?: { reason?: string }
+): Promise<ClassSession> {
+  return api.post(`${PT_ADMIN_ENDPOINT}/sessions/${sessionId}/cancel`, { json: data || {} }).json();
+}
+
+/**
+ * Get PT sessions for a specific trainer
+ */
+export async function getTrainerPTSessions(
+  trainerId: UUID,
+  params: { startDate?: string; endDate?: string; page?: number; size?: number } = {}
+): Promise<PaginatedResponse<ClassSession>> {
+  const searchParams = new URLSearchParams();
+  if (params.startDate) searchParams.set("startDate", params.startDate);
+  if (params.endDate) searchParams.set("endDate", params.endDate);
+  if (params.page !== undefined) searchParams.set("page", String(params.page));
+  if (params.size !== undefined) searchParams.set("size", String(params.size));
+  const query = searchParams.toString();
+  const url = query
+    ? `${PT_ADMIN_ENDPOINT}/trainer/${trainerId}/sessions?${query}`
+    : `${PT_ADMIN_ENDPOINT}/trainer/${trainerId}/sessions`;
+  return api.get(url).json();
+}
+
+// ==================== Dashboard ====================
+
+/**
+ * Get PT dashboard stats
+ */
+export async function getPTDashboardStats(
+  params: { trainerId?: UUID } = {}
+): Promise<PTDashboardStats> {
+  const searchParams = new URLSearchParams();
+  if (params.trainerId) searchParams.set("trainerId", params.trainerId);
+  const query = searchParams.toString();
+  const url = query
+    ? `${PT_ADMIN_ENDPOINT}/dashboard?${query}`
+    : `${PT_ADMIN_ENDPOINT}/dashboard`;
+  return api.get(url).json();
 }

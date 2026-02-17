@@ -2,6 +2,7 @@ package com.liyaqa.membership.api
 
 import com.liyaqa.membership.domain.model.CancellationReasonCategory
 import com.liyaqa.membership.domain.model.CancellationType
+import com.liyaqa.membership.domain.model.ContractPricingTier
 import com.liyaqa.membership.domain.model.ContractStatus
 import com.liyaqa.membership.domain.model.ContractTerm
 import com.liyaqa.membership.domain.model.ContractType
@@ -263,10 +264,65 @@ data class ExitSurveyResponse(
 )
 
 data class ExitSurveyAnalyticsResponse(
-    val reasonStats: List<Map<String, Any>>,
+    val totalResponses: Long,
+    val periodStart: String,
+    val periodEnd: String,
+    val reasonBreakdown: List<ReasonBreakdownDto>,
+    val npsDistribution: NpsDistributionDto,
     val averageNps: Double,
-    val npsDistribution: Map<String, Long>,
-    val totalSurveys: Long
+    val satisfactionDistribution: SatisfactionDistributionDto,
+    val averageSatisfaction: Double,
+    val wouldRecommendPercentage: Double,
+    val openToFutureOffersPercentage: Double,
+    val topDissatisfactionAreas: List<DissatisfactionAreaDto>,
+    val competitorAnalysis: List<CompetitorAnalysisDto>,
+    val trendsOverTime: List<Any> = emptyList()
+)
+
+data class ReasonBreakdownDto(
+    val category: String,
+    val count: Long,
+    val percentage: Double
+)
+
+data class NpsDistributionDto(
+    val promoters: Long,
+    val passives: Long,
+    val detractors: Long
+)
+
+data class SatisfactionDistributionDto(
+    val veryDissatisfied: Long,
+    val dissatisfied: Long,
+    val neutral: Long,
+    val satisfied: Long,
+    val verySatisfied: Long
+)
+
+data class DissatisfactionAreaDto(
+    val area: String,
+    val count: Long,
+    val percentage: Double
+)
+
+data class CompetitorAnalysisDto(
+    val competitorName: String,
+    val count: Long,
+    val topReasons: List<String>
+)
+
+data class RetentionMetricsResponse(
+    val totalCancellationRequests: Long,
+    val savedMembers: Long,
+    val retentionRate: Double,
+    val averageTimeToSave: Double,
+    val offerAcceptanceRate: Double,
+    val topAcceptedOfferTypes: List<AcceptedOfferTypeDto>
+)
+
+data class AcceptedOfferTypeDto(
+    val offerType: String,
+    val count: Long
 )
 
 // ==========================================
@@ -334,9 +390,25 @@ data class CreatePricingTierRequest(
 data class PricingTierResponse(
     val id: UUID,
     val planId: UUID,
+    val planName: String,
     val contractTerm: ContractTerm,
     val discountPercentage: BigDecimal?,
     val overrideMonthlyFeeAmount: BigDecimal?,
     val overrideMonthlyFeeCurrency: String?,
-    val isActive: Boolean
-)
+    val isActive: Boolean,
+    val createdAt: Instant?
+) {
+    companion object {
+        fun from(tier: ContractPricingTier, planName: String) = PricingTierResponse(
+            id = tier.id,
+            planId = tier.planId,
+            planName = planName,
+            contractTerm = tier.contractTerm,
+            discountPercentage = tier.discountPercentage,
+            overrideMonthlyFeeAmount = tier.overrideMonthlyFee?.amount,
+            overrideMonthlyFeeCurrency = tier.overrideMonthlyFee?.currency,
+            isActive = tier.isActive,
+            createdAt = tier.createdAt
+        )
+    }
+}

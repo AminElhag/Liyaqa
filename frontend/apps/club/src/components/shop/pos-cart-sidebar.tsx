@@ -58,6 +58,8 @@ export function PosCartSidebar({
     cart: locale === "ar" ? "السلة" : "Cart",
     customer: locale === "ar" ? "العميل" : "Customer",
     selectCustomer: locale === "ar" ? "اختر العميل" : "Select Customer",
+    requiredBeforeCheckout:
+      locale === "ar" ? "مطلوب قبل الدفع" : "Required before checkout",
     noCustomer: locale === "ar" ? "لم يتم اختيار عميل" : "No customer selected",
     emptyCart: locale === "ar" ? "السلة فارغة" : "Cart is empty",
     emptyCartHint:
@@ -90,16 +92,16 @@ export function PosCartSidebar({
   };
 
   return (
-    <Card className="h-full flex flex-col bg-white border-neutral-200 shadow-sm">
+    <Card className="h-full flex flex-col bg-card border shadow-sm">
       {/* Header */}
-      <CardHeader className="pb-3 border-b border-neutral-100">
+      <CardHeader className="pb-3 border-b border-border">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5 text-teal-600" />
+          <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <ShoppingCart className="h-5 w-5 text-primary" />
             {texts.cart}
           </CardTitle>
           {itemCount > 0 && (
-            <Badge variant="secondary" className="bg-teal-50 text-teal-700">
+            <Badge variant="secondary" className="bg-primary/10 text-primary">
               {itemCount} {texts.items}
             </Badge>
           )}
@@ -108,22 +110,22 @@ export function PosCartSidebar({
 
       <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
         {/* Customer Section */}
-        <div className="p-4 border-b border-neutral-100 bg-neutral-50/50">
-          <div className="text-xs font-medium text-neutral-500 uppercase tracking-wide mb-2">
+        <div className="p-4 border-b border-border bg-muted/50">
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
             {texts.customer}
           </div>
           {customer ? (
-            <div className="flex items-center justify-between gap-2 p-3 bg-white rounded-lg border border-neutral-200">
+            <div className="flex items-center justify-between gap-2 p-3 bg-card rounded-lg border border-primary/20">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="h-10 w-10 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0">
-                  <User className="h-5 w-5 text-teal-600" />
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <User className="h-5 w-5 text-primary" />
                 </div>
                 <div className="min-w-0">
-                  <div className="font-medium text-neutral-900 truncate">
+                  <div className="font-medium text-foreground truncate">
                     {customer.name}
                   </div>
                   {customer.phone && (
-                    <div className="text-xs text-neutral-500 truncate">
+                    <div className="text-xs text-muted-foreground truncate">
                       {customer.phone}
                     </div>
                   )}
@@ -132,21 +134,25 @@ export function PosCartSidebar({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-neutral-400 hover:text-red-500 hover:bg-red-50 flex-shrink-0"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
                 onClick={onClearCustomer}
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
           ) : (
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-2 h-12 border-dashed border-neutral-300 text-neutral-600 hover:border-teal-500 hover:text-teal-600 hover:bg-teal-50/50"
+            <button
+              className="w-full flex flex-col items-center justify-center gap-1 h-14 border-2 border-dashed border-primary/40 text-primary rounded-lg hover:border-primary hover:bg-primary/5 transition-all"
               onClick={onSelectCustomer}
             >
-              <UserPlus className="h-4 w-4" />
-              {texts.selectCustomer}
-            </Button>
+              <span className="flex items-center gap-2 font-medium text-sm">
+                <UserPlus className="h-4 w-4" />
+                {texts.selectCustomer}
+              </span>
+              <span className="text-xs text-primary/60">
+                {texts.requiredBeforeCheckout}
+              </span>
+            </button>
           )}
         </div>
 
@@ -155,9 +161,9 @@ export function PosCartSidebar({
           <div className="p-4 space-y-3">
             {isEmpty ? (
               <div className="text-center py-8">
-                <ShoppingCart className="h-12 w-12 mx-auto mb-3 text-neutral-200" />
-                <p className="text-neutral-500 font-medium">{texts.emptyCart}</p>
-                <p className="text-sm text-neutral-400 mt-1">
+                <ShoppingCart className="h-12 w-12 mx-auto mb-3 text-muted-foreground/20" />
+                <p className="text-muted-foreground font-medium">{texts.emptyCart}</p>
+                <p className="text-sm text-muted-foreground/60 mt-1">
                   {texts.emptyCartHint}
                 </p>
               </div>
@@ -165,10 +171,10 @@ export function PosCartSidebar({
               items.map((item) => (
                 <div
                   key={item.productId}
-                  className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg"
+                  className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg"
                 >
                   {/* Product Image Placeholder */}
-                  <div className="h-12 w-12 rounded-md bg-neutral-200 flex-shrink-0 flex items-center justify-center">
+                  <div className="h-12 w-12 rounded-md bg-muted flex-shrink-0 flex items-center justify-center">
                     {item.product.imageUrl ? (
                       <img
                         src={String(item.product.imageUrl)}
@@ -176,44 +182,44 @@ export function PosCartSidebar({
                         className="h-full w-full object-cover rounded-md"
                       />
                     ) : (
-                      <ShoppingCart className="h-5 w-5 text-neutral-400" />
+                      <ShoppingCart className="h-5 w-5 text-muted-foreground" />
                     )}
                   </div>
 
                   {/* Product Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm text-neutral-900 truncate">
+                    <div className="font-medium text-sm text-foreground truncate">
                       {getProductName(item)}
                     </div>
-                    <div className="text-xs text-neutral-500 mt-0.5">
+                    <div className="text-xs text-muted-foreground mt-0.5">
                       {formatPrice(getProductPrice(item))}
                     </div>
 
                     {/* Quantity Controls */}
                     <div className="flex items-center gap-2 mt-2">
-                      <div className="flex items-center border border-neutral-200 rounded-md bg-white">
+                      <div className="flex items-center border border-border rounded-md bg-card">
                         <button
-                          className="p-1 hover:bg-neutral-100 rounded-l-md transition-colors"
+                          className="p-2 hover:bg-muted rounded-s-md transition-colors"
                           onClick={() =>
                             onUpdateQuantity(item.productId, item.quantity - 1)
                           }
                         >
-                          <Minus className="h-3 w-3 text-neutral-600" />
+                          <Minus className="h-4 w-4 text-muted-foreground" />
                         </button>
                         <span className="px-3 text-sm font-medium min-w-[2rem] text-center">
                           {item.quantity}
                         </span>
                         <button
-                          className="p-1 hover:bg-neutral-100 rounded-r-md transition-colors"
+                          className="p-2 hover:bg-muted rounded-e-md transition-colors"
                           onClick={() =>
                             onUpdateQuantity(item.productId, item.quantity + 1)
                           }
                         >
-                          <Plus className="h-3 w-3 text-neutral-600" />
+                          <Plus className="h-4 w-4 text-muted-foreground" />
                         </button>
                       </div>
                       <button
-                        className="p-1.5 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                        className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
                         onClick={() => onRemoveItem(item.productId)}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -222,7 +228,7 @@ export function PosCartSidebar({
                   </div>
 
                   {/* Line Total */}
-                  <div className="text-sm font-semibold text-neutral-900 flex-shrink-0">
+                  <div className="text-sm font-semibold text-foreground flex-shrink-0">
                     {formatPrice(getProductPrice(item) * item.quantity)}
                   </div>
                 </div>
@@ -233,28 +239,28 @@ export function PosCartSidebar({
 
         {/* Totals & Actions */}
         {!isEmpty && (
-          <div className="border-t border-neutral-200 bg-white p-4 space-y-4">
+          <div className="border-t border-border bg-muted/30 p-4 space-y-4">
             {/* Totals */}
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between text-neutral-600">
+              <div className="flex justify-between text-muted-foreground">
                 <span>{texts.subtotal}</span>
                 <span>{formatPrice(subtotal)}</span>
               </div>
-              <div className="flex justify-between text-neutral-600">
+              <div className="flex justify-between text-muted-foreground">
                 <span>{texts.vat}</span>
                 <span>{formatPrice(taxTotal)}</span>
               </div>
               <Separator className="my-2" />
-              <div className="flex justify-between font-bold text-lg text-neutral-900">
+              <div className="flex justify-between font-bold text-lg text-foreground">
                 <span>{texts.total}</span>
-                <span className="text-teal-600">{formatPrice(grandTotal)}</span>
+                <span className="text-primary">{formatPrice(grandTotal)}</span>
               </div>
             </div>
 
             {/* Actions */}
             <div className="space-y-2">
               <Button
-                className="w-full h-12 bg-teal-600 hover:bg-teal-700 text-white font-semibold"
+                className="w-full h-14 text-base bg-primary hover:bg-[#E85D3A] text-white font-semibold"
                 disabled={!canCheckout || isCheckoutLoading}
                 onClick={onCheckout}
               >
@@ -269,10 +275,10 @@ export function PosCartSidebar({
               </Button>
               <Button
                 variant="ghost"
-                className="w-full text-neutral-500 hover:text-red-600 hover:bg-red-50"
+                className="w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                 onClick={onClearItems}
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className="h-4 w-4 me-2" />
                 {texts.clearCart}
               </Button>
             </div>

@@ -1,5 +1,6 @@
 package com.liyaqa.auth.infrastructure.security
 
+import com.liyaqa.auth.domain.model.AccountType
 import com.liyaqa.auth.domain.model.Role
 import com.liyaqa.platform.domain.model.PlatformRolePermissions
 import com.liyaqa.platform.domain.model.PlatformUserRole
@@ -100,6 +101,9 @@ class JwtAuthenticationFilter(
                 val isImpersonation = jwtTokenProvider.extractIsImpersonation(token)
                 val impersonatorId = if (isImpersonation) jwtTokenProvider.extractImpersonatorId(token) else null
 
+                // Extract account type (nullable for backward compat with old tokens)
+                val accountType = jwtTokenProvider.extractAccountType(token)
+
                 val authentication = UsernamePasswordAuthenticationToken(
                     JwtUserPrincipal(
                         userId = userId,
@@ -110,7 +114,8 @@ class JwtAuthenticationFilter(
                         scope = scope,
                         platformRole = platformRole,
                         isImpersonation = isImpersonation,
-                        impersonatorId = impersonatorId
+                        impersonatorId = impersonatorId,
+                        accountType = accountType
                     ),
                     null,
                     authorities
@@ -150,5 +155,6 @@ data class JwtUserPrincipal(
     val scope: String = "facility",
     val platformRole: PlatformUserRole? = null,
     val isImpersonation: Boolean = false,
-    val impersonatorId: UUID? = null
+    val impersonatorId: UUID? = null,
+    val accountType: AccountType? = null
 )

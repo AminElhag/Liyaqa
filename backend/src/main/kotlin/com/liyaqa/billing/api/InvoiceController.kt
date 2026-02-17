@@ -78,11 +78,13 @@ class InvoiceController(
     fun getInvoice(@PathVariable id: UUID): ResponseEntity<InvoiceResponse> {
         val invoice = invoiceService.getInvoice(id)
         val member = memberRepository.findById(invoice.memberId).orElse(null)
+        val payments = invoiceService.getPayments(id)
         return ResponseEntity.ok(
             InvoiceResponse.from(
                 invoice,
                 memberName = member?.let { buildMemberName(it) },
-                memberEmail = member?.email
+                memberEmail = member?.email,
+                payments = payments
             )
         )
     }
@@ -322,12 +324,37 @@ class InvoiceController(
             InvoiceSummaryResponse(
                 totalInvoices = invoiceService.countByStatus(InvoiceStatus.ISSUED) +
                     invoiceService.countByStatus(InvoiceStatus.PAID) +
-                    invoiceService.countByStatus(InvoiceStatus.OVERDUE),
+                    invoiceService.countByStatus(InvoiceStatus.OVERDUE) +
+                    invoiceService.countByStatus(InvoiceStatus.DRAFT) +
+                    invoiceService.countByStatus(InvoiceStatus.PARTIALLY_PAID),
+                draftCount = invoiceService.countByStatus(InvoiceStatus.DRAFT),
                 pendingCount = invoiceService.countByStatus(InvoiceStatus.ISSUED),
                 overdueCount = invoiceService.countByStatus(InvoiceStatus.OVERDUE),
-                paidCount = invoiceService.countByStatus(InvoiceStatus.PAID)
+                paidCount = invoiceService.countByStatus(InvoiceStatus.PAID),
+                partiallyPaidCount = invoiceService.countByStatus(InvoiceStatus.PARTIALLY_PAID)
             )
         )
+    }
+
+    /**
+     * Gets payments for an invoice.
+     */
+    @GetMapping("/invoices/{id}/payments")
+    @PreAuthorize("hasAuthority('invoices_view')")
+    fun getInvoicePayments(@PathVariable id: UUID): ResponseEntity<List<PaymentResponse>> {
+        val payments = invoiceService.getPayments(id)
+        return ResponseEntity.ok(payments.map { PaymentResponse.from(it) })
+    }
+
+    /**
+     * Gets catalog items for the invoice line item picker.
+     * Returns active membership plans, class packs, and products.
+     */
+    @GetMapping("/invoices/catalog")
+    @PreAuthorize("hasAuthority('invoices_create')")
+    fun getInvoiceCatalog(): ResponseEntity<List<CatalogItemResponse>> {
+        val items = invoiceService.getCatalogItems()
+        return ResponseEntity.ok(items.map { CatalogItemResponse.from(it) })
     }
 
     /**

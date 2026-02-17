@@ -24,27 +24,26 @@ import java.util.UUID
  * Spring Data JPA repository interface for Product.
  */
 interface SpringDataProductRepository : JpaRepository<Product, UUID> {
-    // All queries use LEFT JOIN FETCH to eagerly load the category to avoid LazyInitializationException
 
-    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.category")
+    @Query("SELECT p FROM Product p")
     fun findAllWithCategory(pageable: Pageable): Page<Product>
 
-    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.category WHERE p.id = :id")
+    @Query("SELECT p FROM Product p WHERE p.id = :id")
     fun findByIdWithCategory(@Param("id") id: UUID): Optional<Product>
 
-    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.category WHERE p.status = :status")
+    @Query("SELECT p FROM Product p WHERE p.status = :status")
     fun findByStatusWithCategory(@Param("status") status: ProductStatus, pageable: Pageable): Page<Product>
 
-    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.category WHERE p.productType = :productType")
+    @Query("SELECT p FROM Product p WHERE p.productType = :productType")
     fun findByProductTypeWithCategory(@Param("productType") productType: ProductType, pageable: Pageable): Page<Product>
 
-    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.category WHERE p.category.id = :categoryId")
+    @Query("SELECT p FROM Product p WHERE p.category.id = :categoryId")
     fun findByCategoryIdWithCategory(@Param("categoryId") categoryId: UUID, pageable: Pageable): Page<Product>
 
-    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.category WHERE p.category.id = :categoryId AND p.status = :status")
+    @Query("SELECT p FROM Product p WHERE p.category.id = :categoryId AND p.status = :status")
     fun findByCategoryIdAndStatusWithCategory(@Param("categoryId") categoryId: UUID, @Param("status") status: ProductStatus, pageable: Pageable): Page<Product>
 
-    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.category WHERE p.status = :status AND p.productType = :productType")
+    @Query("SELECT p FROM Product p WHERE p.status = :status AND p.productType = :productType")
     fun findByStatusAndProductTypeWithCategory(
         @Param("status") status: ProductStatus,
         @Param("productType") productType: ProductType,
@@ -55,14 +54,14 @@ interface SpringDataProductRepository : JpaRepository<Product, UUID> {
     fun existsBySku(sku: String): Boolean
 
     @Query("""
-        SELECT p FROM Product p LEFT JOIN FETCH p.category
+        SELECT p FROM Product p
         WHERE LOWER(p.name.en) LIKE LOWER(CONCAT('%', :query, '%'))
            OR LOWER(p.name.ar) LIKE LOWER(CONCAT('%', :query, '%'))
     """)
     fun searchByNameWithCategory(@Param("query") query: String, pageable: Pageable): Page<Product>
 
     @Query("""
-        SELECT p FROM Product p LEFT JOIN FETCH p.category
+        SELECT p FROM Product p
         WHERE p.status = :status
           AND (LOWER(p.name.en) LIKE LOWER(CONCAT('%', :query, '%'))
            OR LOWER(p.name.ar) LIKE LOWER(CONCAT('%', :query, '%')))

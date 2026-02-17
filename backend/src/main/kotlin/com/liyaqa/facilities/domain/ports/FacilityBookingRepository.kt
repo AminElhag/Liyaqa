@@ -19,6 +19,7 @@ interface FacilityBookingRepository {
     fun findUpcomingByMemberId(memberId: UUID, pageable: Pageable): Page<FacilityBooking>
     fun countByMemberIdAndStatusAndBookedAtAfter(memberId: UUID, status: BookingStatus, after: Instant): Long
     fun existsBySlotIdAndStatusIn(slotId: UUID, statuses: List<BookingStatus>): Boolean
+    fun findBySlotIdIn(slotIds: List<UUID>): List<FacilityBooking>
     fun findBySlotDate(date: LocalDate): List<FacilityBooking>
     fun deleteById(id: UUID)
 }

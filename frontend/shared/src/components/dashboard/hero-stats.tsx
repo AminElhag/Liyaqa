@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useMemo } from "react";
 import { useLocale } from "next-intl";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -154,30 +155,35 @@ interface HeroStatCardProps {
   isRtl: boolean;
 }
 
-function HeroStatCard({ stat, locale, isRtl }: HeroStatCardProps) {
+const HeroStatCard = memo(function HeroStatCard({ stat, locale, isRtl }: HeroStatCardProps) {
   const Icon = stat.icon;
   const title = locale === "ar" ? stat.titleAr : stat.titleEn;
   const secondaryLabel = locale === "ar" ? stat.secondaryLabelAr : stat.secondaryLabelEn;
 
+  const sparklineChartData = useMemo(
+    () => stat.sparklineData?.map((v, i) => ({ value: v, index: i })),
+    [stat.sparklineData]
+  );
+
   const gradientClasses: Record<string, string> = {
-    primary: "from-sky-500/10 to-sky-500/5 hover:from-sky-500/20 hover:to-sky-500/10",
-    success: "from-green-500/10 to-green-500/5 hover:from-green-500/20 hover:to-green-500/10",
-    warning: "from-amber-500/10 to-amber-500/5 hover:from-amber-500/20 hover:to-amber-500/10",
-    danger: "from-red-500/10 to-red-500/5 hover:from-red-500/20 hover:to-red-500/10",
+    primary: "from-[#FF6B4A]/10 to-[#FF6B4A]/5 hover:from-[#FF6B4A]/20 hover:to-[#FF6B4A]/10 dark:from-[#FF6B4A]/15 dark:to-[#FF6B4A]/5",
+    success: "from-emerald-500/10 to-emerald-500/5 hover:from-emerald-500/20 hover:to-emerald-500/10 dark:from-emerald-500/15 dark:to-emerald-500/5",
+    warning: "from-amber-500/10 to-amber-500/5 hover:from-amber-500/20 hover:to-amber-500/10 dark:from-amber-500/15 dark:to-amber-500/5",
+    danger: "from-violet-500/10 to-violet-500/5 hover:from-violet-500/20 hover:to-violet-500/10 dark:from-violet-500/15 dark:to-violet-500/5",
   };
 
   const iconClasses: Record<string, string> = {
-    primary: "bg-sky-500/20 text-sky-600",
-    success: "bg-green-500/20 text-green-600",
-    warning: "bg-amber-500/20 text-amber-600",
-    danger: "bg-red-500/20 text-red-600",
+    primary: "bg-[#FF6B4A]/20 text-[#FF6B4A] dark:bg-[#FF6B4A]/30",
+    success: "bg-emerald-500/20 text-emerald-600 dark:bg-emerald-500/30 dark:text-emerald-400",
+    warning: "bg-amber-500/20 text-amber-600 dark:bg-amber-500/30 dark:text-amber-400",
+    danger: "bg-violet-500/20 text-violet-600 dark:bg-violet-500/30 dark:text-violet-400",
   };
 
   const chartColors: Record<string, string> = {
-    primary: "#0ea5e9",
-    success: "#22c55e",
+    primary: "#FF6B4A",
+    success: "#10b981",
     warning: "#f59e0b",
-    danger: "#ef4444",
+    danger: "#8b5cf6",
   };
 
   return (
@@ -185,9 +191,8 @@ function HeroStatCard({ stat, locale, isRtl }: HeroStatCardProps) {
       <Link href={`/${locale}${stat.href}`}>
         <div
           className={cn(
-            "relative overflow-hidden rounded-md3-lg border bg-gradient-to-br p-4 transition-all duration-300",
-            "hover:shadow-md3-2 hover:scale-[1.02] cursor-pointer",
-            "md3-state-layer",
+            "relative overflow-hidden rounded-xl border dark:border-neutral-800 bg-gradient-to-br p-4 transition-all duration-300",
+            "hover:shadow-md hover:scale-[1.02] cursor-pointer",
             gradientClasses[stat.accentColor]
           )}
         >
@@ -197,7 +202,7 @@ function HeroStatCard({ stat, locale, isRtl }: HeroStatCardProps) {
               <div className={cn("p-2 rounded-lg", iconClasses[stat.accentColor])}>
                 <Icon className="h-4 w-4" />
               </div>
-              <span className="text-sm font-medium text-muted-foreground">{title}</span>
+              <span className="text-xs font-medium text-muted-foreground truncate">{title}</span>
             </div>
             {stat.alert && (
               <AlertCircle className="h-4 w-4 text-amber-500 animate-pulse" />
@@ -241,10 +246,10 @@ function HeroStatCard({ stat, locale, isRtl }: HeroStatCardProps) {
           </div>
 
           {/* Sparkline */}
-          {stat.sparklineData && (
+          {sparklineChartData && (
             <div className="absolute bottom-0 left-0 right-0 h-12 opacity-50">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={stat.sparklineData.map((v, i) => ({ value: v, index: i }))}>
+                <AreaChart data={sparklineChartData}>
                   <defs>
                     <linearGradient id={`gradient-${stat.accentColor}`} x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor={chartColors[stat.accentColor]} stopOpacity={0.4} />
@@ -266,7 +271,7 @@ function HeroStatCard({ stat, locale, isRtl }: HeroStatCardProps) {
       </Link>
     </motion.div>
   );
-}
+});
 
 function HeroStatsSkeleton() {
   return (
@@ -274,14 +279,14 @@ function HeroStatsSkeleton() {
       {Array.from({ length: 4 }).map((_, i) => (
         <div
           key={i}
-          className="rounded-md3-lg border bg-card p-4 animate-pulse shadow-md3-1"
+          className="rounded-xl border dark:border-neutral-800 bg-card p-4 animate-pulse"
         >
           <div className="flex items-center gap-2 mb-3">
-            <div className="h-8 w-8 rounded-md3-md bg-muted" />
-            <div className="h-4 w-24 rounded-md3-sm bg-muted" />
+            <div className="h-8 w-8 rounded-lg bg-muted" />
+            <div className="h-4 w-24 rounded bg-muted" />
           </div>
-          <div className="h-8 w-20 rounded-md3-sm bg-muted mb-2" />
-          <div className="h-4 w-32 rounded-md3-sm bg-muted" />
+          <div className="h-8 w-20 rounded bg-muted mb-2" />
+          <div className="h-4 w-32 rounded bg-muted" />
         </div>
       ))}
     </div>

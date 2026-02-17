@@ -1,0 +1,50 @@
+{
+  "common": {
+    "appName": "Liyaqa Trainer",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "search": "Search",
+    "noResults": "No results found"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "loginTitle": "Trainer Portal",
+    "loginSubtitle": "Sign in to manage your classes and sessions",
+    "wrongPortal": "You don't have trainer access. Please use the correct portal.",
+    "selectAccountType": "Choose Your Portal",
+    "switchPortal": "Switch Portal"
+  },
+  "trainer": {
+    "dashboard": "Dashboard",
+    "schedule": "Schedule",
+    "clients": "Clients",
+    "classes": "Classes",
+    "earnings": "Earnings",
+    "profile": "Profile",
+    "notifications": "Notifications",
+    "certifications": "Certifications",
+    "sessions": "Sessions",
+    "availability": "Availability"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "schedule": "Schedule",
+    "clients": "Clients",
+    "classes": "Classes",
+    "earnings": "Earnings",
+    "profile": "Profile",
+    "notifications": "Notifications",
+    "certifications": "Certifications",
+    "settings": "Settings"
+  }
+}

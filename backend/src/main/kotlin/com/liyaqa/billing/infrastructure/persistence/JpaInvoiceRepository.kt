@@ -71,11 +71,11 @@ interface SpringDataInvoiceRepository : JpaRepository<Invoice, UUID> {
 
     @Query("""
         SELECT i FROM Invoice i
-        WHERE (:search IS NULL OR LOWER(i.invoiceNumber) LIKE LOWER(CONCAT('%', :search, '%')))
-        AND (:status IS NULL OR i.status = :status)
-        AND (:memberId IS NULL OR i.memberId = :memberId)
-        AND (:dateFrom IS NULL OR i.createdAt >= :dateFrom)
-        AND (:dateTo IS NULL OR i.createdAt <= :dateTo)
+        WHERE (:search = '' OR LOWER(i.invoiceNumber) LIKE LOWER(CONCAT('%', :search, '%')))
+        AND COALESCE(:status, i.status) = i.status
+        AND COALESCE(:memberId, i.memberId) = i.memberId
+        AND COALESCE(:dateFrom, i.createdAt) <= i.createdAt
+        AND i.createdAt <= COALESCE(:dateTo, i.createdAt)
     """)
     fun search(
         @Param("search") search: String?,
@@ -203,7 +203,7 @@ class JpaInvoiceRepository(
         val dateToInstant = dateTo?.plusDays(1)?.atStartOfDay()?.toInstant(ZoneOffset.UTC)
 
         return springDataRepository.search(
-            search = search?.takeIf { it.isNotBlank() },
+            search = search?.takeIf { it.isNotBlank() } ?: "",
             status = status,
             memberId = memberId,
             dateFrom = dateFromInstant,

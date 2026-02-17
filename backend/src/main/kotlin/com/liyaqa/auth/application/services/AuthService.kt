@@ -6,15 +6,22 @@ import com.liyaqa.auth.application.commands.LoginCommand
 import com.liyaqa.auth.application.commands.RefreshTokenCommand
 import com.liyaqa.auth.application.commands.RegisterCommand
 import com.liyaqa.auth.application.commands.ResetPasswordCommand
+import com.liyaqa.auth.domain.model.AccountType
+import com.liyaqa.auth.domain.model.AccountTypeSession
 import com.liyaqa.auth.domain.model.PasswordResetToken
 import com.liyaqa.auth.domain.model.RefreshToken
 import com.liyaqa.auth.domain.model.User
 import com.liyaqa.auth.domain.model.UserStatus
+import com.liyaqa.auth.domain.ports.AccountTypeSessionRepository
 import com.liyaqa.auth.domain.ports.PasswordResetTokenRepository
 import com.liyaqa.auth.domain.ports.RefreshTokenRepository
 import com.liyaqa.auth.domain.ports.UserRepository
 import com.liyaqa.auth.infrastructure.security.JwtTokenProvider
+import com.liyaqa.employee.application.commands.CreateEmployeeCommand
+import com.liyaqa.employee.application.services.EmployeeService
+import com.liyaqa.organization.domain.ports.ClubRepository
 import com.liyaqa.shared.application.services.PermissionService
+import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.TenantContext
 import com.liyaqa.shared.domain.TenantId
 import com.liyaqa.notification.domain.ports.EmailService
@@ -25,6 +32,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.security.SecureRandom
 import java.time.Instant
+import java.time.LocalDate
 import java.util.UUID
 
 /**
@@ -51,6 +59,11 @@ data class MfaRequiredResult(
 sealed class LoginResult {
     data class Success(val authResult: AuthResult) : LoginResult()
     data class MfaRequired(val mfaResult: MfaRequiredResult) : LoginResult()
+    data class AccountTypeSelection(
+        val sessionToken: String,
+        val accountTypes: Set<AccountType>,
+        val user: User
+    ) : LoginResult()
 }
 
 @Service
@@ -59,6 +72,7 @@ class AuthService(
     private val userRepository: UserRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val passwordResetTokenRepository: PasswordResetTokenRepository,
+    private val accountTypeSessionRepository: AccountTypeSessionRepository,
     private val jwtTokenProvider: JwtTokenProvider,
     private val passwordEncoder: PasswordEncoder,
     private val emailService: EmailService,
@@ -67,6 +81,8 @@ class AuthService(
     private val auditService: com.liyaqa.shared.application.services.AuthAuditService,
     private val securityEmailService: com.liyaqa.notification.application.services.SecurityEmailService,
     private val sessionService: SessionService,
+    private val employeeService: EmployeeService,
+    private val clubRepository: ClubRepository,
     @Value("\${app.frontend.base-url:https://app.liyaqa.com}")
     private val frontendBaseUrl: String
 ) {
@@ -129,10 +145,38 @@ class AuthService(
             )
         }
 
+        // Check if user has multiple account types — require selection
+        if (user.accountTypes.size > 1) {
+            logger.info("Account type selection required for user: ${user.id} (types: ${user.accountTypes})")
+            val rawToken = generateSecureToken(32)
+            val tokenHash = jwtTokenProvider.hashToken(rawToken)
+
+            // Clean up any existing sessions for this user
+            accountTypeSessionRepository.deleteByUserId(user.id)
+
+            val session = AccountTypeSession(
+                userId = user.id,
+                tenantId = command.tenantId,
+                tokenHash = tokenHash,
+                expiresAt = Instant.now().plusSeconds(300) // 5 minutes
+            )
+            accountTypeSessionRepository.save(session)
+
+            return LoginResult.AccountTypeSelection(
+                sessionToken = rawToken,
+                accountTypes = user.accountTypes,
+                user = user
+            )
+        }
+
         user.recordSuccessfulLogin()
         userRepository.save(user)
 
-        return LoginResult.Success(generateTokens(user, command.deviceInfo))
+        // Single account type — derive and pass it through
+        val accountType = user.accountTypes.firstOrNull()
+            ?: User.accountTypeFromRole(user.role)
+
+        return LoginResult.Success(generateTokens(user, command.deviceInfo, accountType = accountType))
     }
 
     /**
@@ -158,7 +202,14 @@ class AuthService(
         user.recordSuccessfulLogin()
         userRepository.save(user)
 
-        return generateTokens(user, deviceInfo)
+        // Derive account type from role for single-type users
+        val accountType = if (user.accountTypes.size == 1) {
+            user.accountTypes.first()
+        } else {
+            User.accountTypeFromRole(user.role)
+        }
+
+        return generateTokens(user, deviceInfo, accountType = accountType)
     }
 
     /**
@@ -193,6 +244,9 @@ class AuthService(
             isPlatformUser = isPlatformUser
         )
 
+        // Derive and add account type from role
+        User.accountTypeFromRole(command.role)?.let { user.addAccountType(it) }
+
         val savedUser = userRepository.save(user)
 
         // Record password in history
@@ -200,6 +254,32 @@ class AuthService(
 
         // Grant default permissions for the user's role
         permissionService.grantDefaultPermissionsForRole(savedUser.id, savedUser.role.name)
+
+        // Auto-create Employee record for staff roles
+        if (User.accountTypeFromRole(command.role) == AccountType.EMPLOYEE) {
+            try {
+                val club = clubRepository.findById(command.tenantId).orElse(null)
+                if (club != null) {
+                    val displayNameEn = command.displayName.en.ifBlank { command.email.substringBefore('@') }
+                    employeeService.createEmployee(
+                        CreateEmployeeCommand(
+                            userId = savedUser.id,
+                            organizationId = club.organizationId,
+                            tenantId = command.tenantId,
+                            firstName = LocalizedText(en = displayNameEn, ar = command.displayName.ar),
+                            lastName = LocalizedText(en = "", ar = null),
+                            hireDate = LocalDate.now(),
+                            email = command.email
+                        )
+                    )
+                    logger.info("Auto-created employee record for user: ${savedUser.id}")
+                } else {
+                    logger.warn("Club not found for tenant ${command.tenantId}, skipping employee auto-creation")
+                }
+            } catch (e: Exception) {
+                logger.error("Failed to auto-create employee for user ${savedUser.id}: ${e.message}", e)
+            }
+        }
 
         return generateTokens(savedUser, null)
     }
@@ -212,6 +292,9 @@ class AuthService(
         if (!jwtTokenProvider.validateRefreshToken(command.refreshToken)) {
             throw IllegalArgumentException("Invalid or expired refresh token")
         }
+
+        // Extract account type from the refresh token before revoking (to preserve it)
+        val accountType = jwtTokenProvider.extractAccountType(command.refreshToken)
 
         val tokenHash = jwtTokenProvider.hashToken(command.refreshToken)
         val storedToken = refreshTokenRepository.findByTokenHash(tokenHash)
@@ -255,7 +338,7 @@ class AuthService(
             throw IllegalStateException("IP address validation failed. Your session may have been compromised. Please log in again from your original location.")
         }
 
-        return generateTokens(user, command.deviceInfo, command.ipAddress)
+        return generateTokens(user, command.deviceInfo, command.ipAddress, accountType = accountType)
     }
 
     /**
@@ -454,6 +537,60 @@ class AuthService(
     }
 
     /**
+     * Selects an account type after login for users with multiple account types.
+     * Consumes the session token and issues a full JWT.
+     * @throws IllegalArgumentException if session token is invalid, expired, or used
+     * @throws IllegalStateException if user doesn't have the requested account type
+     */
+    fun selectAccountType(sessionToken: String, accountType: AccountType, deviceInfo: String?): AuthResult {
+        val tokenHash = jwtTokenProvider.hashToken(sessionToken)
+        val session = accountTypeSessionRepository.findByTokenHash(tokenHash)
+            .orElseThrow { IllegalArgumentException("Invalid or expired session token") }
+
+        if (!session.isValid()) {
+            throw IllegalArgumentException("Session token has expired or already been used")
+        }
+
+        // Mark as used immediately to prevent reuse
+        session.markUsed()
+        accountTypeSessionRepository.save(session)
+
+        val user = userRepository.findById(session.userId)
+            .orElseThrow { IllegalArgumentException("User not found") }
+
+        if (!user.hasAccountType(accountType)) {
+            throw IllegalStateException("User does not have account type: $accountType")
+        }
+
+        // Set tenant context
+        TenantContext.setCurrentTenant(TenantId(session.tenantId))
+
+        user.recordSuccessfulLogin()
+        userRepository.save(user)
+
+        return generateTokens(user, deviceInfo, accountType = accountType)
+    }
+
+    /**
+     * Switches to a different account type while already authenticated.
+     * Issues new JWT with the selected account type.
+     * @throws IllegalStateException if user doesn't have the requested account type
+     */
+    fun switchAccountType(userId: UUID, accountType: AccountType): AuthResult {
+        val user = userRepository.findById(userId)
+            .orElseThrow { NoSuchElementException("User not found: $userId") }
+
+        if (!user.hasAccountType(accountType)) {
+            throw IllegalStateException("User does not have account type: $accountType")
+        }
+
+        // Set tenant context
+        TenantContext.setCurrentTenant(TenantId(user.tenantId))
+
+        return generateTokens(user, null, accountType = accountType)
+    }
+
+    /**
      * Generates tokens for a user (used by OAuth flow).
      * Public method for external use.
      */
@@ -461,12 +598,17 @@ class AuthService(
         return generateTokens(user, deviceInfo, null)
     }
 
-    private fun generateTokens(user: User, deviceInfo: String?, ipAddress: String? = null): AuthResult {
+    private fun generateTokens(
+        user: User,
+        deviceInfo: String?,
+        ipAddress: String? = null,
+        accountType: AccountType? = null
+    ): AuthResult {
         // Load user's permissions
         val permissions = permissionService.getUserPermissionCodes(user.id)
 
-        val accessToken = jwtTokenProvider.generateAccessToken(user, permissions)
-        val (refreshToken, tokenHash) = jwtTokenProvider.generateRefreshToken(user)
+        val accessToken = jwtTokenProvider.generateAccessToken(user, permissions, accountType)
+        val (refreshToken, tokenHash) = jwtTokenProvider.generateRefreshToken(user, accountType)
 
         // Store refresh token with absolute session timeout
         val now = Instant.now()

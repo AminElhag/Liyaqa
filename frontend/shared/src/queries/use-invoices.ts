@@ -20,6 +20,9 @@ import {
   bulkIssueInvoices,
   bulkCancelInvoices,
   createInvoiceFromSubscription,
+  getInvoicePayments,
+  getInvoiceCatalog,
+  getInvoiceSummary,
 } from "../lib/api/invoices";
 import type { PaginatedResponse, UUID } from "../types/api";
 import type {
@@ -28,6 +31,9 @@ import type {
   CreateInvoiceRequest,
   UpdateInvoiceRequest,
   PayInvoiceRequest,
+  Payment,
+  CatalogItem,
+  InvoiceSummary,
 } from "../types/billing";
 import { memberKeys } from "./use-members";
 import { dashboardKeys } from "./use-dashboard";
@@ -42,6 +48,10 @@ export const invoiceKeys = {
   detail: (id: UUID) => [...invoiceKeys.details(), id] as const,
   member: (memberId: UUID) =>
     [...invoiceKeys.all, "member", memberId] as const,
+  summary: () => [...invoiceKeys.all, "summary"] as const,
+  catalog: () => [...invoiceKeys.all, "catalog"] as const,
+  payments: (invoiceId: UUID) =>
+    [...invoiceKeys.all, "payments", invoiceId] as const,
 };
 
 /**
@@ -96,6 +106,50 @@ export function useMemberInvoices(
 }
 
 /**
+ * Hook to fetch invoice summary stats
+ */
+export function useInvoiceSummary(
+  options?: Omit<UseQueryOptions<InvoiceSummary>, "queryKey" | "queryFn">
+) {
+  return useQuery({
+    queryKey: invoiceKeys.summary(),
+    queryFn: () => getInvoiceSummary(),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    ...options,
+  });
+}
+
+/**
+ * Hook to fetch catalog items for invoice line item picker
+ */
+export function useInvoiceCatalog(
+  options?: Omit<UseQueryOptions<CatalogItem[]>, "queryKey" | "queryFn">
+) {
+  return useQuery({
+    queryKey: invoiceKeys.catalog(),
+    queryFn: () => getInvoiceCatalog(),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    ...options,
+  });
+}
+
+/**
+ * Hook to fetch payments for an invoice
+ */
+export function useInvoicePayments(
+  invoiceId: UUID,
+  options?: Omit<UseQueryOptions<Payment[]>, "queryKey" | "queryFn">
+) {
+  return useQuery({
+    queryKey: invoiceKeys.payments(invoiceId),
+    queryFn: () => getInvoicePayments(invoiceId),
+    enabled: !!invoiceId,
+    staleTime: 60 * 1000, // 1 minute
+    ...options,
+  });
+}
+
+/**
  * Hook to create a new invoice
  */
 export function useCreateInvoice() {
@@ -105,6 +159,7 @@ export function useCreateInvoice() {
     mutationFn: (data: CreateInvoiceRequest) => createInvoice(data),
     onSuccess: (invoice) => {
       queryClient.invalidateQueries({ queryKey: invoiceKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: invoiceKeys.summary() });
       queryClient.invalidateQueries({
         queryKey: invoiceKeys.member(invoice.memberId),
       });
@@ -143,6 +198,7 @@ export function useDeleteInvoice() {
     onSuccess: (_, id) => {
       queryClient.removeQueries({ queryKey: invoiceKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: invoiceKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: invoiceKeys.summary() });
       queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
     },
   });
@@ -159,6 +215,7 @@ export function useIssueInvoice() {
     onSuccess: (invoice) => {
       queryClient.setQueryData(invoiceKeys.detail(invoice.id), invoice);
       queryClient.invalidateQueries({ queryKey: invoiceKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: invoiceKeys.summary() });
       queryClient.invalidateQueries({
         queryKey: invoiceKeys.member(invoice.memberId),
       });
@@ -178,6 +235,7 @@ export function useCancelInvoice() {
     onSuccess: (invoice) => {
       queryClient.setQueryData(invoiceKeys.detail(invoice.id), invoice);
       queryClient.invalidateQueries({ queryKey: invoiceKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: invoiceKeys.summary() });
       queryClient.invalidateQueries({
         queryKey: invoiceKeys.member(invoice.memberId),
       });
@@ -198,6 +256,10 @@ export function usePayInvoice() {
     onSuccess: (invoice) => {
       queryClient.setQueryData(invoiceKeys.detail(invoice.id), invoice);
       queryClient.invalidateQueries({ queryKey: invoiceKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: invoiceKeys.summary() });
+      queryClient.invalidateQueries({
+        queryKey: invoiceKeys.payments(invoice.id),
+      });
       queryClient.invalidateQueries({
         queryKey: invoiceKeys.member(invoice.memberId),
       });
@@ -267,6 +329,7 @@ export function useCreateInvoiceFromSubscription() {
       createInvoiceFromSubscription(subscriptionId),
     onSuccess: (invoice) => {
       queryClient.invalidateQueries({ queryKey: invoiceKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: invoiceKeys.summary() });
       queryClient.invalidateQueries({
         queryKey: invoiceKeys.member(invoice.memberId),
       });

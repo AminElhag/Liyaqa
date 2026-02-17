@@ -13,6 +13,7 @@ import {
   Pause,
   Package,
   Search,
+  Gift,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -47,6 +48,7 @@ import {
   useDeactivateClassPack,
 } from "@liyaqa/shared/queries";
 import type { ClassPack, ClassPackStatus } from "@liyaqa/shared/types/scheduling";
+import { GrantPackToMemberDialog } from "@/components/admin/grant-pack-to-member-dialog";
 
 export default function ClassPacksPage() {
   const locale = useLocale() as "en" | "ar";
@@ -59,6 +61,7 @@ export default function ClassPacksPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
+  const [grantPack, setGrantPack] = useState<ClassPack | null>(null);
 
   // Fetch class packs
   const { data, isLoading, error } = useClassPacks({
@@ -102,6 +105,7 @@ export default function ClassPacksPage() {
       packDeleted: "Class pack deleted successfully",
       deleteConfirm: "Are you sure you want to delete this class pack?",
       classes: "classes",
+      assignToMember: "Assign to Member",
     },
     ar: {
       title: "باقات الحصص",
@@ -132,6 +136,7 @@ export default function ClassPacksPage() {
       packDeleted: "تم حذف الباقة بنجاح",
       deleteConfirm: "هل أنت متأكد من حذف هذه الباقة؟",
       classes: "حصص",
+      assignToMember: "تعيين لعضو",
     },
   };
 
@@ -272,6 +277,12 @@ export default function ClassPacksPage() {
                   <Edit className="me-2 h-4 w-4" />
                   {t.edit}
                 </DropdownMenuItem>
+                {pack.status === "ACTIVE" && (
+                  <DropdownMenuItem onClick={() => setGrantPack(pack)}>
+                    <Gift className="me-2 h-4 w-4" />
+                    {t.assignToMember}
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 {pack.status === "ACTIVE" ? (
                   <DropdownMenuItem onClick={() => handleStatusChange(pack, "deactivate")}>
@@ -402,6 +413,18 @@ export default function ClassPacksPage() {
             />
           </CardContent>
         </Card>
+      )}
+
+      {/* Grant Pack to Member Dialog */}
+      {grantPack && (
+        <GrantPackToMemberDialog
+          open={!!grantPack}
+          onOpenChange={(open) => {
+            if (!open) setGrantPack(null);
+          }}
+          classPack={grantPack}
+          locale={locale}
+        />
       )}
     </div>
   );

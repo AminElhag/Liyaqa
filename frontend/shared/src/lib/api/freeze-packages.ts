@@ -187,13 +187,9 @@ export async function getSubscriptionFreezeHistory(
  * Get active freeze for a subscription
  */
 export async function getActiveFreeze(subscriptionId: UUID): Promise<FreezeHistory | null> {
-  try {
-    return await api.get(`api/subscriptions/${subscriptionId}/freeze/active`).json();
-  } catch (error) {
-    // Return null if no active freeze (404)
-    if (error instanceof HTTPError && error.response.status === 404) {
-      return null;
-    }
-    throw error;
+  const response = await api.get(`api/subscriptions/${subscriptionId}/freeze/active`);
+  if (response.status === 204) {
+    return null;
   }
+  return response.json();
 }

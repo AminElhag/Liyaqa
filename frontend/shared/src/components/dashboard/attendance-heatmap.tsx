@@ -57,11 +57,13 @@ export function AttendanceHeatmap({ data, isLoading }: AttendanceHeatmapProps) {
 
   return (
     <motion.div variants={cardVariants} initial="hidden" animate="visible">
-      <Card>
+      <Card className="dark:border-neutral-800">
         <CardHeader className={cn("pb-4", isRtl && "text-right")}>
           <div className={cn("flex items-center justify-between", isRtl && "flex-row-reverse")}>
             <div className={cn("flex items-center gap-2", isRtl && "flex-row-reverse")}>
-              <Activity className="h-5 w-5 text-muted-foreground" />
+              <div className="p-2 rounded-lg bg-[#FF6B4A]/20">
+                <Activity className="h-5 w-5 text-[#FF6B4A]" />
+              </div>
               <CardTitle className="text-lg font-semibold">{texts.title}</CardTitle>
             </div>
             {summary?.peakHour && (
@@ -75,21 +77,21 @@ export function AttendanceHeatmap({ data, isLoading }: AttendanceHeatmapProps) {
         <CardContent className="space-y-4">
           {/* Summary Stats */}
           <div className="grid grid-cols-3 gap-3">
-            <div className={cn("rounded-lg bg-sky-500/10 p-3", isRtl && "text-right")}>
+            <div className={cn("rounded-lg bg-[#FF6B4A]/10 dark:bg-[#FF6B4A]/15 p-3", isRtl && "text-right")}>
               <div className="text-xs text-muted-foreground mb-1">{texts.totalCheckIns}</div>
-              <div className="font-display text-xl font-bold text-sky-600">
+              <div className="font-display text-xl font-bold text-[#FF6B4A]">
                 <AnimatedNumber value={summary?.totalCheckIns || 0} locale={locale} />
               </div>
             </div>
-            <div className={cn("rounded-lg bg-green-500/10 p-3", isRtl && "text-right")}>
+            <div className={cn("rounded-lg bg-emerald-500/10 dark:bg-emerald-500/15 p-3", isRtl && "text-right")}>
               <div className="text-xs text-muted-foreground mb-1">{texts.uniqueMembers}</div>
-              <div className="font-display text-xl font-bold text-green-600">
+              <div className="font-display text-xl font-bold text-emerald-600 dark:text-emerald-400">
                 <AnimatedNumber value={summary?.uniqueMembers || 0} locale={locale} />
               </div>
             </div>
-            <div className={cn("rounded-lg bg-amber-500/10 p-3", isRtl && "text-right")}>
+            <div className={cn("rounded-lg bg-amber-500/10 dark:bg-amber-500/15 p-3", isRtl && "text-right")}>
               <div className="text-xs text-muted-foreground mb-1">{texts.avgPerDay}</div>
-              <div className="font-display text-xl font-bold text-amber-600">
+              <div className="font-display text-xl font-bold text-amber-600 dark:text-amber-400">
                 <AnimatedNumber
                   value={summary?.averageCheckInsPerDay || 0}
                   decimals={1}
@@ -204,30 +206,27 @@ function generateHeatmapData(byHour: AttendanceByHour[]): number[][] {
   );
 
   // Map hour data to time slots
-  byHour.forEach(({ hour, checkIns }) => {
-    // Find which time slot this hour belongs to
+  byHour.forEach(({ hour, day, checkIns }) => {
     const slotIndex = TIME_SLOTS.findIndex((slot, i) => {
       const nextSlot = TIME_SLOTS[i + 1] || 24;
       return hour >= slot && hour < nextSlot;
     });
 
     if (slotIndex !== -1) {
-      // Distribute across all days (simplified - in real app, would use daily data)
-      const dayIndex = Math.floor(Math.random() * 7);
-      grid[dayIndex][slotIndex] += checkIns;
+      const dayIndex = day != null ? day : 0;
+      if (dayIndex >= 0 && dayIndex < 7) {
+        grid[dayIndex][slotIndex] += checkIns;
+      }
     }
   });
 
-  // Add some variance for visual interest
-  return grid.map((row) =>
-    row.map((value) => Math.max(0, value + Math.floor(Math.random() * 10)))
-  );
+  return grid;
 }
 
 function getHeatmapColor(intensity: number): string {
-  // Teal color scale from light to dark
-  const lightness = 95 - intensity * 50;
-  return `hsl(173, 80%, ${lightness}%)`;
+  // Coral color scale from light to dark (matching #FF6B4A primary)
+  const lightness = 92 - intensity * 45;
+  return `hsl(13, 100%, ${lightness}%)`;
 }
 
 function formatHour(hour: number, locale: string): string {
@@ -238,7 +237,7 @@ function formatHour(hour: number, locale: string): string {
 
 function AttendanceHeatmapSkeleton() {
   return (
-    <Card>
+    <Card className="dark:border-neutral-800">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <Skeleton className="h-6 w-36" />

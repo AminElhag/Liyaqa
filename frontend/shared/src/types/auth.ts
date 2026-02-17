@@ -1,6 +1,57 @@
 import type { UUID, LocalizedText } from "./api";
 
 /**
+ * Account types — a user can hold multiple simultaneously.
+ */
+export type AccountType = "EMPLOYEE" | "TRAINER" | "MEMBER";
+
+/**
+ * Info about an available account type.
+ */
+export interface AccountTypeInfo {
+  accountType: AccountType;
+  label: string;
+  labelAr: string;
+}
+
+/**
+ * Response when login requires account type selection (user has multiple account types).
+ */
+export interface AccountTypeSelectionResponse {
+  accountTypeSelectionRequired: true;
+  sessionToken: string;
+  availableAccountTypes: AccountTypeInfo[];
+  user: User;
+}
+
+/**
+ * Request to select an account type after login.
+ */
+export interface SelectAccountTypeRequest {
+  sessionToken: string;
+  accountType: AccountType;
+}
+
+/**
+ * Request to switch account type while already authenticated.
+ */
+export interface SwitchAccountTypeRequest {
+  accountType: AccountType;
+}
+
+/**
+ * Type guard to check if login response requires account type selection.
+ */
+export function isAccountTypeSelection(
+  response: LoginResponse | MfaRequiredResponse | AccountTypeSelectionResponse
+): response is AccountTypeSelectionResponse {
+  return (
+    "accountTypeSelectionRequired" in response &&
+    response.accountTypeSelectionRequired === true
+  );
+}
+
+/**
  * User roles matching backend
  */
 export type UserRole =
@@ -74,6 +125,8 @@ export interface User {
   memberId?: UUID;
   isPlatformUser?: boolean;
   permissions?: string[];
+  accountTypes?: AccountType[];
+  activeAccountType?: AccountType;
   lastLoginAt?: string;
   createdAt: string;
   updatedAt: string;

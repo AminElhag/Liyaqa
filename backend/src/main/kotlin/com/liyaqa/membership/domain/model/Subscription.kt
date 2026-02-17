@@ -25,7 +25,7 @@ class Subscription(
     id: UUID = UUID.randomUUID(),
 
     @Column(name = "member_id", nullable = false)
-    val memberId: UUID,
+    var memberId: UUID,
 
     @Column(name = "plan_id", nullable = false)
     val planId: UUID,
@@ -211,6 +211,17 @@ class Subscription(
         endDate = endDate.plusDays(frozenDays.toLong()) // Extend by frozen days
         status = SubscriptionStatus.ACTIVE
         frozenAt = null
+    }
+
+    /**
+     * Transfers the subscription to a different member.
+     * @throws IllegalStateException if subscription is not active
+     * @throws IllegalArgumentException if transferring to the same member
+     */
+    fun transfer(newMemberId: UUID) {
+        require(status == SubscriptionStatus.ACTIVE) { "Only active subscriptions can be transferred" }
+        require(newMemberId != memberId) { "Cannot transfer subscription to the same member" }
+        memberId = newMemberId
     }
 
     /**

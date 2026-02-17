@@ -118,7 +118,7 @@ export default function PricingTiersPage() {
       planId: tier.planId,
       contractTerm: tier.contractTerm,
       discountPercentage: tier.discountPercentage?.toString() || "",
-      overrideMonthlyFee: tier.overrideMonthlyFee?.toString() || "",
+      overrideMonthlyFee: tier.overrideMonthlyFeeAmount?.toString() || "",
     });
     setEditingTier(tier);
     setDialogOpen(true);
@@ -130,7 +130,7 @@ export default function PricingTiersPage() {
         planId: data.planId as UUID,
         contractTerm: data.contractTerm,
         discountPercentage: data.discountPercentage ? parseFloat(data.discountPercentage) : undefined,
-        overrideMonthlyFee: data.overrideMonthlyFee ? parseFloat(data.overrideMonthlyFee) : undefined,
+        overrideMonthlyFeeAmount: data.overrideMonthlyFee ? parseFloat(data.overrideMonthlyFee) : undefined,
       };
 
       if (editingTier) {
@@ -278,9 +278,9 @@ export default function PricingTiersPage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        {tier.overrideMonthlyFee ? (
+                        {tier.overrideMonthlyFeeAmount ? (
                           <span className="font-medium">
-                            {tier.overrideMonthlyFee} {tier.overrideCurrency}
+                            {tier.overrideMonthlyFeeAmount} {tier.overrideMonthlyFeeCurrency}
                           </span>
                         ) : (
                           <span className="text-muted-foreground">-</span>

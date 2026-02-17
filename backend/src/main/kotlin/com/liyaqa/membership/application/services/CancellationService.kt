@@ -20,6 +20,12 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import com.liyaqa.membership.api.CompetitorAnalysisDto
+import com.liyaqa.membership.api.DissatisfactionAreaDto
+import com.liyaqa.membership.api.ExitSurveyAnalyticsResponse
+import com.liyaqa.membership.api.NpsDistributionDto
+import com.liyaqa.membership.api.ReasonBreakdownDto
+import com.liyaqa.membership.api.SatisfactionDistributionDto
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
@@ -484,6 +490,107 @@ class CancellationService(
             "averageNps" to (avgNps ?: 0.0),
             "npsDistribution" to npsDistribution,
             "totalSurveys" to exitSurveyRepository.count()
+        )
+    }
+
+    /**
+     * Get full exit survey analytics matching the frontend ExitSurveyAnalytics type.
+     * Computes all metrics in-memory from entity list to avoid fragile JPQL aggregates.
+     */
+    fun getFullExitSurveyAnalytics(startDate: Instant, endDate: Instant): ExitSurveyAnalyticsResponse {
+        val surveys = exitSurveyRepository.findByCreatedAtBetween(
+            startDate, endDate, Pageable.unpaged()
+        ).content
+
+        val total = surveys.size.toLong()
+
+        // Reason breakdown
+        val reasonBreakdown = surveys.groupBy { it.reasonCategory.name }
+            .map { (category, items) ->
+                ReasonBreakdownDto(
+                    category = category,
+                    count = items.size.toLong(),
+                    percentage = if (total > 0) items.size.toDouble() / total * 100.0 else 0.0
+                )
+            }
+            .sortedByDescending { it.count }
+
+        // NPS distribution
+        val surveysWithNps = surveys.filter { it.npsScore != null }
+        val promoters = surveysWithNps.count { it.npsScore!! >= 9 }.toLong()
+        val passives = surveysWithNps.count { it.npsScore!! in 7..8 }.toLong()
+        val detractors = surveysWithNps.count { it.npsScore!! <= 6 }.toLong()
+        val npsDistribution = NpsDistributionDto(promoters, passives, detractors)
+
+        // Average NPS
+        val averageNps = if (surveysWithNps.isNotEmpty()) {
+            surveysWithNps.map { it.npsScore!! }.average()
+        } else 0.0
+
+        // Satisfaction distribution
+        val surveysWithSat = surveys.filter { it.overallSatisfaction != null }
+        val satisfactionDistribution = SatisfactionDistributionDto(
+            veryDissatisfied = surveysWithSat.count { it.overallSatisfaction == 1 }.toLong(),
+            dissatisfied = surveysWithSat.count { it.overallSatisfaction == 2 }.toLong(),
+            neutral = surveysWithSat.count { it.overallSatisfaction == 3 }.toLong(),
+            satisfied = surveysWithSat.count { it.overallSatisfaction == 4 }.toLong(),
+            verySatisfied = surveysWithSat.count { it.overallSatisfaction == 5 }.toLong()
+        )
+
+        // Average satisfaction
+        val averageSatisfaction = if (surveysWithSat.isNotEmpty()) {
+            surveysWithSat.map { it.overallSatisfaction!! }.average()
+        } else 0.0
+
+        // Would recommend percentage
+        val surveysWithRecommend = surveys.filter { it.wouldRecommend != null }
+        val wouldRecommendPercentage = if (surveysWithRecommend.isNotEmpty()) {
+            surveysWithRecommend.count { it.wouldRecommend == true }.toDouble() / surveysWithRecommend.size * 100.0
+        } else 0.0
+
+        // Open to future offers percentage
+        val openToFutureOffersPercentage = if (total > 0) {
+            surveys.count { it.openToFutureOffers }.toDouble() / total * 100.0
+        } else 0.0
+
+        // Top dissatisfaction areas
+        val allAreas = surveys.flatMap { it.dissatisfactionAreas ?: emptyList() }
+        val totalAreas = allAreas.size
+        val topDissatisfactionAreas = allAreas.groupBy { it }
+            .map { (area, items) ->
+                DissatisfactionAreaDto(
+                    area = area,
+                    count = items.size.toLong(),
+                    percentage = if (totalAreas > 0) items.size.toDouble() / totalAreas * 100.0 else 0.0
+                )
+            }
+            .sortedByDescending { it.count }
+
+        // Competitor analysis
+        val competitorAnalysis = surveys.filter { it.competitorName != null }
+            .groupBy { it.competitorName!! }
+            .map { (name, items) ->
+                CompetitorAnalysisDto(
+                    competitorName = name,
+                    count = items.size.toLong(),
+                    topReasons = items.mapNotNull { it.competitorReason }.distinct().take(5)
+                )
+            }
+            .sortedByDescending { it.count }
+
+        return ExitSurveyAnalyticsResponse(
+            totalResponses = total,
+            periodStart = startDate.toString(),
+            periodEnd = endDate.toString(),
+            reasonBreakdown = reasonBreakdown,
+            npsDistribution = npsDistribution,
+            averageNps = averageNps,
+            satisfactionDistribution = satisfactionDistribution,
+            averageSatisfaction = averageSatisfaction,
+            wouldRecommendPercentage = wouldRecommendPercentage,
+            openToFutureOffersPercentage = openToFutureOffersPercentage,
+            topDissatisfactionAreas = topDissatisfactionAreas,
+            competitorAnalysis = competitorAnalysis
         )
     }
 

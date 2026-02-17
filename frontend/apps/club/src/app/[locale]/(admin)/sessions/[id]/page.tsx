@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import {
@@ -9,6 +10,7 @@ import {
   MapPin,
   Calendar,
   UserCheck,
+  UserPlus,
   XCircle,
   Edit,
   Play,
@@ -37,8 +39,10 @@ import {
   useStartSession,
   useCompleteSession,
   useCancelSession,
+  useCreateBooking,
 } from "@liyaqa/shared/queries";
 import { SessionQrCode } from "@/components/admin/session-qr-code";
+import { BookingMemberSearch } from "@/components/admin/booking-member-search";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import { formatDate, formatTime } from "@liyaqa/shared/utils";
 
@@ -59,6 +63,9 @@ export default function SessionDetailPage() {
   const startSession = useStartSession();
   const completeSession = useCompleteSession();
   const cancelSession = useCancelSession();
+  const createBooking = useCreateBooking();
+
+  const [addMemberOpen, setAddMemberOpen] = useState(false);
 
   const texts = {
     back: locale === "ar" ? "العودة للجلسات" : "Back to Sessions",
@@ -94,6 +101,7 @@ export default function SessionDetailPage() {
     sessionCompleted: locale === "ar" ? "تم إنهاء الجلسة" : "Session completed",
     sessionCancelled: locale === "ar" ? "تم إلغاء الجلسة" : "Session cancelled",
     errorAction: locale === "ar" ? "حدث خطأ" : "An error occurred",
+    addMember: locale === "ar" ? "إضافة عضو" : "Add Member",
   };
 
   const handleStartSession = async () => {
@@ -136,6 +144,10 @@ export default function SessionDetailPage() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleBookMember = async (memberId: string) => {
+    await createBooking.mutateAsync({ sessionId: id, memberId });
   };
 
   if (isLoading) {
@@ -339,11 +351,19 @@ export default function SessionDetailPage() {
 
       {/* Bookings List */}
       <Card>
-        <CardHeader>
-          <CardTitle>{texts.bookings}</CardTitle>
-          <CardDescription>
-            {bookings?.length || 0} {texts.booked}
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>{texts.bookings}</CardTitle>
+            <CardDescription>
+              {bookings?.length || 0} {texts.booked}
+            </CardDescription>
+          </div>
+          {(session.status === "SCHEDULED" || session.status === "IN_PROGRESS") && (
+            <Button size="sm" variant="outline" onClick={() => setAddMemberOpen(true)}>
+              <UserPlus className="me-2 h-4 w-4" />
+              {texts.addMember}
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           {isLoadingBookings ? (
@@ -416,6 +436,15 @@ export default function SessionDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Add Member Dialog */}
+      <BookingMemberSearch
+        session={session}
+        existingMemberIds={(bookings || []).map((b) => b.memberId)}
+        open={addMemberOpen}
+        onOpenChange={setAddMemberOpen}
+        onBookMember={handleBookMember}
+      />
     </div>
   );
 }

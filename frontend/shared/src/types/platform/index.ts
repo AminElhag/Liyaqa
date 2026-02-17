@@ -17,3 +17,20 @@ export * from "./dunning";
 export * from "./announcements";
 export * from "./feature-flags";
 export * from "./templates";
+// Tenant types — TenantStatus already exported from ./announcements, TenantSummaryResponse from ./feature-flags
+export type {
+  TenantResponse,
+  OnboardingChecklistItem,
+  OnboardingChecklistResponse,
+  DataExportJobResponse,
+  DeactivationLogResponse,
+  TenantFilters,
+  ProvisionTenantRequest,
+  UpdateTenantRequest,
+} from "./tenant";
+export { TENANT_STATUS_CONFIG } from "./tenant";
+export * from "./billing";
+export * from "./impersonation";
+export * from "./facility-monitoring";
+export * from "./ticket-analytics";
+export * from "./team";

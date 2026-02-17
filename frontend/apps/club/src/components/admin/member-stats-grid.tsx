@@ -2,11 +2,10 @@
 
 import {
   Calendar,
-  Dumbbell,
+  CreditCard,
   Clock,
   CheckCircle,
   XCircle,
-  Infinity,
 } from "lucide-react";
 import { cn } from "@liyaqa/shared/utils";
 import type { Member } from "@liyaqa/shared/types/member";
@@ -65,18 +64,19 @@ export function MemberStatsGrid({
   // Ensure subscriptions is an array (defensive handling)
   const subscriptionsList = Array.isArray(subscriptions) ? subscriptions : [];
 
-  // Get active subscription
-  const activeSubscription = subscriptionsList.find(
+  // Count active memberships
+  const activeMemberships = subscriptionsList.filter(
+    (sub) => sub.status === "ACTIVE"
+  );
+  const activeMembershipCount = activeMemberships.length;
+
+  // Calculate days until expiry across ALL active subscriptions
+  const activeOrFrozen = subscriptionsList.filter(
     (sub) => sub.status === "ACTIVE" || sub.status === "FROZEN"
   );
-
-  // Calculate days until expiry
-  const daysUntilExpiry = activeSubscription
-    ? Math.max(0, activeSubscription.daysRemaining)
+  const daysUntilExpiry = activeOrFrozen.length > 0
+    ? Math.max(0, Math.min(...activeOrFrozen.map((s) => s.daysRemaining)))
     : null;
-
-  // Get classes remaining
-  const classesRemaining = activeSubscription?.classesRemaining;
 
   // Format member since date
   const memberSince = new Date(member.createdAt).toLocaleDateString(
@@ -96,10 +96,9 @@ export function MemberStatsGrid({
 
   const texts = {
     memberSince: locale === "ar" ? "عضو منذ" : "Member Since",
-    classesRemaining: locale === "ar" ? "الحصص المتبقية" : "Classes Left",
+    activeMemberships: locale === "ar" ? "العضويات النشطة" : "Active Memberships",
     daysRemaining: locale === "ar" ? "أيام متبقية" : "Days Left",
     status: locale === "ar" ? "الحالة" : "Status",
-    unlimited: locale === "ar" ? "غير محدود" : "Unlimited",
     active: locale === "ar" ? "نشط" : "Active",
     inactive: locale === "ar" ? "غير نشط" : "Inactive",
     noSubscription: locale === "ar" ? "لا يوجد" : "None",
@@ -118,21 +117,11 @@ export function MemberStatsGrid({
         iconTextClass="text-blue-600"
       />
 
-      {/* Classes Remaining */}
+      {/* Active Memberships */}
       <StatCard
-        icon={
-          classesRemaining === undefined ? (
-            <Infinity className="h-6 w-6" />
-          ) : (
-            <Dumbbell className="h-6 w-6" />
-          )
-        }
-        value={
-          classesRemaining === undefined
-            ? texts.unlimited
-            : classesRemaining ?? texts.noSubscription
-        }
-        label={texts.classesRemaining}
+        icon={<CreditCard className="h-6 w-6" />}
+        value={activeMembershipCount}
+        label={texts.activeMemberships}
         iconBgClass="bg-violet-50"
         iconTextClass="text-violet-600"
       />

@@ -302,4 +302,35 @@ data class UpdateClubRequest(
     val descriptionAr: String?
 )
 
+// ============================================
+// Create Club User Request
+// ============================================
+
+data class CreateClubUserRequest(
+    @field:NotBlank(message = "Email is required")
+    val email: String,
+
+    @field:NotBlank(message = "Password is required")
+    @field:Size(min = 8, message = "Password must be at least 8 characters")
+    val password: String,
+
+    @field:NotBlank(message = "Display name (English) is required")
+    val displayNameEn: String,
+
+    val displayNameAr: String? = null,
+
+    val role: Role = Role.MEMBER
+)
+
+// ============================================
+// Update Club User Request
+// ============================================
+
+data class UpdateClubUserRequest(
+    val displayNameEn: String? = null,
+    val displayNameAr: String? = null,
+    val role: Role? = null,
+    val status: UserStatus? = null
+)
+
 // PageResponse is defined in ClientPlanDtos.kt

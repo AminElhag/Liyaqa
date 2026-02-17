@@ -51,10 +51,11 @@ export function LocationForm({
   isPending,
 }: LocationFormProps) {
   const locale = useLocale();
-  const { data: clubs, isLoading: clubsLoading } = useClubs({
-    status: "ACTIVE",
-    size: 100,
-  });
+  const needsClubSelector = !defaultClubId && !location;
+  const { data: clubs, isLoading: clubsLoading } = useClubs(
+    { status: "ACTIVE", size: 100 },
+    { enabled: needsClubSelector },
+  );
 
   const {
     register,
@@ -85,7 +86,7 @@ export function LocationForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Club Selection */}
-      {!location && (
+      {needsClubSelector && (
         <Card>
           <CardHeader>
             <CardTitle>{locale === "ar" ? "النادي" : "Club"}</CardTitle>

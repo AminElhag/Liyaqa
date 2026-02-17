@@ -1,0 +1,218 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Cairo:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 11 100% 64%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 11 100% 64%;
+    --radius: 0.5rem;
+
+    /* Brand colors */
+    --brand-coral: 11 100% 64%;
+    --brand-terracotta: 11 84% 58%;
+    --brand-tint: 11 100% 71%;
+
+    /* MD3 Shape Corners */
+    --md3-shape-corner-xs: 4px;
+    --md3-shape-corner-sm: 8px;
+    --md3-shape-corner-md: 12px;
+    --md3-shape-corner-lg: 16px;
+    --md3-shape-corner-xl: 28px;
+
+    /* MD3 Surface Colors with Elevation */
+    --md3-surface: 0 0% 98%;
+    --md3-surface-dim: 0 0% 94%;
+    --md3-surface-bright: 0 0% 100%;
+    --md3-surface-container-lowest: 0 0% 100%;
+    --md3-surface-container-low: 0 0% 97%;
+    --md3-surface-container: 0 0% 95%;
+    --md3-surface-container-high: 0 0% 93%;
+    --md3-surface-container-highest: 0 0% 91%;
+
+    --md3-surface-tint: 11 100% 64%;
+
+    --md3-outline: 220 13% 46%;
+    --md3-outline-variant: 220 13% 78%;
+
+    --md3-on-surface: 220 15% 10%;
+    --md3-on-surface-variant: 220 10% 35%;
+
+    --md3-state-hover: 0.08;
+    --md3-state-focus: 0.12;
+    --md3-state-pressed: 0.12;
+    --md3-state-dragged: 0.16;
+
+    --md3-touch-target: 48px;
+
+    --gradient-primary: linear-gradient(135deg, #FF6B4A 0%, #E85D3A 100%);
+    --gradient-success: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    --gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    --gradient-info: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    --gradient-purple: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+    --card: 224 71% 6%;
+    --card-foreground: 210 40% 98%;
+    --popover: 224 71% 6%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 11 100% 64%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 224 30% 15%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 224 30% 15%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 224 30% 15%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 224 30% 15%;
+    --input: 224 30% 15%;
+    --ring: 11 100% 64%;
+
+    --md3-surface: 224 71% 6%;
+    --md3-surface-dim: 224 71% 4%;
+    --md3-surface-bright: 224 30% 14%;
+    --md3-surface-container-lowest: 224 71% 3%;
+    --md3-surface-container-low: 224 71% 5%;
+    --md3-surface-container: 224 71% 7%;
+    --md3-surface-container-high: 224 71% 9%;
+    --md3-surface-container-highest: 224 71% 11%;
+
+    --md3-outline: 220 10% 55%;
+    --md3-outline-variant: 220 13% 28%;
+
+    --md3-on-surface: 220 10% 92%;
+    --md3-on-surface-variant: 220 10% 70%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* RTL support */
+[dir="rtl"] {
+  font-family: "Cairo", "Tajawal", sans-serif;
+}
+
+[dir="ltr"] {
+  font-family: "Plus Jakarta Sans", "Cairo", sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-neutral-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-neutral-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-neutral-400;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: hsl(224 30% 10%);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(224 30% 25%);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(224 30% 35%);
+}
+
+/* Theme transition */
+* {
+  transition-property: background-color, border-color, color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.no-transitions * {
+  transition: none !important;
+}
+
+/* Display font */
+.font-display {
+  font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
+}
+
+[dir="rtl"] .font-display {
+  font-family: "Cairo", "Space Grotesk", sans-serif;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Focus indicators (WCAG AA) */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary;
+  outline-style: solid;
+}

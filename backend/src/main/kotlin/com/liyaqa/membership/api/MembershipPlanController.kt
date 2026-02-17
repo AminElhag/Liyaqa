@@ -1,6 +1,8 @@
 package com.liyaqa.membership.api
 
 import com.liyaqa.membership.application.services.MembershipPlanService
+import com.liyaqa.membership.domain.model.MembershipPlanStatus
+import com.liyaqa.membership.domain.model.MembershipPlanType
 import com.liyaqa.organization.api.PageResponse
 import jakarta.validation.Valid
 import org.springframework.data.domain.PageRequest
@@ -45,7 +47,7 @@ class MembershipPlanController(
     }
 
     /**
-     * Lists all membership plans with optional filtering by active status.
+     * Lists all membership plans with optional filtering by active status, plan status, or plan type.
      */
     @GetMapping
     @PreAuthorize("hasAuthority('plans_view')")
@@ -54,14 +56,17 @@ class MembershipPlanController(
         @RequestParam(defaultValue = "20") size: Int,
         @RequestParam(defaultValue = "sortOrder") sortBy: String,
         @RequestParam(defaultValue = "ASC") sortDirection: String,
-        @RequestParam(required = false) active: Boolean?
+        @RequestParam(required = false) active: Boolean?,
+        @RequestParam(required = false) status: MembershipPlanStatus?,
+        @RequestParam(required = false) planType: MembershipPlanType?
     ): ResponseEntity<PageResponse<MembershipPlanResponse>> {
         val sort = Sort.by(Sort.Direction.valueOf(sortDirection.uppercase()), sortBy)
         val pageable = PageRequest.of(page, size, sort)
-        val plansPage = if (active != null) {
-            membershipPlanService.getPlansByActiveStatus(active, pageable)
-        } else {
-            membershipPlanService.getAllPlans(pageable)
+        val plansPage = when {
+            status != null -> membershipPlanService.getPlansByStatus(status, pageable)
+            planType != null -> membershipPlanService.getPlansByType(planType, pageable)
+            active != null -> membershipPlanService.getPlansByActiveStatus(active, pageable)
+            else -> membershipPlanService.getAllPlans(pageable)
         }
 
         return ResponseEntity.ok(
@@ -136,6 +141,53 @@ class MembershipPlanController(
     fun deactivatePlan(@PathVariable id: UUID): ResponseEntity<MembershipPlanResponse> {
         val plan = membershipPlanService.deactivatePlan(id)
         return ResponseEntity.ok(MembershipPlanResponse.from(plan))
+    }
+
+    /**
+     * Archives a membership plan.
+     */
+    @PostMapping("/{id}/archive")
+    @PreAuthorize("hasAuthority('plans_update')")
+    fun archivePlan(@PathVariable id: UUID): ResponseEntity<MembershipPlanResponse> {
+        val plan = membershipPlanService.archivePlan(id)
+        return ResponseEntity.ok(MembershipPlanResponse.from(plan))
+    }
+
+    /**
+     * Reactivates an archived membership plan.
+     */
+    @PostMapping("/{id}/reactivate")
+    @PreAuthorize("hasAuthority('plans_update')")
+    fun reactivatePlan(@PathVariable id: UUID): ResponseEntity<MembershipPlanResponse> {
+        val plan = membershipPlanService.reactivatePlan(id)
+        return ResponseEntity.ok(MembershipPlanResponse.from(plan))
+    }
+
+    /**
+     * Publishes a draft plan (DRAFT -> ACTIVE).
+     */
+    @PostMapping("/{id}/publish")
+    @PreAuthorize("hasAuthority('plans_update')")
+    fun publishPlan(@PathVariable id: UUID): ResponseEntity<MembershipPlanResponse> {
+        val plan = membershipPlanService.publishPlan(id)
+        return ResponseEntity.ok(MembershipPlanResponse.from(plan))
+    }
+
+    /**
+     * Gets plan statistics.
+     */
+    @GetMapping("/stats")
+    @PreAuthorize("hasAuthority('plans_view')")
+    fun getPlanStats(): ResponseEntity<PlanStatsResponse> {
+        val stats = membershipPlanService.getPlanStats()
+        return ResponseEntity.ok(
+            PlanStatsResponse(
+                totalPlans = stats["totalPlans"] ?: 0,
+                activePlans = stats["activePlans"] ?: 0,
+                draftPlans = stats["draftPlans"] ?: 0,
+                archivedPlans = stats["archivedPlans"] ?: 0
+            )
+        )
     }
 
     /**

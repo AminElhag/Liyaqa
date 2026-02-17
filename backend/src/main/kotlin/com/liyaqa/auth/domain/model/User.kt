@@ -4,11 +4,15 @@ import com.liyaqa.shared.domain.BaseEntity
 import com.liyaqa.shared.domain.LocalizedText
 import jakarta.persistence.AttributeOverride
 import jakarta.persistence.AttributeOverrides
+import jakarta.persistence.CollectionTable
 import jakarta.persistence.Column
+import jakarta.persistence.ElementCollection
 import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
+import jakarta.persistence.JoinColumn
 import jakarta.persistence.Table
 import org.hibernate.annotations.Filter
 import org.hibernate.annotations.FilterDef
@@ -93,8 +97,50 @@ class User(
 
 ) : BaseEntity(id) {
 
+    /**
+     * The set of account types this user holds within the tenant.
+     * A user can be an EMPLOYEE, TRAINER, and/or MEMBER simultaneously.
+     */
+    @ElementCollection(targetClass = AccountType::class, fetch = FetchType.EAGER)
+    @CollectionTable(
+        name = "user_account_types",
+        joinColumns = [JoinColumn(name = "user_id")]
+    )
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_type")
+    var accountTypes: MutableSet<AccountType> = mutableSetOf()
+
     companion object {
         private const val MAX_FAILED_ATTEMPTS = 5
+
+        /**
+         * Derives the default AccountType from a Role.
+         */
+        fun accountTypeFromRole(role: Role): AccountType? = when (role) {
+            Role.SUPER_ADMIN, Role.CLUB_ADMIN, Role.STAFF -> AccountType.EMPLOYEE
+            Role.TRAINER -> AccountType.TRAINER
+            Role.MEMBER -> AccountType.MEMBER
+            else -> null // Platform roles don't map to account types
+        }
+    }
+
+    /**
+     * Checks if this user has the given account type.
+     */
+    fun hasAccountType(type: AccountType): Boolean = type in accountTypes
+
+    /**
+     * Adds an account type to this user.
+     */
+    fun addAccountType(type: AccountType) {
+        accountTypes.add(type)
+    }
+
+    /**
+     * Removes an account type from this user.
+     */
+    fun removeAccountType(type: AccountType) {
+        accountTypes.remove(type)
     }
 
     /**

@@ -4,7 +4,9 @@ import com.liyaqa.shared.domain.BaseEntity
 import jakarta.persistence.*
 import org.hibernate.annotations.Filter
 import org.hibernate.annotations.FilterDef
+import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.ParamDef
+import org.hibernate.type.SqlTypes
 import java.util.*
 
 @Entity
@@ -35,9 +37,11 @@ class InterventionTemplate(
     @Column(name = "message_template_ar", columnDefinition = "TEXT")
     var messageTemplateAr: String? = null,
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "offer_details", columnDefinition = "JSONB")
     var offerDetails: String? = null,
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "target_risk_levels", columnDefinition = "JSONB")
     var targetRiskLevels: String? = null, // ["HIGH", "CRITICAL"]
 

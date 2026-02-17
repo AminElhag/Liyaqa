@@ -1,5 +1,6 @@
 package com.liyaqa.membership.domain.model
 
+import com.liyaqa.scheduling.domain.model.ClassAccessLevel
 import com.liyaqa.shared.domain.BaseEntity
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.Money
@@ -17,6 +18,19 @@ import org.hibernate.annotations.FilterDef
 import org.hibernate.annotations.ParamDef
 import java.time.LocalDate
 import java.util.UUID
+
+enum class MembershipPlanType {
+    RECURRING,
+    CLASS_PACK,
+    DAY_PASS,
+    TRIAL
+}
+
+enum class MembershipPlanStatus {
+    DRAFT,
+    ACTIVE,
+    ARCHIVED
+}
 
 @Entity
 @Table(name = "membership_plans")
@@ -111,6 +125,26 @@ class MembershipPlan(
     @Column(name = "sort_order", nullable = false)
     var sortOrder: Int = 0,
 
+    // === PLAN TYPE & STATUS ===
+    @Enumerated(EnumType.STRING)
+    @Column(name = "plan_type", nullable = false, length = 20)
+    var planType: MembershipPlanType = MembershipPlanType.RECURRING,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    var status: MembershipPlanStatus = MembershipPlanStatus.ACTIVE,
+
+    // === CLASS PACK FIELDS ===
+    @Column(name = "session_count")
+    var sessionCount: Int? = null,
+
+    @Column(name = "expiry_days")
+    var expiryDays: Int? = null,
+
+    // === TRIAL CONVERSION ===
+    @Column(name = "converts_to_plan_id")
+    var convertsToPlanId: UUID? = null,
+
     // === CONTRACT CONFIGURATION ===
     @Column(name = "category_id")
     var categoryId: UUID? = null,
@@ -137,21 +171,95 @@ class MembershipPlan(
     var earlyTerminationFeeValue: java.math.BigDecimal? = null,
 
     @Column(name = "cooling_off_days")
-    var coolingOffDays: Int = 14
+    var coolingOffDays: Int = 14,
+
+    // === GX CLASS ACCESS ===
+
+    /**
+     * Level of GX class access: UNLIMITED, LIMITED, or NO_ACCESS.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "class_access_level", nullable = false, length = 20)
+    var classAccessLevel: ClassAccessLevel = ClassAccessLevel.UNLIMITED,
+
+    /**
+     * Comma-separated ClassType values for category-based eligibility.
+     * Null means all categories are eligible.
+     */
+    @Column(name = "eligible_class_categories", length = 500)
+    var eligibleClassCategories: String? = null,
+
+    // === PT ACCESS ===
+
+    /**
+     * Level of PT access: UNLIMITED, LIMITED, or NO_ACCESS.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "pt_access_level", nullable = false, length = 20)
+    var ptAccessLevel: ClassAccessLevel = ClassAccessLevel.NO_ACCESS,
+
+    /**
+     * Max PT sessions per billing period (for LIMITED access).
+     */
+    @Column(name = "max_pt_sessions_per_period")
+    var maxPtSessionsPerPeriod: Int? = null,
+
+    /**
+     * Number of PT sessions included per billing period.
+     */
+    @Column(name = "pt_sessions_included")
+    var ptSessionsIncluded: Int? = null
 
 ) : BaseEntity(id) {
 
     /**
      * Deactivates the plan so it cannot be used for new subscriptions.
+     * Keeps backward compatibility via isActive flag.
      */
     fun deactivate() {
         isActive = false
+        status = MembershipPlanStatus.ARCHIVED
     }
 
     /**
      * Activates the plan so it can be used for new subscriptions.
+     * Keeps backward compatibility via isActive flag.
      */
     fun activate() {
+        isActive = true
+        status = MembershipPlanStatus.ACTIVE
+    }
+
+    /**
+     * Transition to ARCHIVED status.
+     */
+    fun archive() {
+        require(status == MembershipPlanStatus.ACTIVE) {
+            "Can only archive an ACTIVE plan (current: $status)"
+        }
+        status = MembershipPlanStatus.ARCHIVED
+        isActive = false
+    }
+
+    /**
+     * Transition from DRAFT to ACTIVE.
+     */
+    fun publish() {
+        require(status == MembershipPlanStatus.DRAFT) {
+            "Can only publish a DRAFT plan (current: $status)"
+        }
+        status = MembershipPlanStatus.ACTIVE
+        isActive = true
+    }
+
+    /**
+     * Reactivate an ARCHIVED plan.
+     */
+    fun reactivate() {
+        require(status == MembershipPlanStatus.ARCHIVED) {
+            "Can only reactivate an ARCHIVED plan (current: $status)"
+        }
+        status = MembershipPlanStatus.ACTIVE
         isActive = true
     }
 
@@ -162,7 +270,7 @@ class MembershipPlan(
         val today = LocalDate.now()
         val afterStart = availableFrom == null || !today.isBefore(availableFrom)
         val beforeEnd = availableUntil == null || !today.isAfter(availableUntil)
-        return isActive && afterStart && beforeEnd
+        return status == MembershipPlanStatus.ACTIVE && afterStart && beforeEnd
     }
 
     /**
@@ -226,7 +334,36 @@ class MembershipPlan(
     /**
      * Checks if this plan has unlimited classes.
      */
-    fun hasUnlimitedClasses(): Boolean = maxClassesPerPeriod == null
+    fun hasUnlimitedClasses(): Boolean = classAccessLevel == ClassAccessLevel.UNLIMITED
+
+    /**
+     * Checks if this plan has GX access.
+     */
+    fun hasGxAccess(): Boolean = classAccessLevel != ClassAccessLevel.NO_ACCESS
+
+    /**
+     * Get eligible class categories as a list.
+     */
+    fun getEligibleClassCategoriesList(): List<String> {
+        return eligibleClassCategories?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
+    }
+
+    /**
+     * Set eligible class categories from a list.
+     */
+    fun setEligibleClassCategoriesList(categories: List<String>) {
+        eligibleClassCategories = if (categories.isEmpty()) null else categories.joinToString(",")
+    }
+
+    /**
+     * Checks if this plan includes PT access.
+     */
+    fun hasPtAccess(): Boolean = ptAccessLevel != ClassAccessLevel.NO_ACCESS
+
+    /**
+     * Checks if this plan has unlimited PT sessions.
+     */
+    fun hasUnlimitedPt(): Boolean = ptAccessLevel == ClassAccessLevel.UNLIMITED
 
     /**
      * Get supported contract terms as a list.

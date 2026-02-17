@@ -45,7 +45,9 @@ class ClassService(
     private val memberRepository: MemberRepository,
     private val locationRepository: LocationRepository,
     private val notificationService: NotificationService,
-    private val trainerEarningsService: TrainerEarningsService
+    private val trainerEarningsService: TrainerEarningsService,
+    private val bookingService: BookingService,
+    private val conflictValidator: SessionConflictValidationService
 ) {
     private val logger = LoggerFactory.getLogger(ClassService::class.java)
     private val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
@@ -86,16 +88,20 @@ class ClassService(
             colorCode = command.colorCode,
             imageUrl = command.imageUrl,
             sortOrder = command.sortOrder,
-            // Pricing fields
             pricingModel = command.pricingModel,
             dropInPrice = command.dropInPrice,
             taxRate = command.taxRate,
             allowNonSubscribers = command.allowNonSubscribers,
-            // Booking settings
             advanceBookingDays = command.advanceBookingDays,
             cancellationDeadlineHours = command.cancellationDeadlineHours,
-            lateCancellationFee = command.lateCancellationFee
+            lateCancellationFee = command.lateCancellationFee,
+            accessPolicy = command.accessPolicy,
+            onlineBookableSpots = command.onlineBookableSpots,
+            noShowFee = command.noShowFee,
+            spotBookingEnabled = command.spotBookingEnabled,
+            roomLayoutId = command.roomLayoutId
         )
+        gymClass.categoryId = command.categoryId
 
         // Validate pricing configuration
         gymClass.validatePricingConfiguration()
@@ -110,6 +116,15 @@ class ClassService(
     fun getGymClass(id: UUID): GymClass {
         return gymClassRepository.findById(id)
             .orElseThrow { NoSuchElementException("Gym class not found: $id") }
+    }
+
+    /**
+     * Batch-loads gym classes by IDs, returning a map keyed by class ID.
+     */
+    @Transactional(readOnly = true)
+    fun getGymClassesMap(ids: Collection<UUID>): Map<UUID, GymClass> {
+        if (ids.isEmpty()) return emptyMap()
+        return gymClassRepository.findAllById(ids).associateBy { it.id }
     }
 
     /**
@@ -171,10 +186,15 @@ class ClassService(
         command.dropInPrice?.let { gymClass.dropInPrice = it }
         command.taxRate?.let { gymClass.taxRate = it }
         command.allowNonSubscribers?.let { gymClass.allowNonSubscribers = it }
-        // Booking settings
         command.advanceBookingDays?.let { gymClass.advanceBookingDays = it }
         command.cancellationDeadlineHours?.let { gymClass.cancellationDeadlineHours = it }
         command.lateCancellationFee?.let { gymClass.lateCancellationFee = it }
+        command.accessPolicy?.let { gymClass.accessPolicy = it }
+        command.onlineBookableSpots?.let { gymClass.onlineBookableSpots = it }
+        command.noShowFee?.let { gymClass.noShowFee = it }
+        command.spotBookingEnabled?.let { gymClass.spotBookingEnabled = it }
+        command.roomLayoutId?.let { gymClass.roomLayoutId = it }
+        command.categoryId?.let { gymClass.categoryId = it }
 
         // Validate pricing configuration
         gymClass.validatePricingConfiguration()
@@ -318,6 +338,14 @@ class ClassService(
         val gymClass = gymClassRepository.findById(command.gymClassId)
             .orElseThrow { NoSuchElementException("Gym class not found: ${command.gymClassId}") }
 
+        conflictValidator.validateNoConflicts(
+            trainerId = command.trainerId ?: gymClass.defaultTrainerId,
+            locationId = command.locationId,
+            sessionDate = command.sessionDate,
+            startTime = command.startTime,
+            endTime = command.endTime
+        )
+
         val session = ClassSession(
             gymClassId = command.gymClassId,
             locationId = command.locationId,
@@ -403,6 +431,16 @@ class ClassService(
             "Can only update scheduled sessions"
         }
 
+        // Validate conflicts using updated values (fall back to existing values)
+        conflictValidator.validateNoConflicts(
+            trainerId = command.trainerId ?: session.trainerId,
+            locationId = command.locationId ?: session.locationId,
+            sessionDate = session.sessionDate,
+            startTime = command.startTime ?: session.startTime,
+            endTime = command.endTime ?: session.endTime,
+            excludeSessionId = id
+        )
+
         command.locationId?.let { session.locationId = it }
         command.trainerId?.let { session.trainerId = it }
         command.startTime?.let { session.startTime = it }
@@ -432,32 +470,42 @@ class ClassService(
         session.complete()
         val savedSession = sessionRepository.save(session)
 
-        // Auto-create earnings record for trainer
+        // Complete all bookings and deduct credits
         try {
             val gymClass = gymClassRepository.findById(savedSession.gymClassId).orElse(null)
-            if (gymClass != null && savedSession.trainerId != null) {
-                val durationMinutes = java.time.Duration.between(
-                    savedSession.startTime,
-                    savedSession.endTime
-                ).toMinutes().toInt()
+            if (gymClass != null) {
+                val completedCount = bookingService.completeBookingsForSession(savedSession.id, gymClass)
+                logger.info("Completed $completedCount bookings for session ${savedSession.id}")
 
-                trainerEarningsService.autoCreateEarningForClassSession(
-                    sessionId = savedSession.id,
-                    trainerId = savedSession.trainerId!!,
-                    sessionDate = savedSession.sessionDate,
-                    durationMinutes = durationMinutes,
-                    attendeeCount = savedSession.currentBookings,
-                    pricePerAttendee = gymClass.dropInPrice ?: com.liyaqa.shared.domain.Money(
-                        java.math.BigDecimal.ZERO,
-                        "SAR"
-                    )
-                )
-                logger.info("Earnings record created for class session: ${savedSession.id}")
+                // Auto-create earnings record for trainer
+                if (savedSession.trainerId != null) {
+                    try {
+                        val durationMinutes = java.time.Duration.between(
+                            savedSession.startTime,
+                            savedSession.endTime
+                        ).toMinutes().toInt()
+
+                        trainerEarningsService.autoCreateEarningForClassSession(
+                            sessionId = savedSession.id,
+                            trainerId = savedSession.trainerId!!,
+                            sessionDate = savedSession.sessionDate,
+                            durationMinutes = durationMinutes,
+                            attendeeCount = savedSession.currentBookings,
+                            pricePerAttendee = gymClass.dropInPrice ?: com.liyaqa.shared.domain.Money(
+                                java.math.BigDecimal.ZERO,
+                                "SAR"
+                            )
+                        )
+                        logger.info("Earnings record created for class session: ${savedSession.id}")
+                    } catch (e: IllegalStateException) {
+                        logger.warn("Earnings already exist for session: ${savedSession.id}")
+                    } catch (e: Exception) {
+                        logger.error("Failed to create earnings for class session ${savedSession.id}: ${e.message}", e)
+                    }
+                }
             }
-        } catch (e: IllegalStateException) {
-            logger.warn("Earnings already exist for session: ${savedSession.id}")
         } catch (e: Exception) {
-            logger.error("Failed to create earnings for class session ${savedSession.id}: ${e.message}", e)
+            logger.error("Failed to complete bookings for session ${savedSession.id}: ${e.message}", e)
         }
 
         return savedSession
@@ -490,6 +538,16 @@ class ClassService(
     fun assignTrainerToSession(sessionId: UUID, trainerId: UUID): ClassSession {
         val session = sessionRepository.findById(sessionId)
             .orElseThrow { NoSuchElementException("Session not found: $sessionId") }
+
+        conflictValidator.validateNoConflicts(
+            trainerId = trainerId,
+            locationId = session.locationId,
+            sessionDate = session.sessionDate,
+            startTime = session.startTime,
+            endTime = session.endTime,
+            excludeSessionId = sessionId
+        )
+
         session.assignTrainer(trainerId)
         return sessionRepository.save(session)
     }
@@ -539,7 +597,18 @@ class ClassService(
                 }
 
                 val session = ClassSession.fromSchedule(gymClass, schedule, currentDate)
-                createdSessions.add(sessionRepository.save(session))
+                try {
+                    conflictValidator.validateNoConflicts(
+                        trainerId = session.trainerId,
+                        locationId = session.locationId,
+                        sessionDate = session.sessionDate,
+                        startTime = session.startTime,
+                        endTime = session.endTime
+                    )
+                    createdSessions.add(sessionRepository.save(session))
+                } catch (e: IllegalStateException) {
+                    logger.warn("Skipping session generation for schedule ${schedule.id} on $currentDate: ${e.message}")
+                }
             }
 
             currentDate = currentDate.plusDays(1)

@@ -81,10 +81,15 @@ export function RevenueOverview({ data, isLoading }: RevenueOverviewProps) {
 
   return (
     <motion.div variants={cardVariants} initial="hidden" animate="visible">
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden dark:border-neutral-800">
         <CardHeader className={cn("pb-4", isRtl && "text-right")}>
           <div className={cn("flex items-center justify-between", isRtl && "flex-row-reverse")}>
-            <CardTitle className="text-lg font-semibold">{texts.title}</CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-emerald-500/20">
+                <DollarSign className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <CardTitle className="text-lg font-semibold">{texts.title}</CardTitle>
+            </div>
             <div className="flex gap-1 p-1 bg-muted rounded-lg">
               {(["day", "week", "month"] as GroupBy[]).map((period) => (
                 <Button
@@ -225,17 +230,17 @@ function StatBox({
   color,
 }: StatBoxProps) {
   const bgColors: Record<string, string> = {
-    primary: "bg-sky-500/10",
-    success: "bg-green-500/10",
-    warning: "bg-amber-500/10",
-    danger: "bg-red-500/10",
+    primary: "bg-[#FF6B4A]/10 dark:bg-[#FF6B4A]/15",
+    success: "bg-emerald-500/10 dark:bg-emerald-500/15",
+    warning: "bg-amber-500/10 dark:bg-amber-500/15",
+    danger: "bg-red-500/10 dark:bg-red-500/15",
   };
 
   const iconColors: Record<string, string> = {
-    primary: "text-sky-600",
-    success: "text-green-600",
-    warning: "text-amber-600",
-    danger: "text-red-600",
+    primary: "text-[#FF6B4A]",
+    success: "text-emerald-600 dark:text-emerald-400",
+    warning: "text-amber-600 dark:text-amber-400",
+    danger: "text-red-600 dark:text-red-400",
   };
 
   return (
@@ -328,7 +333,7 @@ function formatCompactNumber(value: number, locale: string): string {
 
 function RevenueOverviewSkeleton() {
   return (
-    <Card>
+    <Card className="dark:border-neutral-800">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <Skeleton className="h-6 w-40" />

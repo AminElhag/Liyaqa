@@ -1,5 +1,6 @@
 package com.liyaqa.auth.infrastructure.security
 
+import com.liyaqa.auth.domain.model.AccountType
 import com.liyaqa.auth.domain.model.Role
 import com.liyaqa.auth.domain.model.User
 import com.liyaqa.platform.domain.model.PlatformUser
@@ -44,6 +45,7 @@ class JwtTokenProvider(
         private const val CLAIM_PLATFORM_ORG_ID = "platform_org_id"
         private const val CLAIM_PERMISSIONS = "permissions"
         private const val CLAIM_SCOPE = "scope"
+        private const val CLAIM_ACCOUNT_TYPE = "account_type"
         private const val CLAIM_IS_IMPERSONATION = "is_impersonation"
         private const val CLAIM_IMPERSONATOR_ID = "impersonator_id"
         private const val CLAIM_READ_ONLY = "read_only"
@@ -55,27 +57,54 @@ class JwtTokenProvider(
      * Generates an access token for the given user.
      */
     fun generateAccessToken(user: User): String {
-        return generateAccessToken(user, emptyList())
+        return generateAccessToken(user, emptyList(), null)
     }
 
     /**
      * Generates an access token for the given user with permissions.
      */
     fun generateAccessToken(user: User, permissions: List<String>): String {
+        return generateAccessToken(user, permissions, null)
+    }
+
+    /**
+     * Generates an access token for the given user with permissions and account type.
+     * When accountType is provided, it's included as a claim in the JWT.
+     * The scope is derived from the account type when present.
+     */
+    fun generateAccessToken(user: User, permissions: List<String>, accountType: AccountType?): String {
         val now = Instant.now()
         val expiry = now.plusMillis(accessTokenExpiration)
 
-        val scope = if (user.role == Role.MEMBER) "client" else "facility"
+        // Derive scope: if accountType is provided, use it; otherwise fall back to role
+        val scope = when (accountType) {
+            AccountType.MEMBER -> "client"
+            AccountType.EMPLOYEE, AccountType.TRAINER -> "facility"
+            null -> if (user.role == Role.MEMBER) "client" else "facility"
+        }
+
+        // Derive the effective role based on account type
+        val effectiveRole = when (accountType) {
+            AccountType.EMPLOYEE -> user.role.name // Use actual role (SUPER_ADMIN/CLUB_ADMIN/STAFF)
+            AccountType.TRAINER -> Role.TRAINER.name
+            AccountType.MEMBER -> Role.MEMBER.name
+            null -> user.role.name
+        }
 
         val builder = Jwts.builder()
             .subject(user.id.toString())
             .claim(CLAIM_TENANT_ID, user.tenantId.toString())
-            .claim(CLAIM_ROLE, user.role.name)
+            .claim(CLAIM_ROLE, effectiveRole)
             .claim(CLAIM_EMAIL, user.email)
             .claim(CLAIM_TOKEN_TYPE, TOKEN_TYPE_ACCESS)
             .claim(CLAIM_IS_PLATFORM_USER, user.isPlatformUser)
             .claim(CLAIM_PERMISSIONS, permissions)
             .claim(CLAIM_SCOPE, scope)
+
+        // Add account type claim when provided
+        if (accountType != null) {
+            builder.claim(CLAIM_ACCOUNT_TYPE, accountType.name)
+        }
 
         // Add platform organization ID if user is a platform user
         if (user.isPlatformUser && user.platformOrganizationId != null) {
@@ -93,14 +122,21 @@ class JwtTokenProvider(
      * Generates a refresh token for the given user.
      * Returns a pair of (token, tokenHash) where tokenHash should be stored in the database.
      */
-    fun generateRefreshToken(user: User): Pair<String, String> {
+    fun generateRefreshToken(user: User, accountType: AccountType? = null): Pair<String, String> {
         val now = Instant.now()
         val expiry = now.plusMillis(refreshTokenExpiration)
 
-        val token = Jwts.builder()
+        val builder = Jwts.builder()
             .subject(user.id.toString())
             .claim(CLAIM_TENANT_ID, user.tenantId.toString())
             .claim(CLAIM_TOKEN_TYPE, TOKEN_TYPE_REFRESH)
+
+        // Preserve account type in refresh token so it survives token refresh
+        if (accountType != null) {
+            builder.claim(CLAIM_ACCOUNT_TYPE, accountType.name)
+        }
+
+        val token = builder
             .issuedAt(Date.from(now))
             .expiration(Date.from(expiry))
             .signWith(key)
@@ -305,6 +341,21 @@ class JwtTokenProvider(
     fun extractRoleString(token: String): String {
         val claims = parseToken(token)
         return claims[CLAIM_ROLE] as String
+    }
+
+    /**
+     * Extracts the account type from the token.
+     * Returns null for old tokens that don't have this claim (backward compatible).
+     */
+    fun extractAccountType(token: String): AccountType? {
+        val claims = parseToken(token)
+        val typeStr = claims[CLAIM_ACCOUNT_TYPE] as? String ?: return null
+        return try {
+            AccountType.valueOf(typeStr)
+        } catch (e: IllegalArgumentException) {
+            logger.warn("Unknown account type in token: $typeStr")
+            null
+        }
     }
 
     /**

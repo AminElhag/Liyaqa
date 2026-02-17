@@ -6,9 +6,12 @@ import com.liyaqa.shared.api.BulkItemResult
 import com.liyaqa.shared.api.BulkItemStatus
 import com.liyaqa.shared.api.BulkOperationResponse
 import com.liyaqa.shared.api.validateBulkSize
+import com.liyaqa.scheduling.domain.model.BookingStatus
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -23,6 +26,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 @RestController
@@ -30,6 +35,77 @@ import java.util.UUID
 class BookingController(
     private val bookingService: BookingService
 ) {
+    private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
+    /**
+     * Gets a paginated list of all bookings with enriched session, class, and member data.
+     * Supports filtering by date range and booking status.
+     */
+    @GetMapping
+    @PreAuthorize("hasAuthority('bookings_view')")
+    fun getAllBookings(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(required = false) dateFrom: LocalDate?,
+        @RequestParam(required = false) dateTo: LocalDate?,
+        @RequestParam(required = false) status: BookingStatus?
+    ): ResponseEntity<Page<BookingListItem>> {
+        val pageable = PageRequest.of(page, size)
+        val bookingPage = bookingService.getBookings(dateFrom, dateTo, status, pageable)
+
+        // Batch fetch related entities to avoid N+1
+        val sessionIds = bookingPage.content.map { it.sessionId }.toSet()
+        val sessions = bookingService.getSessionsByIds(sessionIds)
+
+        val classIds = sessions.values.map { it.gymClassId }.toSet()
+        val classes = bookingService.getClassesByIds(classIds)
+
+        val memberIds = bookingPage.content.map { it.memberId }.toSet()
+        val members = bookingService.getMembersByIds(memberIds)
+
+        val enrichedContent = bookingPage.content.map { booking ->
+            val session = sessions[booking.sessionId]
+            val gymClass = session?.let { classes[it.gymClassId] }
+            val member = members[booking.memberId]
+
+            BookingListItem(
+                id = booking.id,
+                sessionId = booking.sessionId,
+                sessionDate = session?.sessionDate ?: LocalDate.now(),
+                sessionTime = session?.let {
+                    "${it.startTime.format(timeFormatter)} - ${it.endTime.format(timeFormatter)}"
+                } ?: "",
+                className = gymClass?.let { LocalizedTextResponse.from(it.name) }
+                    ?: LocalizedTextResponse("Unknown", null),
+                memberId = booking.memberId,
+                memberName = member?.let {
+                    LocalizedTextResponse(
+                        en = "${it.firstName.en} ${it.lastName.en}".trim(),
+                        ar = if (it.firstName.ar != null || it.lastName.ar != null) {
+                            "${it.firstName.ar ?: ""} ${it.lastName.ar ?: ""}".trim()
+                        } else null
+                    )
+                } ?: LocalizedTextResponse("Unknown", null),
+                memberEmail = member?.email ?: "",
+                status = booking.status,
+                waitlistPosition = booking.waitlistPosition,
+                checkedInAt = booking.checkedInAt,
+                cancelledAt = booking.cancelledAt,
+                paymentSource = booking.paymentSource,
+                classPackBalanceId = booking.classPackBalanceId,
+                orderId = booking.orderId,
+                paidAmount = booking.paidAmount?.let { MoneyResponse(it.amount, it.currency) },
+                spotId = booking.spotId,
+                spotLabel = booking.spotLabel,
+                tenantId = booking.tenantId,
+                createdAt = booking.createdAt,
+                updatedAt = booking.updatedAt
+            )
+        }
+
+        return ResponseEntity.ok(PageImpl(enrichedContent, pageable, bookingPage.totalElements))
+    }
+
     /**
      * Creates a booking for a member in a class session.
      */

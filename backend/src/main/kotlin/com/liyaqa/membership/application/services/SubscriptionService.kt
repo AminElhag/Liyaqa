@@ -1,8 +1,12 @@
 package com.liyaqa.membership.application.services
 
+import com.liyaqa.auth.domain.ports.UserRepository
 import com.liyaqa.membership.application.commands.CreateSubscriptionCommand
 import com.liyaqa.membership.application.commands.RenewSubscriptionCommand
+import com.liyaqa.membership.application.commands.TransferSubscriptionCommand
 import com.liyaqa.membership.application.commands.UpdateSubscriptionCommand
+import com.liyaqa.membership.domain.model.ActivityType
+import com.liyaqa.membership.domain.model.MemberActivity
 import com.liyaqa.membership.domain.model.Subscription
 import com.liyaqa.membership.domain.model.SubscriptionStatus
 import com.liyaqa.membership.domain.ports.MemberRepository
@@ -21,6 +25,7 @@ import com.liyaqa.webhook.application.services.WebhookEventPublisher
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -39,10 +44,19 @@ class SubscriptionService(
     private val webhookPublisher: WebhookEventPublisher,
     private val voucherRedemptionService: VoucherRedemptionService,
     private val referralTrackingService: ReferralTrackingService,
-    private val referralRewardService: ReferralRewardService
+    private val referralRewardService: ReferralRewardService,
+    private val activityService: ActivityService,
+    private val userRepository: UserRepository
 ) {
     private val logger = LoggerFactory.getLogger(SubscriptionService::class.java)
     private val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+
+    private fun getStaffInfo(): Pair<UUID?, String?> {
+        val auth = SecurityContextHolder.getContext().authentication ?: return null to null
+        val userId = try { UUID.fromString(auth.name) } catch (_: Exception) { null }
+        val staffUser = userId?.let { userRepository.findById(it).orElse(null) }
+        return userId to staffUser?.displayName?.en
+    }
     /**
      * Creates a new subscription for a member.
      * @throws NoSuchElementException if member or plan not found
@@ -183,6 +197,21 @@ class SubscriptionService(
             logger.error("Failed to publish subscription created webhook: ${e.message}", e)
         }
 
+        // Log activity
+        try {
+            val (staffId, staffName) = getStaffInfo()
+            activityService.logActivityAsync(MemberActivity.subscriptionCreated(
+                memberId = command.memberId,
+                planName = plan.name.en ?: plan.name.ar ?: "Unknown",
+                startDate = savedSubscription.startDate.toString(),
+                endDate = savedSubscription.endDate.toString(),
+                performedByUserId = staffId,
+                performedByName = staffName
+            ))
+        } catch (e: Exception) {
+            logger.error("Failed to log subscription created activity: ${e.message}", e)
+        }
+
         return savedSubscription
     }
 
@@ -282,6 +311,21 @@ class SubscriptionService(
             logger.error("Failed to publish subscription frozen webhook: ${e.message}", e)
         }
 
+        // Log activity
+        try {
+            val (staffId, staffName) = getStaffInfo()
+            activityService.logActivityAsync(MemberActivity(
+                memberId = savedSubscription.memberId,
+                activityType = ActivityType.SUBSCRIPTION_FROZEN,
+                title = "Subscription frozen",
+                metadata = mapOf("subscriptionId" to savedSubscription.id.toString()),
+                performedByUserId = staffId,
+                performedByName = staffName
+            ))
+        } catch (e: Exception) {
+            logger.error("Failed to log subscription frozen activity: ${e.message}", e)
+        }
+
         return savedSubscription
     }
 
@@ -303,6 +347,21 @@ class SubscriptionService(
             webhookPublisher.publishSubscriptionUnfrozen(savedSubscription)
         } catch (e: Exception) {
             logger.error("Failed to publish subscription unfrozen webhook: ${e.message}", e)
+        }
+
+        // Log activity
+        try {
+            val (staffId, staffName) = getStaffInfo()
+            activityService.logActivityAsync(MemberActivity(
+                memberId = savedSubscription.memberId,
+                activityType = ActivityType.SUBSCRIPTION_UNFROZEN,
+                title = "Subscription unfrozen",
+                metadata = mapOf("subscriptionId" to savedSubscription.id.toString()),
+                performedByUserId = staffId,
+                performedByName = staffName
+            ))
+        } catch (e: Exception) {
+            logger.error("Failed to log subscription unfrozen activity: ${e.message}", e)
         }
 
         return savedSubscription
@@ -328,7 +387,77 @@ class SubscriptionService(
             logger.error("Failed to publish subscription cancelled webhook: ${e.message}", e)
         }
 
+        // Log activity
+        try {
+            val (staffId, staffName) = getStaffInfo()
+            activityService.logActivityAsync(MemberActivity(
+                memberId = savedSubscription.memberId,
+                activityType = ActivityType.SUBSCRIPTION_CANCELLED,
+                title = "Subscription cancelled",
+                metadata = mapOf("subscriptionId" to savedSubscription.id.toString()),
+                performedByUserId = staffId,
+                performedByName = staffName
+            ))
+        } catch (e: Exception) {
+            logger.error("Failed to log subscription cancelled activity: ${e.message}", e)
+        }
+
         return savedSubscription
+    }
+
+    /**
+     * Transfers a subscription to another member.
+     */
+    fun transferSubscription(id: UUID, command: TransferSubscriptionCommand): Subscription {
+        val subscription = subscriptionRepository.findById(id)
+            .orElseThrow { NoSuchElementException("Subscription not found: $id") }
+
+        val sourceMemberId = subscription.memberId
+        val targetMember = memberRepository.findById(command.targetMemberId)
+            .orElseThrow { NoSuchElementException("Target member not found: ${command.targetMemberId}") }
+        val sourceMember = memberRepository.findById(sourceMemberId).orElse(null)
+
+        if (subscriptionRepository.existsActiveByMemberId(command.targetMemberId)) {
+            throw IllegalStateException("Target member already has an active subscription")
+        }
+
+        subscription.transfer(command.targetMemberId)
+
+        command.reason?.let { reason ->
+            val existing = subscription.notes ?: ""
+            val sep = if (existing.isNotBlank()) "\n" else ""
+            subscription.notes = "$existing${sep}[Transfer] $reason"
+        }
+
+        val saved = subscriptionRepository.save(subscription)
+
+        // Log activity on source member
+        try {
+            val (staffId, staffName) = getStaffInfo()
+            val targetName = targetMember.fullName.en ?: targetMember.fullName.ar ?: "Unknown"
+            activityService.logActivityAsync(MemberActivity(
+                memberId = sourceMemberId,
+                activityType = ActivityType.SUBSCRIPTION_CANCELLED,
+                title = "Subscription transferred to $targetName",
+                metadata = mapOf("targetMemberId" to command.targetMemberId.toString(), "subscriptionId" to id.toString()),
+                performedByUserId = staffId,
+                performedByName = staffName
+            ))
+            // Log activity on target member
+            val sourceName = sourceMember?.fullName?.en ?: sourceMember?.fullName?.ar ?: "Unknown"
+            activityService.logActivityAsync(MemberActivity(
+                memberId = command.targetMemberId,
+                activityType = ActivityType.SUBSCRIPTION_CREATED,
+                title = "Subscription transferred from $sourceName",
+                metadata = mapOf("sourceMemberId" to sourceMemberId.toString(), "subscriptionId" to id.toString()),
+                performedByUserId = staffId,
+                performedByName = staffName
+            ))
+        } catch (e: Exception) {
+            logger.error("Failed to log transfer activity: ${e.message}", e)
+        }
+
+        return saved
     }
 
     /**
@@ -364,6 +493,25 @@ class SubscriptionService(
             webhookPublisher.publishSubscriptionRenewed(savedSubscription)
         } catch (e: Exception) {
             logger.error("Failed to publish subscription renewed webhook: ${e.message}", e)
+        }
+
+        // Log activity
+        try {
+            val (staffId, staffName) = getStaffInfo()
+            activityService.logActivityAsync(MemberActivity(
+                memberId = savedSubscription.memberId,
+                activityType = ActivityType.SUBSCRIPTION_RENEWED,
+                title = "Subscription renewed until ${savedSubscription.endDate}",
+                metadata = mapOf(
+                    "subscriptionId" to savedSubscription.id.toString(),
+                    "newEndDate" to savedSubscription.endDate.toString(),
+                    "planName" to (plan.name.en ?: plan.name.ar ?: "Unknown")
+                ),
+                performedByUserId = staffId,
+                performedByName = staffName
+            ))
+        } catch (e: Exception) {
+            logger.error("Failed to log subscription renewed activity: ${e.message}", e)
         }
 
         return savedSubscription

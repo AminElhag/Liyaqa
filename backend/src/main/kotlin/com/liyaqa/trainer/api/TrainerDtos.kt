@@ -29,11 +29,10 @@ import java.util.UUID
 // ==================== REQUEST DTOs ====================
 
 /**
- * Request to create a new trainer from an existing user.
+ * Request to create a new trainer. User linking is optional.
  */
 data class CreateTrainerRequest(
-    @field:NotNull(message = "User ID is required")
-    val userId: UUID,
+    val userId: UUID? = null,
 
     @field:NotNull(message = "Organization ID is required")
     val organizationId: UUID,
@@ -82,7 +81,17 @@ data class CreateTrainerRequest(
 
     val assignedClubIds: List<UUID>? = null,
 
-    val primaryClubId: UUID? = null
+    val primaryClubId: UUID? = null,
+
+    val skillCategoryIds: List<UUID>? = null
+)
+
+/**
+ * Request to update trainer skills (class categories).
+ */
+data class UpdateTrainerSkillsRequest(
+    @field:NotNull(message = "Category IDs are required")
+    val categoryIds: List<UUID>
 )
 
 /**
@@ -228,7 +237,7 @@ data class TimeSlotInput(
  */
 data class TrainerResponse(
     val id: UUID,
-    val userId: UUID,
+    val userId: UUID?,
     val organizationId: UUID,
     // Basic Info
     val displayName: LocalizedText?,
@@ -255,7 +264,8 @@ data class TrainerResponse(
     // Related data (populated by controller)
     val userName: String? = null,
     val userEmail: String? = null,
-    val assignedClubs: List<TrainerClubAssignmentResponse>? = null
+    val assignedClubs: List<TrainerClubAssignmentResponse>? = null,
+    val skills: List<TrainerSkillResponse>? = null
 ) {
     companion object {
         fun from(
@@ -265,7 +275,8 @@ data class TrainerResponse(
             availability: AvailabilityData?,
             userName: String? = null,
             userEmail: String? = null,
-            clubAssignments: List<TrainerClubAssignmentResponse>? = null
+            clubAssignments: List<TrainerClubAssignmentResponse>? = null,
+            skills: List<TrainerSkillResponse>? = null
         ): TrainerResponse = TrainerResponse(
             id = trainer.id,
             userId = trainer.userId,
@@ -292,7 +303,8 @@ data class TrainerResponse(
             updatedAt = trainer.updatedAt,
             userName = userName,
             userEmail = userEmail,
-            assignedClubs = clubAssignments
+            assignedClubs = clubAssignments,
+            skills = skills
         )
     }
 }
@@ -302,7 +314,7 @@ data class TrainerResponse(
  */
 data class TrainerSummaryResponse(
     val id: UUID,
-    val userId: UUID,
+    val userId: UUID?,
     val displayName: LocalizedText?,
     val userName: String?,
     val userEmail: String?,
@@ -311,14 +323,16 @@ data class TrainerSummaryResponse(
     val specializations: List<String>,
     val status: TrainerStatus,
     val ptSessionRate: BigDecimal?,
-    val createdAt: Instant
+    val createdAt: Instant,
+    val skills: List<TrainerSkillResponse>? = null
 ) {
     companion object {
         fun from(
             trainer: Trainer,
             specializations: List<String>,
             userName: String? = null,
-            userEmail: String? = null
+            userEmail: String? = null,
+            skills: List<TrainerSkillResponse>? = null
         ): TrainerSummaryResponse = TrainerSummaryResponse(
             id = trainer.id,
             userId = trainer.userId,
@@ -330,10 +344,21 @@ data class TrainerSummaryResponse(
             specializations = specializations,
             status = trainer.status,
             ptSessionRate = trainer.ptSessionRate,
-            createdAt = trainer.createdAt
+            createdAt = trainer.createdAt,
+            skills = skills
         )
     }
 }
+
+/**
+ * Trainer skill response (category the trainer can teach).
+ */
+data class TrainerSkillResponse(
+    val categoryId: UUID,
+    val categoryName: LocalizedText? = null,
+    val colorCode: String? = null,
+    val icon: String? = null
+)
 
 /**
  * Certification response.

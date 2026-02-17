@@ -4,6 +4,8 @@ import com.liyaqa.membership.application.commands.CreateMembershipPlanCommand
 import com.liyaqa.membership.application.commands.UpdateMembershipPlanCommand
 import com.liyaqa.membership.domain.model.BillingPeriod
 import com.liyaqa.membership.domain.model.MembershipPlan
+import com.liyaqa.membership.domain.model.MembershipPlanStatus
+import com.liyaqa.membership.domain.model.MembershipPlanType
 import com.liyaqa.organization.api.LocalizedTextResponse
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.TaxableFee
@@ -69,6 +71,11 @@ data class CreateMembershipPlanRequest(
 
     val descriptionAr: String? = null,
 
+    // === PLAN TYPE & STATUS ===
+    val planType: MembershipPlanType = MembershipPlanType.RECURRING,
+
+    val status: MembershipPlanStatus = MembershipPlanStatus.ACTIVE,
+
     // === DATE RESTRICTIONS ===
     val availableFrom: LocalDate? = null,
 
@@ -91,7 +98,7 @@ data class CreateMembershipPlanRequest(
     @field:Valid
     val joinFee: TaxableFeeRequest = TaxableFeeRequest(),
 
-    // === ACTIVE STATUS ===
+    // === ACTIVE STATUS (backward compat) ===
     val isActive: Boolean = true,
 
     // === BILLING & DURATION ===
@@ -147,11 +154,23 @@ data class CreateMembershipPlanRequest(
 
     @field:Min(value = 0, message = "Cooling-off days cannot be negative")
     @field:Max(value = 30, message = "Cooling-off days cannot exceed 30")
-    val coolingOffDays: Int = 14
+    val coolingOffDays: Int = 14,
+
+    // === CLASS PACK FIELDS ===
+    @field:Positive(message = "Session count must be positive")
+    val sessionCount: Int? = null,
+
+    @field:Positive(message = "Expiry days must be positive")
+    val expiryDays: Int? = null,
+
+    // === TRIAL CONVERSION ===
+    val convertsToPlanId: UUID? = null
 ) {
     fun toCommand() = CreateMembershipPlanCommand(
         name = LocalizedText(en = nameEn, ar = nameAr),
         description = if (descriptionEn != null) LocalizedText(en = descriptionEn, ar = descriptionAr) else null,
+        planType = planType,
+        status = status,
         availableFrom = availableFrom,
         availableUntil = availableUntil,
         minimumAge = minimumAge,
@@ -179,7 +198,11 @@ data class CreateMembershipPlanRequest(
         defaultNoticePeriodDays = defaultNoticePeriodDays,
         earlyTerminationFeeType = earlyTerminationFeeType,
         earlyTerminationFeeValue = earlyTerminationFeeValue,
-        coolingOffDays = coolingOffDays
+        coolingOffDays = coolingOffDays,
+        // Class pack & trial
+        sessionCount = sessionCount,
+        expiryDays = expiryDays,
+        convertsToPlanId = convertsToPlanId
     )
 }
 
@@ -268,7 +291,17 @@ data class UpdateMembershipPlanRequest(
     @field:Max(value = 30, message = "Cooling-off days cannot exceed 30")
     val coolingOffDays: Int? = null,
 
-    val clearCategoryId: Boolean = false
+    val clearCategoryId: Boolean = false,
+
+    // === CLASS PACK FIELDS ===
+    @field:Positive(message = "Session count must be positive")
+    val sessionCount: Int? = null,
+
+    @field:Positive(message = "Expiry days must be positive")
+    val expiryDays: Int? = null,
+
+    // === TRIAL CONVERSION ===
+    val convertsToPlanId: UUID? = null
 ) {
     fun toCommand(): UpdateMembershipPlanCommand {
         val name = if (nameEn != null) LocalizedText(en = nameEn, ar = nameAr) else null
@@ -308,7 +341,11 @@ data class UpdateMembershipPlanRequest(
             earlyTerminationFeeType = earlyTerminationFeeType,
             earlyTerminationFeeValue = earlyTerminationFeeValue,
             coolingOffDays = coolingOffDays,
-            clearCategoryId = clearCategoryId
+            clearCategoryId = clearCategoryId,
+            // Class pack & trial
+            sessionCount = sessionCount,
+            expiryDays = expiryDays,
+            convertsToPlanId = convertsToPlanId
         )
     }
 }
@@ -319,6 +356,10 @@ data class MembershipPlanResponse(
     val id: UUID,
     val name: LocalizedTextResponse,
     val description: LocalizedTextResponse?,
+
+    // === PLAN TYPE & STATUS ===
+    val planType: MembershipPlanType,
+    val status: MembershipPlanStatus,
 
     // === DATE RESTRICTIONS ===
     val availableFrom: LocalDate?,
@@ -371,6 +412,13 @@ data class MembershipPlanResponse(
     val earlyTerminationFeeValue: BigDecimal?,
     val coolingOffDays: Int,
 
+    // === CLASS PACK FIELDS ===
+    val sessionCount: Int?,
+    val expiryDays: Int?,
+
+    // === TRIAL CONVERSION ===
+    val convertsToPlanId: UUID?,
+
     // === AUDIT ===
     val createdAt: Instant,
     val updatedAt: Instant
@@ -380,6 +428,9 @@ data class MembershipPlanResponse(
             id = plan.id,
             name = LocalizedTextResponse.from(plan.name),
             description = plan.description?.let { LocalizedTextResponse.from(it) },
+            // Plan type & status
+            planType = plan.planType,
+            status = plan.status,
             // Date restrictions
             availableFrom = plan.availableFrom,
             availableUntil = plan.availableUntil,
@@ -423,9 +474,23 @@ data class MembershipPlanResponse(
             earlyTerminationFeeType = plan.earlyTerminationFeeType,
             earlyTerminationFeeValue = plan.earlyTerminationFeeValue,
             coolingOffDays = plan.coolingOffDays,
+            // Class pack & trial
+            sessionCount = plan.sessionCount,
+            expiryDays = plan.expiryDays,
+            convertsToPlanId = plan.convertsToPlanId,
             // Audit
             createdAt = plan.createdAt,
             updatedAt = plan.updatedAt
         )
     }
 }
+
+/**
+ * Plan statistics response.
+ */
+data class PlanStatsResponse(
+    val totalPlans: Long,
+    val activePlans: Long,
+    val draftPlans: Long,
+    val archivedPlans: Long
+)

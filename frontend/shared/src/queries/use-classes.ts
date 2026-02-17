@@ -35,6 +35,7 @@ import type {
   GenerateSessionsRequest,
   ClassSession,
 } from "../types/scheduling";
+import { bookingKeys } from "./use-bookings";
 
 // Query keys
 export const classKeys = {
@@ -332,6 +333,7 @@ export function useCompleteSession() {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: classSessionKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: classSessionKeys.all });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
     },
   });
 }

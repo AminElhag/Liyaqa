@@ -45,7 +45,13 @@ import {
   Gift,
   Building2,
   TrendingUp,
+  CalendarDays,
+  BookOpen,
+  Ticket,
+  LayoutGrid,
+  MapPin,
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@liyaqa/shared/utils";
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@liyaqa/shared/components/ui/avatar";
@@ -59,6 +65,8 @@ import {
 } from "@liyaqa/shared/components/ui/dropdown-menu";
 import { ScrollArea } from "@liyaqa/shared/components/ui/scroll-area";
 import { LanguageToggle } from "@liyaqa/shared/components/ui/language-toggle";
+import { ThemeToggle } from "@liyaqa/shared/components/ui/theme-toggle";
+import { Badge } from "@liyaqa/shared/components/ui/badge";
 import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import { useUIStore } from "@liyaqa/shared/stores/ui-store";
 import { getInitials } from "@liyaqa/shared/utils";
@@ -86,13 +94,51 @@ const adminNavGroups: NavGroupConfig[] = [
     icon: Users,
     defaultExpanded: true,
     items: [
+      { href: "/enroll", labelKey: "enroll", icon: UserPlus },
       { href: "/members", labelKey: "members", icon: Users },
-      { href: "/leads", labelKey: "leads", icon: UserPlus },
+      { href: "/leads", labelKey: "leads", icon: Target },
       { href: "/tasks", labelKey: "tasks", icon: CheckSquare },
-      { href: "/subscriptions", labelKey: "subscriptions", icon: CreditCard },
-      { href: "/cancellations", labelKey: "cancellations", icon: XCircle },
       { href: "/contracts", labelKey: "contracts", icon: FileText },
-      { href: "/freeze-packages", labelKey: "freezePackages", icon: Snowflake },
+    ],
+  },
+
+  // Group Exercise
+  {
+    id: "groupExercise",
+    labelKey: "navGroups.groupExercise",
+    icon: CalendarDays,
+    items: [
+      { href: "/class-categories", labelKey: "classCategories", icon: Tags },
+      { href: "/classes", labelKey: "classes", icon: LayoutGrid },
+      { href: "/timetable", labelKey: "timetable", icon: CalendarDays },
+      { href: "/bookings", labelKey: "bookings", icon: BookOpen },
+      { href: "/attendance", labelKey: "attendance", icon: ClipboardCheck },
+      { href: "/gx-settings", labelKey: "gxSettings", icon: Settings },
+    ],
+  },
+
+  // Personal Training
+  {
+    id: "personalTraining",
+    labelKey: "navGroups.personalTraining",
+    icon: Dumbbell,
+    items: [
+      { href: "/pt-classes", labelKey: "ptClasses", icon: LayoutGrid },
+      { href: "/pt-schedule", labelKey: "ptSchedule", icon: Calendar },
+      { href: "/pt-bookings", labelKey: "ptBookings", icon: BookOpen },
+      { href: "/trainers", labelKey: "trainers", icon: Dumbbell },
+      { href: "/pt-settings", labelKey: "ptSettings", icon: Settings },
+    ],
+  },
+
+  // Credit Packs (universal — GX, PT, Goods)
+  {
+    id: "creditPacks",
+    labelKey: "navGroups.creditPacks",
+    icon: Ticket,
+    items: [
+      { href: "/credit-packs", labelKey: "allPacks", icon: Ticket },
+      { href: "/credit-packs/balances", labelKey: "memberBalances", icon: Users },
     ],
   },
 
@@ -102,11 +148,8 @@ const adminNavGroups: NavGroupConfig[] = [
     labelKey: "navGroups.operations",
     icon: ClipboardCheck,
     items: [
-      { href: "/attendance", labelKey: "attendance", icon: ClipboardCheck },
-      { href: "/classes", labelKey: "classes", icon: Calendar },
-      { href: "/trainers", labelKey: "trainers", icon: Dumbbell },
-      { href: "/pt-sessions", labelKey: "ptSessions", icon: UserCheck },
       { href: "/facilities", labelKey: "facilities", icon: Building2 },
+      { href: "/locations", labelKey: "locations", icon: MapPin },
     ],
   },
 
@@ -209,7 +252,15 @@ export function AdminShell({ children }: AdminShellProps) {
   const isMember = user?.role === "MEMBER";
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-background">
+      {/* Skip link for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:start-4 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-white"
+      >
+        Skip to main content
+      </a>
+
       {/* Mobile sidebar overlay */}
       {mobileMenuOpen && (
         <div
@@ -220,37 +271,46 @@ export function AdminShell({ children }: AdminShellProps) {
 
       {/* Sidebar */}
       <aside
+        aria-label="Main navigation"
         className={cn(
-          "fixed top-0 z-50 h-full border-e shadow-sm transition-all duration-300",
-          "bg-gradient-to-b from-white to-neutral-50/80",
+          "fixed top-0 z-50 h-full border-e border-neutral-700 dark:border-neutral-800 shadow-sm transition-all duration-300",
+          "bg-neutral-900 dark:bg-neutral-950 text-white",
           sidebarCollapsed ? "w-16" : "w-64",
           mobileMenuOpen ? "start-0" : "-start-64 lg:start-0"
         )}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center justify-between px-4 border-b bg-white">
+        <div className="flex h-16 items-center justify-between px-4 border-b border-neutral-700 dark:border-neutral-800">
           {!sidebarCollapsed && (
             <Link href={`/${locale}/dashboard`} className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm">
-                <span className="text-white font-bold text-lg">L</span>
-              </div>
-              <span className="font-semibold text-lg bg-gradient-to-r from-neutral-800 to-neutral-600 bg-clip-text text-transparent">
-                Liyaqa
-              </span>
+              <Image
+                src="/assets/logo-liyaqa-white.svg"
+                alt="Liyaqa"
+                width={120}
+                height={32}
+                className="h-8 w-auto"
+                style={{ width: 'auto', height: 'auto' }}
+                priority
+              />
             </Link>
           )}
           {sidebarCollapsed && (
             <Link href={`/${locale}/dashboard`} className="mx-auto">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm">
-                <span className="text-white font-bold text-lg">L</span>
-              </div>
+              <Image
+                src="/assets/logo-liyaqa-icon.svg"
+                alt="Liyaqa"
+                width={32}
+                height={32}
+                className="h-8 w-8"
+                priority
+              />
             </Link>
           )}
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleSidebarCollapse}
-            className="hidden lg:flex"
+            className="hidden lg:flex hover:bg-neutral-800 text-neutral-400 hover:text-white"
           >
             <ChevronLeft
               className={cn(
@@ -263,7 +323,7 @@ export function AdminShell({ children }: AdminShellProps) {
             variant="ghost"
             size="icon"
             onClick={() => setMobileMenuOpen(false)}
-            className="lg:hidden"
+            className="lg:hidden hover:bg-neutral-800 text-neutral-400 hover:text-white"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -271,6 +331,22 @@ export function AdminShell({ children }: AdminShellProps) {
 
         {/* Navigation */}
         <ScrollArea className="h-[calc(100vh-4rem)]">
+          {/* Enroll CTA — prominent action for front desk staff */}
+          {!isMember && (
+            <div className="p-2">
+              <Link
+                href={`/${locale}/enroll`}
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E85D3A]",
+                  sidebarCollapsed && "px-2"
+                )}
+              >
+                <UserPlus className="h-5 w-5 shrink-0" />
+                {!sidebarCollapsed && <span>{locale === "ar" ? "تسجيل عضو" : "Enroll"}</span>}
+              </Link>
+            </div>
+          )}
           <nav className="p-2 space-y-1">
             {isMember ? (
               // Member navigation - simple flat list
@@ -286,7 +362,7 @@ export function AdminShell({ children }: AdminShellProps) {
                       "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all",
                       active
                         ? "bg-primary text-white"
-                        : "text-neutral-600 hover:bg-neutral-100 hover:translate-x-0.5"
+                        : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
                     )}
                   >
                     <Icon className="h-5 w-5 shrink-0" />
@@ -319,7 +395,7 @@ export function AdminShell({ children }: AdminShellProps) {
         )}
       >
         {/* Header */}
-        <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-sm border-b flex items-center justify-between px-4 lg:px-6">
+        <header className="sticky top-0 z-30 h-16 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b flex items-center justify-between px-4 lg:px-6">
           <Button
             variant="ghost"
             size="icon"
@@ -335,7 +411,7 @@ export function AdminShell({ children }: AdminShellProps) {
               type="button"
               onClick={commandPalette.open}
               className={cn(
-                "hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-md3-md",
+                "hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg",
                 "text-sm text-muted-foreground",
                 "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
                 "transition-colors duration-150"
@@ -366,6 +442,7 @@ export function AdminShell({ children }: AdminShellProps) {
           <div className="flex-1" />
 
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <LanguageToggle />
 
             <DropdownMenu>
@@ -373,13 +450,20 @@ export function AdminShell({ children }: AdminShellProps) {
                 <Button variant="ghost" className="gap-2">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="" />
-                    <AvatarFallback className="bg-gradient-to-br from-teal-100 to-teal-200 text-teal-700">
+                    <AvatarFallback className="bg-primary text-white text-xs font-medium">
                       {getInitials(locale === "ar" ? user?.displayName?.ar || user?.displayName?.en : user?.displayName?.en)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="hidden md:inline-block text-sm">
-                    {locale === "ar" ? user?.displayName?.ar || user?.displayName?.en : user?.displayName?.en}
-                  </span>
+                  <div className="hidden md:flex flex-col items-start">
+                    <span className="text-sm font-medium">
+                      {locale === "ar" ? user?.displayName?.ar || user?.displayName?.en : user?.displayName?.en}
+                    </span>
+                    {user?.role && (
+                      <Badge variant="secondary" className="h-4 text-[10px] px-1.5 font-normal">
+                        {user.role.replace(/_/g, " ").toLowerCase()}
+                      </Badge>
+                    )}
+                  </div>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -404,7 +488,7 @@ export function AdminShell({ children }: AdminShellProps) {
         </header>
 
         {/* Page content */}
-        <main className="p-4 lg:p-6 pb-20 lg:pb-6">{children}</main>
+        <main id="main-content" className="p-4 lg:p-6 pb-20 lg:pb-6">{children}</main>
       </div>
 
       {/* Mobile Bottom Navigation */}

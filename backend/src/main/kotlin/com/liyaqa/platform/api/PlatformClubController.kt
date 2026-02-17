@@ -10,6 +10,8 @@ import com.liyaqa.platform.api.dto.ClubSubscriptionStats
 import com.liyaqa.platform.api.dto.ClubUserResponse
 import com.liyaqa.platform.api.dto.ClubUserStats
 import com.liyaqa.platform.api.dto.ClientClubResponse
+import com.liyaqa.platform.api.dto.CreateClubUserRequest
+import com.liyaqa.platform.api.dto.UpdateClubUserRequest
 import com.liyaqa.platform.api.dto.PageResponse
 import com.liyaqa.platform.api.dto.PlatformClubDetailResponse
 import com.liyaqa.platform.api.dto.PlatformResetPasswordRequest
@@ -21,6 +23,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import com.liyaqa.platform.domain.model.PlatformUserRole
 import com.liyaqa.platform.infrastructure.security.PlatformSecured
@@ -179,6 +182,37 @@ class PlatformClubController(
         @Valid @RequestBody request: PlatformResetPasswordRequest
     ): ResponseEntity<ClubUserResponse> {
         val user = platformClubService.resetUserPassword(clubId, userId, request.newPassword)
+        return ResponseEntity.ok(ClubUserResponse.from(user))
+    }
+
+    /**
+     * Creates a new user for a club.
+     * Only PLATFORM_SUPER_ADMIN and PLATFORM_ADMIN can create users.
+     */
+    @PostMapping("/{clubId}/users")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
+    @Operation(summary = "Create club user", description = "Create a new user account for a club (admin only)")
+    fun createClubUser(
+        @PathVariable clubId: UUID,
+        @Valid @RequestBody request: CreateClubUserRequest
+    ): ResponseEntity<ClubUserResponse> {
+        val user = platformClubService.createUserForClub(clubId, request)
+        return ResponseEntity.status(HttpStatus.CREATED).body(ClubUserResponse.from(user))
+    }
+
+    /**
+     * Updates a user in a club.
+     * Only PLATFORM_SUPER_ADMIN and PLATFORM_ADMIN can update users.
+     */
+    @PutMapping("/{clubId}/users/{userId}")
+    @PlatformSecured(roles = [PlatformUserRole.PLATFORM_SUPER_ADMIN, PlatformUserRole.PLATFORM_ADMIN])
+    @Operation(summary = "Update club user", description = "Update a user's display name, role, or status (admin only)")
+    fun updateClubUser(
+        @PathVariable clubId: UUID,
+        @PathVariable userId: UUID,
+        @Valid @RequestBody request: UpdateClubUserRequest
+    ): ResponseEntity<ClubUserResponse> {
+        val user = platformClubService.updateUserInClub(clubId, userId, request)
         return ResponseEntity.ok(ClubUserResponse.from(user))
     }
 

@@ -34,7 +34,7 @@ class ProductController(
      * Get all products with optional filtering.
      */
     @GetMapping
-    @PreAuthorize("hasAuthority('products_view')")
+    @PreAuthorize("hasAuthority('shop_view')")
     fun getProducts(
         @RequestParam status: ProductStatus?,
         @RequestParam type: ProductType?,
@@ -57,7 +57,7 @@ class ProductController(
      * Get product by ID.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('products_view')")
+    @PreAuthorize("hasAuthority('shop_view')")
     fun getProduct(@PathVariable id: UUID): ResponseEntity<ProductResponse> {
         val product = productService.getById(id)
         val bundleItems = if (product.productType == ProductType.BUNDLE) {
@@ -70,7 +70,7 @@ class ProductController(
      * Get product statistics.
      */
     @GetMapping("/stats")
-    @PreAuthorize("hasAuthority('products_view')")
+    @PreAuthorize("hasAuthority('shop_view')")
     fun getStats(): ResponseEntity<ProductStatsResponse> {
         val stats = productService.getStats()
         return ResponseEntity.ok(ProductStatsResponse.from(stats))
@@ -80,7 +80,7 @@ class ProductController(
      * Create a new product.
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('products_create')")
+    @PreAuthorize("hasAuthority('shop_create')")
     fun createProduct(
         @Valid @RequestBody request: CreateProductRequest
     ): ResponseEntity<ProductResponse> {
@@ -96,7 +96,7 @@ class ProductController(
      * Update a product.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('products_update')")
+    @PreAuthorize("hasAuthority('shop_update')")
     fun updateProduct(
         @PathVariable id: UUID,
         @Valid @RequestBody request: UpdateProductRequest
@@ -113,7 +113,7 @@ class ProductController(
      * Delete a product.
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('products_delete')")
+    @PreAuthorize("hasAuthority('shop_delete')")
     fun deleteProduct(@PathVariable id: UUID): ResponseEntity<Void> {
         productService.delete(id)
         return ResponseEntity.noContent().build()
@@ -125,7 +125,7 @@ class ProductController(
      * Publish a draft product.
      */
     @PostMapping("/{id}/publish")
-    @PreAuthorize("hasAuthority('products_update')")
+    @PreAuthorize("hasAuthority('shop_update')")
     fun publishProduct(@PathVariable id: UUID): ResponseEntity<ProductResponse> {
         val product = productService.publish(id)
         return ResponseEntity.ok(ProductResponse.from(product))
@@ -135,7 +135,7 @@ class ProductController(
      * Activate a product.
      */
     @PostMapping("/{id}/activate")
-    @PreAuthorize("hasAuthority('products_update')")
+    @PreAuthorize("hasAuthority('shop_update')")
     fun activateProduct(@PathVariable id: UUID): ResponseEntity<ProductResponse> {
         val product = productService.activate(id)
         return ResponseEntity.ok(ProductResponse.from(product))
@@ -145,7 +145,7 @@ class ProductController(
      * Deactivate a product.
      */
     @PostMapping("/{id}/deactivate")
-    @PreAuthorize("hasAuthority('products_update')")
+    @PreAuthorize("hasAuthority('shop_update')")
     fun deactivateProduct(@PathVariable id: UUID): ResponseEntity<ProductResponse> {
         val product = productService.deactivate(id)
         return ResponseEntity.ok(ProductResponse.from(product))
@@ -155,7 +155,7 @@ class ProductController(
      * Discontinue a product.
      */
     @PostMapping("/{id}/discontinue")
-    @PreAuthorize("hasAuthority('products_update')")
+    @PreAuthorize("hasAuthority('shop_update')")
     fun discontinueProduct(@PathVariable id: UUID): ResponseEntity<ProductResponse> {
         val product = productService.discontinue(id)
         return ResponseEntity.ok(ProductResponse.from(product))
@@ -167,7 +167,7 @@ class ProductController(
      * Add stock to a product.
      */
     @PostMapping("/{id}/add-stock")
-    @PreAuthorize("hasAuthority('products_update')")
+    @PreAuthorize("hasAuthority('shop_update')")
     fun addStock(
         @PathVariable id: UUID,
         @Valid @RequestBody request: AdjustStockRequest
@@ -180,7 +180,7 @@ class ProductController(
      * Deduct stock from a product.
      */
     @PostMapping("/{id}/deduct-stock")
-    @PreAuthorize("hasAuthority('products_update')")
+    @PreAuthorize("hasAuthority('shop_update')")
     fun deductStock(
         @PathVariable id: UUID,
         @Valid @RequestBody request: AdjustStockRequest
@@ -195,7 +195,7 @@ class ProductController(
      * Get bundle items for a bundle product.
      */
     @GetMapping("/{id}/bundle-items")
-    @PreAuthorize("hasAuthority('products_view')")
+    @PreAuthorize("hasAuthority('shop_view')")
     fun getBundleItems(@PathVariable id: UUID): ResponseEntity<List<BundleItemResponse>> {
         val items = productService.getBundleItems(id)
         return ResponseEntity.ok(items.map { BundleItemResponse.from(it) })

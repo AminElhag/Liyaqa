@@ -1,0 +1,50 @@
+{
+  "common": {
+    "appName": "لياقة - المدرب",
+    "loading": "جاري التحميل...",
+    "error": "حدث خطأ",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "back": "رجوع",
+    "next": "التالي",
+    "submit": "إرسال",
+    "search": "بحث",
+    "noResults": "لا توجد نتائج"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "loginTitle": "بوابة المدرب",
+    "loginSubtitle": "سجّل الدخول لإدارة حصصك وجلساتك",
+    "wrongPortal": "ليس لديك صلاحية المدرب. يرجى استخدام البوابة الصحيحة.",
+    "selectAccountType": "اختر البوابة",
+    "switchPortal": "تبديل البوابة"
+  },
+  "trainer": {
+    "dashboard": "لوحة التحكم",
+    "schedule": "الجدول",
+    "clients": "العملاء",
+    "classes": "الحصص",
+    "earnings": "الأرباح",
+    "profile": "الملف الشخصي",
+    "notifications": "الإشعارات",
+    "certifications": "الشهادات",
+    "sessions": "الجلسات",
+    "availability": "التوفر"
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "schedule": "الجدول",
+    "clients": "العملاء",
+    "classes": "الحصص",
+    "earnings": "الأرباح",
+    "profile": "الملف الشخصي",
+    "notifications": "الإشعارات",
+    "certifications": "الشهادات",
+    "settings": "الإعدادات"
+  }
+}

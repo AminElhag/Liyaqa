@@ -4,7 +4,9 @@ import com.liyaqa.shared.domain.BaseEntity
 import jakarta.persistence.*
 import org.hibernate.annotations.Filter
 import org.hibernate.annotations.FilterDef
+import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.ParamDef
+import org.hibernate.type.SqlTypes
 import java.util.*
 
 @Entity
@@ -25,9 +27,11 @@ class ForecastScenario(
     @Column(name = "description_ar", columnDefinition = "TEXT")
     var descriptionAr: String? = null,
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "adjustments", nullable = false, columnDefinition = "JSONB")
     var adjustments: String, // JSON: {membership_growth: 0.1, price_change: 50}
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "scenario_forecasts", columnDefinition = "JSONB")
     var scenarioForecasts: String? = null, // Calculated results
 

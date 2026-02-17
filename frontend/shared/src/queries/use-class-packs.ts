@@ -16,6 +16,7 @@ import {
 import type { UUID } from "../types/api";
 import type {
   ClassPackStatus,
+  ServiceType,
   CreateClassPackRequest,
   UpdateClassPackRequest,
 } from "../types/scheduling";
@@ -42,6 +43,7 @@ export function useClassPacks(params: {
   page?: number;
   size?: number;
   status?: ClassPackStatus;
+  serviceType?: ServiceType;
   sortBy?: string;
   sortDirection?: "ASC" | "DESC";
 } = {}) {

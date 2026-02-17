@@ -154,7 +154,96 @@ class GymClass(
         AttributeOverride(name = "amount", column = Column(name = "late_cancel_fee_amount")),
         AttributeOverride(name = "currency", column = Column(name = "late_cancel_fee_currency"))
     )
-    var lateCancellationFee: Money? = null
+    var lateCancellationFee: Money? = null,
+
+    // ==================== GX ACCESS POLICY ====================
+
+    /**
+     * Who can book this class.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "access_policy", nullable = false)
+    var accessPolicy: ClassAccessPolicy = ClassAccessPolicy.MEMBERS_ONLY,
+
+    /**
+     * Number of spots bookable online (rest reserved for walk-ins).
+     * Null means all spots are bookable online.
+     */
+    @Column(name = "online_bookable_spots")
+    var onlineBookableSpots: Int? = null,
+
+    /**
+     * Fee charged for no-shows.
+     */
+    @Embedded
+    @AttributeOverrides(
+        AttributeOverride(name = "amount", column = Column(name = "no_show_fee_amount")),
+        AttributeOverride(name = "currency", column = Column(name = "no_show_fee_currency"))
+    )
+    var noShowFee: Money? = null,
+
+    // ==================== SPOT BOOKING ====================
+
+    /**
+     * Whether members pick a specific spot when booking.
+     */
+    @Column(name = "spot_booking_enabled", nullable = false)
+    var spotBookingEnabled: Boolean = false,
+
+    /**
+     * Reference to the room layout used for spot booking.
+     */
+    @Column(name = "room_layout_id")
+    var roomLayoutId: UUID? = null,
+
+    // ==================== CLASS CATEGORY ====================
+
+    /**
+     * Optional category for per-category class pack credit allocation.
+     */
+    @Column(name = "category_id")
+    var categoryId: UUID? = null,
+
+    // ==================== PERSONAL TRAINING ====================
+
+    /**
+     * PT session type: ONE_ON_ONE or SEMI_PRIVATE.
+     * Only applicable when classType == PERSONAL_TRAINING.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "pt_session_type", length = 20)
+    var ptSessionType: PTSessionType? = null,
+
+    /**
+     * PT location type: CLUB or HOME.
+     * Only applicable when classType == PERSONAL_TRAINING.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "pt_location_type", length = 10)
+    var ptLocationType: PTLocationType? = null,
+
+    /**
+     * Travel fee for HOME PT sessions.
+     */
+    @Embedded
+    @AttributeOverrides(
+        AttributeOverride(name = "amount", column = Column(name = "travel_fee_amount")),
+        AttributeOverride(name = "currency", column = Column(name = "travel_fee_currency"))
+    )
+    var travelFee: Money? = null,
+
+    /**
+     * FK to trainers table for PT classes — the assigned trainer.
+     */
+    @Column(name = "trainer_profile_id")
+    var trainerProfileId: UUID? = null,
+
+    /**
+     * Minimum number of clients to run the session.
+     * For semi-private PT: minimum clients needed.
+     */
+    @Column(name = "min_capacity", nullable = false)
+    var minCapacity: Int = 1
 
 ) : BaseEntity(id) {
 
@@ -264,5 +353,46 @@ class GymClass(
         val rate = taxRate ?: BigDecimal.ZERO
         val taxAmount = price.amount.multiply(rate).divide(BigDecimal("100"), 2, java.math.RoundingMode.HALF_UP)
         return Money(price.amount.add(taxAmount), price.currency)
+    }
+
+    // ==================== PT HELPERS ====================
+
+    /**
+     * Checks if this class is a personal training class.
+     */
+    fun isPersonalTraining(): Boolean = classType == ClassType.PERSONAL_TRAINING
+
+    /**
+     * Checks if this is a home PT class.
+     */
+    fun isHomePT(): Boolean = isPersonalTraining() && ptLocationType == PTLocationType.HOME
+
+    /**
+     * Checks if this is a semi-private PT class.
+     */
+    fun isSemiPrivate(): Boolean = isPersonalTraining() && ptSessionType == PTSessionType.SEMI_PRIVATE
+
+    /**
+     * Validates PT-specific configuration.
+     */
+    fun validatePTConfiguration() {
+        if (!isPersonalTraining()) return
+
+        requireNotNull(ptSessionType) { "PT session type is required for personal training classes" }
+        requireNotNull(ptLocationType) { "PT location type is required for personal training classes" }
+
+        when (ptSessionType) {
+            PTSessionType.ONE_ON_ONE -> require(maxCapacity == 1) { "1:1 PT classes must have capacity of 1" }
+            PTSessionType.SEMI_PRIVATE -> {
+                require(maxCapacity in 2..4) { "Semi-private PT classes must have capacity between 2 and 4" }
+                require(minCapacity >= 1) { "Minimum capacity must be at least 1" }
+                require(minCapacity <= maxCapacity) { "Minimum capacity cannot exceed max capacity" }
+            }
+            null -> {} // handled above
+        }
+
+        if (ptLocationType == PTLocationType.HOME) {
+            // Travel fee is optional but recommended for home PT
+        }
     }
 }

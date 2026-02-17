@@ -7,13 +7,14 @@ import {
 } from "@dnd-kit/sortable";
 import { useLocale } from "next-intl";
 import { cn } from "@liyaqa/shared/utils";
-import { SortableDealCard } from "./deal-card";
+import { DealCard, SortableDealCard } from "./deal-card";
 import type { DealSummary, DealStatus } from "@liyaqa/shared/types/platform";
 
 interface KanbanColumnProps {
   status: DealStatus;
   deals: DealSummary[];
   onDealClick: (deal: DealSummary) => void;
+  isDropTarget?: boolean;
 }
 
 const COLUMN_CONFIG: Record<
@@ -91,7 +92,7 @@ const COLUMN_CONFIG: Record<
   },
 };
 
-export function KanbanColumn({ status, deals, onDealClick }: KanbanColumnProps) {
+function DroppableColumn({ status, deals, onDealClick }: Omit<KanbanColumnProps, "isDropTarget">) {
   const locale = useLocale();
   const config = COLUMN_CONFIG[status];
 
@@ -147,6 +148,58 @@ export function KanbanColumn({ status, deals, onDealClick }: KanbanColumnProps) 
       </div>
     </div>
   );
+}
+
+function StaticColumn({ status, deals, onDealClick }: Omit<KanbanColumnProps, "isDropTarget">) {
+  const locale = useLocale();
+  const config = COLUMN_CONFIG[status];
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col min-w-[300px] max-w-[300px] rounded-lg border",
+        config.bgColor,
+        config.borderColor
+      )}
+    >
+      {/* Header */}
+      <div
+        className={cn(
+          "flex items-center justify-between px-4 py-3 rounded-t-lg",
+          config.headerBg
+        )}
+      >
+        <h3 className="font-semibold text-sm">
+          {locale === "ar" ? config.labelAr : config.labelEn}
+        </h3>
+        <span className="text-xs font-medium bg-white px-2 py-1 rounded-full">
+          {deals.length}
+        </span>
+      </div>
+
+      {/* Cards Container — plain (non-sortable) */}
+      <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-300px)]">
+        {deals.map((deal) => (
+          <div key={deal.id} onClick={() => onDealClick(deal)} className="cursor-pointer">
+            <DealCard deal={deal} />
+          </div>
+        ))}
+
+        {deals.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground text-sm">
+            {locale === "ar" ? "لا توجد صفقات" : "No deals"}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function KanbanColumn({ isDropTarget = true, ...props }: KanbanColumnProps) {
+  if (isDropTarget) {
+    return <DroppableColumn {...props} />;
+  }
+  return <StaticColumn {...props} />;
 }
 
 export { COLUMN_CONFIG };

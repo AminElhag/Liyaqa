@@ -68,8 +68,8 @@ export function NavGroup({
           className={cn(
             "flex w-full items-center justify-center p-2 rounded-lg transition-colors",
             isGroupActive
-              ? "bg-primary/10 text-primary"
-              : "text-neutral-600 hover:bg-neutral-100"
+              ? "bg-primary/20 text-primary"
+              : "text-neutral-400 hover:bg-neutral-800 hover:text-white"
           )}
           title={tGroups(group.id)}
         >
@@ -77,8 +77,8 @@ export function NavGroup({
         </button>
         {/* Tooltip flyout on hover */}
         <div className="absolute start-full top-0 ms-2 hidden group-hover:block z-50">
-          <div className="bg-white rounded-lg shadow-lg border border-neutral-200 py-2 min-w-[180px]">
-            <div className="px-3 py-1.5 text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+          <div className="bg-neutral-800 rounded-lg shadow-lg border border-neutral-700 py-2 min-w-[180px]">
+            <div className="px-3 py-1.5 text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">
               {tGroups(group.id)}
             </div>
             {group.items.map((item) => {
@@ -93,7 +93,7 @@ export function NavGroup({
                     "flex items-center gap-2 px-3 py-2 text-sm transition-colors",
                     active
                       ? "bg-primary text-white"
-                      : "text-neutral-700 hover:bg-neutral-100"
+                      : "text-neutral-300 hover:bg-neutral-700 hover:text-white"
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -114,24 +114,24 @@ export function NavGroup({
           className={cn(
             "flex w-full items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all",
             isGroupActive
-              ? "bg-gradient-to-r from-teal-50 to-transparent border-s-[3px] border-teal-600 text-teal-700"
-              : "text-neutral-600 hover:bg-neutral-100"
+              ? "bg-primary/15 border-s-[3px] border-primary text-white"
+              : "text-neutral-400 hover:bg-neutral-800 hover:text-white"
           )}
         >
           <span className="flex items-center gap-3">
             <GroupIcon className="h-5 w-5 shrink-0" />
-            <span>{tGroups(group.id)}</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider">{tGroups(group.id)}</span>
           </span>
           <ChevronDown
             className={cn(
-              "h-4 w-4 shrink-0 text-neutral-400 transition-transform duration-200",
+              "h-4 w-4 shrink-0 text-neutral-500 transition-transform duration-200",
               isExpanded && "rotate-180"
             )}
           />
         </button>
       </CollapsibleTrigger>
       <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
-        <div className="ms-4 mt-1 space-y-0.5 border-s border-neutral-200 ps-3">
+        <div className="ms-4 mt-1 space-y-0.5 border-s border-neutral-700 ps-3">
           {group.items.map((item, index) => {
             const Icon = item.icon;
             const active = isItemActive(item.href);
@@ -144,7 +144,7 @@ export function NavGroup({
                   "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all",
                   active
                     ? "bg-primary text-white font-medium"
-                    : "text-neutral-600 hover:bg-neutral-100 hover:translate-x-0.5"
+                    : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
                 )}
                 style={{
                   animationDelay: `${index * 30}ms`,

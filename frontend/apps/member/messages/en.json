@@ -1,0 +1,43 @@
+{
+  "common": {
+    "appName": "Liyaqa Member",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "search": "Search",
+    "noResults": "No results found"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "loginTitle": "Member Portal",
+    "loginSubtitle": "Sign in to manage your membership and bookings",
+    "wrongPortal": "You don't have member access. Please use the correct portal.",
+    "selectAccountType": "Choose Your Portal",
+    "switchPortal": "Switch Portal"
+  },
+  "member": {
+    "dashboard": "Dashboard",
+    "bookings": "My Bookings",
+    "subscription": "My Subscription",
+    "profile": "Profile",
+    "schedule": "Class Schedule",
+    "classPacks": "Class Packs",
+    "agreements": "Agreements",
+    "payments": "Payments",
+    "paymentMethods": "Payment Methods",
+    "qrCode": "QR Code",
+    "notifications": "Notifications",
+    "settings": "Settings",
+    "fitness": "Fitness",
+    "referrals": "Referrals",
+    "freeze": "Freeze",
+    "ptSessions": "PT Sessions"
+  }
+}

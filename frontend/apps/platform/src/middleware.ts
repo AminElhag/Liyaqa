@@ -61,17 +61,33 @@ function isPublicRoute(pathname: string): boolean {
 }
 
 /**
- * Extracts JWT token from request
+ * Reads session metadata from the lightweight `session_meta` cookie,
+ * falling back to the full `access_token` cookie or Authorization header.
  */
-function getTokenFromRequest(request: NextRequest): string | null {
-  const cookieToken = request.cookies.get("access_token")?.value;
-  if (cookieToken) {
-    return cookieToken;
+function getSessionFromRequest(request: NextRequest): JWTPayload | null {
+  // 1. Try lightweight session_meta cookie (preferred)
+  const metaCookie = request.cookies.get("session_meta")?.value;
+  if (metaCookie) {
+    try {
+      const decoded = JSON.parse(
+        Buffer.from(metaCookie, "base64").toString("utf-8")
+      ) as JWTPayload;
+      return decoded;
+    } catch {
+      // Malformed — fall through
+    }
   }
 
+  // 2. Fallback: full access_token cookie (backward compat)
+  const cookieToken = request.cookies.get("access_token")?.value;
+  if (cookieToken) {
+    return decodeJWT(cookieToken);
+  }
+
+  // 3. Fallback: Authorization header
   const authHeader = request.headers.get("authorization");
   if (authHeader?.startsWith("Bearer ")) {
-    return authHeader.substring(7);
+    return decodeJWT(authHeader.substring(7));
   }
 
   return null;
@@ -91,7 +107,7 @@ function decodeJWT(token: string): JWTPayload | null {
     ) as JWTPayload;
 
     return decoded;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -136,21 +152,10 @@ async function authMiddleware(request: NextRequest) {
     return null;
   }
 
-  // Get token from request
-  const token = getTokenFromRequest(request);
+  // Get session metadata from cookie (or fallback to full JWT)
+  const decodedToken = getSessionFromRequest(request);
 
-  // No token found - redirect to platform login
-  if (!token) {
-    const locale = pathname.split("/")[1] || defaultLocale;
-    const loginUrl = new URL(`/${locale}/platform-login`, request.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // Decode and validate token
-  const decodedToken = decodeJWT(token);
-
-  // Invalid token - redirect to platform login
+  // No valid session found - redirect to platform login
   if (!decodedToken) {
     const locale = pathname.split("/")[1] || defaultLocale;
     const loginUrl = new URL(`/${locale}/platform-login`, request.url);

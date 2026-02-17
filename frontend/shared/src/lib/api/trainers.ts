@@ -8,6 +8,7 @@ import type {
   UpdateTrainerProfileRequest,
   UpdateTrainerBasicInfoRequest,
   UpdateAvailabilityRequest,
+  UpdateTrainerSkillsRequest,
   AssignTrainerToClubRequest,
   TrainerQueryParams,
   Availability,
@@ -148,6 +149,18 @@ export async function getTrainerAvailableSlots(
     slotDurationMinutes: String(slotDurationMinutes),
   });
   return api.get(`api/pt-sessions/trainers/${id}/availability?${params}`).json();
+}
+
+// ==================== Skills Operations ====================
+
+/**
+ * Update trainer skills (class categories)
+ */
+export async function updateTrainerSkills(
+  id: UUID,
+  data: UpdateTrainerSkillsRequest
+): Promise<Trainer> {
+  return api.put(`${TRAINERS_ENDPOINT}/${id}/skills`, { json: data }).json();
 }
 
 // ==================== Club Assignment Operations ====================

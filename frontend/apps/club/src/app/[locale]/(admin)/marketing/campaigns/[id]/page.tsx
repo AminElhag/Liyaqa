@@ -28,6 +28,8 @@ import {
   CHANNEL_LABELS,
 } from '@liyaqa/shared/types/marketing';
 import { useToast } from '@liyaqa/shared/hooks/use-toast';
+import { parseApiError } from '@liyaqa/shared/lib/api/client';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@liyaqa/shared/components/ui/tooltip';
 
 export default function CampaignDetailPage() {
   const t = useTranslations();
@@ -48,10 +50,11 @@ export default function CampaignDetailPage() {
         title: t('common.success', { defaultValue: 'Success' }),
         description: t('marketing.campaignActivated', { defaultValue: 'Campaign activated' }),
       });
-    } catch (error) {
+    } catch (err) {
+      const apiError = await parseApiError(err);
       toast({
         title: t('common.error', { defaultValue: 'Error' }),
-        description: t('marketing.activationFailed', { defaultValue: 'Failed to activate campaign' }),
+        description: apiError.message || t('marketing.activationFailed', { defaultValue: 'Failed to activate campaign' }),
         variant: 'destructive',
       });
     }
@@ -64,10 +67,11 @@ export default function CampaignDetailPage() {
         title: t('common.success', { defaultValue: 'Success' }),
         description: t('marketing.campaignPaused', { defaultValue: 'Campaign paused' }),
       });
-    } catch (error) {
+    } catch (err) {
+      const apiError = await parseApiError(err);
       toast({
         title: t('common.error', { defaultValue: 'Error' }),
-        description: t('marketing.pauseFailed', { defaultValue: 'Failed to pause campaign' }),
+        description: apiError.message || t('marketing.pauseFailed', { defaultValue: 'Failed to pause campaign' }),
         variant: 'destructive',
       });
     }
@@ -84,10 +88,11 @@ export default function CampaignDetailPage() {
         description: t('marketing.campaignDeleted', { defaultValue: 'Campaign deleted' }),
       });
       router.push('/marketing/campaigns');
-    } catch (error) {
+    } catch (err) {
+      const apiError = await parseApiError(err);
       toast({
         title: t('common.error', { defaultValue: 'Error' }),
-        description: t('marketing.deleteFailed', { defaultValue: 'Failed to delete campaign' }),
+        description: apiError.message || t('marketing.deleteFailed', { defaultValue: 'Failed to delete campaign' }),
         variant: 'destructive',
       });
     }
@@ -120,6 +125,7 @@ export default function CampaignDetailPage() {
   }
 
   const { campaign, steps } = data;
+  const hasNoSteps = steps.length === 0;
 
   return (
     <div className="space-y-6">
@@ -148,10 +154,26 @@ export default function CampaignDetailPage() {
                     {t('common.edit', { defaultValue: 'Edit' })}
                   </Link>
                 </Button>
-                <Button onClick={handleActivate} disabled={activateMutation.isPending}>
-                  <Play className="mr-2 h-4 w-4" />
-                  {t('common.activate', { defaultValue: 'Activate' })}
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span tabIndex={hasNoSteps ? 0 : undefined}>
+                        <Button
+                          onClick={handleActivate}
+                          disabled={activateMutation.isPending || hasNoSteps}
+                        >
+                          <Play className="mr-2 h-4 w-4" />
+                          {t('common.activate', { defaultValue: 'Activate' })}
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    {hasNoSteps && (
+                      <TooltipContent>
+                        {t('marketing.activateNeedsSteps', { defaultValue: 'Add at least one step before activating' })}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               </>
             ) : campaign.status === 'ACTIVE' ? (
               <Button variant="secondary" onClick={handlePause} disabled={pauseMutation.isPending}>

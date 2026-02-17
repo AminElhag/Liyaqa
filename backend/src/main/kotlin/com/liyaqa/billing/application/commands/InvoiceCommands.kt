@@ -1,7 +1,9 @@
 package com.liyaqa.billing.application.commands
 
+import com.liyaqa.billing.domain.model.InvoiceTypeCode
 import com.liyaqa.billing.domain.model.LineItemType
 import com.liyaqa.billing.domain.model.PaymentMethod
+import com.liyaqa.billing.domain.model.VatCategoryCode
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.Money
 import java.math.BigDecimal
@@ -17,7 +19,8 @@ data class CreateInvoiceCommand(
     val lineItems: List<LineItemCommand>,
     val vatRate: BigDecimal = BigDecimal("15.00"),
     val notes: LocalizedText? = null,
-    val dueDate: LocalDate? = null
+    val dueDate: LocalDate? = null,
+    val invoiceTypeCode: InvoiceTypeCode = InvoiceTypeCode.SIMPLIFIED
 )
 
 /**
@@ -27,7 +30,9 @@ data class LineItemCommand(
     val description: LocalizedText,
     val quantity: Int = 1,
     val unitPrice: Money,
-    val itemType: LineItemType = LineItemType.OTHER
+    val itemType: LineItemType = LineItemType.OTHER,
+    val taxRate: BigDecimal = BigDecimal("15.00"),
+    val vatCategoryCode: VatCategoryCode = VatCategoryCode.S
 )
 
 /**
@@ -44,7 +49,8 @@ data class CreateSubscriptionInvoiceCommand(
 data class RecordPaymentCommand(
     val amount: Money,
     val paymentMethod: PaymentMethod,
-    val reference: String? = null
+    val reference: String? = null,
+    val notes: String? = null
 )
 
 /**

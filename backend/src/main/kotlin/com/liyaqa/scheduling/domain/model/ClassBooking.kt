@@ -95,7 +95,41 @@ class ClassBooking(
         AttributeOverride(name = "amount", column = Column(name = "paid_amount")),
         AttributeOverride(name = "currency", column = Column(name = "paid_currency"))
     )
-    var paidAmount: Money? = null
+    var paidAmount: Money? = null,
+
+    // ==================== SPOT BOOKING ====================
+
+    /**
+     * The spot ID within the room layout (e.g., "A1", "B3").
+     */
+    @Column(name = "spot_id", length = 20)
+    var spotId: String? = null,
+
+    /**
+     * Human-readable spot label (e.g., "Front Row 1").
+     */
+    @Column(name = "spot_label", length = 50)
+    var spotLabel: String? = null,
+
+    // ==================== CATEGORY CREDIT TRACKING ====================
+
+    /**
+     * Reference to the category balance used (if paid with per-category class pack).
+     */
+    @Column(name = "category_balance_id")
+    var categoryBalanceId: UUID? = null,
+
+    // ==================== PT TRAVEL FEE ====================
+
+    /**
+     * Travel fee paid for HOME PT booking.
+     */
+    @Embedded
+    @AttributeOverrides(
+        AttributeOverride(name = "amount", column = Column(name = "travel_fee_paid_amount")),
+        AttributeOverride(name = "currency", column = Column(name = "travel_fee_paid_currency"))
+    )
+    var travelFeePaid: Money? = null
 
 ) : BaseEntity(id) {
 
@@ -139,7 +173,22 @@ class ClassBooking(
     }
 
     /**
-     * Checks if the booking is active (not cancelled or no-show).
+     * Completes the booking (session finished, member attended).
+     */
+    fun complete() {
+        require(status == BookingStatus.CONFIRMED || status == BookingStatus.CHECKED_IN) {
+            "Only confirmed or checked-in bookings can be completed"
+        }
+        status = BookingStatus.COMPLETED
+    }
+
+    /**
+     * Checks if the booking is completed.
+     */
+    fun isCompleted(): Boolean = status == BookingStatus.COMPLETED
+
+    /**
+     * Checks if the booking is active (not cancelled, no-show, or completed).
      */
     fun isActive(): Boolean {
         return status == BookingStatus.CONFIRMED || status == BookingStatus.WAITLISTED || status == BookingStatus.CHECKED_IN

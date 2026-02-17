@@ -15,7 +15,6 @@ import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
 import java.util.*
@@ -180,7 +179,7 @@ class ForecastingController(
     @Operation(summary = "Create a budget")
     fun createBudget(
         @Valid @RequestBody request: CreateBudgetRequest,
-        @AuthenticationPrincipal currentUser: CurrentUser
+        currentUser: CurrentUser
     ): ResponseEntity<BudgetResponse> {
         val command = CreateBudgetCommand(
             fiscalYear = request.fiscalYear,
@@ -199,7 +198,7 @@ class ForecastingController(
     @Operation(summary = "Create multiple budgets")
     fun bulkCreateBudgets(
         @Valid @RequestBody request: BulkCreateBudgetsRequest,
-        @AuthenticationPrincipal currentUser: CurrentUser
+        currentUser: CurrentUser
     ): ResponseEntity<List<BudgetResponse>> {
         val command = BulkCreateBudgetsCommand(
             fiscalYear = request.fiscalYear,
@@ -300,7 +299,7 @@ class ForecastingController(
     @Operation(summary = "Create a scenario")
     fun createScenario(
         @Valid @RequestBody request: CreateScenarioRequest,
-        @AuthenticationPrincipal currentUser: CurrentUser
+        currentUser: CurrentUser
     ): ResponseEntity<ForecastScenarioResponse> {
         val command = CreateScenarioCommand(
             name = request.name,

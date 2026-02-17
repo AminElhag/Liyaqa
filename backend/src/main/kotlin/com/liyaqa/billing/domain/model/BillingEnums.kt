@@ -44,3 +44,36 @@ enum class LineItemType {
     DISCOUNT,        // Discount (negative amount)
     OTHER            // Other charges
 }
+
+/**
+ * ZATCA invoice type code (Phase 1).
+ * SIMPLIFIED: B2C invoices (gym members) - most common
+ * STANDARD: B2B invoices (corporate memberships)
+ */
+enum class InvoiceTypeCode {
+    SIMPLIFIED,
+    STANDARD
+}
+
+/**
+ * ZATCA document type code (UN/CEFACT 1001).
+ */
+enum class DocumentTypeCode {
+    INVOICE_388,       // Standard invoice
+    CREDIT_NOTE_381,   // Credit note (refund)
+    DEBIT_NOTE_383     // Debit note (additional charge)
+}
+
+/**
+ * ZATCA VAT category code per line item.
+ * S: Standard rate (15%)
+ * Z: Zero-rated
+ * E: Exempt
+ * O: Out of scope
+ */
+enum class VatCategoryCode {
+    S,  // Standard rate (15%)
+    Z,  // Zero-rated
+    E,  // Exempt from VAT
+    O   // Out of scope of VAT
+}

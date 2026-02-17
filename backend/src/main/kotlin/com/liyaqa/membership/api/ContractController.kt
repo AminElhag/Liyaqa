@@ -4,6 +4,7 @@ import com.liyaqa.membership.application.services.CancellationService
 import com.liyaqa.membership.application.services.ContractService
 import com.liyaqa.membership.application.services.CreateContractCommand
 import com.liyaqa.membership.domain.model.CancellationType
+import com.liyaqa.membership.domain.model.ContractPricingTier
 import com.liyaqa.membership.domain.model.ContractStatus
 import com.liyaqa.membership.domain.model.MembershipCategory
 import com.liyaqa.membership.domain.model.MembershipCategoryType
@@ -12,7 +13,10 @@ import com.liyaqa.membership.domain.ports.ContractPricingTierRepository
 import com.liyaqa.membership.domain.ports.ExitSurveyRepository
 import com.liyaqa.membership.domain.ports.MembershipCategoryRepository
 import com.liyaqa.membership.domain.ports.MembershipContractRepository
+import com.liyaqa.membership.domain.ports.MembershipPlanRepository
+import com.liyaqa.membership.domain.ports.RetentionOfferRepository
 import com.liyaqa.shared.domain.LocalizedText
+import com.liyaqa.shared.domain.Money
 import jakarta.validation.Valid
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -27,6 +31,9 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 import java.util.UUID
 
 /**
@@ -478,13 +485,139 @@ class ExitSurveyController(
      * Get exit survey analytics.
      */
     @GetMapping("/analytics")
-    fun getAnalytics(): ResponseEntity<ExitSurveyAnalyticsResponse> {
-        val analytics = cancellationService.getExitSurveyAnalytics()
-        return ResponseEntity.ok(ExitSurveyAnalyticsResponse(
-            reasonStats = analytics["reasonStats"] as List<Map<String, Any>>,
-            averageNps = analytics["averageNps"] as Double,
-            npsDistribution = analytics["npsDistribution"] as Map<String, Long>,
-            totalSurveys = analytics["totalSurveys"] as Long
+    fun getAnalytics(
+        @RequestParam(required = false) startDate: String?,
+        @RequestParam(required = false) endDate: String?
+    ): ResponseEntity<ExitSurveyAnalyticsResponse> {
+        val start = startDate?.let { LocalDate.parse(it).atStartOfDay().toInstant(ZoneOffset.UTC) }
+            ?: Instant.now().minus(java.time.Duration.ofDays(365))
+        val end = endDate?.let { LocalDate.parse(it).plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC) }
+            ?: Instant.now()
+
+        val analytics = cancellationService.getFullExitSurveyAnalytics(start, end)
+        return ResponseEntity.ok(analytics)
+    }
+}
+
+/**
+ * Admin controller for retention metrics.
+ */
+@RestController
+@RequestMapping("/api/admin/retention")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CLUB_ADMIN', 'STAFF')")
+class RetentionMetricsController(
+    private val cancellationRequestRepository: CancellationRequestRepository,
+    private val retentionOfferRepository: RetentionOfferRepository
+) {
+
+    @GetMapping("/metrics")
+    fun getMetrics(): ResponseEntity<RetentionMetricsResponse> {
+        val totalRequests = cancellationRequestRepository.count()
+        val savedMembers = cancellationRequestRepository.countSaved()
+        val retentionRate = cancellationRequestRepository.getRetentionRate()
+
+        val offerStats = retentionOfferRepository.getOfferAcceptanceStats()
+        val offerAcceptanceRate = (offerStats["acceptanceRate"] as? Number)?.toDouble() ?: 0.0
+
+        val acceptedOfferTypes = try {
+            retentionOfferRepository.getAcceptedOfferTypeStats().map { row ->
+                AcceptedOfferTypeDto(
+                    offerType = row[0].toString(),
+                    count = (row[1] as Number).toLong()
+                )
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+
+        return ResponseEntity.ok(RetentionMetricsResponse(
+            totalCancellationRequests = totalRequests,
+            savedMembers = savedMembers,
+            retentionRate = retentionRate,
+            averageTimeToSave = 0.0,
+            offerAcceptanceRate = offerAcceptanceRate,
+            topAcceptedOfferTypes = acceptedOfferTypes
         ))
+    }
+}
+
+/**
+ * Admin controller for contract pricing tiers.
+ */
+@RestController
+@RequestMapping("/api/admin")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'CLUB_ADMIN', 'STAFF')")
+class PricingTierController(
+    private val pricingTierRepository: ContractPricingTierRepository,
+    private val planRepository: MembershipPlanRepository
+) {
+
+    @GetMapping("/pricing-tiers")
+    fun getAll(): List<PricingTierResponse> {
+        val tiers = pricingTierRepository.findAll(Pageable.unpaged()).content
+        val planIds = tiers.map { it.planId }.distinct()
+        val planNames = planIds.associateWith { planId ->
+            planRepository.findById(planId).map { it.name.en }.orElse("Unknown Plan")
+        }
+        return tiers.map { PricingTierResponse.from(it, planNames[it.planId] ?: "Unknown Plan") }
+    }
+
+    @GetMapping("/plans/{planId}/pricing-tiers")
+    fun getByPlan(@PathVariable planId: UUID): List<PricingTierResponse> {
+        val planName = planRepository.findById(planId).map { it.name.en }.orElse("Unknown Plan")
+        val tiers = pricingTierRepository.findActiveByPlanId(planId)
+        return tiers.map { PricingTierResponse.from(it, planName) }
+    }
+
+    @PostMapping("/plans/{planId}/pricing-tiers")
+    fun create(
+        @PathVariable planId: UUID,
+        @Valid @RequestBody request: CreatePricingTierRequest
+    ): ResponseEntity<PricingTierResponse> {
+        val plan = planRepository.findById(planId)
+            .orElse(null) ?: return ResponseEntity.notFound().build()
+
+        val overrideFee = request.overrideMonthlyFeeAmount?.let {
+            Money(it, plan.membershipFee.currency)
+        }
+
+        val tier = ContractPricingTier(
+            planId = planId,
+            contractTerm = request.contractTerm,
+            discountPercentage = request.discountPercentage,
+            overrideMonthlyFee = overrideFee
+        )
+
+        val saved = pricingTierRepository.save(tier)
+        return ResponseEntity.ok(PricingTierResponse.from(saved, plan.name.en))
+    }
+
+    @PutMapping("/pricing-tiers/{id}")
+    fun update(
+        @PathVariable id: UUID,
+        @Valid @RequestBody request: CreatePricingTierRequest
+    ): ResponseEntity<PricingTierResponse> {
+        val tier = pricingTierRepository.findById(id)
+            .orElse(null) ?: return ResponseEntity.notFound().build()
+
+        val plan = planRepository.findById(tier.planId)
+            .orElse(null) ?: return ResponseEntity.notFound().build()
+
+        request.discountPercentage?.let { tier.discountPercentage = it }
+        request.overrideMonthlyFeeAmount?.let {
+            tier.overrideMonthlyFee = Money(it, plan.membershipFee.currency)
+        }
+
+        val saved = pricingTierRepository.save(tier)
+        return ResponseEntity.ok(PricingTierResponse.from(saved, plan.name.en))
+    }
+
+    @DeleteMapping("/pricing-tiers/{id}")
+    fun delete(@PathVariable id: UUID): ResponseEntity<Void> {
+        if (!pricingTierRepository.existsById(id)) {
+            return ResponseEntity.notFound().build()
+        }
+        pricingTierRepository.deleteById(id)
+        return ResponseEntity.noContent().build()
     }
 }

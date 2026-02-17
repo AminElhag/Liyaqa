@@ -61,7 +61,8 @@ class ClassController(
     @PreAuthorize("hasAuthority('classes_view')")
     fun getGymClass(@PathVariable id: UUID): ResponseEntity<GymClassResponse> {
         val gymClass = classService.getGymClass(id)
-        return ResponseEntity.ok(GymClassResponse.from(gymClass))
+        val schedules = classService.getSchedulesByGymClass(id)
+        return ResponseEntity.ok(GymClassResponse.from(gymClass, schedules))
     }
 
     /**
@@ -310,9 +311,9 @@ class ClassController(
     /**
      * Deletes a schedule.
      */
-    @DeleteMapping("/schedules/{id}")
+    @DeleteMapping("/{classId}/schedules/{id}")
     @PreAuthorize("hasAuthority('classes_delete')")
-    fun deleteSchedule(@PathVariable id: UUID): ResponseEntity<Unit> {
+    fun deleteSchedule(@PathVariable classId: UUID, @PathVariable id: UUID): ResponseEntity<Unit> {
         classService.deleteSchedule(id)
         return ResponseEntity.noContent().build()
     }
@@ -327,7 +328,8 @@ class ClassController(
     @PreAuthorize("hasAuthority('sessions_update')")
     fun createSession(@Valid @RequestBody request: CreateClassSessionRequest): ResponseEntity<ClassSessionResponse> {
         val session = classService.createSession(request.toCommand())
-        return ResponseEntity.status(HttpStatus.CREATED).body(ClassSessionResponse.from(session))
+        val gymClass = classService.getGymClassesMap(setOf(session.gymClassId))[session.gymClassId]
+        return ResponseEntity.status(HttpStatus.CREATED).body(ClassSessionResponse.from(session, gymClass))
     }
 
     /**
@@ -338,7 +340,8 @@ class ClassController(
     @PreAuthorize("hasAuthority('sessions_update')")
     fun generateSessions(@Valid @RequestBody request: GenerateSessionsRequest): ResponseEntity<List<ClassSessionResponse>> {
         val sessions = classService.generateSessionsFromSchedules(request.toCommand())
-        return ResponseEntity.status(HttpStatus.CREATED).body(sessions.map { ClassSessionResponse.from(it) })
+        val classMap = classService.getGymClassesMap(sessions.map { it.gymClassId }.toSet())
+        return ResponseEntity.status(HttpStatus.CREATED).body(sessions.map { ClassSessionResponse.from(it, classMap[it.gymClassId]) })
     }
 
     /**
@@ -348,7 +351,8 @@ class ClassController(
     @PreAuthorize("hasAuthority('classes_view')")
     fun getSession(@PathVariable id: UUID): ResponseEntity<ClassSessionResponse> {
         val session = classService.getSession(id)
-        return ResponseEntity.ok(ClassSessionResponse.from(session))
+        val gymClass = classService.getGymClassesMap(setOf(session.gymClassId))[session.gymClassId]
+        return ResponseEntity.ok(ClassSessionResponse.from(session, gymClass))
     }
 
     /**
@@ -363,10 +367,11 @@ class ClassController(
     ): ResponseEntity<PageResponse<ClassSessionResponse>> {
         val pageable = PageRequest.of(page, size, Sort.by("sessionDate", "startTime"))
         val sessionsPage = classService.getSessionsByGymClass(classId, pageable)
+        val classMap = classService.getGymClassesMap(setOf(classId))
 
         return ResponseEntity.ok(
             PageResponse(
-                content = sessionsPage.content.map { ClassSessionResponse.from(it) },
+                content = sessionsPage.content.map { ClassSessionResponse.from(it, classMap[it.gymClassId]) },
                 page = sessionsPage.number,
                 size = sessionsPage.size,
                 totalElements = sessionsPage.totalElements,
@@ -389,10 +394,11 @@ class ClassController(
     ): ResponseEntity<PageResponse<ClassSessionResponse>> {
         val pageable = PageRequest.of(page, size)
         val sessionsPage = classService.getUpcomingSessionsByGymClass(classId, pageable)
+        val classMap = classService.getGymClassesMap(setOf(classId))
 
         return ResponseEntity.ok(
             PageResponse(
-                content = sessionsPage.content.map { ClassSessionResponse.from(it) },
+                content = sessionsPage.content.map { ClassSessionResponse.from(it, classMap[it.gymClassId]) },
                 page = sessionsPage.number,
                 size = sessionsPage.size,
                 totalElements = sessionsPage.totalElements,
@@ -415,10 +421,11 @@ class ClassController(
     ): ResponseEntity<PageResponse<ClassSessionResponse>> {
         val pageable = PageRequest.of(page, size, Sort.by("startTime"))
         val sessionsPage = classService.getSessionsByDate(date, pageable)
+        val classMap = classService.getGymClassesMap(sessionsPage.content.map { it.gymClassId }.toSet())
 
         return ResponseEntity.ok(
             PageResponse(
-                content = sessionsPage.content.map { ClassSessionResponse.from(it) },
+                content = sessionsPage.content.map { ClassSessionResponse.from(it, classMap[it.gymClassId]) },
                 page = sessionsPage.number,
                 size = sessionsPage.size,
                 totalElements = sessionsPage.totalElements,
@@ -433,7 +440,7 @@ class ClassController(
      * Gets sessions in a date range.
      */
     @GetMapping("/sessions")
-    @PreAuthorize("hasAuthority('sessions_update')")
+    @PreAuthorize("hasAuthority('sessions_view')")
     fun getSessionsByDateRange(
         @RequestParam startDate: LocalDate,
         @RequestParam endDate: LocalDate,
@@ -442,10 +449,11 @@ class ClassController(
     ): ResponseEntity<PageResponse<ClassSessionResponse>> {
         val pageable = PageRequest.of(page, size, Sort.by("sessionDate", "startTime"))
         val sessionsPage = classService.getSessionsByDateRange(startDate, endDate, pageable)
+        val classMap = classService.getGymClassesMap(sessionsPage.content.map { it.gymClassId }.toSet())
 
         return ResponseEntity.ok(
             PageResponse(
-                content = sessionsPage.content.map { ClassSessionResponse.from(it) },
+                content = sessionsPage.content.map { ClassSessionResponse.from(it, classMap[it.gymClassId]) },
                 page = sessionsPage.number,
                 size = sessionsPage.size,
                 totalElements = sessionsPage.totalElements,
@@ -468,10 +476,11 @@ class ClassController(
     ): ResponseEntity<PageResponse<ClassSessionResponse>> {
         val pageable = PageRequest.of(page, size, Sort.by("sessionDate", "startTime"))
         val sessionsPage = classService.getSessionsByLocation(locationId, pageable)
+        val classMap = classService.getGymClassesMap(sessionsPage.content.map { it.gymClassId }.toSet())
 
         return ResponseEntity.ok(
             PageResponse(
-                content = sessionsPage.content.map { ClassSessionResponse.from(it) },
+                content = sessionsPage.content.map { ClassSessionResponse.from(it, classMap[it.gymClassId]) },
                 page = sessionsPage.number,
                 size = sessionsPage.size,
                 totalElements = sessionsPage.totalElements,
@@ -494,10 +503,11 @@ class ClassController(
     ): ResponseEntity<PageResponse<ClassSessionResponse>> {
         val pageable = PageRequest.of(page, size)
         val sessionsPage = classService.getUpcomingSessionsByLocation(locationId, pageable)
+        val classMap = classService.getGymClassesMap(sessionsPage.content.map { it.gymClassId }.toSet())
 
         return ResponseEntity.ok(
             PageResponse(
-                content = sessionsPage.content.map { ClassSessionResponse.from(it) },
+                content = sessionsPage.content.map { ClassSessionResponse.from(it, classMap[it.gymClassId]) },
                 page = sessionsPage.number,
                 size = sessionsPage.size,
                 totalElements = sessionsPage.totalElements,
@@ -519,7 +529,8 @@ class ClassController(
         @Valid @RequestBody request: UpdateClassSessionRequest
     ): ResponseEntity<ClassSessionResponse> {
         val session = classService.updateSession(id, request.toCommand())
-        return ResponseEntity.ok(ClassSessionResponse.from(session))
+        val gymClass = classService.getGymClassesMap(setOf(session.gymClassId))[session.gymClassId]
+        return ResponseEntity.ok(ClassSessionResponse.from(session, gymClass))
     }
 
     /**
@@ -530,7 +541,8 @@ class ClassController(
     @PreAuthorize("hasAuthority('sessions_update')")
     fun startSession(@PathVariable id: UUID): ResponseEntity<ClassSessionResponse> {
         val session = classService.startSession(id)
-        return ResponseEntity.ok(ClassSessionResponse.from(session))
+        val gymClass = classService.getGymClassesMap(setOf(session.gymClassId))[session.gymClassId]
+        return ResponseEntity.ok(ClassSessionResponse.from(session, gymClass))
     }
 
     /**
@@ -541,7 +553,8 @@ class ClassController(
     @PreAuthorize("hasAuthority('sessions_update')")
     fun completeSession(@PathVariable id: UUID): ResponseEntity<ClassSessionResponse> {
         val session = classService.completeSession(id)
-        return ResponseEntity.ok(ClassSessionResponse.from(session))
+        val gymClass = classService.getGymClassesMap(setOf(session.gymClassId))[session.gymClassId]
+        return ResponseEntity.ok(ClassSessionResponse.from(session, gymClass))
     }
 
     /**
@@ -555,7 +568,8 @@ class ClassController(
         @RequestBody(required = false) request: CancelSessionRequest?
     ): ResponseEntity<ClassSessionResponse> {
         val session = classService.cancelSession(id, request?.reason)
-        return ResponseEntity.ok(ClassSessionResponse.from(session))
+        val gymClass = classService.getGymClassesMap(setOf(session.gymClassId))[session.gymClassId]
+        return ResponseEntity.ok(ClassSessionResponse.from(session, gymClass))
     }
 
     /**
@@ -568,7 +582,8 @@ class ClassController(
         @PathVariable trainerId: UUID
     ): ResponseEntity<ClassSessionResponse> {
         val session = classService.assignTrainerToSession(id, trainerId)
-        return ResponseEntity.ok(ClassSessionResponse.from(session))
+        val gymClass = classService.getGymClassesMap(setOf(session.gymClassId))[session.gymClassId]
+        return ResponseEntity.ok(ClassSessionResponse.from(session, gymClass))
     }
 
     /**

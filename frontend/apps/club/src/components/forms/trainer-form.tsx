@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLocale } from "next-intl";
+import { ChevronDown, X } from "lucide-react";
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Input } from "@liyaqa/shared/components/ui/input";
 import { Label } from "@liyaqa/shared/components/ui/label";
@@ -16,12 +18,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@liyaqa/shared/components/ui/select";
+import { Switch } from "@liyaqa/shared/components/ui/switch";
+import { Checkbox } from "@liyaqa/shared/components/ui/checkbox";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@liyaqa/shared/components/ui/popover";
+import { Badge } from "@liyaqa/shared/components/ui/badge";
 import { useUsers } from "@liyaqa/shared/queries/use-users";
+import { useActiveClassCategories } from "@liyaqa/shared/queries/use-class-categories";
 import { getLocalizedText } from "@liyaqa/shared/utils";
 import type { Trainer, TrainerEmploymentType, TrainerType, CompensationModel, Gender } from "@liyaqa/shared/types/trainer";
 
 const trainerFormSchema = z.object({
-  userId: z.string().min(1, "User is required"),
+  userId: z.string().optional().or(z.literal("")),
+  // Skills
+  skillCategoryIds: z.array(z.string()).optional(),
   // Basic Info
   displayName: z.object({
     en: z.string().min(2, "Name must be at least 2 characters").max(100).optional().or(z.literal("")),
@@ -47,6 +60,12 @@ const trainerFormSchema = z.object({
     en: z.string().optional(),
     ar: z.string().optional(),
   }),
+  // PT-specific fields
+  homeServiceAvailable: z.boolean().optional(),
+  travelFeeAmount: z.coerce.number().min(0).optional(),
+  travelFeeCurrency: z.string().optional(),
+  travelRadiusKm: z.coerce.number().min(0).optional(),
+  maxConcurrentClients: z.coerce.number().min(0).optional(),
 });
 
 export type TrainerFormData = z.infer<typeof trainerFormSchema>;
@@ -87,12 +106,16 @@ const GENDERS: { value: Gender; labelEn: string; labelAr: string }[] = [
 
 export function TrainerForm({ trainer, onSubmit, isPending, showUserField = false }: TrainerFormProps) {
   const locale = useLocale();
+  const [skillsOpen, setSkillsOpen] = useState(false);
 
   // Fetch users for the user selector (only when showUserField is true)
   const { data: usersData, isLoading: isLoadingUsers } = useUsers(
     { size: 100 },
     { enabled: showUserField }
   );
+
+  // Fetch active class categories for skills picker
+  const { data: categories } = useActiveClassCategories();
 
   const {
     register,
@@ -104,6 +127,7 @@ export function TrainerForm({ trainer, onSubmit, isPending, showUserField = fals
     resolver: zodResolver(trainerFormSchema),
     defaultValues: {
       userId: trainer?.userId || "",
+      skillCategoryIds: trainer?.skills?.map((s) => s.categoryId) || [],
       // Basic Info
       displayName: {
         en: trainer?.displayName?.en || "",
@@ -129,6 +153,12 @@ export function TrainerForm({ trainer, onSubmit, isPending, showUserField = fals
         en: trainer?.notes?.en || "",
         ar: trainer?.notes?.ar || "",
       },
+      // PT fields
+      homeServiceAvailable: trainer?.homeServiceAvailable || false,
+      travelFeeAmount: trainer?.travelFeeAmount || undefined,
+      travelFeeCurrency: trainer?.travelFeeCurrency || "SAR",
+      travelRadiusKm: trainer?.travelRadiusKm || undefined,
+      maxConcurrentClients: trainer?.maxConcurrentClients || undefined,
     },
   });
 
@@ -137,12 +167,28 @@ export function TrainerForm({ trainer, onSubmit, isPending, showUserField = fals
   const selectedCompensationModel = watch("compensationModel");
   const selectedGender = watch("gender");
   const selectedUserId = watch("userId");
+  const homeServiceAvailable = watch("homeServiceAvailable");
+  const selectedSkillIds = watch("skillCategoryIds") || [];
+
+  const toggleSkill = (categoryId: string) => {
+    const current = selectedSkillIds;
+    const next = current.includes(categoryId)
+      ? current.filter((id) => id !== categoryId)
+      : [...current, categoryId];
+    setValue("skillCategoryIds", next);
+  };
 
   const texts = {
     // User
+    linkUser: locale === "ar" ? "ربط حساب مستخدم (اختياري)" : "Link User Account (Optional)",
+    linkUserHint: locale === "ar" ? "اختياري — المدربون بدون حساب لن يتمكنوا من تسجيل الدخول" : "Optional — trainers without an account won't be able to log in",
     selectUser: locale === "ar" ? "اختر المستخدم" : "Select User",
-    userRequired: locale === "ar" ? "المستخدم مطلوب" : "User is required",
     loadingUsers: locale === "ar" ? "جاري التحميل..." : "Loading users...",
+    // Skills
+    skills: locale === "ar" ? "المهارات التدريبية" : "Training Skills",
+    skillsHint: locale === "ar" ? "اختر فئات الفصول التي يمكن للمدرب تدريسها" : "Select class categories this trainer can teach",
+    selectSkills: locale === "ar" ? "اختر المهارات..." : "Select skills...",
+    noCategories: locale === "ar" ? "لا توجد فئات" : "No categories available",
     // Basic Info
     basicInfo: locale === "ar" ? "المعلومات الأساسية" : "Basic Information",
     displayNameEn: locale === "ar" ? "الاسم (بالإنجليزية)" : "Display Name (English)",
@@ -160,13 +206,22 @@ export function TrainerForm({ trainer, onSubmit, isPending, showUserField = fals
     classification: locale === "ar" ? "التصنيف" : "Classification",
     employmentType: locale === "ar" ? "نوع التوظيف" : "Employment Type",
     trainerType: locale === "ar" ? "نوع المدرب" : "Trainer Type",
-    specializations: locale === "ar" ? "التخصصات" : "Specializations",
+    additionalSpecs: locale === "ar" ? "تخصصات إضافية (نص حر)" : "Additional Specializations (free text)",
     specializationsHint: locale === "ar" ? "مفصولة بفواصل" : "Comma-separated",
 
     compensation: locale === "ar" ? "التعويضات" : "Compensation",
     hourlyRate: locale === "ar" ? "السعر بالساعة" : "Hourly Rate",
     ptSessionRate: locale === "ar" ? "سعر جلسة PT" : "PT Session Rate",
     compensationModel: locale === "ar" ? "نموذج التعويض" : "Compensation Model",
+
+    // PT fields
+    ptSettings: locale === "ar" ? "إعدادات التدريب الشخصي" : "Personal Training Settings",
+    homeServiceAvailable: locale === "ar" ? "خدمة منزلية متاحة" : "Home Service Available",
+    homeServiceHint: locale === "ar" ? "يمكن للمدرب تقديم جلسات في منزل العميل" : "Trainer can provide sessions at client's home",
+    travelFee: locale === "ar" ? "رسوم التنقل" : "Travel Fee",
+    travelFeeCurrency: locale === "ar" ? "العملة" : "Currency",
+    travelRadius: locale === "ar" ? "نطاق التنقل (كم)" : "Travel Radius (km)",
+    maxConcurrentClients: locale === "ar" ? "الحد الأقصى للعملاء المتزامنين" : "Max Concurrent Clients",
 
     notes: locale === "ar" ? "ملاحظات" : "Notes",
     notesEn: locale === "ar" ? "ملاحظات (بالإنجليزية)" : "Notes (English)",
@@ -179,16 +234,17 @@ export function TrainerForm({ trainer, onSubmit, isPending, showUserField = fals
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* User Selection (only shown when creating a new trainer) */}
+      {/* User Selection (optional) */}
       {showUserField && (
         <Card>
           <CardHeader>
-            <CardTitle>{texts.selectUser} *</CardTitle>
+            <CardTitle>{texts.linkUser}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">{texts.linkUserHint}</p>
               <Select
-                value={selectedUserId}
+                value={selectedUserId || ""}
                 onValueChange={(value) => setValue("userId", value)}
                 disabled={isLoadingUsers}
               >
@@ -207,9 +263,6 @@ export function TrainerForm({ trainer, onSubmit, isPending, showUserField = fals
                   ))}
                 </SelectContent>
               </Select>
-              {errors.userId && (
-                <p className="text-sm text-destructive">{texts.userRequired}</p>
-              )}
             </div>
           </CardContent>
         </Card>
@@ -336,7 +389,7 @@ export function TrainerForm({ trainer, onSubmit, isPending, showUserField = fals
         </CardContent>
       </Card>
 
-      {/* Classification */}
+      {/* Classification + Skills */}
       <Card>
         <CardHeader>
           <CardTitle>{texts.classification}</CardTitle>
@@ -381,9 +434,94 @@ export function TrainerForm({ trainer, onSubmit, isPending, showUserField = fals
             </div>
           </div>
 
+          {/* Skills multi-select */}
+          <div className="space-y-2">
+            <Label>{texts.skills}</Label>
+            <p className="text-sm text-muted-foreground">{texts.skillsHint}</p>
+            <Popover open={skillsOpen} onOpenChange={setSkillsOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  type="button"
+                  className="w-full justify-between font-normal"
+                >
+                  <span className="truncate">
+                    {selectedSkillIds.length > 0
+                      ? `${selectedSkillIds.length} ${locale === "ar" ? "مختارة" : "selected"}`
+                      : texts.selectSkills}
+                  </span>
+                  <ChevronDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                {!categories || categories.length === 0 ? (
+                  <p className="p-4 text-sm text-muted-foreground">{texts.noCategories}</p>
+                ) : (
+                  <div className="max-h-[250px] overflow-y-auto p-2 space-y-1">
+                    {categories.map((cat) => {
+                      const isSelected = selectedSkillIds.includes(cat.id);
+                      return (
+                        <label
+                          key={cat.id}
+                          className="flex items-center gap-3 rounded-md px-3 py-2 cursor-pointer hover:bg-muted transition-colors"
+                        >
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSkill(cat.id)}
+                          />
+                          {cat.colorCode && (
+                            <span
+                              className="h-3 w-3 rounded-full shrink-0"
+                              style={{ backgroundColor: cat.colorCode }}
+                            />
+                          )}
+                          <span className="text-sm">
+                            {getLocalizedText(cat.name, locale)}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+
+            {/* Selected category badges */}
+            {selectedSkillIds.length > 0 && categories && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {selectedSkillIds.map((id) => {
+                  const cat = categories.find((c) => c.id === id);
+                  if (!cat) return null;
+                  return (
+                    <Badge
+                      key={id}
+                      variant="secondary"
+                      className="gap-1 pe-1"
+                      style={cat.colorCode ? {
+                        backgroundColor: `${cat.colorCode}20`,
+                        color: cat.colorCode,
+                        borderColor: `${cat.colorCode}40`,
+                      } : undefined}
+                    >
+                      {getLocalizedText(cat.name, locale)}
+                      <button
+                        type="button"
+                        onClick={() => toggleSkill(id)}
+                        className="rounded-full p-0.5 hover:bg-black/10 dark:hover:bg-white/10"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Additional specializations (free text) */}
           <div className="space-y-2">
             <Label htmlFor="specializations">
-              {texts.specializations}
+              {texts.additionalSpecs}
               <span className="text-sm text-muted-foreground ms-2">({texts.specializationsHint})</span>
             </Label>
             <Input
@@ -442,6 +580,76 @@ export function TrainerForm({ trainer, onSubmit, isPending, showUserField = fals
                 </SelectContent>
               </Select>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Personal Training Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{texts.ptSettings}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Home Service Toggle */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="homeServiceAvailable">{texts.homeServiceAvailable}</Label>
+              <p className="text-sm text-muted-foreground">{texts.homeServiceHint}</p>
+            </div>
+            <Switch
+              id="homeServiceAvailable"
+              checked={homeServiceAvailable || false}
+              onCheckedChange={(checked) => setValue("homeServiceAvailable", checked)}
+            />
+          </div>
+
+          {/* Travel settings (shown when home service is enabled) */}
+          {homeServiceAvailable && (
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="travelFeeAmount">{texts.travelFee}</Label>
+                <Input
+                  id="travelFeeAmount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  {...register("travelFeeAmount")}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="travelFeeCurrency">{texts.travelFeeCurrency}</Label>
+                <Input
+                  id="travelFeeCurrency"
+                  {...register("travelFeeCurrency")}
+                  placeholder="SAR"
+                  defaultValue="SAR"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="travelRadiusKm">{texts.travelRadius}</Label>
+                <Input
+                  id="travelRadiusKm"
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  {...register("travelRadiusKm")}
+                  placeholder="25"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Max Concurrent Clients */}
+          <div className="max-w-xs space-y-2">
+            <Label htmlFor="maxConcurrentClients">{texts.maxConcurrentClients}</Label>
+            <Input
+              id="maxConcurrentClients"
+              type="number"
+              min="0"
+              {...register("maxConcurrentClients")}
+              placeholder="10"
+            />
           </div>
         </CardContent>
       </Card>

@@ -26,6 +26,8 @@ interface SpringDataFacilityBookingRepository : JpaRepository<FacilityBooking, U
     fun countByMemberIdAndStatusAndBookedAtAfter(memberId: UUID, status: BookingStatus, after: Instant): Long
     fun existsBySlotIdAndStatusIn(slotId: UUID, statuses: List<BookingStatus>): Boolean
 
+    fun findBySlotIdIn(slotIds: List<UUID>): List<FacilityBooking>
+
     @Query("SELECT b FROM FacilityBooking b JOIN FacilitySlot s ON b.slotId = s.id WHERE s.slotDate = :date ORDER BY s.startTime")
     fun findBySlotDate(@Param("date") date: LocalDate): List<FacilityBooking>
 }
@@ -64,6 +66,9 @@ class JpaFacilityBookingRepository(
 
     override fun existsBySlotIdAndStatusIn(slotId: UUID, statuses: List<BookingStatus>): Boolean =
         springDataRepository.existsBySlotIdAndStatusIn(slotId, statuses)
+
+    override fun findBySlotIdIn(slotIds: List<UUID>): List<FacilityBooking> =
+        if (slotIds.isEmpty()) emptyList() else springDataRepository.findBySlotIdIn(slotIds)
 
     override fun findBySlotDate(date: LocalDate): List<FacilityBooking> =
         springDataRepository.findBySlotDate(date)

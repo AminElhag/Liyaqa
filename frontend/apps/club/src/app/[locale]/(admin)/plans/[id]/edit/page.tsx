@@ -2,16 +2,14 @@
 
 import { use } from "react";
 import { useLocale } from "next-intl";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, CreditCard } from "lucide-react";
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Card, CardContent } from "@liyaqa/shared/components/ui/card";
 import { Skeleton } from "@liyaqa/shared/components/ui/skeleton";
-import { PlanForm, type PlanFormData } from "@/components/forms/plan-form";
-import { usePlan, useUpdatePlan } from "@liyaqa/shared/queries/use-plans";
-import { useToast } from "@liyaqa/shared/hooks/use-toast";
+import { usePlan } from "@liyaqa/shared/queries/use-plans";
 import { getLocalizedText } from "@liyaqa/shared/utils";
+import { PlanWizard } from "@/components/plans/plan-wizard";
 
 interface EditPlanPageProps {
   params: Promise<{ id: string }>;
@@ -20,99 +18,9 @@ interface EditPlanPageProps {
 export default function EditPlanPage({ params }: EditPlanPageProps) {
   const { id } = use(params);
   const locale = useLocale();
-  const router = useRouter();
-  const { toast } = useToast();
+  const isAr = locale === "ar";
 
   const { data: plan, isLoading, error } = usePlan(id);
-  const updatePlan = useUpdatePlan();
-
-  const handleSubmit = async (data: PlanFormData) => {
-    try {
-      await updatePlan.mutateAsync({
-        id,
-        data: {
-          name: {
-            en: data.name.en,
-            ar: data.name.ar || undefined,
-          },
-          description: data.description?.en || data.description?.ar
-            ? {
-                en: data.description.en || "",
-                ar: data.description.ar || undefined,
-              }
-            : undefined,
-
-          // Date restrictions
-          availableFrom: data.availableFrom || undefined,
-          availableUntil: data.availableUntil || undefined,
-
-          // Age restrictions
-          minimumAge: data.minimumAge ?? undefined,
-          maximumAge: data.maximumAge ?? undefined,
-
-          // Fee structure
-          membershipFee: {
-            amount: data.membershipFee.amount,
-            currency: data.membershipFee.currency,
-            taxRate: data.membershipFee.taxRate,
-          },
-          administrationFee: {
-            amount: data.administrationFee.amount,
-            currency: data.administrationFee.currency,
-            taxRate: data.administrationFee.taxRate,
-          },
-          joinFee: {
-            amount: data.joinFee.amount,
-            currency: data.joinFee.currency,
-            taxRate: data.joinFee.taxRate,
-          },
-
-          // Billing & duration
-          billingPeriod: data.billingPeriod,
-          durationDays: data.durationDays ?? undefined,
-          maxClassesPerPeriod: data.maxClassesPerPeriod ?? undefined,
-
-          // Features
-          hasGuestPasses: data.hasGuestPasses,
-          guestPassesCount: data.guestPassesCount,
-          hasLockerAccess: data.hasLockerAccess,
-          hasSaunaAccess: data.hasSaunaAccess,
-          hasPoolAccess: data.hasPoolAccess,
-          freezeDaysAllowed: data.freezeDaysAllowed,
-
-          // Status
-          isActive: data.isActive,
-          sortOrder: data.sortOrder,
-
-          // Contract configuration
-          categoryId: data.categoryId || undefined,
-          contractType: data.contractType,
-          supportedTerms: data.supportedTerms,
-          defaultCommitmentMonths: data.defaultCommitmentMonths,
-          minimumCommitmentMonths: data.minimumCommitmentMonths ?? undefined,
-          defaultNoticePeriodDays: data.defaultNoticePeriodDays,
-          earlyTerminationFeeType: data.earlyTerminationFeeType,
-          earlyTerminationFeeValue: data.earlyTerminationFeeValue ?? undefined,
-          coolingOffDays: data.coolingOffDays,
-        },
-      });
-      toast({
-        title: locale === "ar" ? "تم الحفظ" : "Saved",
-        description:
-          locale === "ar"
-            ? "تم حفظ التغييرات بنجاح"
-            : "Changes saved successfully",
-      });
-      router.push(`/${locale}/plans/${id}`);
-    } catch {
-      toast({
-        title: locale === "ar" ? "خطأ" : "Error",
-        description:
-          locale === "ar" ? "فشل في حفظ التغييرات" : "Failed to save changes",
-        variant: "destructive",
-      });
-    }
-  };
 
   if (isLoading) {
     return (
@@ -135,17 +43,13 @@ export default function EditPlanPage({ params }: EditPlanPageProps) {
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/${locale}/plans`}>
             <ChevronLeft className="h-4 w-4 me-1" />
-            {locale === "ar" ? "العودة للباقات" : "Back to plans"}
+            {isAr ? "العودة للباقات" : "Back to plans"}
           </Link>
         </Button>
         <Card>
-          <CardContent className="py-12 text-center text-neutral-500">
-            <CreditCard className="h-12 w-12 mx-auto mb-3 text-neutral-300" />
-            <p>
-              {locale === "ar"
-                ? "لم يتم العثور على الباقة"
-                : "Plan not found"}
-            </p>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            <CreditCard className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />
+            <p>{isAr ? "لم يتم العثور على الباقة" : "Plan not found"}</p>
           </CardContent>
         </Card>
       </div>
@@ -159,22 +63,18 @@ export default function EditPlanPage({ params }: EditPlanPageProps) {
         <Button variant="ghost" size="sm" asChild className="mb-2">
           <Link href={`/${locale}/plans/${id}`}>
             <ChevronLeft className="h-4 w-4 me-1" />
-            {locale === "ar" ? "العودة للباقة" : "Back to plan"}
+            {isAr ? "العودة للباقة" : "Back to plan"}
           </Link>
         </Button>
-        <h1 className="text-2xl font-bold text-neutral-900">
-          {locale === "ar" ? "تعديل الباقة" : "Edit Plan"}
+        <h1 className="text-2xl font-bold text-foreground">
+          {isAr ? "تعديل الباقة" : "Edit Plan"}
         </h1>
-        <p className="text-neutral-500">
+        <p className="text-muted-foreground">
           {getLocalizedText(plan.name, locale)}
         </p>
       </div>
 
-      <PlanForm
-        plan={plan}
-        onSubmit={handleSubmit}
-        isPending={updatePlan.isPending}
-      />
+      <PlanWizard plan={plan} />
     </div>
   );
 }

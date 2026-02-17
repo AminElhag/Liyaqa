@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, Package } from "lucide-react";
 import { cn } from "@liyaqa/shared/utils";
 import { useCreateClassPack } from "@liyaqa/shared/queries";
+import { HTTPError } from "ky";
 import { parseApiError, getLocalizedErrorMessage } from "@liyaqa/shared/lib/api";
 import {
   ClassPackForm,
@@ -50,9 +51,21 @@ export default function NewClassPackPage() {
         validityDays: data.validityDays || undefined,
         sortOrder: data.sortOrder,
         imageUrl: data.imageUrl || undefined,
+        allocationMode: data.allocationMode,
+        categoryAllocations:
+          data.allocationMode === "PER_CATEGORY" && data.categoryAllocations?.length
+            ? data.categoryAllocations.map((a) => ({
+                categoryId: a.categoryId,
+                creditCount: a.creditCount,
+              }))
+            : undefined,
       });
       router.push(`/${locale}/class-packs`);
     } catch (err) {
+      if (err instanceof HTTPError) {
+        const body = await err.response.clone().text();
+        console.error("Class pack creation error response:", body);
+      }
       const apiError = await parseApiError(err);
       setError(getLocalizedErrorMessage(apiError, locale));
     }

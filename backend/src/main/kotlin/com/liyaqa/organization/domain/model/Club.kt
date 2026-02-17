@@ -106,7 +106,7 @@ class Club(
     /**
      * If true, block member check-in during prayer times.
      */
-    @Column(name = "block_checkin_during_prayer")
+    @Column(name = "block_checkin_during_prayer", nullable = false, columnDefinition = "boolean default false")
     var blockCheckinDuringPrayer: Boolean = false,
 
     // ==================== WHATSAPP SETTINGS (Saudi Market) ====================
@@ -114,7 +114,7 @@ class Club(
     /**
      * Whether WhatsApp notifications are enabled for this club.
      */
-    @Column(name = "whatsapp_enabled")
+    @Column(name = "whatsapp_enabled", nullable = false, columnDefinition = "boolean default false")
     var whatsappEnabled: Boolean = false,
 
     /**
@@ -134,7 +134,7 @@ class Club(
     /**
      * Whether STC Pay payments are enabled for this club.
      */
-    @Column(name = "stcpay_enabled")
+    @Column(name = "stcpay_enabled", nullable = false, columnDefinition = "boolean default false")
     var stcpayEnabled: Boolean = false,
 
     /**
@@ -148,7 +148,7 @@ class Club(
     /**
      * Whether SADAD bill payments are enabled for this club.
      */
-    @Column(name = "sadad_enabled")
+    @Column(name = "sadad_enabled", nullable = false, columnDefinition = "boolean default false")
     var sadadEnabled: Boolean = false,
 
     /**
@@ -168,7 +168,7 @@ class Club(
     /**
      * Whether Tamara BNPL is enabled for this club.
      */
-    @Column(name = "tamara_enabled")
+    @Column(name = "tamara_enabled", nullable = false, columnDefinition = "boolean default false")
     var tamaraEnabled: Boolean = false,
 
     /**
@@ -181,7 +181,30 @@ class Club(
      * Tamara Notification Token.
      */
     @Column(name = "tamara_notification_token")
-    var tamaraNotificationToken: String? = null
+    var tamaraNotificationToken: String? = null,
+
+    // ==================== ZATCA SELLER CONFIG (Saudi Tax Compliance) ====================
+
+    @Column(name = "zatca_seller_name_ar")
+    var zatcaSellerNameAr: String? = null,
+
+    @Column(name = "zatca_cr_number", length = 50)
+    var zatcaCrNumber: String? = null,
+
+    @Column(name = "zatca_street")
+    var zatcaStreet: String? = null,
+
+    @Column(name = "zatca_building_number", length = 20)
+    var zatcaBuildingNumber: String? = null,
+
+    @Column(name = "zatca_city", length = 100)
+    var zatcaCity: String? = null,
+
+    @Column(name = "zatca_postal_code", length = 10)
+    var zatcaPostalCode: String? = null,
+
+    @Column(name = "zatca_district", length = 100)
+    var zatcaDistrict: String? = null
 
 ) {
 

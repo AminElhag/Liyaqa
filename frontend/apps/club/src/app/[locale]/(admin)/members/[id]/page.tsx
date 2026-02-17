@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
@@ -17,8 +17,6 @@ import {
   UserCircle,
   UserPlus,
   Plus,
-  Wallet,
-  History,
   Key,
 } from "lucide-react";
 import Link from "next/link";
@@ -52,22 +50,28 @@ import { ResetPasswordDialog } from "@/components/admin/reset-password-dialog";
 import { CreateUserAccountDialog } from "@/components/admin/create-user-account-dialog";
 import { MemberProfileHero } from "@/components/admin/member-profile-hero";
 import { MemberStatsGrid } from "@/components/admin/member-stats-grid";
-import { SubscriptionCard } from "@/components/admin/subscription-card";
-import { WalletBalanceCard } from "@/components/admin/wallet-balance-card";
-import { WalletTransactionsTable } from "@/components/admin/wallet-transactions-table";
 import { MemberClassPacksCard } from "@/components/admin/member-class-packs-card";
+import { MemberBookingHistoryCard } from "@/components/admin/member-booking-history-card";
+import { MemberPTSessionsCard } from "@/components/admin/member-pt-sessions-card";
+import {
+  MembershipCard,
+  CancelDialog,
+  TransferDialog,
+  EditDialog,
+  RenewDialog,
+  CompletePaymentDialog,
+  MemberHistoryTimeline,
+} from "@/components/membership";
 import {
   useMember,
   useDeleteMember,
   useSuspendMember,
   useActivateMember,
   useMemberSubscriptions,
-  useCreateInvoiceFromSubscription,
+  useLogProfileView,
 } from "@liyaqa/shared/queries";
-import { useWallet, useWalletTransactions } from "@liyaqa/shared/queries/use-wallet";
 import { FreezeSubscriptionDialog } from "@liyaqa/shared/components/dialogs/freeze-subscription-dialog";
-import { AddCreditDialog } from "@liyaqa/shared/components/dialogs/add-credit-dialog";
-import { AdjustBalanceDialog } from "@liyaqa/shared/components/dialogs/adjust-balance-dialog";
+import { UnfreezeSubscriptionDialog } from "@liyaqa/shared/components/dialogs/unfreeze-subscription-dialog";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import { formatDate } from "@liyaqa/shared/utils";
 import type { Subscription } from "@liyaqa/shared/types/member";
@@ -84,42 +88,41 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
   const { data: member, isLoading, error } = useMember(id);
   const { data: subscriptions } = useMemberSubscriptions(id);
 
-  // Wallet data
-  const { data: wallet, isLoading: walletLoading } = useWallet(id);
-  const [transactionsPage, setTransactionsPage] = useState(0);
-  const [transactionsSize, setTransactionsSize] = useState(5);
-  const { data: transactionsData, isLoading: transactionsLoading } = useWalletTransactions(
-    id,
-    { page: transactionsPage, size: transactionsSize }
-  );
-
   const deleteMember = useDeleteMember();
   const suspendMember = useSuspendMember();
   const activateMember = useActivateMember();
+  const logProfileView = useLogProfileView(id);
+
+  // Fire-and-forget profile view on mount
+  const viewLogged = useRef(false);
+  useEffect(() => {
+    if (!viewLogged.current && id) {
+      viewLogged.current = true;
+      logProfileView.mutate();
+    }
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Photo upload dialog state
   const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
 
-  // Freeze subscription dialog state
-  const [freezeDialogOpen, setFreezeDialogOpen] = useState(false);
+  // Selected subscription for dialogs
   const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
 
-  // Wallet dialog states
-  const [addCreditDialogOpen, setAddCreditDialogOpen] = useState(false);
-  const [adjustBalanceDialogOpen, setAdjustBalanceDialogOpen] = useState(false);
+  // Dialog states
+  const [freezeDialogOpen, setFreezeDialogOpen] = useState(false);
+  const [unfreezeDialogOpen, setUnfreezeDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [renewDialogOpen, setRenewDialogOpen] = useState(false);
+  const [completePaymentDialogOpen, setCompletePaymentDialogOpen] = useState(false);
 
-  // Reset password dialog state
+  // Other dialog states
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
-
-  // Create user account dialog state
   const [createUserOpen, setCreateUserOpen] = useState(false);
-
-  // Delete confirmation dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  // Toast and invoice mutation
   const { toast } = useToast();
-  const createInvoice = useCreateInvoiceFromSubscription();
 
   // Handlers for subscription actions
   const handleFreeze = (subscription: Subscription) => {
@@ -127,52 +130,64 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
     setFreezeDialogOpen(true);
   };
 
-  const handleCreateInvoice = (subscription: Subscription) => {
-    createInvoice.mutate(subscription.id, {
-      onSuccess: (invoice) => {
-        toast({
-          title: locale === "ar" ? "تم إنشاء الفاتورة" : "Invoice Created",
-          description: locale === "ar"
-            ? `تم إنشاء الفاتورة رقم ${invoice.invoiceNumber}`
-            : `Invoice ${invoice.invoiceNumber} created successfully`,
-        });
-        router.push(`/${locale}/invoices/${invoice.id}`);
-      },
-      onError: (error) => {
-        toast({
-          title: locale === "ar" ? "خطأ" : "Error",
-          description: error instanceof Error ? error.message : "Failed to create invoice",
-          variant: "destructive",
-        });
-      },
+  const handleUnfreeze = (subscription: Subscription) => {
+    setSelectedSubscription(subscription);
+    setUnfreezeDialogOpen(true);
+  };
+
+  const handleCancel = (subscription: Subscription) => {
+    setSelectedSubscription(subscription);
+    setCancelDialogOpen(true);
+  };
+
+  const handleTransfer = (subscription: Subscription) => {
+    setSelectedSubscription(subscription);
+    setTransferDialogOpen(true);
+  };
+
+  const handleEdit = (subscription: Subscription) => {
+    setSelectedSubscription(subscription);
+    setEditDialogOpen(true);
+  };
+
+  const handleRenew = (subscription: Subscription) => {
+    setSelectedSubscription(subscription);
+    setRenewDialogOpen(true);
+  };
+
+  const handleCompletePayment = (subscription: Subscription) => {
+    setSelectedSubscription(subscription);
+    setCompletePaymentDialogOpen(true);
+  };
+
+  const handleRemove = (subscription: Subscription) => {
+    // For now, navigate to subscription detail where delete is available
+    toast({
+      title: locale === "ar" ? "إزالة العضوية" : "Remove Membership",
+      description: locale === "ar"
+        ? "يمكنك إزالة العضوية من صفحة تفاصيل الاشتراك"
+        : "You can remove this membership from the subscription detail page",
     });
   };
 
   const texts = {
     back: locale === "ar" ? "العودة للأعضاء" : "Back to Members",
     edit: locale === "ar" ? "تعديل" : "Edit",
-    resetPassword:
-      locale === "ar" ? "إعادة تعيين كلمة المرور" : "Reset Password",
-    createUserAccount:
-      locale === "ar" ? "إنشاء حساب مستخدم" : "Create User Account",
+    resetPassword: locale === "ar" ? "إعادة تعيين كلمة المرور" : "Reset Password",
+    createUserAccount: locale === "ar" ? "إنشاء حساب مستخدم" : "Create User Account",
     delete: locale === "ar" ? "حذف" : "Delete",
     deleteTitle: locale === "ar" ? "حذف العضو؟" : "Delete Member?",
-    deleteDescription:
-      locale === "ar"
-        ? "هل أنت متأكد من حذف هذا العضو؟ سيتم حذف جميع بياناته بشكل دائم."
-        : "Are you sure you want to delete this member? All their data will be permanently removed.",
+    deleteDescription: locale === "ar"
+      ? "هل أنت متأكد من حذف هذا العضو؟ سيتم حذف جميع بياناته بشكل دائم."
+      : "Are you sure you want to delete this member? All their data will be permanently removed.",
     cancel: locale === "ar" ? "إلغاء" : "Cancel",
     suspend: locale === "ar" ? "إيقاف" : "Suspend",
     activate: locale === "ar" ? "تفعيل" : "Activate",
     contactInfo: locale === "ar" ? "معلومات التواصل" : "Contact Information",
-    emergencyContact:
-      locale === "ar" ? "جهة اتصال الطوارئ" : "Emergency Contact",
-    subscriptions: locale === "ar" ? "الاشتراكات" : "Subscriptions",
-    noSubscriptions:
-      locale === "ar" ? "لا توجد اشتراكات" : "No subscriptions",
-    addSubscription:
-      locale === "ar" ? "إضافة اشتراك" : "Add Subscription",
-    joinDate: locale === "ar" ? "تاريخ الانضمام" : "Join Date",
+    emergencyContact: locale === "ar" ? "جهة اتصال الطوارئ" : "Emergency Contact",
+    memberships: locale === "ar" ? "العضويات" : "Memberships",
+    noMemberships: locale === "ar" ? "لا توجد عضويات" : "No memberships",
+    addMembership: locale === "ar" ? "إضافة عضوية" : "Add Membership",
     dateOfBirth: locale === "ar" ? "تاريخ الميلاد" : "Date of Birth",
     gender: locale === "ar" ? "الجنس" : "Gender",
     male: locale === "ar" ? "ذكر" : "Male",
@@ -180,15 +195,10 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
     address: locale === "ar" ? "العنوان" : "Address",
     notes: locale === "ar" ? "ملاحظات" : "Notes",
     notFound: locale === "ar" ? "لم يتم العثور على العضو" : "Member not found",
-    error:
-      locale === "ar"
-        ? "حدث خطأ أثناء تحميل البيانات"
-        : "Error loading member data",
+    error: locale === "ar" ? "حدث خطأ أثناء تحميل البيانات" : "Error loading member data",
     email: locale === "ar" ? "البريد الإلكتروني" : "Email",
     phone: locale === "ar" ? "الهاتف" : "Phone",
     name: locale === "ar" ? "الاسم" : "Name",
-    walletTransactions: locale === "ar" ? "سجل المعاملات" : "Transaction History",
-    noTransactions: locale === "ar" ? "لا توجد معاملات" : "No transactions yet",
   };
 
   if (isLoading) {
@@ -336,53 +346,76 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
         />
       </div>
 
-      {/* Wallet Section */}
-      <div className="grid gap-6 md:grid-cols-2 animate-fade-in-up animation-delay-150">
-        {/* Wallet Balance Card */}
-        <WalletBalanceCard
-          wallet={wallet}
-          isLoading={walletLoading}
-          locale={locale}
-          onAddCredit={() => setAddCreditDialogOpen(true)}
-          onAdjustBalance={() => setAdjustBalanceDialogOpen(true)}
-        />
-
-        {/* Class Packs Card */}
-        <MemberClassPacksCard memberId={member.id} locale={locale} />
-      </div>
-
-      {/* Wallet Transactions */}
-      <Card className="animate-fade-in-up animation-delay-175">
-        <CardHeader>
+      {/* Memberships Section (unified: all subscription types including class packs) */}
+      <Card className="animate-fade-in-up animation-delay-150">
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <History className="h-5 w-5" />
-            {texts.walletTransactions}
+            <CreditCard className="h-5 w-5" />
+            {texts.memberships}
           </CardTitle>
+          <Button asChild size="sm">
+            <Link href={`/${locale}/members/${member.id}/enroll`}>
+              <Plus className="me-2 h-4 w-4" />
+              {texts.addMembership}
+            </Link>
+          </Button>
         </CardHeader>
         <CardContent>
-          {transactionsData && transactionsData.content.length > 0 ? (
-            <WalletTransactionsTable
-              transactions={transactionsData.content}
-              isLoading={transactionsLoading}
-              locale={locale}
-              pageIndex={transactionsPage}
-              pageSize={transactionsSize}
-              totalPages={transactionsData.totalPages}
-              totalElements={transactionsData.totalElements}
-              onPageChange={setTransactionsPage}
-              onPageSizeChange={setTransactionsSize}
-            />
+          {Array.isArray(subscriptions) && subscriptions.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {subscriptions.map((sub) => (
+                <MembershipCard
+                  key={sub.id}
+                  subscription={sub}
+                  locale={locale}
+                  onFreeze={handleFreeze}
+                  onUnfreeze={handleUnfreeze}
+                  onCancel={handleCancel}
+                  onTransfer={handleTransfer}
+                  onEdit={handleEdit}
+                  onRenew={handleRenew}
+                  onCompletePayment={handleCompletePayment}
+                  onRemove={handleRemove}
+                />
+              ))}
+            </div>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <Wallet className="h-10 w-10 mx-auto mb-3 opacity-20" />
-              <p>{texts.noTransactions}</p>
+            <div className="text-center py-12 text-muted-foreground">
+              <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-20" />
+              <p>{texts.noMemberships}</p>
+              <Button asChild className="mt-4" variant="outline">
+                <Link href={`/${locale}/members/${member.id}/enroll`}>
+                  <Plus className="me-2 h-4 w-4" />
+                  {texts.addMembership}
+                </Link>
+              </Button>
             </div>
           )}
         </CardContent>
       </Card>
 
+      {/* Class Packs */}
+      <div className="animate-fade-in-up animation-delay-175">
+        <MemberClassPacksCard memberId={member.id} locale={locale} />
+      </div>
+
+      {/* Class Booking History */}
+      <div className="animate-fade-in-up animation-delay-200">
+        <MemberBookingHistoryCard memberId={member.id} locale={locale} />
+      </div>
+
+      {/* PT Sessions */}
+      <div className="animate-fade-in-up animation-delay-225">
+        <MemberPTSessionsCard memberId={member.id} locale={locale} />
+      </div>
+
+      {/* Member History Timeline */}
+      <div className="animate-fade-in-up animation-delay-250">
+        <MemberHistoryTimeline memberId={member.id} />
+      </div>
+
       {/* Contact & Emergency Cards */}
-      <div className="grid gap-6 md:grid-cols-2 animate-fade-in-up animation-delay-200">
+      <div className="grid gap-6 md:grid-cols-2 animate-fade-in-up animation-delay-300">
         {/* Contact Information */}
         <Card>
           <CardHeader>
@@ -414,9 +447,7 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
               <div className="flex items-center gap-3">
                 <Calendar className="h-5 w-5 text-muted-foreground shrink-0" />
                 <div>
-                  <p className="text-sm text-muted-foreground">
-                    {texts.dateOfBirth}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{texts.dateOfBirth}</p>
                   <p>{formatDate(member.dateOfBirth, locale)}</p>
                 </div>
               </div>
@@ -439,11 +470,7 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
                   <p className="text-sm text-muted-foreground">{texts.address}</p>
                   <p className="truncate">
                     {member.address.formatted ||
-                      [
-                        member.address.street,
-                        member.address.city,
-                        member.address.country,
-                      ]
+                      [member.address.street, member.address.city, member.address.country]
                         .filter(Boolean)
                         .join(", ") ||
                       "-"}
@@ -506,7 +533,7 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
       {/* Notes (if shown separately when emergency contact exists) */}
       {(member.emergencyContactName || member.emergencyContactPhone) &&
         member.notes && (
-          <Card className="animate-fade-in-up animation-delay-300">
+          <Card className="animate-fade-in-up animation-delay-350">
             <CardHeader>
               <CardTitle className="text-lg">{texts.notes}</CardTitle>
             </CardHeader>
@@ -518,47 +545,7 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
           </Card>
         )}
 
-      {/* Subscriptions */}
-      <Card className="animate-fade-in-up animation-delay-300">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <CreditCard className="h-5 w-5" />
-            {texts.subscriptions}
-          </CardTitle>
-          <Button asChild size="sm">
-            <Link href={`/${locale}/members/${member.id}/subscription/new`}>
-              <Plus className="me-2 h-4 w-4" />
-              {texts.addSubscription}
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {Array.isArray(subscriptions) && subscriptions.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              {subscriptions.map((sub) => (
-                <SubscriptionCard
-                  key={sub.id}
-                  subscription={sub}
-                  locale={locale}
-                  onFreeze={handleFreeze}
-                  onCreateInvoice={handleCreateInvoice}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-20" />
-              <p>{texts.noSubscriptions}</p>
-              <Button asChild className="mt-4" variant="outline">
-                <Link href={`/${locale}/members/${member.id}/subscription/new`}>
-                  <Plus className="me-2 h-4 w-4" />
-                  {texts.addSubscription}
-                </Link>
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* ====== DIALOGS ====== */}
 
       {/* Photo Upload Dialog */}
       <PhotoUploadDialog
@@ -580,20 +567,79 @@ export default function MemberDetailPage({ params }: MemberDetailPageProps) {
         />
       )}
 
-      {/* Add Credit Dialog */}
-      <AddCreditDialog
-        open={addCreditDialogOpen}
-        onOpenChange={setAddCreditDialogOpen}
-        memberId={member.id}
-      />
+      {/* Unfreeze Subscription Dialog */}
+      {selectedSubscription && (
+        <UnfreezeSubscriptionDialog
+          open={unfreezeDialogOpen}
+          onOpenChange={(open) => {
+            setUnfreezeDialogOpen(open);
+            if (!open) setSelectedSubscription(null);
+          }}
+          subscriptionId={selectedSubscription.id}
+        />
+      )}
 
-      {/* Adjust Balance Dialog */}
-      <AdjustBalanceDialog
-        open={adjustBalanceDialogOpen}
-        onOpenChange={setAdjustBalanceDialogOpen}
-        memberId={member.id}
-        currentBalance={wallet?.balance.amount ?? 0}
-      />
+      {/* Cancel Dialog */}
+      {selectedSubscription && (
+        <CancelDialog
+          open={cancelDialogOpen}
+          onOpenChange={(open) => {
+            setCancelDialogOpen(open);
+            if (!open) setSelectedSubscription(null);
+          }}
+          subscriptionId={selectedSubscription.id}
+          memberId={member.id}
+        />
+      )}
+
+      {/* Transfer Dialog */}
+      {selectedSubscription && (
+        <TransferDialog
+          open={transferDialogOpen}
+          onOpenChange={(open) => {
+            setTransferDialogOpen(open);
+            if (!open) setSelectedSubscription(null);
+          }}
+          subscriptionId={selectedSubscription.id}
+          currentMemberId={member.id}
+        />
+      )}
+
+      {/* Edit Dialog */}
+      {selectedSubscription && (
+        <EditDialog
+          open={editDialogOpen}
+          onOpenChange={(open) => {
+            setEditDialogOpen(open);
+            if (!open) setSelectedSubscription(null);
+          }}
+          subscription={selectedSubscription}
+        />
+      )}
+
+      {/* Renew Dialog */}
+      {selectedSubscription && (
+        <RenewDialog
+          open={renewDialogOpen}
+          onOpenChange={(open) => {
+            setRenewDialogOpen(open);
+            if (!open) setSelectedSubscription(null);
+          }}
+          subscriptionId={selectedSubscription.id}
+        />
+      )}
+
+      {/* Complete Payment Dialog */}
+      {selectedSubscription && (
+        <CompletePaymentDialog
+          open={completePaymentDialogOpen}
+          onOpenChange={(open) => {
+            setCompletePaymentDialogOpen(open);
+            if (!open) setSelectedSubscription(null);
+          }}
+          subscription={selectedSubscription}
+        />
+      )}
 
       {/* Reset Password Dialog */}
       {member.userId && (

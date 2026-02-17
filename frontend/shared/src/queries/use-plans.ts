@@ -15,12 +15,16 @@ import {
   deletePlan,
   activatePlan,
   deactivatePlan,
+  archivePlan,
+  reactivatePlan,
+  publishPlan,
+  getPlanStats,
   type CreatePlanRequest,
   type UpdatePlanRequest,
   type PlanQueryParams,
 } from "../lib/api/plans";
 import type { PaginatedResponse, UUID } from "../types/api";
-import type { MembershipPlan } from "../types/member";
+import type { MembershipPlan, PlanStats } from "../types/member";
 
 // Query keys
 export const planKeys = {
@@ -28,6 +32,7 @@ export const planKeys = {
   lists: () => [...planKeys.all, "list"] as const,
   list: (params: PlanQueryParams) => [...planKeys.lists(), params] as const,
   active: () => [...planKeys.all, "active"] as const,
+  stats: () => [...planKeys.all, "stats"] as const,
   details: () => [...planKeys.all, "detail"] as const,
   detail: (id: UUID) => [...planKeys.details(), id] as const,
 };
@@ -153,6 +158,72 @@ export function useDeactivatePlan() {
       queryClient.setQueryData(planKeys.detail(updatedPlan.id), updatedPlan);
       queryClient.invalidateQueries({ queryKey: planKeys.lists() });
       queryClient.invalidateQueries({ queryKey: planKeys.active() });
+      queryClient.invalidateQueries({ queryKey: planKeys.stats() });
     },
+  });
+}
+
+/**
+ * Hook to archive a plan (ACTIVE -> ARCHIVED)
+ */
+export function useArchivePlan() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: UUID) => archivePlan(id),
+    onSuccess: (updatedPlan) => {
+      queryClient.setQueryData(planKeys.detail(updatedPlan.id), updatedPlan);
+      queryClient.invalidateQueries({ queryKey: planKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: planKeys.active() });
+      queryClient.invalidateQueries({ queryKey: planKeys.stats() });
+    },
+  });
+}
+
+/**
+ * Hook to reactivate an archived plan
+ */
+export function useReactivatePlan() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: UUID) => reactivatePlan(id),
+    onSuccess: (updatedPlan) => {
+      queryClient.setQueryData(planKeys.detail(updatedPlan.id), updatedPlan);
+      queryClient.invalidateQueries({ queryKey: planKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: planKeys.active() });
+      queryClient.invalidateQueries({ queryKey: planKeys.stats() });
+    },
+  });
+}
+
+/**
+ * Hook to publish a draft plan (DRAFT -> ACTIVE)
+ */
+export function usePublishPlan() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: UUID) => publishPlan(id),
+    onSuccess: (updatedPlan) => {
+      queryClient.setQueryData(planKeys.detail(updatedPlan.id), updatedPlan);
+      queryClient.invalidateQueries({ queryKey: planKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: planKeys.active() });
+      queryClient.invalidateQueries({ queryKey: planKeys.stats() });
+    },
+  });
+}
+
+/**
+ * Hook to fetch plan statistics
+ */
+export function usePlanStats(
+  options?: Omit<UseQueryOptions<PlanStats>, "queryKey" | "queryFn">
+) {
+  return useQuery({
+    queryKey: planKeys.stats(),
+    queryFn: () => getPlanStats(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    ...options,
   });
 }

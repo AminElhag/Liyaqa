@@ -71,7 +71,7 @@ class BookingService(
             .orElseThrow { NoSuchElementException("Session not found: ${command.sessionId}") }
 
         // Verify session is bookable
-        require(session.status == SessionStatus.SCHEDULED) {
+        require(session.status == SessionStatus.SCHEDULED || session.status == SessionStatus.IN_PROGRESS) {
             "Cannot book a ${session.status} session"
         }
 
@@ -164,6 +164,41 @@ class BookingService(
         return savedBooking
     }
 
+
+    /**
+     * Gets a paginated list of bookings filtered by date range and optional status.
+     */
+    @Transactional(readOnly = true)
+    fun getBookings(dateFrom: LocalDate?, dateTo: LocalDate?, status: BookingStatus?, pageable: Pageable): Page<ClassBooking> {
+        return bookingRepository.findByDateRange(dateFrom, dateTo, status, pageable)
+    }
+
+    /**
+     * Batch fetches sessions by their IDs.
+     */
+    @Transactional(readOnly = true)
+    fun getSessionsByIds(ids: Set<UUID>): Map<UUID, ClassSession> {
+        return ids.mapNotNull { sessionRepository.findById(it).orElse(null) }
+            .associateBy { it.id }
+    }
+
+    /**
+     * Batch fetches gym classes by their IDs.
+     */
+    @Transactional(readOnly = true)
+    fun getClassesByIds(ids: Set<UUID>): Map<UUID, GymClass> {
+        return ids.mapNotNull { gymClassRepository.findById(it).orElse(null) }
+            .associateBy { it.id }
+    }
+
+    /**
+     * Batch fetches members by their IDs.
+     */
+    @Transactional(readOnly = true)
+    fun getMembersByIds(ids: Set<UUID>): Map<UUID, Member> {
+        return ids.mapNotNull { memberRepository.findById(it).orElse(null) }
+            .associateBy { it.id }
+    }
 
     /**
      * Gets a booking by ID.
@@ -435,6 +470,73 @@ class BookingService(
         logger.info("Booking deleted: $id")
     }
 
+
+    // ==================== SESSION COMPLETION ====================
+
+    /**
+     * Completes all active bookings for a finished session.
+     * - CONFIRMED and CHECKED_IN bookings are marked COMPLETED
+     * - Deducts class pack or subscription credits if not already deducted
+     * - WAITLISTED bookings are cancelled (session is over)
+     *
+     * @return count of completed bookings
+     */
+    fun completeBookingsForSession(sessionId: UUID, gymClass: GymClass): Int {
+        val bookings = bookingRepository.findBySessionId(sessionId)
+        var completedCount = 0
+
+        for (booking in bookings) {
+            when (booking.status) {
+                BookingStatus.CONFIRMED, BookingStatus.CHECKED_IN -> {
+                    // Deduct class pack credit if not already deducted
+                    if (booking.classPackBalanceId != null && !booking.classDeducted) {
+                        try {
+                            val balance = balanceRepository.findById(booking.classPackBalanceId!!).orElse(null)
+                            if (balance != null && balance.canUseCredit()) {
+                                balance.useClass()
+                                balanceRepository.save(balance)
+                                booking.markClassDeducted()
+                                logger.info("Deducted class pack credit from balance ${balance.id} for booking ${booking.id}")
+                            }
+                        } catch (e: Exception) {
+                            logger.error("Failed to deduct class pack credit for booking ${booking.id}: ${e.message}", e)
+                        }
+                    }
+
+                    // Deduct subscription credit if not already deducted
+                    if (booking.subscriptionId != null && !booking.classDeducted && gymClass.deductsClassFromPlan) {
+                        try {
+                            val subscription = subscriptionRepository.findById(booking.subscriptionId!!).orElse(null)
+                            if (subscription != null && subscription.isActive() && subscription.hasClassesAvailable()) {
+                                subscription.useClass()
+                                subscriptionRepository.save(subscription)
+                                booking.markClassDeducted()
+                                logger.info("Deducted class from subscription ${subscription.id} for booking ${booking.id}")
+                            }
+                        } catch (e: Exception) {
+                            logger.error("Failed to deduct subscription credit for booking ${booking.id}: ${e.message}", e)
+                        }
+                    }
+
+                    booking.complete()
+                    bookingRepository.save(booking)
+                    completedCount++
+                }
+
+                BookingStatus.WAITLISTED -> {
+                    booking.cancel("Session completed — waitlist expired")
+                    bookingRepository.save(booking)
+                }
+
+                else -> {
+                    // CANCELLED, NO_SHOW — no action needed
+                }
+            }
+        }
+
+        logger.info("Completed $completedCount bookings for session $sessionId")
+        return completedCount
+    }
 
     // ==================== BULK OPERATIONS ====================
 

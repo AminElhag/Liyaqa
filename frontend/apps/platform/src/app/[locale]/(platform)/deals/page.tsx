@@ -23,7 +23,6 @@ import { LoseDealDialog } from "@liyaqa/shared/components/platform/lose-deal-dia
 import { getDealColumns, SOURCE_LABELS } from "@liyaqa/shared/components/platform/deal-columns";
 import {
   useDeals,
-  useAdvanceDeal,
   useLoseDeal,
   useDeleteDeal,
 } from "@liyaqa/shared/queries/platform/use-deals";
@@ -62,7 +61,6 @@ export default function DealsPage() {
   });
 
   // Mutations
-  const advanceDeal = useAdvanceDeal();
   const loseDeal = useLoseDeal();
   const deleteDeal = useDeleteDeal();
 
@@ -102,10 +100,6 @@ export default function DealsPage() {
     router.push(`/${locale}/deals/${deal.id}/edit`);
   };
 
-  const handleAdvance = (deal: DealSummary) => {
-    advanceDeal.mutate(deal.id);
-  };
-
   const handleLose = (deal: DealSummary) => {
     setSelectedDeal(deal);
     setLoseDealDialogOpen(true);
@@ -138,7 +132,6 @@ export default function DealsPage() {
         locale,
         onView: handleView,
         onEdit: handleEdit,
-        onAdvance: handleAdvance,
         onLose: handleLose,
         onDelete: handleDelete,
         canEdit,

@@ -3,6 +3,8 @@ package com.liyaqa.membership.application.services
 import com.liyaqa.membership.application.commands.CreateMembershipPlanCommand
 import com.liyaqa.membership.application.commands.UpdateMembershipPlanCommand
 import com.liyaqa.membership.domain.model.MembershipPlan
+import com.liyaqa.membership.domain.model.MembershipPlanStatus
+import com.liyaqa.membership.domain.model.MembershipPlanType
 import com.liyaqa.membership.domain.ports.MembershipPlanRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -41,14 +43,40 @@ class MembershipPlanService(
             }
         }
 
-        // Validate at least one fee is set
-        require(!command.membershipFee.isZero() || !command.administrationFee.isZero()) {
-            "At least membership fee or administration fee must be set"
+        // Type-specific validation
+        when (command.planType) {
+            MembershipPlanType.CLASS_PACK -> {
+                require(command.sessionCount != null && command.sessionCount > 0) {
+                    "Class pack plans require a positive session count"
+                }
+            }
+            MembershipPlanType.TRIAL -> {
+                require(command.durationDays != null && command.durationDays > 0) {
+                    "Trial plans require a duration in days"
+                }
+            }
+            MembershipPlanType.RECURRING -> {
+                // Validate at least one fee is set for recurring
+                require(!command.membershipFee.isZero() || !command.administrationFee.isZero()) {
+                    "At least membership fee or administration fee must be set"
+                }
+            }
+            MembershipPlanType.DAY_PASS -> {
+                // Day passes require a membership fee
+                require(!command.membershipFee.isZero()) {
+                    "Day pass plans require a membership fee"
+                }
+            }
         }
+
+        // Sync isActive with status
+        val isActive = command.status == MembershipPlanStatus.ACTIVE
 
         val plan = MembershipPlan(
             name = command.name,
             description = command.description,
+            planType = command.planType,
+            status = command.status,
             availableFrom = command.availableFrom,
             availableUntil = command.availableUntil,
             minimumAge = command.minimumAge,
@@ -66,7 +94,7 @@ class MembershipPlanService(
             hasPoolAccess = command.hasPoolAccess,
             freezeDaysAllowed = command.freezeDaysAllowed,
             sortOrder = command.sortOrder,
-            isActive = command.isActive,
+            isActive = isActive,
             // Contract configuration
             categoryId = command.categoryId,
             contractType = command.contractType,
@@ -76,7 +104,11 @@ class MembershipPlanService(
             defaultNoticePeriodDays = command.defaultNoticePeriodDays,
             earlyTerminationFeeType = command.earlyTerminationFeeType,
             earlyTerminationFeeValue = command.earlyTerminationFeeValue,
-            coolingOffDays = command.coolingOffDays
+            coolingOffDays = command.coolingOffDays,
+            // Class pack & trial
+            sessionCount = command.sessionCount,
+            expiryDays = command.expiryDays,
+            convertsToPlanId = command.convertsToPlanId
         )
 
         return membershipPlanRepository.save(plan)
@@ -215,6 +247,11 @@ class MembershipPlanService(
         command.earlyTerminationFeeValue?.let { plan.earlyTerminationFeeValue = it }
         command.coolingOffDays?.let { plan.coolingOffDays = it }
 
+        // Update class pack & trial fields
+        command.sessionCount?.let { plan.sessionCount = it }
+        command.expiryDays?.let { plan.expiryDays = it }
+        command.convertsToPlanId?.let { plan.convertsToPlanId = it }
+
         return membershipPlanRepository.save(plan)
     }
 
@@ -249,6 +286,72 @@ class MembershipPlanService(
             throw NoSuchElementException("Membership plan not found: $id")
         }
         membershipPlanRepository.deleteById(id)
+    }
+
+    /**
+     * Archives a membership plan. Existing subscribers keep their contract terms.
+     */
+    fun archivePlan(id: UUID): MembershipPlan {
+        val plan = membershipPlanRepository.findById(id)
+            .orElseThrow { NoSuchElementException("Membership plan not found: $id") }
+
+        plan.archive()
+        return membershipPlanRepository.save(plan)
+    }
+
+    /**
+     * Reactivates an archived membership plan.
+     */
+    fun reactivatePlan(id: UUID): MembershipPlan {
+        val plan = membershipPlanRepository.findById(id)
+            .orElseThrow { NoSuchElementException("Membership plan not found: $id") }
+
+        plan.reactivate()
+        return membershipPlanRepository.save(plan)
+    }
+
+    /**
+     * Publishes a draft plan (transitions DRAFT -> ACTIVE).
+     */
+    fun publishPlan(id: UUID): MembershipPlan {
+        val plan = membershipPlanRepository.findById(id)
+            .orElseThrow { NoSuchElementException("Membership plan not found: $id") }
+
+        plan.publish()
+        return membershipPlanRepository.save(plan)
+    }
+
+    /**
+     * Gets plans filtered by status (DRAFT, ACTIVE, ARCHIVED).
+     */
+    @Transactional(readOnly = true)
+    fun getPlansByStatus(status: MembershipPlanStatus, pageable: Pageable): Page<MembershipPlan> {
+        return membershipPlanRepository.findByStatus(status, pageable)
+    }
+
+    /**
+     * Gets plans filtered by plan type.
+     */
+    @Transactional(readOnly = true)
+    fun getPlansByType(planType: MembershipPlanType, pageable: Pageable): Page<MembershipPlan> {
+        return membershipPlanRepository.findByPlanType(planType, pageable)
+    }
+
+    /**
+     * Gets plan statistics: total, active, draft, archived counts.
+     */
+    @Transactional(readOnly = true)
+    fun getPlanStats(): Map<String, Long> {
+        val total = membershipPlanRepository.count()
+        val active = membershipPlanRepository.countByStatus(MembershipPlanStatus.ACTIVE)
+        val draft = membershipPlanRepository.countByStatus(MembershipPlanStatus.DRAFT)
+        val archived = membershipPlanRepository.countByStatus(MembershipPlanStatus.ARCHIVED)
+        return mapOf(
+            "totalPlans" to total,
+            "activePlans" to active,
+            "draftPlans" to draft,
+            "archivedPlans" to archived
+        )
     }
 
     /**

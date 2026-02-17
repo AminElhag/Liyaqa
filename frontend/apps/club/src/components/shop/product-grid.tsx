@@ -8,13 +8,6 @@ import { Input } from "@liyaqa/shared/components/ui/input";
 import { Card, CardContent } from "@liyaqa/shared/components/ui/card";
 import { Badge } from "@liyaqa/shared/components/ui/badge";
 import { Skeleton } from "@liyaqa/shared/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@liyaqa/shared/components/ui/select";
 import { useShopProducts, useShopCategories } from "@liyaqa/shared/queries/use-shop";
 import { getLocalizedText, formatCurrency } from "@liyaqa/shared/utils";
 import { PRODUCT_TYPE_LABELS } from "@liyaqa/shared/types/product";
@@ -85,39 +78,51 @@ export function ProductGrid({
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={texts.search}
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
-            className="ps-9"
-          />
-        </div>
-        <Select
-          value={categoryFilter}
-          onValueChange={(value) => {
-            setCategoryFilter(value as UUID | "all");
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder={texts.search}
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(0);
+          }}
+          className="ps-9"
+        />
+      </div>
+
+      {/* Category Chips */}
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+        <button
+          className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+            categoryFilter === "all"
+              ? "bg-primary text-white"
+              : "bg-muted text-muted-foreground hover:bg-muted/80"
+          }`}
+          onClick={() => {
+            setCategoryFilter("all");
             setPage(0);
           }}
         >
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder={texts.allCategories} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{texts.allCategories}</SelectItem>
-            {categories?.content?.map((cat) => (
-              <SelectItem key={cat.id} value={cat.id}>
-                {getLocalizedText(cat.name, locale)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          {texts.allCategories}
+        </button>
+        {categories?.content?.map((cat) => (
+          <button
+            key={cat.id}
+            className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              categoryFilter === cat.id
+                ? "bg-primary text-white"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            }`}
+            onClick={() => {
+              setCategoryFilter(cat.id);
+              setPage(0);
+            }}
+          >
+            {getLocalizedText(cat.name, locale)}
+          </button>
+        ))}
       </div>
 
       {/* Product Grid */}
@@ -126,7 +131,7 @@ export function ProductGrid({
           {[...Array(6)].map((_, i) => (
             <Card key={i}>
               <CardContent className="p-4 space-y-3">
-                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-36 w-full" />
                 <Skeleton className="h-5 w-3/4" />
                 <Skeleton className="h-4 w-1/2" />
                 <Skeleton className="h-10 w-full" />
@@ -136,7 +141,7 @@ export function ProductGrid({
         </div>
       ) : !products?.content?.length ? (
         <div className="py-12 text-center text-muted-foreground">
-          <Package className="h-12 w-12 mx-auto mb-3 text-neutral-300" />
+          <Package className="h-12 w-12 mx-auto mb-3 text-primary/20" />
           <p>{texts.noProducts}</p>
         </div>
       ) : (
@@ -148,28 +153,33 @@ export function ProductGrid({
             return (
               <Card
                 key={product.id}
-                className={outOfStock ? "opacity-60" : ""}
+                className={`transition-all duration-200 ${
+                  outOfStock
+                    ? "opacity-60"
+                    : "hover:shadow-md hover:-translate-y-0.5 hover:border-primary/30"
+                }`}
               >
                 <CardContent className="p-4 space-y-3">
                   {/* Product Image Placeholder */}
-                  <div className="h-32 bg-muted rounded-md flex items-center justify-center">
-                    <Package className="h-12 w-12 text-muted-foreground" />
+                  <div className="relative h-36 bg-gradient-to-br from-primary/5 to-primary/10 rounded-md flex items-center justify-center">
+                    <Package className="h-10 w-10 text-primary/30" />
+                    <Badge
+                      variant="outline"
+                      className="absolute top-2 end-2 bg-card/80 backdrop-blur-sm text-xs"
+                    >
+                      {
+                        PRODUCT_TYPE_LABELS[product.productType][
+                          locale as "en" | "ar"
+                        ]
+                      }
+                    </Badge>
                   </div>
 
                   {/* Product Info */}
                   <div>
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-medium line-clamp-2">
-                        {getLocalizedText(product.name, locale)}
-                      </h3>
-                      <Badge variant="outline" className="shrink-0">
-                        {
-                          PRODUCT_TYPE_LABELS[product.productType][
-                            locale as "en" | "ar"
-                          ]
-                        }
-                      </Badge>
-                    </div>
+                    <h3 className="font-medium line-clamp-2">
+                      {getLocalizedText(product.name, locale)}
+                    </h3>
                     {product.description && (
                       <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
                         {getLocalizedText(product.description, locale)}
@@ -197,7 +207,7 @@ export function ProductGrid({
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="h-9 w-9 rounded-e-none"
+                          className="h-10 w-10 rounded-e-none active:scale-95 transition-transform"
                           onClick={() => setQuantity(product.id, qty - 1)}
                           disabled={qty <= 1 || disabled}
                         >
@@ -210,7 +220,7 @@ export function ProductGrid({
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="h-9 w-9 rounded-s-none"
+                          className="h-10 w-10 rounded-s-none active:scale-95 transition-transform"
                           onClick={() => setQuantity(product.id, qty + 1)}
                           disabled={disabled}
                         >
@@ -218,7 +228,7 @@ export function ProductGrid({
                         </Button>
                       </div>
                       <Button
-                        className="flex-1"
+                        className="flex-1 bg-primary hover:bg-[#E85D3A] text-white"
                         onClick={() => handleAddToCart(product)}
                         disabled={disabled}
                       >

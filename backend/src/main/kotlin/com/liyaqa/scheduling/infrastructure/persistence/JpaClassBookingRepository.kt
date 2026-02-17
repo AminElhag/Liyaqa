@@ -33,6 +33,30 @@ interface SpringDataClassBookingRepository : JpaRepository<ClassBooking, UUID> {
     """)
     fun findWaitlistedBySessionIdOrderByPosition(@Param("sessionId") sessionId: UUID): List<ClassBooking>
 
+    @Query(
+        value = """
+            SELECT b FROM ClassBooking b
+            JOIN ClassSession s ON b.sessionId = s.id
+            WHERE s.sessionDate >= COALESCE(:dateFrom, s.sessionDate)
+            AND s.sessionDate <= COALESCE(:dateTo, s.sessionDate)
+            AND b.status = COALESCE(:status, b.status)
+            ORDER BY s.sessionDate DESC, s.startTime DESC
+        """,
+        countQuery = """
+            SELECT COUNT(b) FROM ClassBooking b
+            JOIN ClassSession s ON b.sessionId = s.id
+            WHERE s.sessionDate >= COALESCE(:dateFrom, s.sessionDate)
+            AND s.sessionDate <= COALESCE(:dateTo, s.sessionDate)
+            AND b.status = COALESCE(:status, b.status)
+        """
+    )
+    fun findByDateRange(
+        @Param("dateFrom") dateFrom: LocalDate?,
+        @Param("dateTo") dateTo: LocalDate?,
+        @Param("status") status: BookingStatus?,
+        pageable: Pageable
+    ): Page<ClassBooking>
+
     @Query("""
         SELECT b FROM ClassBooking b
         JOIN ClassSession s ON b.sessionId = s.id
@@ -176,6 +200,9 @@ class JpaClassBookingRepository(
 
     override fun countByMemberIdAndStatus(memberId: UUID, status: BookingStatus): Long =
         springDataRepository.countByMemberIdAndStatus(memberId, status)
+
+    override fun findByDateRange(dateFrom: LocalDate?, dateTo: LocalDate?, status: BookingStatus?, pageable: Pageable): Page<ClassBooking> =
+        springDataRepository.findByDateRange(dateFrom, dateTo, status, pageable)
 
     override fun findActiveBookingsByMemberAndDate(memberId: UUID, sessionDate: LocalDate): List<ClassBooking> =
         springDataRepository.findActiveBookingsByMemberAndDate(memberId, sessionDate)

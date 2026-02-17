@@ -77,3 +77,14 @@ export async function deactivateClientPlan(id: string): Promise<ClientPlan> {
 export async function deleteClientPlan(id: string): Promise<void> {
   await api.delete(`${BASE_URL}/${id}`);
 }
+
+/**
+ * Compare multiple plans side-by-side
+ */
+export async function comparePlans(planIds: string[]): Promise<ClientPlan[]> {
+  return api
+    .get("api/v1/platform/subscriptions/plans/compare", {
+      searchParams: { ids: planIds.join(",") },
+    })
+    .json<ClientPlan[]>();
+}

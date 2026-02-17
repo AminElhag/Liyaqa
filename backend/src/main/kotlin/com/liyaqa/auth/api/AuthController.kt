@@ -88,6 +88,22 @@ class AuthController(
                     )
                 )
             }
+            is com.liyaqa.auth.application.services.LoginResult.AccountTypeSelection -> {
+                // Look up organization ID from club to include in response
+                val organizationId = clubRepository.findById(tenantId)
+                    .map { it.organizationId }
+                    .orElse(null)
+
+                val permissions = permissionService.getUserPermissionCodes(loginResult.user.id)
+
+                ResponseEntity.ok(
+                    AccountTypeSelectionResponse(
+                        sessionToken = loginResult.sessionToken,
+                        availableAccountTypes = loginResult.accountTypes.map { AccountTypeInfo.from(it) },
+                        user = UserResponse.from(loginResult.user, organizationId, permissions)
+                    )
+                )
+            }
             is com.liyaqa.auth.application.services.LoginResult.Success -> {
                 // Look up organization ID from club to include in response
                 val organizationId = clubRepository.findById(tenantId)
@@ -284,7 +300,7 @@ class AuthController(
         // Load user permissions
         val permissions = permissionService.getUserPermissionCodes(user.id)
 
-        return ResponseEntity.ok(UserResponse.from(user, organizationId, permissions))
+        return ResponseEntity.ok(UserResponse.from(user, organizationId, permissions, principal.accountType))
     }
 
     /**
@@ -328,6 +344,63 @@ class AuthController(
                 messageAr = "تم إعادة تعيين كلمة المرور بنجاح. يرجى تسجيل الدخول بكلمة المرور الجديدة."
             )
         )
+    }
+
+    @Operation(
+        summary = "Select Account Type",
+        description = "Selects an account type after login when user has multiple account types. " +
+                "Consumes the session token and returns full JWT tokens."
+    )
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Account type selected, tokens issued"),
+        ApiResponse(responseCode = "400", description = "Invalid or expired session token"),
+        ApiResponse(responseCode = "403", description = "User does not have the requested account type")
+    ])
+    @PostMapping("/select-account-type")
+    fun selectAccountType(
+        @Valid @RequestBody request: SelectAccountTypeRequest
+    ): ResponseEntity<AuthResponse> {
+        val result = authService.selectAccountType(
+            sessionToken = request.sessionToken,
+            accountType = request.accountType,
+            deviceInfo = null
+        )
+
+        val organizationId = clubRepository.findById(result.user.tenantId)
+            .map { it.organizationId }
+            .orElse(null)
+
+        val permissions = permissionService.getUserPermissionCodes(result.user.id)
+
+        return ResponseEntity.ok(AuthResponse.from(result, organizationId, permissions))
+    }
+
+    @Operation(
+        summary = "Switch Account Type",
+        description = "Switches to a different account type while already authenticated. " +
+                "Issues new JWT tokens with the selected account type."
+    )
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Account type switched, new tokens issued"),
+        ApiResponse(responseCode = "403", description = "User does not have the requested account type")
+    ])
+    @PostMapping("/switch-account-type")
+    fun switchAccountType(
+        @AuthenticationPrincipal principal: JwtUserPrincipal,
+        @Valid @RequestBody request: SwitchAccountTypeRequest
+    ): ResponseEntity<AuthResponse> {
+        val result = authService.switchAccountType(
+            userId = principal.userId,
+            accountType = request.accountType
+        )
+
+        val organizationId = clubRepository.findById(result.user.tenantId)
+            .map { it.organizationId }
+            .orElse(null)
+
+        val permissions = permissionService.getUserPermissionCodes(result.user.id)
+
+        return ResponseEntity.ok(AuthResponse.from(result, organizationId, permissions))
     }
 
     /**

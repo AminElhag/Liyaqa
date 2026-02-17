@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { User, LoginRequest, RegisterRequest, PlatformLoginRequest, SendCodeRequest, VerifyCodeRequest } from "../types/auth";
-import { isPlatformRole, isMfaRequired } from "../types/auth";
+import type { User, LoginRequest, RegisterRequest, PlatformLoginRequest, SendCodeRequest, VerifyCodeRequest, AccountType, AccountTypeInfo } from "../types/auth";
+import { isPlatformRole, isMfaRequired, isAccountTypeSelection } from "../types/auth";
 import { authApi } from "../lib/api/auth";
 import { mfaApi } from "../lib/api/mfa";
 import {
@@ -33,6 +33,12 @@ interface AuthState {
   passwordlessEmail: string | null;
   codeExpiresAt: number | null; // timestamp in milliseconds
 
+  // Account type selection state
+  accountTypeSelectionRequired: boolean;
+  accountTypeSessionToken: string | null;
+  availableAccountTypes: AccountTypeInfo[];
+  pendingUser: User | null;
+
   // Actions
   login: (credentials: LoginRequest) => Promise<void>;
   platformLogin: (credentials: PlatformLoginRequest) => Promise<void>;
@@ -49,6 +55,9 @@ interface AuthState {
   hasAllPermissions: (permissionCodes: string[]) => boolean;
   setHasHydrated: (state: boolean) => void;
   clearMfaState: () => void;
+  selectAccountType: (accountType: AccountType) => Promise<void>;
+  switchAccountType: (accountType: AccountType) => Promise<void>;
+  clearAccountTypeSelection: () => void;
   sendPlatformLoginCode: (email: string) => Promise<void>;
   verifyPlatformLoginCode: (email: string, code: string, deviceInfo?: string) => Promise<void>;
   clearPasswordlessState: () => void;
@@ -67,6 +76,10 @@ export const useAuthStore = create<AuthState>()(
       mfaEmail: null,
       passwordlessEmail: null,
       codeExpiresAt: null,
+      accountTypeSelectionRequired: false,
+      accountTypeSessionToken: null,
+      availableAccountTypes: [],
+      pendingUser: null,
 
       setHasHydrated: (state: boolean) => {
         set({ _hasHydrated: state });
@@ -77,6 +90,88 @@ export const useAuthStore = create<AuthState>()(
           mfaRequired: false,
           mfaPendingUserId: null,
           mfaEmail: null,
+        });
+      },
+
+      selectAccountType: async (accountType: AccountType) => {
+        const { accountTypeSessionToken } = get();
+        if (!accountTypeSessionToken) {
+          throw new Error("No pending account type selection");
+        }
+
+        set({ isLoading: true, error: null });
+        try {
+          const response = await authApi.selectAccountType({
+            sessionToken: accountTypeSessionToken,
+            accountType,
+          });
+
+          // Store tokens
+          setAccessToken(response.accessToken);
+          setRefreshToken(response.refreshToken);
+
+          // Disable platform mode for regular login
+          setPlatformMode(false);
+
+          // Set tenant context from user
+          if (response.user.tenantId) {
+            setTenantContext(
+              response.user.tenantId,
+              response.user.organizationId || null,
+              response.user.role === "SUPER_ADMIN"
+            );
+            useTenantStore.getState().setTenant(
+              response.user.tenantId,
+              undefined,
+              response.user.organizationId || undefined
+            );
+          }
+
+          set({
+            user: response.user,
+            isAuthenticated: true,
+            isLoading: false,
+            accountTypeSelectionRequired: false,
+            accountTypeSessionToken: null,
+            availableAccountTypes: [],
+            pendingUser: null,
+          });
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : "Failed to select account type";
+          set({ isLoading: false, error: errorMessage });
+          throw error;
+        }
+      },
+
+      switchAccountType: async (accountType: AccountType) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await authApi.switchAccountType({ accountType });
+
+          // Store new tokens
+          setAccessToken(response.accessToken);
+          setRefreshToken(response.refreshToken);
+
+          // Update user in state
+          set({
+            user: response.user,
+            isLoading: false,
+          });
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : "Failed to switch account type";
+          set({ isLoading: false, error: errorMessage });
+          throw error;
+        }
+      },
+
+      clearAccountTypeSelection: () => {
+        set({
+          accountTypeSelectionRequired: false,
+          accountTypeSessionToken: null,
+          availableAccountTypes: [],
+          pendingUser: null,
         });
       },
 
@@ -92,6 +187,18 @@ export const useAuthStore = create<AuthState>()(
               mfaRequired: true,
               mfaPendingUserId: response.userId,
               mfaEmail: response.email,
+            });
+            return;
+          }
+
+          // Check if account type selection is required
+          if (isAccountTypeSelection(response)) {
+            set({
+              isLoading: false,
+              accountTypeSelectionRequired: true,
+              accountTypeSessionToken: response.sessionToken,
+              availableAccountTypes: response.availableAccountTypes,
+              pendingUser: response.user,
             });
             return;
           }
@@ -125,6 +232,10 @@ export const useAuthStore = create<AuthState>()(
             mfaRequired: false,
             mfaPendingUserId: null,
             mfaEmail: null,
+            accountTypeSelectionRequired: false,
+            accountTypeSessionToken: null,
+            availableAccountTypes: [],
+            pendingUser: null,
           });
         } catch (error) {
           set({
@@ -278,6 +389,10 @@ export const useAuthStore = create<AuthState>()(
           mfaEmail: null,
           passwordlessEmail: null,
           codeExpiresAt: null,
+          accountTypeSelectionRequired: false,
+          accountTypeSessionToken: null,
+          availableAccountTypes: [],
+          pendingUser: null,
         });
       },
 

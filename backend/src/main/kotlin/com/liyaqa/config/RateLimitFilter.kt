@@ -53,9 +53,8 @@ class RateLimitFilter(
                 }
 
                 // Check rate limit
-                rateLimiter.executeSupplier {
+                rateLimiter.executeRunnable {
                     logger.debug("Rate limit check passed for $clientId on $path")
-                    null
                 }
 
                 // Continue with filter chain if rate limit not exceeded

@@ -1,6 +1,8 @@
 package com.liyaqa.membership.application.commands
 
 import com.liyaqa.membership.domain.model.BillingPeriod
+import com.liyaqa.membership.domain.model.MembershipPlanStatus
+import com.liyaqa.membership.domain.model.MembershipPlanType
 import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.TaxableFee
 import java.math.BigDecimal
@@ -13,6 +15,10 @@ import java.util.UUID
 data class CreateMembershipPlanCommand(
     val name: LocalizedText,
     val description: LocalizedText? = null,
+
+    // Plan type & status
+    val planType: MembershipPlanType = MembershipPlanType.RECURRING,
+    val status: MembershipPlanStatus = MembershipPlanStatus.ACTIVE,
 
     // Date restrictions
     val availableFrom: LocalDate? = null,
@@ -27,7 +33,7 @@ data class CreateMembershipPlanCommand(
     val administrationFee: TaxableFee = TaxableFee(),
     val joinFee: TaxableFee = TaxableFee(),
 
-    // Active status
+    // Active status (backward compatibility)
     val isActive: Boolean = true,
 
     // Billing & duration
@@ -53,7 +59,14 @@ data class CreateMembershipPlanCommand(
     val defaultNoticePeriodDays: Int = 30,
     val earlyTerminationFeeType: String = "NONE",
     val earlyTerminationFeeValue: BigDecimal? = null,
-    val coolingOffDays: Int = 14
+    val coolingOffDays: Int = 14,
+
+    // Class pack fields
+    val sessionCount: Int? = null,
+    val expiryDays: Int? = null,
+
+    // Trial conversion
+    val convertsToPlanId: UUID? = null
 )
 
 /**
@@ -62,6 +75,9 @@ data class CreateMembershipPlanCommand(
 data class UpdateMembershipPlanCommand(
     val name: LocalizedText? = null,
     val description: LocalizedText? = null,
+
+    // Plan type (cannot change after creation, but included for completeness)
+    val planType: MembershipPlanType? = null,
 
     // Date restrictions
     val availableFrom: LocalDate? = null,
@@ -104,5 +120,12 @@ data class UpdateMembershipPlanCommand(
     val earlyTerminationFeeType: String? = null,
     val earlyTerminationFeeValue: BigDecimal? = null,
     val coolingOffDays: Int? = null,
-    val clearCategoryId: Boolean = false
+    val clearCategoryId: Boolean = false,
+
+    // Class pack fields
+    val sessionCount: Int? = null,
+    val expiryDays: Int? = null,
+
+    // Trial conversion
+    val convertsToPlanId: UUID? = null
 )

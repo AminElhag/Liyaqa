@@ -12,7 +12,6 @@ import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
@@ -67,7 +66,7 @@ class ReportingController(
     @Operation(summary = "Create a scheduled report")
     fun createScheduledReport(
         @Valid @RequestBody request: CreateScheduledReportRequest,
-        @AuthenticationPrincipal currentUser: CurrentUser
+        currentUser: CurrentUser
     ): ResponseEntity<ScheduledReportResponse> {
         val command = CreateScheduledReportCommand(
             name = request.name,

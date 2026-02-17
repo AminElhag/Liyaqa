@@ -1,6 +1,8 @@
 package com.liyaqa.membership.infrastructure.persistence
 
 import com.liyaqa.membership.domain.model.MembershipPlan
+import com.liyaqa.membership.domain.model.MembershipPlanStatus
+import com.liyaqa.membership.domain.model.MembershipPlanType
 import com.liyaqa.membership.domain.ports.MembershipPlanRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -14,17 +16,20 @@ import java.util.UUID
 
 interface SpringDataMembershipPlanRepository : JpaRepository<MembershipPlan, UUID> {
     fun findByIsActive(isActive: Boolean, pageable: Pageable): Page<MembershipPlan>
+    fun findByStatus(status: MembershipPlanStatus, pageable: Pageable): Page<MembershipPlan>
+    fun findByPlanType(planType: MembershipPlanType, pageable: Pageable): Page<MembershipPlan>
+    fun countByStatus(status: MembershipPlanStatus): Long
     fun existsByNameEn(nameEn: String): Boolean
 
     /**
      * Find plans that are currently available:
-     * - Active (isActive = true)
+     * - Status is ACTIVE
      * - Either no start date or start date is on or before today
      * - Either no end date or end date is on or after today
      */
     @Query("""
         SELECT p FROM MembershipPlan p
-        WHERE p.isActive = true
+        WHERE p.status = com.liyaqa.membership.domain.model.MembershipPlanStatus.ACTIVE
         AND (p.availableFrom IS NULL OR p.availableFrom <= :today)
         AND (p.availableUntil IS NULL OR p.availableUntil >= :today)
     """)
@@ -52,6 +57,15 @@ class JpaMembershipPlanRepository(
 
     override fun findByIsActive(isActive: Boolean, pageable: Pageable): Page<MembershipPlan> =
         springDataRepository.findByIsActive(isActive, pageable)
+
+    override fun findByStatus(status: MembershipPlanStatus, pageable: Pageable): Page<MembershipPlan> =
+        springDataRepository.findByStatus(status, pageable)
+
+    override fun findByPlanType(planType: MembershipPlanType, pageable: Pageable): Page<MembershipPlan> =
+        springDataRepository.findByPlanType(planType, pageable)
+
+    override fun countByStatus(status: MembershipPlanStatus): Long =
+        springDataRepository.countByStatus(status)
 
     override fun existsById(id: UUID): Boolean =
         springDataRepository.existsById(id)

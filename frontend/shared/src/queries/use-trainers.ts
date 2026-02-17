@@ -19,6 +19,7 @@ import {
   terminateTrainer,
   getTrainerAvailability,
   updateTrainerAvailability,
+  updateTrainerSkills,
   getTrainerClubs,
   assignTrainerToClub,
   removeTrainerFromClub,
@@ -36,6 +37,7 @@ import type {
   UpdateTrainerProfileRequest,
   UpdateTrainerBasicInfoRequest,
   UpdateAvailabilityRequest,
+  UpdateTrainerSkillsRequest,
   AssignTrainerToClubRequest,
   TrainerQueryParams,
   Availability,
@@ -345,6 +347,22 @@ export function useRemoveTrainerFromClub() {
     onSuccess: (_, { trainerId }) => {
       queryClient.invalidateQueries({ queryKey: trainerKeys.clubs(trainerId) });
       queryClient.invalidateQueries({ queryKey: trainerKeys.detail(trainerId) });
+    },
+  });
+}
+
+/**
+ * Hook to update trainer skills (class categories)
+ */
+export function useUpdateTrainerSkills() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: UUID; data: UpdateTrainerSkillsRequest }) =>
+      updateTrainerSkills(id, data),
+    onSuccess: (updatedTrainer) => {
+      queryClient.setQueryData(trainerKeys.detail(updatedTrainer.id), updatedTrainer);
+      queryClient.invalidateQueries({ queryKey: trainerKeys.lists() });
     },
   });
 }

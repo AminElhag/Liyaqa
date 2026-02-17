@@ -141,11 +141,8 @@ export function useCreateTask() {
 
   return useMutation({
     mutationFn: (request: tasksApi.CreateTaskRequest) => tasksApi.createTask(request),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: taskKeys.memberTasks(data.memberId) });
-      queryClient.invalidateQueries({ queryKey: taskKeys.myTasks() });
-      queryClient.invalidateQueries({ queryKey: taskKeys.myTasksToday() });
-      queryClient.invalidateQueries({ queryKey: taskKeys.stats() });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
     },
   });
 }
@@ -163,7 +160,7 @@ export function useUpdateTask() {
     }) => tasksApi.updateTask(taskId, request),
     onSuccess: (data) => {
       queryClient.setQueryData(taskKeys.detail(data.id), data);
-      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
     },
   });
 }
@@ -181,8 +178,7 @@ export function useAssignTask() {
     }) => tasksApi.assignTask(taskId, { assigneeUserId }),
     onSuccess: (data) => {
       queryClient.setQueryData(taskKeys.detail(data.id), data);
-      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: taskKeys.unassigned() });
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
     },
   });
 }
@@ -194,7 +190,7 @@ export function useUnassignTask() {
     mutationFn: (taskId: string) => tasksApi.unassignTask(taskId),
     onSuccess: (data) => {
       queryClient.setQueryData(taskKeys.detail(data.id), data);
-      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
     },
   });
 }
@@ -206,8 +202,7 @@ export function useStartTask() {
     mutationFn: (taskId: string) => tasksApi.startTask(taskId),
     onSuccess: (data) => {
       queryClient.setQueryData(taskKeys.detail(data.id), data);
-      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: taskKeys.stats() });
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
     },
   });
 }
@@ -225,9 +220,7 @@ export function useCompleteTask() {
     }) => tasksApi.completeTask(taskId, request),
     onSuccess: (data) => {
       queryClient.setQueryData(taskKeys.detail(data.id), data);
-      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: taskKeys.myTasksToday() });
-      queryClient.invalidateQueries({ queryKey: taskKeys.stats() });
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
     },
   });
 }
@@ -240,8 +233,7 @@ export function useCancelTask() {
       tasksApi.cancelTask(taskId, reason),
     onSuccess: (data) => {
       queryClient.setQueryData(taskKeys.detail(data.id), data);
-      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: taskKeys.stats() });
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
     },
   });
 }
@@ -259,8 +251,7 @@ export function useSnoozeTask() {
     }) => tasksApi.snoozeTask(taskId, { newDueDate }),
     onSuccess: (data) => {
       queryClient.setQueryData(taskKeys.detail(data.id), data);
-      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: taskKeys.myTasksToday() });
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
     },
   });
 }
@@ -278,7 +269,7 @@ export function useRescheduleTask() {
     }) => tasksApi.rescheduleTask(taskId, request),
     onSuccess: (data) => {
       queryClient.setQueryData(taskKeys.detail(data.id), data);
-      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
     },
   });
 }

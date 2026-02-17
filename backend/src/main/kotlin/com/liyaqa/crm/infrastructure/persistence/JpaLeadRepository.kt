@@ -42,16 +42,16 @@ interface SpringDataLeadRepository : JpaRepository<Lead, UUID> {
 
     @Query("""
         SELECT l FROM Lead l
-        WHERE (:search IS NULL OR (
-            LOWER(l.name) LIKE LOWER(CONCAT('%', :search, '%'))
-            OR LOWER(l.email) LIKE LOWER(CONCAT('%', :search, '%'))
-            OR LOWER(l.phone) LIKE LOWER(CONCAT('%', :search, '%'))
+        WHERE (CAST(:search AS string) IS NULL OR (
+            LOWER(l.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+            OR LOWER(l.email) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+            OR LOWER(l.phone) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
         ))
-        AND (:status IS NULL OR l.status = :status)
-        AND (:source IS NULL OR l.source = :source)
-        AND (:assignedToUserId IS NULL OR l.assignedToUserId = :assignedToUserId)
-        AND (:createdAfter IS NULL OR l.createdAt >= :createdAfter)
-        AND (:createdBefore IS NULL OR l.createdAt <= :createdBefore)
+        AND (CAST(:status AS string) IS NULL OR l.status = :status)
+        AND (CAST(:source AS string) IS NULL OR l.source = :source)
+        AND (CAST(:assignedToUserId AS string) IS NULL OR l.assignedToUserId = :assignedToUserId)
+        AND (CAST(:createdAfter AS string) IS NULL OR l.createdAt >= :createdAfter)
+        AND (CAST(:createdBefore AS string) IS NULL OR l.createdAt <= :createdBefore)
     """)
     fun search(
         @Param("search") search: String?,

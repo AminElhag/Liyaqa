@@ -102,12 +102,12 @@ export default function PosPage() {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-1">
-          <div className="h-10 w-10 rounded-lg bg-teal-100 flex items-center justify-center">
-            <Store className="h-5 w-5 text-teal-600" />
+          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Store className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900">{texts.title}</h1>
-            <p className="text-sm text-neutral-500">{texts.subtitle}</p>
+            <h1 className="text-2xl font-bold text-foreground">{texts.title}</h1>
+            <p className="text-sm text-muted-foreground">{texts.subtitle}</p>
           </div>
         </div>
       </div>

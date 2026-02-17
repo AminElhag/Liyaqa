@@ -47,6 +47,7 @@ const statusConfig: Record<
   CONFIRMED: { variant: "success", labelEn: "Confirmed", labelAr: "مؤكد" },
   WAITLISTED: { variant: "warning", labelEn: "Waitlisted", labelAr: "قائمة الانتظار" },
   NO_SHOW: { variant: "danger", labelEn: "No Show", labelAr: "لم يحضر" },
+  COMPLETED: { variant: "success", labelEn: "Completed", labelAr: "مكتمل" },
 };
 
 interface StatusBadgeProps {

@@ -33,3 +33,11 @@ data class RenewSubscriptionCommand(
     val newEndDate: LocalDate? = null, // If null, will calculate based on plan
     val paidAmount: Money? = null
 )
+
+/**
+ * Command for transferring a subscription to another member.
+ */
+data class TransferSubscriptionCommand(
+    val targetMemberId: UUID,
+    val reason: String? = null
+)

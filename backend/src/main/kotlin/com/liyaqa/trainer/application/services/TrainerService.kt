@@ -8,10 +8,13 @@ import com.liyaqa.trainer.application.commands.*
 import com.liyaqa.trainer.domain.model.Trainer
 import com.liyaqa.trainer.domain.model.TrainerClubAssignment
 import com.liyaqa.trainer.domain.model.TrainerClubAssignmentStatus
+import com.liyaqa.trainer.domain.model.TrainerSkill
 import com.liyaqa.trainer.domain.model.TrainerStatus
 import com.liyaqa.trainer.domain.model.TrainerType
 import com.liyaqa.trainer.domain.ports.TrainerClubAssignmentRepository
 import com.liyaqa.trainer.domain.ports.TrainerRepository
+import com.liyaqa.trainer.domain.ports.TrainerSkillRepository
+import com.liyaqa.scheduling.domain.ports.ClassCategoryRepository
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -35,8 +38,10 @@ import java.util.UUID
 class TrainerService(
     private val trainerRepository: TrainerRepository,
     private val trainerClubAssignmentRepository: TrainerClubAssignmentRepository,
+    private val trainerSkillRepository: TrainerSkillRepository,
     private val userRepository: UserRepository,
     private val clubRepository: ClubRepository,
+    private val classCategoryRepository: ClassCategoryRepository,
     private val objectMapper: ObjectMapper
 ) {
     private val logger = LoggerFactory.getLogger(TrainerService::class.java)
@@ -47,14 +52,16 @@ class TrainerService(
      * Create a new trainer from an existing user.
      */
     fun createTrainer(command: CreateTrainerCommand): Trainer {
-        // Verify user exists
-        require(userRepository.existsById(command.userId)) {
-            "User not found with id: ${command.userId}"
-        }
+        // Verify user exists (only if userId is provided)
+        command.userId?.let { uid ->
+            require(userRepository.existsById(uid)) {
+                "User not found with id: $uid"
+            }
 
-        // Verify trainer doesn't already exist for this user in this organization
-        require(!trainerRepository.existsByUserIdAndOrganizationId(command.userId, command.organizationId)) {
-            "A trainer profile already exists for user ${command.userId} in organization ${command.organizationId}"
+            // Verify trainer doesn't already exist for this user in this organization
+            require(!trainerRepository.existsByUserIdAndOrganizationId(uid, command.organizationId)) {
+                "A trainer profile already exists for user $uid in organization ${command.organizationId}"
+            }
         }
 
         // Verify primary club if specified
@@ -86,8 +93,22 @@ class TrainerService(
             notes = command.notes
         }
 
+        // Add TRAINER account type to the user (only if userId is provided)
+        command.userId?.let { uid ->
+            userRepository.findById(uid).ifPresent { user ->
+                user.addAccountType(com.liyaqa.auth.domain.model.AccountType.TRAINER)
+                userRepository.save(user)
+            }
+        }
+
         val savedTrainer = trainerRepository.save(trainer)
         logger.info("Created trainer ${savedTrainer.id} for user ${command.userId}")
+
+        // Save trainer skills
+        command.skillCategoryIds?.forEach { categoryId ->
+            val skill = TrainerSkill.create(trainerId = savedTrainer.id, categoryId = categoryId)
+            trainerSkillRepository.save(skill)
+        }
 
         // Assign to clubs if specified
         command.assignedClubIds?.forEach { clubId ->
@@ -453,13 +474,47 @@ class TrainerService(
         return trainerClubAssignmentRepository.findPrimaryByTrainerId(trainerId).orElse(null)
     }
 
+    // ==================== SKILL OPERATIONS ====================
+
+    /**
+     * Update trainer skills (replace all with new set).
+     */
+    fun updateTrainerSkills(command: UpdateTrainerSkillsCommand): List<TrainerSkill> {
+        // Verify trainer exists
+        getTrainer(command.trainerId)
+
+        // Delete existing skills and re-insert
+        trainerSkillRepository.deleteByTrainerId(command.trainerId)
+
+        val skills = command.categoryIds.map { categoryId ->
+            TrainerSkill.create(trainerId = command.trainerId, categoryId = categoryId)
+        }
+
+        return if (skills.isNotEmpty()) {
+            trainerSkillRepository.saveAll(skills)
+        } else {
+            emptyList()
+        }
+    }
+
+    /**
+     * Get trainer skills.
+     */
+    @Transactional(readOnly = true)
+    fun getTrainerSkills(trainerId: UUID): List<TrainerSkill> {
+        return trainerSkillRepository.findByTrainerId(trainerId)
+    }
+
     // ==================== DELETE OPERATIONS ====================
 
     /**
-     * Delete a trainer and all club assignments.
+     * Delete a trainer and all club assignments and skills.
      */
     fun deleteTrainer(id: UUID) {
-        // Delete all club assignments first
+        // Delete all skills first
+        trainerSkillRepository.deleteByTrainerId(id)
+
+        // Delete all club assignments
         trainerClubAssignmentRepository.deleteByTrainerId(id)
 
         // Delete the trainer

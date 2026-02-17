@@ -219,14 +219,14 @@ export default function CampaignEditPage() {
             <div className="space-y-2">
               <Label htmlFor="segment">{t('marketing.segment', { defaultValue: 'Target Segment' })}</Label>
               <Select
-                value={formData.segmentId}
-                onValueChange={(value) => setFormData({ ...formData, segmentId: value })}
+                value={formData.segmentId || '__none__'}
+                onValueChange={(value) => setFormData({ ...formData, segmentId: value === '__none__' ? '' : value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={t('marketing.noSegment', { defaultValue: 'All members (no segment)' })} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">
+                  <SelectItem value="__none__">
                     {t('marketing.noSegment', { defaultValue: 'All members (no segment)' })}
                   </SelectItem>
                   {segmentsData?.content.map((segment) => (

@@ -7,7 +7,23 @@ import type {
   UpdateClassRequest,
   GenerateSessionsRequest,
   ClassSession,
+  ClassSchedule,
 } from "../../types/scheduling";
+
+/**
+ * Map backend ClassSessionResponse field names to frontend ClassSession field names.
+ * Backend sends: gymClassId, sessionDate, maxCapacity, currentBookings
+ * Frontend expects: classId, date, capacity, bookedCount
+ */
+function mapSession(raw: Record<string, unknown>): ClassSession {
+  return {
+    ...raw,
+    classId: raw.gymClassId ?? raw.classId,
+    date: raw.sessionDate ?? raw.date,
+    capacity: raw.maxCapacity ?? raw.capacity,
+    bookedCount: raw.currentBookings ?? raw.bookedCount,
+  } as ClassSession;
+}
 
 /**
  * Get paginated classes
@@ -93,7 +109,14 @@ export async function generateSessions(
   classId: UUID,
   data: GenerateSessionsRequest
 ): Promise<ClassSession[]> {
-  return api.post(`api/classes/${classId}/generate-sessions`, { json: data }).json();
+  const raw: Record<string, unknown>[] = await api.post("api/classes/sessions/generate", {
+    json: {
+      gymClassId: classId,
+      fromDate: data.startDate,
+      toDate: data.endDate,
+    },
+  }).json();
+  return raw.map(mapSession);
 }
 
 /**
@@ -106,7 +129,7 @@ export async function addSchedule(
     startTime: string;
     endTime: string;
   }
-): Promise<GymClass> {
+): Promise<ClassSchedule> {
   return api.post(`api/classes/${classId}/schedules`, { json: schedule }).json();
 }
 
@@ -116,8 +139,8 @@ export async function addSchedule(
 export async function removeSchedule(
   classId: UUID,
   scheduleId: UUID
-): Promise<GymClass> {
-  return api.delete(`api/classes/${classId}/schedules/${scheduleId}`).json();
+): Promise<void> {
+  await api.delete(`api/classes/${classId}/schedules/${scheduleId}`);
 }
 
 /**
@@ -130,14 +153,16 @@ export async function createSession(data: {
   endTime: string;
   capacity?: number;
 }): Promise<ClassSession> {
-  return api.post("api/classes/sessions", { json: data }).json();
+  const raw: Record<string, unknown> = await api.post("api/classes/sessions", { json: data }).json();
+  return mapSession(raw);
 }
 
 /**
  * Get a single session by ID
  */
 export async function getSession(id: UUID): Promise<ClassSession> {
-  return api.get(`api/classes/sessions/${id}`).json();
+  const raw: Record<string, unknown> = await api.get(`api/classes/sessions/${id}`).json();
+  return mapSession(raw);
 }
 
 /**
@@ -152,14 +177,16 @@ export async function updateSession(
     capacity?: number;
   }
 ): Promise<ClassSession> {
-  return api.put(`api/classes/sessions/${id}`, { json: data }).json();
+  const raw: Record<string, unknown> = await api.put(`api/classes/sessions/${id}`, { json: data }).json();
+  return mapSession(raw);
 }
 
 /**
  * Get sessions by date
  */
 export async function getSessionsByDate(date: string): Promise<ClassSession[]> {
-  return api.get(`api/classes/sessions/date/${date}`).json();
+  const raw: Record<string, unknown>[] = await api.get(`api/classes/sessions/date/${date}`).json();
+  return raw.map(mapSession);
 }
 
 /**
@@ -176,8 +203,8 @@ export async function getSessions(params: {
 }): Promise<PaginatedResponse<ClassSession>> {
   const searchParams = new URLSearchParams();
 
-  if (params.dateFrom) searchParams.set("dateFrom", params.dateFrom);
-  if (params.dateTo) searchParams.set("dateTo", params.dateTo);
+  if (params.dateFrom) searchParams.set("startDate", params.dateFrom);
+  if (params.dateTo) searchParams.set("endDate", params.dateTo);
   if (params.status) searchParams.set("status", params.status);
   if (params.locationId) searchParams.set("locationId", params.locationId);
   if (params.trainerId) searchParams.set("trainerId", params.trainerId);
@@ -187,7 +214,8 @@ export async function getSessions(params: {
   const queryString = searchParams.toString();
   const url = queryString ? `api/classes/sessions?${queryString}` : "api/classes/sessions";
 
-  return api.get(url).json();
+  const res: PaginatedResponse<Record<string, unknown>> = await api.get(url).json();
+  return { ...res, content: res.content.map(mapSession) };
 }
 
 /**
@@ -206,7 +234,8 @@ export async function getUpcomingSessionsByClass(
     ? `api/classes/${classId}/sessions/upcoming?${queryString}`
     : `api/classes/${classId}/sessions/upcoming`;
 
-  return api.get(url).json();
+  const res: PaginatedResponse<Record<string, unknown>> = await api.get(url).json();
+  return { ...res, content: res.content.map(mapSession) };
 }
 
 /**
@@ -216,23 +245,26 @@ export async function cancelSession(
   id: UUID,
   reason?: string
 ): Promise<ClassSession> {
-  return api
+  const raw: Record<string, unknown> = await api
     .post(`api/classes/sessions/${id}/cancel`, {
       json: reason ? { reason } : {},
     })
     .json();
+  return mapSession(raw);
 }
 
 /**
  * Start a session
  */
 export async function startSession(id: UUID): Promise<ClassSession> {
-  return api.post(`api/classes/sessions/${id}/start`).json();
+  const raw: Record<string, unknown> = await api.post(`api/classes/sessions/${id}/start`).json();
+  return mapSession(raw);
 }
 
 /**
  * Complete a session
  */
 export async function completeSession(id: UUID): Promise<ClassSession> {
-  return api.post(`api/classes/sessions/${id}/complete`).json();
+  const raw: Record<string, unknown> = await api.post(`api/classes/sessions/${id}/complete`).json();
+  return mapSession(raw);
 }

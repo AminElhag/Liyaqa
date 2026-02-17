@@ -13,7 +13,7 @@ import java.util.UUID
  * Command to create a new trainer.
  */
 data class CreateTrainerCommand(
-    val userId: UUID,
+    val userId: UUID? = null,
     val organizationId: UUID,
     val tenantId: UUID,
     // Basic Info
@@ -34,7 +34,16 @@ data class CreateTrainerCommand(
     val phone: String? = null,
     val notes: LocalizedText? = null,
     val assignedClubIds: List<UUID>? = null,
-    val primaryClubId: UUID? = null
+    val primaryClubId: UUID? = null,
+    val skillCategoryIds: List<UUID>? = null
+)
+
+/**
+ * Command to update trainer skills (class categories they can teach).
+ */
+data class UpdateTrainerSkillsCommand(
+    val trainerId: UUID,
+    val categoryIds: List<UUID>
 )
 
 /**

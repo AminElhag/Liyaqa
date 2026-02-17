@@ -27,10 +27,8 @@ export function useAddSchedule() {
       classId: UUID;
       schedule: { dayOfWeek: string; startTime: string; endTime: string };
     }) => addSchedule(classId, schedule),
-    onSuccess: (updatedClass, { classId }) => {
-      // Update the class detail cache with the new class data (includes schedules)
-      queryClient.setQueryData(classKeys.detail(classId), updatedClass);
-      // Invalidate lists to ensure they show updated schedule counts
+    onSuccess: (_newSchedule, { classId }) => {
+      queryClient.invalidateQueries({ queryKey: classKeys.detail(classId) });
       queryClient.invalidateQueries({ queryKey: classKeys.lists() });
     },
   });
@@ -50,10 +48,8 @@ export function useDeleteSchedule() {
       classId: UUID;
       scheduleId: UUID;
     }) => removeSchedule(classId, scheduleId),
-    onSuccess: (updatedClass, { classId }) => {
-      // Update the class detail cache with the new class data (without the deleted schedule)
-      queryClient.setQueryData(classKeys.detail(classId), updatedClass);
-      // Invalidate lists to ensure they show updated schedule counts
+    onSuccess: (_result, { classId }) => {
+      queryClient.invalidateQueries({ queryKey: classKeys.detail(classId) });
       queryClient.invalidateQueries({ queryKey: classKeys.lists() });
     },
   });

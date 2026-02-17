@@ -22,6 +22,7 @@ import {
   useQualifyDeal,
   useSendProposal,
   useStartNegotiation,
+  useChangeDealStage,
 } from "@liyaqa/shared/queries/platform/use-deals";
 import type { DealSummary, DealStatus } from "@liyaqa/shared/types/platform";
 
@@ -29,53 +30,74 @@ interface KanbanBoardProps {
   onDealClick: (deal: DealSummary) => void;
 }
 
-// Only show these stages in the kanban (open deals)
-const KANBAN_STAGES: DealStatus[] = ["LEAD", "CONTACTED", "PROPOSAL_SENT", "NEGOTIATION"];
+// Pipeline stages shown as draggable columns
+const PIPELINE_STAGES: DealStatus[] = [
+  "LEAD", "CONTACTED", "DEMO_SCHEDULED", "DEMO_DONE", "PROPOSAL_SENT", "NEGOTIATION",
+];
 
-// Map of valid transitions
+// Terminal stages shown as read-only columns below
+const TERMINAL_STAGES: DealStatus[] = ["WON", "LOST", "CHURNED"];
+
+// All stages combined (for lookups)
+const ALL_STAGES: DealStatus[] = [...PIPELINE_STAGES, ...TERMINAL_STAGES];
+
+// Map of valid drag-and-drop transitions
 const VALID_TRANSITIONS: Record<DealStatus, DealStatus[]> = {
   LEAD: ["CONTACTED"],
-  CONTACTED: ["PROPOSAL_SENT"],
-  DEMO_SCHEDULED: [],
-  DEMO_DONE: [],
+  CONTACTED: ["DEMO_SCHEDULED", "PROPOSAL_SENT"],
+  DEMO_SCHEDULED: ["DEMO_DONE"],
+  DEMO_DONE: ["PROPOSAL_SENT"],
   PROPOSAL_SENT: ["NEGOTIATION"],
-  NEGOTIATION: [],
-  WON: [],
-  LOST: [],
-  CHURNED: [],
+  NEGOTIATION: [],   // WON requires conversion wizard
+  WON: [],           // terminal
+  LOST: [],          // reopen via detail page
+  CHURNED: [],       // reopen via detail page
 };
 
 export function KanbanBoard({ onDealClick }: KanbanBoardProps) {
   const locale = useLocale();
   const [activeDeal, setActiveDeal] = useState<DealSummary | null>(null);
 
-  // Fetch deals for each stage
+  // Fetch deals for each pipeline stage
   const leadDeals = useDealsByStatus("LEAD", { size: 100 });
   const contactedDeals = useDealsByStatus("CONTACTED", { size: 100 });
+  const demoScheduledDeals = useDealsByStatus("DEMO_SCHEDULED", { size: 100 });
+  const demoDoneDeals = useDealsByStatus("DEMO_DONE", { size: 100 });
   const proposalDeals = useDealsByStatus("PROPOSAL_SENT", { size: 100 });
   const negotiationDeals = useDealsByStatus("NEGOTIATION", { size: 100 });
+
+  // Fetch terminal stages
+  const wonDeals = useDealsByStatus("WON", { size: 50 });
+  const lostDeals = useDealsByStatus("LOST", { size: 50 });
+  const churnedDeals = useDealsByStatus("CHURNED", { size: 50 });
 
   // Mutations for status transitions
   const qualifyDeal = useQualifyDeal();
   const sendProposal = useSendProposal();
   const startNegotiation = useStartNegotiation();
+  const changeDealStage = useChangeDealStage();
 
   const isLoading =
     leadDeals.isLoading ||
     contactedDeals.isLoading ||
+    demoScheduledDeals.isLoading ||
+    demoDoneDeals.isLoading ||
     proposalDeals.isLoading ||
-    negotiationDeals.isLoading;
+    negotiationDeals.isLoading ||
+    wonDeals.isLoading ||
+    lostDeals.isLoading ||
+    churnedDeals.isLoading;
 
   const dealsMap: Record<DealStatus, DealSummary[]> = {
     LEAD: leadDeals.data?.content || [],
     CONTACTED: contactedDeals.data?.content || [],
-    DEMO_SCHEDULED: [],
-    DEMO_DONE: [],
+    DEMO_SCHEDULED: demoScheduledDeals.data?.content || [],
+    DEMO_DONE: demoDoneDeals.data?.content || [],
     PROPOSAL_SENT: proposalDeals.data?.content || [],
     NEGOTIATION: negotiationDeals.data?.content || [],
-    WON: [],
-    LOST: [],
-    CHURNED: [],
+    WON: wonDeals.data?.content || [],
+    LOST: lostDeals.data?.content || [],
+    CHURNED: churnedDeals.data?.content || [],
   };
 
   const sensors = useSensors(
@@ -91,7 +113,7 @@ export function KanbanBoard({ onDealClick }: KanbanBoardProps) {
 
   const findDealById = useCallback(
     (id: string): DealSummary | undefined => {
-      for (const stage of KANBAN_STAGES) {
+      for (const stage of ALL_STAGES) {
         const deal = dealsMap[stage].find((d) => d.id === id);
         if (deal) return deal;
       }
@@ -136,6 +158,12 @@ export function KanbanBoard({ onDealClick }: KanbanBoardProps) {
         case "CONTACTED":
           qualifyDeal.mutate(dealId);
           break;
+        case "DEMO_SCHEDULED":
+          changeDealStage.mutate({ id: dealId, stage: "DEMO_SCHEDULED" });
+          break;
+        case "DEMO_DONE":
+          changeDealStage.mutate({ id: dealId, stage: "DEMO_DONE" });
+          break;
         case "PROPOSAL_SENT":
           sendProposal.mutate(dealId);
           break;
@@ -144,7 +172,7 @@ export function KanbanBoard({ onDealClick }: KanbanBoardProps) {
           break;
       }
     },
-    [findDealById, qualifyDeal, sendProposal, startNegotiation]
+    [findDealById, qualifyDeal, sendProposal, startNegotiation, changeDealStage]
   );
 
   const texts = {
@@ -153,6 +181,10 @@ export function KanbanBoard({ onDealClick }: KanbanBoardProps) {
       locale === "ar"
         ? "اسحب الصفقات لتغيير مرحلتها"
         : "Drag deals to change their stage",
+    terminalHeader:
+      locale === "ar"
+        ? "الصفقات المغلقة"
+        : "Closed Deals",
   };
 
   if (isLoading) {
@@ -164,9 +196,10 @@ export function KanbanBoard({ onDealClick }: KanbanBoardProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <p className="text-sm text-muted-foreground">{texts.dragHint}</p>
 
+      {/* Pipeline columns (draggable) */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -174,7 +207,7 @@ export function KanbanBoard({ onDealClick }: KanbanBoardProps) {
         onDragEnd={handleDragEnd}
       >
         <div className="flex gap-4 overflow-x-auto pb-4">
-          {KANBAN_STAGES.map((status) => (
+          {PIPELINE_STAGES.map((status) => (
             <KanbanColumn
               key={status}
               status={status}
@@ -192,6 +225,24 @@ export function KanbanBoard({ onDealClick }: KanbanBoardProps) {
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {/* Terminal stages (non-draggable, compact) */}
+      <div>
+        <h3 className="text-sm font-medium text-muted-foreground mb-3">
+          {texts.terminalHeader}
+        </h3>
+        <div className="flex gap-4 overflow-x-auto pb-4">
+          {TERMINAL_STAGES.map((status) => (
+            <KanbanColumn
+              key={status}
+              status={status}
+              deals={dealsMap[status]}
+              onDealClick={onDealClick}
+              isDropTarget={false}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

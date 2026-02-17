@@ -52,14 +52,14 @@ const schema = z.object({
   // Stock pricing
   enableStockPricing: z.boolean().default(false),
   lowStockThreshold: z.number().min(0).default(10),
-  lowStockPrice: z.number().min(0).optional().nullable(),
-  outOfStockPrice: z.number().min(0).optional().nullable(),
+  lowStockPrice: z.number().min(0).optional().nullable().or(z.nan().transform(() => null)),
+  outOfStockPrice: z.number().min(0).optional().nullable().or(z.nan().transform(() => null)),
   // Inventory
   trackInventory: z.boolean().default(false),
-  stockQuantity: z.number().min(0).optional().nullable(),
+  stockQuantity: z.number().min(0).optional().nullable().or(z.nan().transform(() => null)),
   // Expiration
   hasExpiration: z.boolean().default(false),
-  expirationDays: z.number().min(1).optional().nullable(),
+  expirationDays: z.number().min(1).optional().nullable().or(z.nan().transform(() => null)),
   // Zone access
   zoneAccess: z.array(z.enum([
     "LOCKER_ROOM",
@@ -70,13 +70,13 @@ const schema = z.object({
     "STUDIO",
     "OTHER",
   ] as const)).default([]),
-  accessDurationDays: z.number().min(1).optional().nullable(),
+  accessDurationDays: z.number().min(1).optional().nullable().or(z.nan().transform(() => null)),
   // Restrictions
   isSingleUse: z.boolean().default(false),
-  maxQuantityPerOrder: z.number().min(1).optional().nullable(),
+  maxQuantityPerOrder: z.number().min(1).optional().nullable().or(z.nan().transform(() => null)),
   // Display
   sortOrder: z.number().min(0).default(0),
-  imageUrl: z.string().url().optional().nullable().or(z.literal("")),
+  imageUrl: z.string().url().optional().or(z.literal("")),
   // Bundle items
   bundleItems: z.array(bundleItemSchema).optional(),
 });

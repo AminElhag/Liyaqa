@@ -2,6 +2,7 @@ package com.liyaqa.membership.api
 
 import com.liyaqa.membership.application.commands.CreateSubscriptionCommand
 import com.liyaqa.membership.application.commands.RenewSubscriptionCommand
+import com.liyaqa.membership.application.commands.TransferSubscriptionCommand
 import com.liyaqa.membership.application.commands.UpdateSubscriptionCommand
 import com.liyaqa.membership.domain.model.MembershipPlan
 import com.liyaqa.membership.domain.model.Subscription
@@ -66,6 +67,17 @@ data class RenewSubscriptionRequest(
     fun toCommand() = RenewSubscriptionCommand(
         newEndDate = newEndDate,
         paidAmount = paidAmount?.let { Money(it, paidCurrency) }
+    )
+}
+
+data class TransferSubscriptionRequest(
+    @field:NotNull(message = "Target member ID is required")
+    val targetMemberId: UUID,
+    val reason: String? = null
+) {
+    fun toCommand() = TransferSubscriptionCommand(
+        targetMemberId = targetMemberId,
+        reason = reason
     )
 }
 

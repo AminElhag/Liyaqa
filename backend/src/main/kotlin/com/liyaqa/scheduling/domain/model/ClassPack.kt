@@ -102,7 +102,22 @@ class ClassPack(
      * Image URL for the pack.
      */
     @Column(name = "image_url")
-    var imageUrl: String? = null
+    var imageUrl: String? = null,
+
+    /**
+     * Allocation mode: FLAT (legacy pool) or PER_CATEGORY (credits distributed per category).
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "allocation_mode", nullable = false)
+    var allocationMode: ClassPackAllocationMode = ClassPackAllocationMode.FLAT,
+
+    /**
+     * Service type: GX (group exercise), PT (personal training), or GOODS.
+     * Determines what this pack can be redeemed for.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "service_type", nullable = false, length = 10)
+    var serviceType: ServiceType = ServiceType.GX
 
 ) : BaseEntity(id) {
 

@@ -20,8 +20,10 @@ interface GymClassRepository {
     fun findByLocationIdAndStatus(locationId: UUID, status: GymClassStatus, pageable: Pageable): Page<GymClass>
     fun findByClassType(classType: ClassType, pageable: Pageable): Page<GymClass>
     fun findByDefaultTrainerId(trainerId: UUID, pageable: Pageable): Page<GymClass>
+    fun findAllById(ids: Collection<UUID>): List<GymClass>
     fun existsById(id: UUID): Boolean
     fun deleteById(id: UUID)
     fun count(): Long
     fun countByStatus(status: GymClassStatus): Long
+    fun countByCategoryId(categoryId: UUID): Long
 }

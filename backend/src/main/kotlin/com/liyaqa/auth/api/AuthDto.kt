@@ -151,6 +151,62 @@ data class PasswordStrengthResponse(
     val violations: List<String>
 )
 
+// === Account Type Selection DTOs ===
+
+/**
+ * Request to select an account type after login when user has multiple types.
+ */
+data class SelectAccountTypeRequest(
+    @field:NotBlank(message = "Session token is required")
+    val sessionToken: String,
+
+    @field:NotNull(message = "Account type is required")
+    val accountType: com.liyaqa.auth.domain.model.AccountType
+)
+
+/**
+ * Response when login requires account type selection (user has multiple account types).
+ */
+data class AccountTypeSelectionResponse(
+    val accountTypeSelectionRequired: Boolean = true,
+    val sessionToken: String,
+    val availableAccountTypes: List<AccountTypeInfo>,
+    val user: UserResponse
+)
+
+/**
+ * Info about an available account type.
+ */
+data class AccountTypeInfo(
+    val accountType: com.liyaqa.auth.domain.model.AccountType,
+    val label: String,
+    val labelAr: String
+) {
+    companion object {
+        fun from(type: com.liyaqa.auth.domain.model.AccountType) = AccountTypeInfo(
+            accountType = type,
+            label = when (type) {
+                com.liyaqa.auth.domain.model.AccountType.EMPLOYEE -> "Employee Portal"
+                com.liyaqa.auth.domain.model.AccountType.TRAINER -> "Trainer Portal"
+                com.liyaqa.auth.domain.model.AccountType.MEMBER -> "Member Portal"
+            },
+            labelAr = when (type) {
+                com.liyaqa.auth.domain.model.AccountType.EMPLOYEE -> "بوابة الموظف"
+                com.liyaqa.auth.domain.model.AccountType.TRAINER -> "بوابة المدرب"
+                com.liyaqa.auth.domain.model.AccountType.MEMBER -> "بوابة العضو"
+            }
+        )
+    }
+}
+
+/**
+ * Request to switch account type while already authenticated.
+ */
+data class SwitchAccountTypeRequest(
+    @field:NotNull(message = "Account type is required")
+    val accountType: com.liyaqa.auth.domain.model.AccountType
+)
+
 // === Response DTOs ===
 
 data class AuthResponse(
@@ -192,6 +248,8 @@ data class UserResponse(
     val organizationId: UUID?,
     val isPlatformUser: Boolean,
     val permissions: List<String>,
+    val accountTypes: List<com.liyaqa.auth.domain.model.AccountType>,
+    val activeAccountType: com.liyaqa.auth.domain.model.AccountType?,
     val lastLoginAt: Instant?,
     val createdAt: Instant,
     val updatedAt: Instant
@@ -202,8 +260,14 @@ data class UserResponse(
          * @param user The user entity
          * @param organizationId Optional organization ID (looked up from club if needed)
          * @param permissions Optional list of permission codes
+         * @param activeAccountType The currently active account type (from JWT)
          */
-        fun from(user: User, organizationId: UUID? = null, permissions: List<String> = emptyList()) = UserResponse(
+        fun from(
+            user: User,
+            organizationId: UUID? = null,
+            permissions: List<String> = emptyList(),
+            activeAccountType: com.liyaqa.auth.domain.model.AccountType? = null
+        ) = UserResponse(
             id = user.id,
             email = user.email,
             displayName = LocalizedTextResponse.from(user.displayName),
@@ -214,6 +278,8 @@ data class UserResponse(
             organizationId = organizationId,
             isPlatformUser = user.isPlatformUser,
             permissions = permissions,
+            accountTypes = user.accountTypes.toList(),
+            activeAccountType = activeAccountType ?: User.accountTypeFromRole(user.role),
             lastLoginAt = user.lastLoginAt,
             createdAt = user.createdAt,
             updatedAt = user.updatedAt

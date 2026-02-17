@@ -1,14 +1,14 @@
 import { api } from "./client";
 import type { PaginatedResponse, UUID, LocalizedText, Money } from "../../types/api";
-import type { MembershipPlan, TaxableFeeRequest, BillingPeriod, SubscriptionType } from "../../types/member";
+import type { MembershipPlan, TaxableFeeRequest, BillingPeriod, SubscriptionType, MembershipPlanType, MembershipPlanStatus, PlanStats } from "../../types/member";
 import type { ContractType, ContractTerm, TerminationFeeType } from "../../types/contract";
 
 const PLANS_ENDPOINT = "api/membership-plans";
 
 /**
- * Re-export BillingPeriod for convenience
+ * Re-export types for convenience
  */
-export type { BillingPeriod } from "../../types/member";
+export type { BillingPeriod, MembershipPlanType, MembershipPlanStatus } from "../../types/member";
 
 /**
  * Create plan request
@@ -16,6 +16,10 @@ export type { BillingPeriod } from "../../types/member";
 export interface CreatePlanRequest {
   name: LocalizedText;
   description?: LocalizedText;
+
+  // Plan type & status
+  planType?: MembershipPlanType;
+  status?: MembershipPlanStatus;
 
   // Date restrictions
   availableFrom?: string;
@@ -34,6 +38,10 @@ export interface CreatePlanRequest {
   billingPeriod: BillingPeriod;
   durationDays?: number;
   maxClassesPerPeriod?: number;
+
+  // GX class access
+  classAccessLevel?: "UNLIMITED" | "LIMITED" | "NO_ACCESS";
+  eligibleClassCategories?: string;
 
   // Features
   hasGuestPasses?: boolean;
@@ -58,6 +66,18 @@ export interface CreatePlanRequest {
   earlyTerminationFeeValue?: number;
   coolingOffDays?: number;
 
+  // PT access
+  ptAccessLevel?: "UNLIMITED" | "LIMITED" | "NO_ACCESS";
+  maxPtSessionsPerPeriod?: number;
+  ptSessionsIncluded?: number;
+
+  // Class pack fields
+  sessionCount?: number;
+  expiryDays?: number;
+
+  // Trial conversion
+  convertsToPlanId?: UUID;
+
   // Legacy (backward compatibility)
   price?: Money;
   classLimit?: number;
@@ -80,7 +100,10 @@ export interface UpdatePlanRequest extends Partial<CreatePlanRequest> {
  */
 export interface PlanQueryParams {
   active?: boolean;
+  status?: MembershipPlanStatus;
+  planType?: MembershipPlanType;
   type?: SubscriptionType;
+  search?: string;
   page?: number;
   size?: number;
 }
@@ -92,7 +115,10 @@ function buildQueryString(params: PlanQueryParams): string {
   const searchParams = new URLSearchParams();
   if (params.active !== undefined)
     searchParams.set("active", String(params.active));
+  if (params.status) searchParams.set("status", params.status);
+  if (params.planType) searchParams.set("planType", params.planType);
   if (params.type) searchParams.set("type", params.type);
+  if (params.search) searchParams.set("search", params.search);
   if (params.page !== undefined) searchParams.set("page", String(params.page));
   if (params.size !== undefined) searchParams.set("size", String(params.size));
   return searchParams.toString();
@@ -138,6 +164,10 @@ export async function createPlan(
     descriptionEn: data.description?.en || null,
     descriptionAr: data.description?.ar || null,
 
+    // Plan type & status
+    planType: data.planType ?? "RECURRING",
+    status: data.status ?? "ACTIVE",
+
     // Date restrictions
     availableFrom: data.availableFrom || null,
     availableUntil: data.availableUntil || null,
@@ -167,6 +197,8 @@ export async function createPlan(
     billingPeriod: data.billingPeriod,
     durationDays: data.durationDays ?? null,
     maxClassesPerPeriod: data.maxClassesPerPeriod ?? data.classLimit ?? null,
+    classAccessLevel: data.classAccessLevel ?? "UNLIMITED",
+    eligibleClassCategories: data.eligibleClassCategories ?? null,
 
     // Features
     hasGuestPasses: data.hasGuestPasses ?? false,
@@ -190,6 +222,16 @@ export async function createPlan(
     earlyTerminationFeeType: data.earlyTerminationFeeType ?? "NONE",
     earlyTerminationFeeValue: data.earlyTerminationFeeValue ?? null,
     coolingOffDays: data.coolingOffDays ?? 14,
+
+    // PT access
+    ptAccessLevel: data.ptAccessLevel ?? "NO_ACCESS",
+    maxPtSessionsPerPeriod: data.maxPtSessionsPerPeriod ?? null,
+    ptSessionsIncluded: data.ptSessionsIncluded ?? null,
+
+    // Class pack & trial
+    sessionCount: data.sessionCount ?? null,
+    expiryDays: data.expiryDays ?? null,
+    convertsToPlanId: data.convertsToPlanId ?? null,
   };
   return api.post(PLANS_ENDPOINT, { json: backendData }).json();
 }
@@ -266,6 +308,8 @@ export async function updatePlan(
   if (data.durationDays !== undefined) backendData.durationDays = data.durationDays;
   if (data.maxClassesPerPeriod !== undefined) backendData.maxClassesPerPeriod = data.maxClassesPerPeriod;
   if (data.classLimit !== undefined) backendData.maxClassesPerPeriod = data.classLimit;
+  if (data.classAccessLevel !== undefined) backendData.classAccessLevel = data.classAccessLevel;
+  if (data.eligibleClassCategories !== undefined) backendData.eligibleClassCategories = data.eligibleClassCategories;
 
   // Features
   if (data.hasGuestPasses !== undefined) backendData.hasGuestPasses = data.hasGuestPasses;
@@ -294,6 +338,11 @@ export async function updatePlan(
   if (data.earlyTerminationFeeValue !== undefined) backendData.earlyTerminationFeeValue = data.earlyTerminationFeeValue;
   if (data.coolingOffDays !== undefined) backendData.coolingOffDays = data.coolingOffDays;
 
+  // PT access
+  if (data.ptAccessLevel !== undefined) backendData.ptAccessLevel = data.ptAccessLevel;
+  if (data.maxPtSessionsPerPeriod !== undefined) backendData.maxPtSessionsPerPeriod = data.maxPtSessionsPerPeriod;
+  if (data.ptSessionsIncluded !== undefined) backendData.ptSessionsIncluded = data.ptSessionsIncluded;
+
   return api.put(`${PLANS_ENDPOINT}/${id}`, { json: backendData }).json();
 }
 
@@ -316,4 +365,32 @@ export async function activatePlan(id: UUID): Promise<MembershipPlan> {
  */
 export async function deactivatePlan(id: UUID): Promise<MembershipPlan> {
   return api.post(`${PLANS_ENDPOINT}/${id}/deactivate`).json();
+}
+
+/**
+ * Archive a plan (ACTIVE -> ARCHIVED)
+ */
+export async function archivePlan(id: UUID): Promise<MembershipPlan> {
+  return api.post(`${PLANS_ENDPOINT}/${id}/archive`).json();
+}
+
+/**
+ * Reactivate an archived plan (ARCHIVED -> ACTIVE)
+ */
+export async function reactivatePlan(id: UUID): Promise<MembershipPlan> {
+  return api.post(`${PLANS_ENDPOINT}/${id}/reactivate`).json();
+}
+
+/**
+ * Publish a draft plan (DRAFT -> ACTIVE)
+ */
+export async function publishPlan(id: UUID): Promise<MembershipPlan> {
+  return api.post(`${PLANS_ENDPOINT}/${id}/publish`).json();
+}
+
+/**
+ * Get plan statistics
+ */
+export async function getPlanStats(): Promise<PlanStats> {
+  return api.get(`${PLANS_ENDPOINT}/stats`).json();
 }

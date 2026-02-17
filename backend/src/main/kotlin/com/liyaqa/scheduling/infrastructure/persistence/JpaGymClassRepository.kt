@@ -18,6 +18,7 @@ interface SpringDataGymClassRepository : JpaRepository<GymClass, UUID> {
     fun findByClassType(classType: ClassType, pageable: Pageable): Page<GymClass>
     fun findByDefaultTrainerId(trainerId: UUID, pageable: Pageable): Page<GymClass>
     fun countByStatus(status: GymClassStatus): Long
+    fun countByCategoryId(categoryId: UUID): Long
 }
 
 @Repository
@@ -53,6 +54,9 @@ class JpaGymClassRepository(
     override fun findByDefaultTrainerId(trainerId: UUID, pageable: Pageable): Page<GymClass> =
         springDataRepository.findByDefaultTrainerId(trainerId, pageable)
 
+    override fun findAllById(ids: Collection<UUID>): List<GymClass> =
+        springDataRepository.findAllById(ids)
+
     override fun existsById(id: UUID): Boolean =
         springDataRepository.existsById(id)
 
@@ -64,4 +68,7 @@ class JpaGymClassRepository(
 
     override fun countByStatus(status: GymClassStatus): Long =
         springDataRepository.countByStatus(status)
+
+    override fun countByCategoryId(categoryId: UUID): Long =
+        springDataRepository.countByCategoryId(categoryId)
 }

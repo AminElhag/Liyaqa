@@ -171,7 +171,7 @@ export function AIInsightsBanner({
 
   if (isLoading) {
     return (
-      <div className="rounded-md3-lg border p-4 animate-pulse">
+      <div className="rounded-xl border p-4 animate-pulse">
         <div className="flex items-center gap-3">
           <div className="h-6 w-6 rounded-full bg-muted" />
           <div className="h-5 w-32 rounded bg-muted" />
@@ -187,7 +187,7 @@ export function AIInsightsBanner({
   return (
     <div
       className={cn(
-        "rounded-md3-lg border overflow-hidden",
+        "rounded-xl border overflow-hidden",
         "bg-gradient-to-r from-violet-50/50 via-purple-50/30 to-fuchsia-50/50",
         "dark:from-violet-950/20 dark:via-purple-950/10 dark:to-fuchsia-950/20",
         "border-violet-200/50 dark:border-violet-800/30"
@@ -204,7 +204,7 @@ export function AIInsightsBanner({
         )}
       >
         <div className={cn("flex items-center gap-3", isRtl && "flex-row-reverse")}>
-          <div className="flex items-center justify-center h-8 w-8 rounded-md3-sm bg-violet-100 dark:bg-violet-900/50">
+          <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-violet-100 dark:bg-violet-900/50">
             <Sparkles className="h-4 w-4 text-violet-600 dark:text-violet-400" />
           </div>
           <div className={cn("text-start", isRtl && "text-end")}>
@@ -240,7 +240,7 @@ export function AIInsightsBanner({
               <div
                 key={insight.id}
                 className={cn(
-                  "relative flex items-start gap-4 p-4 rounded-md3-md border",
+                  "relative flex items-start gap-4 p-4 rounded-xl border",
                   styles.bg,
                   styles.border
                 )}
@@ -248,9 +248,9 @@ export function AIInsightsBanner({
                 {/* Type indicator bar */}
                 <div
                   className={cn(
-                    "absolute top-0 bottom-0 w-1 rounded-l-md3-md",
+                    "absolute top-0 bottom-0 w-1 rounded-l-xl",
                     styles.accent,
-                    isRtl ? "right-0 rounded-l-none rounded-r-md3-md" : "left-0"
+                    isRtl ? "right-0 rounded-l-none rounded-r-xl" : "left-0"
                   )}
                 />
 

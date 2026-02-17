@@ -4,7 +4,9 @@ import com.liyaqa.shared.domain.BaseEntity
 import jakarta.persistence.*
 import org.hibernate.annotations.Filter
 import org.hibernate.annotations.FilterDef
+import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.ParamDef
+import org.hibernate.type.SqlTypes
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.*
@@ -32,9 +34,11 @@ class ForecastModel(
     @Column(name = "accuracy_rmse", precision = 15, scale = 2)
     var accuracyRmse: BigDecimal? = null,
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "feature_importance", columnDefinition = "JSONB")
     var featureImportance: String? = null,
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "hyperparameters", columnDefinition = "JSONB")
     var hyperparameters: String? = null,
 

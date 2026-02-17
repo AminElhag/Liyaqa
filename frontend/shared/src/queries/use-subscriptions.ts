@@ -20,11 +20,21 @@ import {
   bulkFreezeSubscriptions,
   bulkUnfreezeSubscriptions,
   bulkCancelSubscriptions,
+  cancelSubscriptionWithReason,
+  transferSubscription,
+  getMembershipHistory,
   type SubscriptionQueryParams,
   type UpdateSubscriptionRequest,
 } from "../lib/api/subscriptions";
 import type { PaginatedResponse, UUID } from "../types/api";
-import type { Subscription, CreateSubscriptionRequest } from "../types/member";
+import type {
+  Subscription,
+  CreateSubscriptionRequest,
+  CancelSubscriptionRequest,
+  TransferSubscriptionRequest,
+  RenewSubscriptionRequest,
+  MembershipHistoryEvent,
+} from "../types/member";
 import { memberKeys } from "./use-members";
 
 // Query keys
@@ -185,7 +195,8 @@ export function useRenewSubscription() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: UUID) => renewSubscription(id),
+    mutationFn: ({ id, data }: { id: UUID; data?: RenewSubscriptionRequest }) =>
+      renewSubscription(id, data),
     onSuccess: (updatedSubscription) => {
       queryClient.setQueryData(
         subscriptionKeys.detail(updatedSubscription.id),
@@ -286,5 +297,68 @@ export function useDeleteSubscription() {
       queryClient.invalidateQueries({ queryKey: subscriptionKeys.lists() });
       queryClient.invalidateQueries({ queryKey: subscriptionKeys.all });
     },
+  });
+}
+
+/**
+ * Hook to cancel a subscription with reason details
+ */
+export function useCancelSubscriptionWithReason() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: UUID; data: CancelSubscriptionRequest }) =>
+      cancelSubscriptionWithReason(id, data),
+    onSuccess: (updatedSubscription) => {
+      queryClient.setQueryData(
+        subscriptionKeys.detail(updatedSubscription.id),
+        updatedSubscription
+      );
+      queryClient.invalidateQueries({ queryKey: subscriptionKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: subscriptionKeys.byMember(updatedSubscription.memberId),
+      });
+    },
+  });
+}
+
+/**
+ * Hook to transfer a subscription to another member
+ */
+export function useTransferSubscription() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: UUID;
+      data: TransferSubscriptionRequest;
+    }) => transferSubscription(id, data),
+    onSuccess: (updatedSubscription) => {
+      queryClient.invalidateQueries({ queryKey: subscriptionKeys.all });
+      queryClient.invalidateQueries({
+        queryKey: memberKeys.all,
+      });
+    },
+  });
+}
+
+/**
+ * Hook to fetch membership history for a member
+ */
+export function useMembershipHistory(
+  memberId: UUID,
+  options?: Omit<
+    UseQueryOptions<MembershipHistoryEvent[]>,
+    "queryKey" | "queryFn"
+  >
+) {
+  return useQuery({
+    queryKey: [...subscriptionKeys.all, "history", memberId] as const,
+    queryFn: () => getMembershipHistory(memberId),
+    enabled: false, // Backend endpoint not yet implemented — GET /api/members/{id}/membership-history
+    ...options,
   });
 }

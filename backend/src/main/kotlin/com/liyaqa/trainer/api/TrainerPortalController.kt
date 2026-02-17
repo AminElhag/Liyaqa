@@ -47,7 +47,7 @@ class TrainerPortalController(
 
         // Get trainer details
         val trainer = trainerService.getTrainer(trainerId)
-        val user = userRepository.findById(trainer.userId).orElse(null)
+        val user = trainer.userId?.let { userRepository.findById(it).orElse(null) }
         val specializations = trainerService.deserializeSpecializations(trainer.specializations)
 
         // Overview

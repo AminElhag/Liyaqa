@@ -219,16 +219,6 @@ class SubscriptionController(
     }
 
     /**
-     * Freezes a subscription.
-     */
-    @PostMapping("/subscriptions/{id}/freeze")
-    @PreAuthorize("hasAuthority('subscriptions_freeze')")
-    fun freezeSubscription(@PathVariable id: UUID): ResponseEntity<SubscriptionResponse> {
-        val subscription = subscriptionService.freezeSubscription(id)
-        return ResponseEntity.ok(toResponse(subscription))
-    }
-
-    /**
      * Unfreezes a subscription.
      */
     @PostMapping("/subscriptions/{id}/unfreeze")
@@ -258,6 +248,19 @@ class SubscriptionController(
         @Valid @RequestBody request: RenewSubscriptionRequest
     ): ResponseEntity<SubscriptionResponse> {
         val subscription = subscriptionService.renewSubscription(id, request.toCommand())
+        return ResponseEntity.ok(toResponse(subscription))
+    }
+
+    /**
+     * Transfers a subscription to another member.
+     */
+    @PostMapping("/subscriptions/{id}/transfer")
+    @PreAuthorize("hasAuthority('subscriptions_update')")
+    fun transferSubscription(
+        @PathVariable id: UUID,
+        @Valid @RequestBody request: TransferSubscriptionRequest
+    ): ResponseEntity<SubscriptionResponse> {
+        val subscription = subscriptionService.transferSubscription(id, request.toCommand())
         return ResponseEntity.ok(toResponse(subscription))
     }
 

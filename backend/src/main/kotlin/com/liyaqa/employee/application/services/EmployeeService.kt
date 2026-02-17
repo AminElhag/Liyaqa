@@ -100,6 +100,12 @@ class EmployeeService(
             notes = command.notes
         }
 
+        // Add EMPLOYEE account type to the user
+        userRepository.findById(command.userId).ifPresent { user ->
+            user.addAccountType(com.liyaqa.auth.domain.model.AccountType.EMPLOYEE)
+            userRepository.save(user)
+        }
+
         val savedEmployee = employeeRepository.save(employee)
         logger.info("Created employee ${savedEmployee.id} for user ${command.userId}")
 

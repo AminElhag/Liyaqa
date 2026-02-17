@@ -105,6 +105,7 @@ class TrainerEarningsService(
      * @param pricePerAttendee Price charged per attendee
      * @return Created TrainerEarnings entity
      */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     fun autoCreateEarningForClassSession(
         sessionId: UUID,
         trainerId: UUID,
@@ -224,7 +225,7 @@ class TrainerEarningsService(
             }
         }
 
-        return Money(amount, currency)
+        return Money(amount.setScale(2, java.math.RoundingMode.HALF_UP), currency)
     }
 
     // ==================== APPROVAL WORKFLOW ====================

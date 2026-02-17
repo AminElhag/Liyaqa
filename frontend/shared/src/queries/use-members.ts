@@ -19,10 +19,14 @@ import {
   bulkActivateMembers,
   resetMemberPassword,
   createUserForMember,
+  getMemberActivities,
+  logProfileView,
 } from "../lib/api/members";
 import type { PaginatedResponse, UUID } from "../types/api";
 import type {
   Member,
+  MemberActivity,
+  MemberActivityQueryParams,
   CreateMemberRequest,
   UpdateMemberRequest,
   MemberQueryParams,
@@ -36,6 +40,8 @@ export const memberKeys = {
     [...memberKeys.lists(), params] as const,
   details: () => [...memberKeys.all, "detail"] as const,
   detail: (id: UUID) => [...memberKeys.details(), id] as const,
+  activities: (id: UUID, params?: MemberActivityQueryParams) =>
+    [...memberKeys.all, "activities", id, params] as const,
 };
 
 /**
@@ -229,5 +235,34 @@ export function useCreateUserForMember() {
       queryClient.invalidateQueries({ queryKey: memberKeys.detail(memberId) });
       queryClient.invalidateQueries({ queryKey: memberKeys.lists() });
     },
+  });
+}
+
+/**
+ * Hook to fetch paginated member activities
+ */
+export function useMemberActivities(
+  memberId: UUID,
+  params: MemberActivityQueryParams = {},
+  options?: Omit<
+    UseQueryOptions<PaginatedResponse<MemberActivity>>,
+    "queryKey" | "queryFn"
+  >
+) {
+  return useQuery({
+    queryKey: memberKeys.activities(memberId, params),
+    queryFn: () => getMemberActivities(memberId, params),
+    enabled: !!memberId,
+    staleTime: 60_000, // 1 minute
+    ...options,
+  });
+}
+
+/**
+ * Hook to log a profile view (fire-and-forget mutation)
+ */
+export function useLogProfileView(memberId: UUID) {
+  return useMutation({
+    mutationFn: () => logProfileView(memberId),
   });
 }

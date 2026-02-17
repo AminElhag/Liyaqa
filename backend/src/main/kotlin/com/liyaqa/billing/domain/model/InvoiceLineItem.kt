@@ -52,7 +52,15 @@ data class InvoiceLineItem(
      * Defaults to 15% (Saudi Arabia VAT rate).
      */
     @Column(name = "line_tax_rate", nullable = false)
-    val taxRate: BigDecimal = BigDecimal("15.00")
+    val taxRate: BigDecimal = BigDecimal("15.00"),
+
+    /**
+     * ZATCA VAT category code for this line item.
+     * S = Standard rate (15%), Z = Zero-rated, E = Exempt, O = Out of scope.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "line_vat_category_code", nullable = false)
+    val vatCategoryCode: VatCategoryCode = VatCategoryCode.S
 ) {
     /**
      * Calculates the line total before tax (quantity * unit price).

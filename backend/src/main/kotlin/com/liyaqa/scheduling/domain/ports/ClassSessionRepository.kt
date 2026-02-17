@@ -1,10 +1,12 @@
 package com.liyaqa.scheduling.domain.ports
 
 import com.liyaqa.scheduling.domain.model.ClassSession
+import com.liyaqa.scheduling.domain.model.ClassType
 import com.liyaqa.scheduling.domain.model.SessionStatus
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import java.time.LocalDate
+import java.time.LocalTime
 import java.util.Optional
 import java.util.UUID
 
@@ -33,4 +35,8 @@ interface ClassSessionRepository {
     fun count(): Long
     fun countByStatus(status: SessionStatus): Long
     fun countBySessionDate(date: LocalDate): Long
+    fun findBySessionDateBetweenAndClassType(startDate: LocalDate, endDate: LocalDate, classType: ClassType, pageable: Pageable): Page<ClassSession>
+    fun findByTrainerIdAndClassType(trainerId: UUID, classType: ClassType, pageable: Pageable): Page<ClassSession>
+    fun findConflictingSessionsByTrainer(trainerId: UUID, sessionDate: LocalDate, startTime: LocalTime, endTime: LocalTime, excludeSessionId: UUID?): List<ClassSession>
+    fun findConflictingSessionsByLocation(locationId: UUID, sessionDate: LocalDate, startTime: LocalTime, endTime: LocalTime, excludeSessionId: UUID?): List<ClassSession>
 }

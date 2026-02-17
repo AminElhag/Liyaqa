@@ -37,10 +37,10 @@ const taskTypeIcons: Partial<Record<TaskType, React.ReactNode>> = {
 };
 
 const priorityColors: Record<TaskPriority, string> = {
-  LOW: "bg-gray-100 text-gray-600",
-  MEDIUM: "bg-yellow-100 text-yellow-700",
-  HIGH: "bg-orange-100 text-orange-700",
-  URGENT: "bg-red-100 text-red-700",
+  LOW: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300",
+  MEDIUM: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+  HIGH: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+  URGENT: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 };
 
 export function MyTasksWidget() {
@@ -81,7 +81,7 @@ export function MyTasksWidget() {
 
   if (error) {
     return (
-      <Card className="border-muted-foreground/20">
+      <Card className="border-muted-foreground/20 dark:border-neutral-800">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Clock className="h-5 w-5" />
@@ -99,7 +99,7 @@ export function MyTasksWidget() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="dark:border-neutral-800">
         <CardHeader>
           <Skeleton className="h-6 w-32" />
         </CardHeader>
@@ -114,18 +114,21 @@ export function MyTasksWidget() {
     );
   }
 
-  // Combine all tasks from the response
+  // Combine all tasks from the response, deduplicating by ID
+  // (a task can appear in multiple categories, e.g. overdue + upcoming)
   const taskList = [
     ...(tasks?.overdue || []),
     ...(tasks?.dueToday || []),
     ...(tasks?.upcoming || []),
-  ];
+  ].filter(
+    (task, index, self) => index === self.findIndex((t) => t.id === task.id)
+  );
   const pendingCount = tasks?.stats?.totalPending || 0;
   const inProgressCount = tasks?.stats?.totalInProgress || 0;
   const overdueCount = tasks?.stats?.totalOverdue || 0;
 
   return (
-    <Card>
+    <Card className="dark:border-neutral-800">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg flex items-center gap-2">
           <Clock className="h-5 w-5" />
@@ -143,12 +146,12 @@ export function MyTasksWidget() {
             {taskList.length} {texts.tasks}
           </Badge>
           {pendingCount > 0 && (
-            <Badge variant="outline" className="text-gray-600">
+            <Badge variant="outline" className="text-gray-600 dark:text-gray-400">
               {pendingCount} {texts.pending}
             </Badge>
           )}
           {inProgressCount > 0 && (
-            <Badge variant="outline" className="text-blue-600">
+            <Badge variant="outline" className="text-blue-600 dark:text-blue-400">
               {inProgressCount} {texts.inProgress}
             </Badge>
           )}
@@ -180,8 +183,8 @@ export function MyTasksWidget() {
                     <div
                       className={`flex items-center justify-center h-8 w-8 rounded-full ${
                         task.status === "IN_PROGRESS"
-                          ? "bg-blue-100 text-blue-600"
-                          : "bg-gray-100 text-gray-600"
+                          ? "bg-blue-500/20 text-blue-600 dark:text-blue-400"
+                          : "bg-muted text-muted-foreground"
                       }`}
                     >
                       {task.status === "IN_PROGRESS" ? (

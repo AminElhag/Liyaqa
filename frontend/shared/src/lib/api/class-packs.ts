@@ -6,6 +6,7 @@ import type {
   CreateClassPackRequest,
   UpdateClassPackRequest,
   ClassPackStatus,
+  ServiceType,
 } from "../../types/scheduling";
 
 /**
@@ -15,6 +16,7 @@ export async function getClassPacks(params: {
   page?: number;
   size?: number;
   status?: ClassPackStatus;
+  serviceType?: ServiceType;
   sortBy?: string;
   sortDirection?: "ASC" | "DESC";
 } = {}): Promise<PaginatedResponse<ClassPack>> {
@@ -23,6 +25,7 @@ export async function getClassPacks(params: {
   if (params.page !== undefined) searchParams.set("page", String(params.page));
   if (params.size !== undefined) searchParams.set("size", String(params.size));
   if (params.status) searchParams.set("status", params.status);
+  if (params.serviceType) searchParams.set("serviceType", params.serviceType);
   if (params.sortBy) searchParams.set("sortBy", params.sortBy);
   if (params.sortDirection) searchParams.set("sortDirection", params.sortDirection);
 

@@ -216,8 +216,8 @@ export function CampaignStepEditor({ campaignId, steps, readOnly = false }: Camp
                 onOpenChange={() => toggleExpand(step.id)}
               >
                 <div className="border rounded-lg">
-                  <CollapsibleTrigger className="w-full">
-                    <div className="flex items-center gap-4 p-4">
+                  <CollapsibleTrigger asChild>
+                    <div className="w-full cursor-pointer flex items-center gap-4 p-4" role="button" tabIndex={0}>
                       <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground font-medium text-sm">
                         {step.stepNumber}
                       </div>

@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@liyaqa/shared/components/ui/card";
@@ -83,9 +82,10 @@ export default function TrainersPage() {
     deactivatedSuccess: locale === "ar" ? "تم إلغاء تفعيل المدرب بنجاح" : "Trainer deactivated successfully",
     onLeaveSuccess: locale === "ar" ? "تم وضع المدرب في إجازة بنجاح" : "Trainer set on leave successfully",
     actionError: locale === "ar" ? "حدث خطأ أثناء تنفيذ العملية" : "Error performing action",
+    clearFilters: locale === "ar" ? "مسح الفلاتر" : "Clear filters",
   };
 
-  // Calculate stats
+  // Calculate stats from current page data
   const stats = {
     total: data?.totalElements || 0,
     active: data?.content?.filter((t) => t.status === "ACTIVE").length || 0,
@@ -155,28 +155,12 @@ export default function TrainersPage() {
     pendingTrainerId,
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <Loading />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <p className="text-destructive">{texts.error}</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{texts.title}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{texts.title}</h1>
           <p className="text-muted-foreground">{texts.description}</p>
         </div>
         <Button asChild>
@@ -188,7 +172,7 @@ export default function TrainersPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">{texts.totalTrainers}</CardTitle>
@@ -229,55 +213,99 @@ export default function TrainersPage() {
 
       {/* Filters */}
       <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-1 gap-4">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder={texts.search}
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setPage(0);
-                  }}
-                  className="ps-10"
-                />
-              </div>
-              <Select
-                value={statusFilter}
-                onValueChange={(value) => {
-                  setStatusFilter(value as TrainerStatus | "ALL");
+        <CardContent className="py-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder={texts.search}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(0);
+                }}
+                className="ps-10"
+              />
+            </div>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value as TrainerStatus | "ALL");
+                setPage(0);
+              }}
+            >
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder={texts.status} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">{texts.all}</SelectItem>
+                <SelectItem value="ACTIVE">{texts.active}</SelectItem>
+                <SelectItem value="INACTIVE">{texts.inactive}</SelectItem>
+                <SelectItem value="ON_LEAVE">{texts.onLeave}</SelectItem>
+                <SelectItem value="TERMINATED">{texts.terminated}</SelectItem>
+              </SelectContent>
+            </Select>
+            {(search || statusFilter !== "ALL") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearch("");
+                  setStatusFilter("ALL");
                   setPage(0);
                 }}
               >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder={texts.status} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">{texts.all}</SelectItem>
-                  <SelectItem value="ACTIVE">{texts.active}</SelectItem>
-                  <SelectItem value="INACTIVE">{texts.inactive}</SelectItem>
-                  <SelectItem value="ON_LEAVE">{texts.onLeave}</SelectItem>
-                  <SelectItem value="TERMINATED">{texts.terminated}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                {texts.clearFilters}
+              </Button>
+            )}
           </div>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={data?.content || []}
-            pageCount={data?.totalPages || 0}
-            pageIndex={page}
-            pageSize={pageSize}
-            onPageChange={setPage}
-            onPageSizeChange={(size) => {
-              setPageSize(size);
-              setPage(0);
-            }}
-          />
+        </CardContent>
+      </Card>
+
+      {/* Table */}
+      <Card>
+        <CardContent className="pt-6">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-10">
+              <Loading />
+            </div>
+          ) : error ? (
+            <div className="py-10 text-center text-destructive">{texts.error}</div>
+          ) : !data?.content || data.content.length === 0 ? (
+            <div className="py-12 text-center text-muted-foreground">
+              <Users className="h-12 w-12 mx-auto mb-4 opacity-20" />
+              <p>{texts.noTrainers}</p>
+              {(search || statusFilter !== "ALL") && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => {
+                    setSearch("");
+                    setStatusFilter("ALL");
+                    setPage(0);
+                  }}
+                >
+                  {texts.clearFilters}
+                </Button>
+              )}
+            </div>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={data.content}
+              manualPagination
+              pageCount={data.totalPages || 1}
+              pageIndex={page}
+              pageSize={pageSize}
+              totalRows={data.totalElements}
+              onPageChange={setPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(0);
+              }}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

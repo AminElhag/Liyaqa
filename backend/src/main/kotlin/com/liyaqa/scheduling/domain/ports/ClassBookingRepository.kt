@@ -34,6 +34,11 @@ interface ClassBookingRepository {
     fun countByMemberIdAndStatus(memberId: UUID, status: BookingStatus): Long
 
     /**
+     * Finds bookings filtered by session date range and optional status.
+     */
+    fun findByDateRange(dateFrom: LocalDate?, dateTo: LocalDate?, status: BookingStatus?, pageable: Pageable): Page<ClassBooking>
+
+    /**
      * Finds all active bookings (CONFIRMED or WAITLISTED) for a member on a specific date.
      * Used for concurrent booking validation to prevent double-booking.
      */

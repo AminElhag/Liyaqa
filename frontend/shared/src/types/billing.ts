@@ -14,7 +14,42 @@ export type InvoiceStatus =
 /**
  * Payment method
  */
-export type PaymentMethod = "CASH" | "CARD" | "BANK_TRANSFER" | "ONLINE";
+export type PaymentMethod =
+  | "CASH"
+  | "CARD"
+  | "BANK_TRANSFER"
+  | "ONLINE"
+  | "MADA"
+  | "APPLE_PAY"
+  | "STC_PAY"
+  | "SADAD"
+  | "TAMARA"
+  | "PAYTABS"
+  | "OTHER";
+
+/**
+ * Line item type
+ */
+export type LineItemType =
+  | "SUBSCRIPTION"
+  | "CLASS_PACKAGE"
+  | "GUEST_PASS"
+  | "PERSONAL_TRAINING"
+  | "MERCHANDISE"
+  | "LOCKER_RENTAL"
+  | "PENALTY"
+  | "DISCOUNT"
+  | "OTHER";
+
+/**
+ * ZATCA VAT category code
+ */
+export type VatCategoryCode = "S" | "Z" | "E" | "O";
+
+/**
+ * ZATCA invoice type code
+ */
+export type InvoiceTypeCode = "SIMPLIFIED" | "STANDARD";
 
 /**
  * Invoice line item
@@ -25,6 +60,51 @@ export interface InvoiceLineItem {
   quantity: number;
   unitPrice: Money;
   lineTotal: Money;
+  lineTaxAmount: Money;
+  lineGrossTotal: Money;
+  itemType: LineItemType;
+  taxRate: number;
+  vatCategoryCode: VatCategoryCode;
+}
+
+/**
+ * Payment record
+ */
+export interface Payment {
+  id: UUID;
+  invoiceId: UUID;
+  amount: Money;
+  paymentMethod: PaymentMethod;
+  paymentReference?: string;
+  notes?: string;
+  paidAt: string;
+  createdBy?: UUID;
+  gatewayTransactionId?: string;
+  createdAt: string;
+}
+
+/**
+ * Catalog item for invoice line item picker
+ */
+export interface CatalogItem {
+  id: UUID;
+  name: LocalizedText;
+  price: Money;
+  taxRate: number;
+  itemType: LineItemType;
+  description?: LocalizedText;
+}
+
+/**
+ * Invoice summary stats
+ */
+export interface InvoiceSummary {
+  totalInvoices: number;
+  draftCount: number;
+  pendingCount: number;
+  overdueCount: number;
+  paidCount: number;
+  partiallyPaidCount: number;
 }
 
 /**
@@ -51,6 +131,8 @@ export interface Invoice {
   notes?: LocalizedText;
   paymentMethod?: PaymentMethod;
   paymentReference?: string;
+  invoiceTypeCode: InvoiceTypeCode;
+  payments: Payment[];
   tenantId?: UUID;
   createdAt: string;
   updatedAt: string;
@@ -60,9 +142,14 @@ export interface Invoice {
  * Create invoice line item request
  */
 export interface CreateLineItemRequest {
-  description: LocalizedText;
+  descriptionEn: string;
+  descriptionAr?: string;
   quantity: number;
   unitPrice: number;
+  currency?: string;
+  itemType?: LineItemType;
+  taxRate?: number;
+  vatCategoryCode?: VatCategoryCode;
 }
 
 /**
@@ -72,17 +159,18 @@ export interface CreateInvoiceRequest {
   memberId: UUID;
   subscriptionId?: UUID;
   lineItems: CreateLineItemRequest[];
-  dueDate?: string;
-  notes?: LocalizedText;
+  vatRate?: number;
+  notesEn?: string;
+  notesAr?: string;
+  invoiceTypeCode?: InvoiceTypeCode;
 }
 
 /**
  * Update invoice request
  */
 export interface UpdateInvoiceRequest {
-  lineItems?: CreateLineItemRequest[];
-  dueDate?: string;
-  notes?: LocalizedText;
+  notesEn?: string;
+  notesAr?: string;
 }
 
 /**
@@ -90,8 +178,10 @@ export interface UpdateInvoiceRequest {
  */
 export interface PayInvoiceRequest {
   amount: number;
+  currency?: string;
   paymentMethod: PaymentMethod;
   paymentReference?: string;
+  notes?: string;
 }
 
 /**
@@ -100,9 +190,7 @@ export interface PayInvoiceRequest {
 export interface InvoiceQueryParams extends ListQueryParams {
   memberId?: UUID;
   status?: InvoiceStatus;
-  issuedAfter?: string;
-  issuedBefore?: string;
-  dueAfter?: string;
-  dueBefore?: string;
+  search?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }
-

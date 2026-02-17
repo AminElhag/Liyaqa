@@ -23,8 +23,8 @@ interface SpringDataSegmentRepository : JpaRepository<Segment, UUID> {
 
     @Query("""
         SELECT s FROM Segment s
-        WHERE (:search IS NULL OR LOWER(s.name) LIKE LOWER(CONCAT('%', :search, '%')))
-        AND (:isActive IS NULL OR s.isActive = :isActive)
+        WHERE (CAST(:search AS string) IS NULL OR LOWER(s.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
+        AND (CAST(:isActive AS string) IS NULL OR s.isActive = :isActive)
     """)
     fun search(
         @Param("search") search: String?,

@@ -156,13 +156,6 @@ export async function deleteDeal(id: string): Promise<void> {
 }
 
 /**
- * Advance deal to next stage
- */
-export async function advanceDeal(id: string): Promise<Deal> {
-  return api.post(`${BASE_URL}/${id}/advance`).json<Deal>();
-}
-
-/**
  * Qualify a deal (LEAD -> QUALIFIED)
  */
 export async function qualifyDeal(id: string): Promise<Deal> {
@@ -181,6 +174,13 @@ export async function sendProposal(id: string): Promise<Deal> {
  */
 export async function startNegotiation(id: string): Promise<Deal> {
   return api.post(`${BASE_URL}/${id}/negotiate`).json<Deal>();
+}
+
+/**
+ * Change deal stage (e.g. CONTACTED -> DEMO_SCHEDULED, DEMO_SCHEDULED -> DEMO_DONE)
+ */
+export async function changeDealStage(id: string, stage: DealStatus, reason?: string): Promise<Deal> {
+  return api.put(`${BASE_URL}/${id}/stage`, { json: { stage, reason } }).json<Deal>();
 }
 
 /**

@@ -2,6 +2,7 @@ package com.liyaqa.trainer.api
 
 import com.liyaqa.auth.domain.ports.UserRepository
 import com.liyaqa.organization.domain.ports.ClubRepository
+import com.liyaqa.scheduling.domain.ports.ClassCategoryRepository
 import com.liyaqa.shared.domain.TenantContext
 import com.liyaqa.trainer.application.commands.*
 import com.liyaqa.trainer.application.services.TrainerService
@@ -33,7 +34,8 @@ import java.util.UUID
 class TrainerController(
     private val trainerService: TrainerService,
     private val userRepository: UserRepository,
-    private val clubRepository: ClubRepository
+    private val clubRepository: ClubRepository,
+    private val classCategoryRepository: ClassCategoryRepository
 ) {
 
     // ==================== CRUD OPERATIONS ====================
@@ -74,7 +76,8 @@ class TrainerController(
             phone = request.phone,
             notes = request.notes?.toLocalizedText(),
             assignedClubIds = request.assignedClubIds,
-            primaryClubId = request.primaryClubId
+            primaryClubId = request.primaryClubId,
+            skillCategoryIds = request.skillCategoryIds
         )
 
         val trainer = trainerService.createTrainer(command)
@@ -114,16 +117,7 @@ class TrainerController(
         }
 
         val response = PageResponse(
-            content = trainerPage.content.map { trainer ->
-                val user = userRepository.findById(trainer.userId).orElse(null)
-                val specializations = trainerService.deserializeSpecializations(trainer.specializations)
-                TrainerSummaryResponse.from(
-                    trainer = trainer,
-                    specializations = specializations,
-                    userName = user?.displayName?.get("en"),
-                    userEmail = user?.email
-                )
-            },
+            content = trainerPage.content.map { buildTrainerSummaryResponse(it) },
             page = trainerPage.number,
             size = trainerPage.size,
             totalElements = trainerPage.totalElements,
@@ -146,16 +140,7 @@ class TrainerController(
         val trainerPage = trainerService.getActiveGroupFitnessTrainers(pageable)
 
         val response = PageResponse(
-            content = trainerPage.content.map { trainer ->
-                val user = userRepository.findById(trainer.userId).orElse(null)
-                val specializations = trainerService.deserializeSpecializations(trainer.specializations)
-                TrainerSummaryResponse.from(
-                    trainer = trainer,
-                    specializations = specializations,
-                    userName = user?.displayName?.get("en"),
-                    userEmail = user?.email
-                )
-            },
+            content = trainerPage.content.map { buildTrainerSummaryResponse(it) },
             page = trainerPage.number,
             size = trainerPage.size,
             totalElements = trainerPage.totalElements,
@@ -178,16 +163,7 @@ class TrainerController(
         val trainerPage = trainerService.getActivePersonalTrainers(pageable)
 
         val response = PageResponse(
-            content = trainerPage.content.map { trainer ->
-                val user = userRepository.findById(trainer.userId).orElse(null)
-                val specializations = trainerService.deserializeSpecializations(trainer.specializations)
-                TrainerSummaryResponse.from(
-                    trainer = trainer,
-                    specializations = specializations,
-                    userName = user?.displayName?.get("en"),
-                    userEmail = user?.email
-                )
-            },
+            content = trainerPage.content.map { buildTrainerSummaryResponse(it) },
             page = trainerPage.number,
             size = trainerPage.size,
             totalElements = trainerPage.totalElements,
@@ -451,6 +427,24 @@ class TrainerController(
         )
     }
 
+    // ==================== SKILLS ====================
+
+    @PutMapping("/{id}/skills")
+    @PreAuthorize("hasAuthority('trainers_update')")
+    @Operation(summary = "Update trainer skills", description = "Set the class categories a trainer can teach")
+    fun updateTrainerSkills(
+        @PathVariable id: UUID,
+        @Valid @RequestBody request: UpdateTrainerSkillsRequest
+    ): ResponseEntity<TrainerResponse> {
+        val command = UpdateTrainerSkillsCommand(
+            trainerId = id,
+            categoryIds = request.categoryIds
+        )
+        trainerService.updateTrainerSkills(command)
+        val trainer = trainerService.getTrainer(id)
+        return ResponseEntity.ok(buildTrainerResponse(trainer))
+    }
+
     // ==================== DELETE ====================
 
     @DeleteMapping("/{id}")
@@ -463,8 +457,36 @@ class TrainerController(
 
     // ==================== HELPER METHODS ====================
 
+    private fun buildSkillResponses(trainerId: UUID): List<TrainerSkillResponse> {
+        val skills = trainerService.getTrainerSkills(trainerId)
+        return skills.mapNotNull { skill ->
+            val category = classCategoryRepository.findById(skill.categoryId).orElse(null)
+            if (category != null) {
+                TrainerSkillResponse(
+                    categoryId = category.id,
+                    categoryName = category.name,
+                    colorCode = category.colorCode,
+                    icon = category.icon
+                )
+            } else null
+        }
+    }
+
+    private fun buildTrainerSummaryResponse(trainer: com.liyaqa.trainer.domain.model.Trainer): TrainerSummaryResponse {
+        val user = trainer.userId?.let { userRepository.findById(it).orElse(null) }
+        val specializations = trainerService.deserializeSpecializations(trainer.specializations)
+        val skills = buildSkillResponses(trainer.id)
+        return TrainerSummaryResponse.from(
+            trainer = trainer,
+            specializations = specializations,
+            userName = user?.displayName?.get("en"),
+            userEmail = user?.email,
+            skills = skills
+        )
+    }
+
     private fun buildTrainerResponse(trainer: com.liyaqa.trainer.domain.model.Trainer): TrainerResponse {
-        val user = userRepository.findById(trainer.userId).orElse(null)
+        val user = trainer.userId?.let { userRepository.findById(it).orElse(null) }
         val specializations = trainerService.deserializeSpecializations(trainer.specializations)
         val certifications = trainerService.deserializeCertifications(trainer.certifications)
         val availability = trainerService.deserializeAvailability(trainer.availability)
@@ -475,6 +497,7 @@ class TrainerController(
                 clubName = club?.name?.get("en")
             )
         }
+        val skills = buildSkillResponses(trainer.id)
 
         return TrainerResponse.from(
             trainer = trainer,
@@ -483,7 +506,8 @@ class TrainerController(
             availability = availability,
             userName = user?.displayName?.get("en"),
             userEmail = user?.email,
-            clubAssignments = clubAssignments
+            clubAssignments = clubAssignments,
+            skills = skills
         )
     }
 }

@@ -16,10 +16,18 @@ export const oauthApi = {
    */
   async fetchOAuthProviders(organizationId?: string): Promise<OAuthProvider[]> {
     const params = organizationId ? `?organizationId=${organizationId}` : "";
-    const response = await api
-      .get(`api/auth/oauth/providers${params}`)
-      .json<{ providers: OAuthProvider[] }>();
-    return response.providers;
+    try {
+      const response = await api
+        .get(`api/auth/oauth/providers${params}`)
+        .json<{ providers: OAuthProvider[] }>();
+      return response.providers;
+    } catch (error) {
+      // Network errors (backend not running, CORS, etc.) — treat as "no providers"
+      if (error instanceof TypeError) {
+        return [];
+      }
+      throw error;
+    }
   },
 
   /**

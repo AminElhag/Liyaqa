@@ -257,6 +257,9 @@ enum class ActivityType {
     REFERRAL_MADE,
     REFERRAL_REWARD_EARNED,
 
+    // Viewing
+    PROFILE_VIEWED,
+
     // System
     SYSTEM_ACTION,
     MEMBER_CREATED,

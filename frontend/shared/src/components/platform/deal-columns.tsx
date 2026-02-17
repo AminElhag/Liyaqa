@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Eye, Edit, Trash2, ArrowRight, XCircle } from "lucide-react";
+import { MoreHorizontal, Eye, Edit, Trash2, XCircle } from "lucide-react";
 import { Button } from "@liyaqa/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -19,7 +19,6 @@ interface DealColumnsOptions {
   locale: string;
   onView: (deal: DealSummary) => void;
   onEdit: (deal: DealSummary) => void;
-  onAdvance: (deal: DealSummary) => void;
   onLose: (deal: DealSummary) => void;
   onDelete: (deal: DealSummary) => void;
   canEdit?: boolean;
@@ -35,7 +34,7 @@ const SOURCE_LABELS: Record<string, { en: string; ar: string }> = {
 };
 
 export function getDealColumns(options: DealColumnsOptions): ColumnDef<DealSummary>[] {
-  const { locale, onView, onEdit, onAdvance, onLose, onDelete, canEdit = true } = options;
+  const { locale, onView, onEdit, onLose, onDelete, canEdit = true } = options;
 
   const texts = {
     title: locale === "ar" ? "العنوان" : "Title",
@@ -48,7 +47,6 @@ export function getDealColumns(options: DealColumnsOptions): ColumnDef<DealSumma
     actions: locale === "ar" ? "الإجراءات" : "Actions",
     view: locale === "ar" ? "عرض" : "View",
     edit: locale === "ar" ? "تعديل" : "Edit",
-    advance: locale === "ar" ? "تقدم" : "Advance",
     lose: locale === "ar" ? "خسارة" : "Mark Lost",
     delete: locale === "ar" ? "حذف" : "Delete",
     na: locale === "ar" ? "غير محدد" : "N/A",
@@ -134,7 +132,7 @@ export function getDealColumns(options: DealColumnsOptions): ColumnDef<DealSumma
       header: texts.actions,
       cell: ({ row }) => {
         const deal = row.original;
-        const isOpen = !["WON", "LOST"].includes(deal.status);
+        const isOpen = !["WON", "LOST", "CHURNED"].includes(deal.status);
         const canDelete = deal.status === "LEAD" || deal.status === "LOST";
 
         return (
@@ -160,10 +158,6 @@ export function getDealColumns(options: DealColumnsOptions): ColumnDef<DealSumma
               {canEdit && isOpen && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => onAdvance(deal)}>
-                    <ArrowRight className="me-2 h-4 w-4" />
-                    {texts.advance}
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onLose(deal)}>
                     <XCircle className="me-2 h-4 w-4" />
                     {texts.lose}

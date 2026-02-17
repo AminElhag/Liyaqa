@@ -16,10 +16,10 @@ import {
   getDealsBySalesRep,
   updateDeal,
   deleteDeal,
-  advanceDeal,
   qualifyDeal,
   sendProposal,
   startNegotiation,
+  changeDealStage,
   convertDeal,
   loseDeal,
   reopenDeal,
@@ -245,30 +245,6 @@ export function useDeleteDeal() {
 }
 
 /**
- * Hook to advance a deal to next stage
- */
-export function useAdvanceDeal() {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  return useMutation({
-    mutationFn: (id: UUID) => advanceDeal(id),
-    onSuccess: (updatedDeal) => {
-      queryClient.setQueryData(dealKeys.detail(updatedDeal.id), updatedDeal);
-      queryClient.invalidateQueries({ queryKey: dealKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: dealKeys.stats() });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to advance deal",
-        description: error.message || "An unexpected error occurred",
-        variant: "destructive",
-      });
-    },
-  });
-}
-
-/**
  * Hook to qualify a deal
  */
 export function useQualifyDeal() {
@@ -333,6 +309,31 @@ export function useStartNegotiation() {
     onError: (error: Error) => {
       toast({
         title: "Failed to start negotiation",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+/**
+ * Hook to change deal stage (e.g. CONTACTED -> DEMO_SCHEDULED)
+ */
+export function useChangeDealStage() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ id, stage, reason }: { id: UUID; stage: DealStatus; reason?: string }) =>
+      changeDealStage(id, stage, reason),
+    onSuccess: (updatedDeal) => {
+      queryClient.setQueryData(dealKeys.detail(updatedDeal.id), updatedDeal);
+      queryClient.invalidateQueries({ queryKey: dealKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: dealKeys.stats() });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to change deal stage",
         description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });

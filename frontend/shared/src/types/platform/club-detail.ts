@@ -15,6 +15,7 @@ export interface ClubStats {
   activeEmployees: number;
   totalSubscriptions: number;
   activeSubscriptions: number;
+  totalLocations?: number;
 }
 
 /**
@@ -36,8 +37,10 @@ export interface PlatformClubDetail {
 // Club User Types
 // ============================================
 
-export type UserRole = "SUPER_ADMIN" | "CLUB_ADMIN" | "STAFF" | "MEMBER" |
-  "PLATFORM_ADMIN" | "SALES_REP" | "SUPPORT_REP" | "MARKETING";
+export type UserRole = "SUPER_ADMIN" | "CLUB_ADMIN" | "STAFF" | "TRAINER" | "MEMBER" |
+  "PLATFORM_SUPER_ADMIN" | "PLATFORM_ADMIN" | "ACCOUNT_MANAGER" |
+  "SUPPORT_LEAD" | "SUPPORT_AGENT" | "PLATFORM_VIEWER" |
+  "SALES_REP" | "SUPPORT_REP" | "MARKETING";
 
 export type UserStatus = "ACTIVE" | "INACTIVE" | "LOCKED" | "PENDING_VERIFICATION";
 
@@ -192,6 +195,29 @@ export interface ClubAuditLog {
  */
 export interface ResetPasswordRequest {
   newPassword: string;
+}
+
+// ============================================
+// Create Club User Request
+// ============================================
+
+export interface CreateClubUserRequest {
+  email: string;
+  password: string;
+  displayNameEn: string;
+  displayNameAr?: string;
+  role: UserRole;
+}
+
+// ============================================
+// Update Club User Request
+// ============================================
+
+export interface UpdateClubUserRequest {
+  displayNameEn?: string;
+  displayNameAr?: string;
+  role?: UserRole;
+  status?: UserStatus;
 }
 
 // ============================================

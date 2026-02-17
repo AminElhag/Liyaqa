@@ -12,6 +12,8 @@ import type {
   ClubDetailQueryParams,
   ClubAuditLogQueryParams,
   ResetPasswordRequest,
+  CreateClubUserRequest,
+  UpdateClubUserRequest,
   ClubLocation,
   ClubMembershipPlan,
   UpdateClubRequest,
@@ -69,6 +71,29 @@ export async function resetUserPassword(
 ): Promise<ClubUser> {
   return api
     .post(`${BASE_URL}/${clubId}/users/${userId}/reset-password`, { json: data })
+    .json<ClubUser>();
+}
+
+/**
+ * Create a new user for a club
+ */
+export async function createClubUser(
+  clubId: string,
+  data: CreateClubUserRequest
+): Promise<ClubUser> {
+  return api.post(`${BASE_URL}/${clubId}/users`, { json: data }).json<ClubUser>();
+}
+
+/**
+ * Update a user in a club (admin action)
+ */
+export async function updateClubUser(
+  clubId: string,
+  userId: string,
+  data: UpdateClubUserRequest
+): Promise<ClubUser> {
+  return api
+    .put(`${BASE_URL}/${clubId}/users/${userId}`, { json: data })
     .json<ClubUser>();
 }
 

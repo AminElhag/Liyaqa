@@ -81,8 +81,8 @@ export function CustomerSelectModal({
       <DialogContent className="sm:max-w-[500px] p-0 gap-0 overflow-hidden">
         {view === "search" ? (
           <div>
-            <DialogHeader className="px-6 pt-6 pb-4 border-b border-neutral-100">
-              <DialogTitle className="text-xl font-semibold text-neutral-900">
+            <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+              <DialogTitle className="text-xl font-semibold text-foreground">
                 {texts.selectCustomer}
               </DialogTitle>
             </DialogHeader>
@@ -90,12 +90,12 @@ export function CustomerSelectModal({
             <div className="p-6 space-y-4">
               {/* Search Input */}
               <div className="relative">
-                <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder={texts.searchPlaceholder}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="ps-10 h-12 bg-neutral-50 border-neutral-200 focus:bg-white"
+                  className="ps-10 h-12 bg-muted border-border focus:bg-card"
                   autoFocus
                 />
               </div>
@@ -104,7 +104,7 @@ export function CustomerSelectModal({
               <ScrollArea className="h-[300px]">
                 <div className="space-y-2">
                   {search.length < 2 && (
-                    <p className="text-sm text-neutral-500 text-center py-8">
+                    <p className="text-sm text-muted-foreground text-center py-8">
                       {texts.searchHint}
                     </p>
                   )}
@@ -121,29 +121,29 @@ export function CustomerSelectModal({
                     <>
                       {members.content.length === 0 ? (
                         <div className="text-center py-8">
-                          <User className="h-12 w-12 mx-auto mb-3 text-neutral-200" />
-                          <p className="text-neutral-500">{texts.noResults}</p>
+                          <User className="h-12 w-12 mx-auto mb-3 text-muted-foreground/20" />
+                          <p className="text-muted-foreground">{texts.noResults}</p>
                         </div>
                       ) : (
                         <>
-                          <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide mb-2">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
                             {texts.recentCustomers}
                           </p>
                           {members.content.map((member: Member) => (
                             <button
                               key={member.id}
-                              className="w-full flex items-center gap-3 p-3 rounded-lg border border-neutral-200 hover:border-teal-300 hover:bg-teal-50/50 transition-all text-start"
+                              className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 hover:bg-primary/5 transition-all text-start"
                               onClick={() => handleSelect(member)}
                             >
-                              <div className="h-10 w-10 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0">
-                                <User className="h-5 w-5 text-teal-600" />
+                              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                <User className="h-5 w-5 text-primary" />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="font-medium text-neutral-900 truncate">
+                                <p className="font-medium text-foreground truncate">
                                   <LocalizedText text={member.firstName} />{" "}
                                   <LocalizedText text={member.lastName} />
                                 </p>
-                                <p className="text-sm text-neutral-500 truncate">
+                                <p className="text-sm text-muted-foreground truncate">
                                   {member.email}
                                   {member.phone && (
                                     <span className="mx-1">|</span>
@@ -161,10 +161,10 @@ export function CustomerSelectModal({
               </ScrollArea>
 
               {/* Add New Customer Button */}
-              <div className="pt-2 border-t border-neutral-100">
+              <div className="pt-2 border-t border-border">
                 <Button
                   variant="outline"
-                  className="w-full h-12 border-dashed border-neutral-300 text-neutral-600 hover:border-teal-500 hover:text-teal-600 hover:bg-teal-50/50"
+                  className="w-full h-12 border-dashed border-primary/30 text-primary/80 hover:border-primary hover:text-primary hover:bg-primary/5"
                   onClick={() => setView("create")}
                 >
                   <UserPlus className="h-4 w-4 me-2" />
@@ -175,7 +175,7 @@ export function CustomerSelectModal({
           </div>
         ) : (
           <div>
-            <DialogHeader className="px-6 pt-6 pb-4 border-b border-neutral-100">
+            <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
               <div className="flex items-center gap-3">
                 <Button
                   variant="ghost"
@@ -185,7 +185,7 @@ export function CustomerSelectModal({
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <DialogTitle className="text-xl font-semibold text-neutral-900">
+                <DialogTitle className="text-xl font-semibold text-foreground">
                   {texts.newCustomer}
                 </DialogTitle>
               </div>

@@ -23,11 +23,21 @@ import {
   User,
   X,
   Check,
+  Loader2,
+  UserCheck,
+  XCircle,
+  AlertCircle,
+  Plus,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@liyaqa/shared/components/ui/card";
 import { Badge } from "@liyaqa/shared/components/ui/badge";
 import { Skeleton } from "@liyaqa/shared/components/ui/skeleton";
+import { Input } from "@liyaqa/shared/components/ui/input";
+import { Label } from "@liyaqa/shared/components/ui/label";
+import { Textarea } from "@liyaqa/shared/components/ui/textarea";
+import { StatusBadge } from "@liyaqa/shared/components/ui/status-badge";
 import {
   Dialog,
   DialogContent,
@@ -44,8 +54,8 @@ import {
   SelectValue,
 } from "@liyaqa/shared/components/ui/select";
 import { cn } from "@liyaqa/shared/utils";
-import { useFacilitySlots, useCreateBooking, useCancelBooking } from "@liyaqa/shared/queries/use-facilities";
-import { useMembers } from "@liyaqa/shared/queries/use-members";
+import { useFacilitySlots, useGenerateSlots, useCreateBooking, useBooking, useCheckInBooking, useCompleteBooking, useCancelBooking, useMarkNoShow } from "@liyaqa/shared/queries/use-facilities";
+import { useMembers, useMember } from "@liyaqa/shared/queries/use-members";
 import type { UUID } from "@liyaqa/shared/types/api";
 import type { FacilitySlot, FacilityBooking } from "@liyaqa/shared/types/facility";
 
@@ -56,7 +66,8 @@ interface BookingCalendarProps {
   facilityName?: string;
 }
 
-const HOURS = Array.from({ length: 15 }, (_, i) => i + 6); // 6 AM to 9 PM
+const DEFAULT_START_HOUR = 6;
+const DEFAULT_END_HOUR = 20;
 
 export function BookingCalendar({ facilityId, facilityName }: BookingCalendarProps) {
   const locale = useLocale();
@@ -67,6 +78,9 @@ export function BookingCalendar({ facilityId, facilityName }: BookingCalendarPro
   const [viewMode, setViewMode] = React.useState<ViewMode>("week");
   const [selectedSlot, setSelectedSlot] = React.useState<FacilitySlot | null>(null);
   const [bookingDialogOpen, setBookingDialogOpen] = React.useState(false);
+  const [managedSlot, setManagedSlot] = React.useState<FacilitySlot | null>(null);
+  const [manageDialogOpen, setManageDialogOpen] = React.useState(false);
+  const [generateSlotsOpen, setGenerateSlotsOpen] = React.useState(false);
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
@@ -76,6 +90,22 @@ export function BookingCalendar({ facilityId, facilityName }: BookingCalendarPro
     startDate: format(viewMode === "week" ? weekStart : currentDate, "yyyy-MM-dd"),
     endDate: format(viewMode === "week" ? weekEnd : currentDate, "yyyy-MM-dd"),
   });
+
+  const hours = React.useMemo(() => {
+    let minHour = DEFAULT_START_HOUR;
+    let maxHour = DEFAULT_END_HOUR;
+
+    if (slots && slots.length > 0) {
+      for (const slot of slots) {
+        const startH = parseInt(slot.startTime.split(":")[0], 10);
+        const endH = parseInt(slot.endTime.split(":")[0], 10);
+        if (startH < minHour) minHour = startH;
+        if (endH > maxHour) maxHour = endH;
+      }
+    }
+
+    return Array.from({ length: maxHour - minHour + 1 }, (_, i) => i + minHour);
+  }, [slots]);
 
   const texts = {
     title: isRtl ? "تقويم الحجوزات" : "Booking Calendar",
@@ -90,6 +120,7 @@ export function BookingCalendar({ facilityId, facilityName }: BookingCalendarPro
     cancel: isRtl ? "إلغاء" : "Cancel",
     confirm: isRtl ? "تأكيد الحجز" : "Confirm Booking",
     noSlots: isRtl ? "لا توجد فترات متاحة" : "No slots available",
+    generateSlots: isRtl ? "إنشاء فترات" : "Generate Slots",
   };
 
   const handlePrevious = () => {
@@ -116,14 +147,18 @@ export function BookingCalendar({ facilityId, facilityName }: BookingCalendarPro
     if (slot.status === "AVAILABLE") {
       setSelectedSlot(slot);
       setBookingDialogOpen(true);
+    } else if (slot.status === "BOOKED" && slot.booking) {
+      setManagedSlot(slot);
+      setManageDialogOpen(true);
     }
   };
 
   const getSlotForDayAndHour = (day: Date, hour: number) => {
     if (!slots) return null;
     return slots.find((slot) => {
-      const slotDate = parseISO(slot.startTime);
-      return isSameDay(slotDate, day) && slotDate.getHours() === hour;
+      const slotDateParsed = parseISO(slot.slotDate);
+      const slotHour = parseInt(slot.startTime.split(":")[0], 10);
+      return isSameDay(slotDateParsed, day) && slotHour === hour;
     });
   };
 
@@ -133,7 +168,7 @@ export function BookingCalendar({ facilityId, facilityName }: BookingCalendarPro
       case "AVAILABLE":
         return "bg-green-100 hover:bg-green-200 cursor-pointer border-green-300";
       case "BOOKED":
-        return "bg-blue-100 border-blue-300";
+        return "bg-blue-100 hover:bg-blue-200 cursor-pointer border-blue-300";
       case "MAINTENANCE":
         return "bg-orange-100 border-orange-300";
       default:
@@ -195,6 +230,10 @@ export function BookingCalendar({ facilityId, facilityName }: BookingCalendarPro
               <SelectItem value="day">{texts.day}</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="outline" size="sm" onClick={() => setGenerateSlotsOpen(true)}>
+            <Plus className="h-4 w-4 me-1" />
+            {texts.generateSlots}
+          </Button>
         </div>
       </div>
 
@@ -249,7 +288,7 @@ export function BookingCalendar({ facilityId, facilityName }: BookingCalendarPro
             </div>
 
             {/* Time Slots */}
-            {HOURS.map((hour) => (
+            {hours.map((hour) => (
               <div
                 key={hour}
                 className={cn(
@@ -328,9 +367,128 @@ export function BookingCalendar({ facilityId, facilityName }: BookingCalendarPro
         facilityId={facilityId}
         facilityName={facilityName}
       />
+
+      {/* Booking Manage Dialog */}
+      <BookingManageDialog
+        open={manageDialogOpen}
+        onOpenChange={setManageDialogOpen}
+        slot={managedSlot}
+        facilityId={facilityId}
+        facilityName={facilityName}
+      />
+
+      {/* Generate Slots Dialog */}
+      <GenerateSlotsDialog
+        open={generateSlotsOpen}
+        onOpenChange={setGenerateSlotsOpen}
+        facilityId={facilityId}
+      />
     </div>
   );
 }
+
+// ========== Generate Slots Dialog ==========
+
+interface GenerateSlotsDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  facilityId: UUID;
+}
+
+function GenerateSlotsDialog({ open, onOpenChange, facilityId }: GenerateSlotsDialogProps) {
+  const locale = useLocale();
+  const isRtl = locale === "ar";
+
+  const today = new Date();
+  const monday = startOfWeek(today, { weekStartsOn: 1 });
+  const sunday = endOfWeek(today, { weekStartsOn: 1 });
+
+  const [startDate, setStartDate] = React.useState(format(monday, "yyyy-MM-dd"));
+  const [endDate, setEndDate] = React.useState(format(sunday, "yyyy-MM-dd"));
+
+  const generateSlotsMutation = useGenerateSlots();
+
+  const texts = {
+    title: isRtl ? "إنشاء فترات زمنية" : "Generate Time Slots",
+    description: isRtl
+      ? "إنشاء فترات زمنية للمرفق بناءً على ساعات التشغيل المحددة"
+      : "Generate time slots for the facility based on its configured operating hours",
+    startDate: isRtl ? "تاريخ البدء" : "Start Date",
+    endDate: isRtl ? "تاريخ الانتهاء" : "End Date",
+    cancel: isRtl ? "إلغاء" : "Cancel",
+    generate: isRtl ? "إنشاء" : "Generate",
+    generating: isRtl ? "جاري الإنشاء..." : "Generating...",
+    success: isRtl ? "تم إنشاء الفترات بنجاح" : "Slots generated successfully",
+    noSlotsGenerated: isRtl
+      ? "لم يتم إنشاء أي فترات. تحقق من ساعات تشغيل المرفق."
+      : "No slots generated. Check facility operating hours.",
+    error: isRtl ? "فشل إنشاء الفترات" : "Failed to generate slots",
+  };
+
+  const handleGenerate = async () => {
+    try {
+      const result = await generateSlotsMutation.mutateAsync({
+        facilityId,
+        data: { startDate, endDate },
+      });
+      if (result.length === 0) {
+        toast.warning(texts.noSlotsGenerated);
+      } else {
+        toast.success(`${texts.success} (${result.length})`);
+      }
+      onOpenChange(false);
+    } catch {
+      toast.error(texts.error);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[400px]">
+        <DialogHeader>
+          <DialogTitle className={cn(isRtl && "text-right")}>{texts.title}</DialogTitle>
+          <DialogDescription className={cn(isRtl && "text-right")}>
+            {texts.description}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label className={cn(isRtl && "text-right block")}>{texts.startDate}</Label>
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className={cn(isRtl && "text-right block")}>{texts.endDate}</Label>
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <DialogFooter className={cn(isRtl && "flex-row-reverse")}>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {texts.cancel}
+          </Button>
+          <Button
+            onClick={handleGenerate}
+            disabled={!startDate || !endDate || generateSlotsMutation.isPending}
+          >
+            {generateSlotsMutation.isPending && <Loader2 className="h-4 w-4 animate-spin me-1" />}
+            {generateSlotsMutation.isPending ? texts.generating : texts.generate}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ========== Booking Dialog ==========
 
 interface BookingDialogProps {
   open: boolean;
@@ -385,8 +543,8 @@ function BookingDialog({ open, onOpenChange, slot, facilityId, facilityName }: B
 
   if (!slot) return null;
 
-  const slotDate = parseISO(slot.startTime);
-  const slotEndDate = parseISO(slot.endTime);
+  const slotDate = parseISO(`${slot.slotDate}T${slot.startTime}`);
+  const slotEndDate = parseISO(`${slot.slotDate}T${slot.endTime}`);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -442,6 +600,274 @@ function BookingDialog({ open, onOpenChange, slot, facilityId, facilityName }: B
             disabled={!selectedMemberId || createBookingMutation.isPending}
           >
             {createBookingMutation.isPending ? texts.booking : texts.confirm}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ========== Booking Manage Dialog ==========
+
+interface BookingManageDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  slot: FacilitySlot | null;
+  facilityId: UUID;
+  facilityName?: string;
+}
+
+export function BookingManageDialog({ open, onOpenChange, slot, facilityId, facilityName }: BookingManageDialogProps) {
+  const locale = useLocale();
+  const isRtl = locale === "ar";
+  const dateLocale = locale === "ar" ? ar : enUS;
+
+  const [showCancelForm, setShowCancelForm] = React.useState(false);
+  const [cancelReason, setCancelReason] = React.useState("");
+
+  const bookingId = slot?.booking?.id ?? "";
+  const { data: booking, isLoading: bookingLoading } = useBooking(bookingId, { enabled: !!bookingId && open });
+  const { data: member } = useMember(booking?.memberId ?? "", { enabled: !!booking?.memberId });
+
+  const checkInMutation = useCheckInBooking();
+  const completeMutation = useCompleteBooking();
+  const cancelMutation = useCancelBooking();
+  const noShowMutation = useMarkNoShow();
+
+  const anyPending = checkInMutation.isPending || completeMutation.isPending || cancelMutation.isPending || noShowMutation.isPending;
+
+  const texts = {
+    title: isRtl ? "إدارة الحجز" : "Manage Booking",
+    description: isRtl ? `حجز في ${facilityName || "المرفق"}` : `Booking at ${facilityName || "facility"}`,
+    date: isRtl ? "التاريخ" : "Date",
+    time: isRtl ? "الوقت" : "Time",
+    member: isRtl ? "العضو" : "Member",
+    status: isRtl ? "الحالة" : "Status",
+    notes: isRtl ? "ملاحظات" : "Notes",
+    bookedAt: isRtl ? "وقت الحجز" : "Booked at",
+    checkedInAt: isRtl ? "وقت تسجيل الدخول" : "Checked in at",
+    cancelledAt: isRtl ? "وقت الإلغاء" : "Cancelled at",
+    cancellationReason: isRtl ? "سبب الإلغاء" : "Cancellation reason",
+    checkIn: isRtl ? "تسجيل الدخول" : "Check In",
+    complete: isRtl ? "إكمال" : "Complete",
+    cancel: isRtl ? "إلغاء الحجز" : "Cancel Booking",
+    noShow: isRtl ? "لم يحضر" : "No-Show",
+    close: isRtl ? "إغلاق" : "Close",
+    closed: isRtl ? "هذا الحجز مغلق." : "This booking is closed.",
+    cancelReasonLabel: isRtl ? "سبب الإلغاء (اختياري)" : "Cancellation reason (optional)",
+    cancelReasonPlaceholder: isRtl ? "أدخل سبب الإلغاء..." : "Enter cancellation reason...",
+    confirmCancel: isRtl ? "تأكيد الإلغاء" : "Confirm Cancel",
+    goBack: isRtl ? "رجوع" : "Go Back",
+    loading: isRtl ? "جاري التحميل..." : "Loading...",
+    checkInSuccess: isRtl ? "تم تسجيل الدخول بنجاح" : "Checked in successfully",
+    completeSuccess: isRtl ? "تم الإكمال بنجاح" : "Booking completed",
+    cancelSuccess: isRtl ? "تم إلغاء الحجز" : "Booking cancelled",
+    noShowSuccess: isRtl ? "تم التسجيل كغياب" : "Marked as no-show",
+    error: isRtl ? "حدث خطأ" : "Something went wrong",
+    noNotes: isRtl ? "لا توجد ملاحظات" : "No notes",
+  };
+
+  const closeDialog = () => {
+    onOpenChange(false);
+    setShowCancelForm(false);
+    setCancelReason("");
+  };
+
+  const handleCheckIn = async () => {
+    try {
+      await checkInMutation.mutateAsync(bookingId);
+      toast.success(texts.checkInSuccess);
+      closeDialog();
+    } catch {
+      toast.error(texts.error);
+    }
+  };
+
+  const handleComplete = async () => {
+    try {
+      await completeMutation.mutateAsync(bookingId);
+      toast.success(texts.completeSuccess);
+      closeDialog();
+    } catch {
+      toast.error(texts.error);
+    }
+  };
+
+  const handleCancel = async () => {
+    try {
+      await cancelMutation.mutateAsync({ id: bookingId, data: cancelReason ? { reason: cancelReason } : undefined });
+      toast.success(texts.cancelSuccess);
+      closeDialog();
+    } catch {
+      toast.error(texts.error);
+    }
+  };
+
+  const handleNoShow = async () => {
+    try {
+      await noShowMutation.mutateAsync(bookingId);
+      toast.success(texts.noShowSuccess);
+      closeDialog();
+    } catch {
+      toast.error(texts.error);
+    }
+  };
+
+  if (!slot) return null;
+
+  const slotDate = parseISO(`${slot.slotDate}T${slot.startTime}`);
+  const slotEndDate = parseISO(`${slot.slotDate}T${slot.endTime}`);
+
+  const memberName = member
+    ? `${locale === "ar" ? (member.firstName.ar || member.firstName.en) : member.firstName.en} ${locale === "ar" ? (member.lastName.ar || member.lastName.en) : member.lastName.en}`
+    : slot.booking?.memberId?.slice(0, 8) ?? "";
+
+  const isTerminal = booking?.status === "COMPLETED" || booking?.status === "CANCELLED" || booking?.status === "NO_SHOW";
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) closeDialog(); else onOpenChange(v); }}>
+      <DialogContent className="sm:max-w-[440px]">
+        <DialogHeader>
+          <DialogTitle className={cn(isRtl && "text-right")}>{texts.title}</DialogTitle>
+          <DialogDescription className={cn(isRtl && "text-right")}>
+            {texts.description}
+          </DialogDescription>
+        </DialogHeader>
+
+        {bookingLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <span className="ms-2 text-sm text-muted-foreground">{texts.loading}</span>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {/* Date */}
+            <div className={cn("flex items-center gap-3", isRtl && "flex-row-reverse")}>
+              <CalendarIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span className="text-sm">
+                {format(slotDate, "EEEE, MMMM d, yyyy", { locale: dateLocale })}
+              </span>
+            </div>
+
+            {/* Time */}
+            <div className={cn("flex items-center gap-3", isRtl && "flex-row-reverse")}>
+              <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span className="text-sm">
+                {format(slotDate, "h:mm a", { locale: dateLocale })} - {format(slotEndDate, "h:mm a", { locale: dateLocale })}
+              </span>
+            </div>
+
+            {/* Member */}
+            <div className={cn("flex items-center gap-3", isRtl && "flex-row-reverse")}>
+              <User className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span className="text-sm font-medium">{memberName}</span>
+            </div>
+
+            {/* Status */}
+            {booking && (
+              <div className={cn("flex items-center gap-3", isRtl && "flex-row-reverse")}>
+                <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0" />
+                <StatusBadge status={booking.status} locale={locale} />
+              </div>
+            )}
+
+            {/* Notes */}
+            {booking?.notes && (
+              <div className={cn("flex items-start gap-3", isRtl && "flex-row-reverse")}>
+                <span className="text-sm text-muted-foreground shrink-0">{texts.notes}:</span>
+                <span className="text-sm">{booking.notes}</span>
+              </div>
+            )}
+
+            {/* Timestamps */}
+            <div className="border-t pt-3 space-y-1">
+              {booking?.bookedAt && (
+                <p className={cn("text-xs text-muted-foreground", isRtl && "text-right")}>
+                  {texts.bookedAt}: {format(parseISO(booking.bookedAt), "MMM d, yyyy h:mm a", { locale: dateLocale })}
+                </p>
+              )}
+              {booking?.checkedInAt && (
+                <p className={cn("text-xs text-muted-foreground", isRtl && "text-right")}>
+                  {texts.checkedInAt}: {format(parseISO(booking.checkedInAt), "MMM d, yyyy h:mm a", { locale: dateLocale })}
+                </p>
+              )}
+              {booking?.cancelledAt && (
+                <p className={cn("text-xs text-muted-foreground", isRtl && "text-right")}>
+                  {texts.cancelledAt}: {format(parseISO(booking.cancelledAt), "MMM d, yyyy h:mm a", { locale: dateLocale })}
+                </p>
+              )}
+              {booking?.cancellationReason && (
+                <p className={cn("text-xs text-muted-foreground", isRtl && "text-right")}>
+                  {texts.cancellationReason}: {booking.cancellationReason}
+                </p>
+              )}
+            </div>
+
+            {/* Cancel form */}
+            {showCancelForm && (
+              <div className="border-t pt-3 space-y-3">
+                <label className={cn("text-sm font-medium", isRtl && "text-right block")}>
+                  {texts.cancelReasonLabel}
+                </label>
+                <Textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  placeholder={texts.cancelReasonPlaceholder}
+                  rows={3}
+                  dir={isRtl ? "rtl" : "ltr"}
+                />
+                <div className={cn("flex gap-2", isRtl && "flex-row-reverse")}>
+                  <Button variant="outline" size="sm" onClick={() => setShowCancelForm(false)} disabled={anyPending}>
+                    {texts.goBack}
+                  </Button>
+                  <Button variant="destructive" size="sm" onClick={handleCancel} disabled={anyPending}>
+                    {cancelMutation.isPending && <Loader2 className="h-4 w-4 animate-spin me-1" />}
+                    {texts.confirmCancel}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <DialogFooter className={cn("gap-2", isRtl && "flex-row-reverse")}>
+          {!bookingLoading && !showCancelForm && (
+            <>
+              {booking?.status === "CONFIRMED" && (
+                <>
+                  <Button size="sm" onClick={handleCheckIn} disabled={anyPending}>
+                    {checkInMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin me-1" /> : <UserCheck className="h-4 w-4 me-1" />}
+                    {texts.checkIn}
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => setShowCancelForm(true)} disabled={anyPending}>
+                    <XCircle className="h-4 w-4 me-1" />
+                    {texts.cancel}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleNoShow} disabled={anyPending}>
+                    {noShowMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin me-1" /> : <AlertCircle className="h-4 w-4 me-1" />}
+                    {texts.noShow}
+                  </Button>
+                </>
+              )}
+              {booking?.status === "CHECKED_IN" && (
+                <>
+                  <Button size="sm" onClick={handleComplete} disabled={anyPending}>
+                    {completeMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin me-1" /> : <Check className="h-4 w-4 me-1" />}
+                    {texts.complete}
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => setShowCancelForm(true)} disabled={anyPending}>
+                    <XCircle className="h-4 w-4 me-1" />
+                    {texts.cancel}
+                  </Button>
+                </>
+              )}
+              {isTerminal && (
+                <p className="text-sm text-muted-foreground">{texts.closed}</p>
+              )}
+            </>
+          )}
+          <Button variant="outline" size="sm" onClick={closeDialog}>
+            {texts.close}
           </Button>
         </DialogFooter>
       </DialogContent>

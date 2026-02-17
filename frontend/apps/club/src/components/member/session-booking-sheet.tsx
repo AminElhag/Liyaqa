@@ -304,14 +304,38 @@ export function SessionBookingSheet({
                       <p className="font-medium">
                         <LocalizedText text={pack.packName} />
                       </p>
-                      <p className="text-sm text-muted-foreground">
-                        {pack.classesRemaining} {t.credits}
-                        {pack.expiresAt && (
-                          <span className="ms-2">
-                            ({t.expires} {format(parseISO(pack.expiresAt), "MMM d")})
-                          </span>
-                        )}
-                      </p>
+                      {pack.allocationMode === "PER_CATEGORY" &&
+                      pack.categoryBalances &&
+                      pack.categoryBalances.length > 0 ? (
+                        <div className="mt-1 space-y-0.5">
+                          {pack.categoryBalances.map((cb) => (
+                            <p key={cb.id} className="text-xs text-muted-foreground flex items-center gap-1.5">
+                              {cb.categoryName && (
+                                <span className="font-medium">
+                                  <LocalizedText text={cb.categoryName} />:
+                                </span>
+                              )}
+                              <span>
+                                {cb.creditsRemaining}/{cb.creditsAllocated}
+                              </span>
+                            </p>
+                          ))}
+                          {pack.expiresAt && (
+                            <p className="text-xs text-muted-foreground">
+                              {t.expires} {format(parseISO(pack.expiresAt), "MMM d")}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          {pack.classesRemaining} {t.credits}
+                          {pack.expiresAt && (
+                            <span className="ms-2">
+                              ({t.expires} {format(parseISO(pack.expiresAt), "MMM d")})
+                            </span>
+                          )}
+                        </p>
+                      )}
                     </Label>
                   </div>
                 ))}

@@ -41,6 +41,15 @@ interface SpringDataRetentionOfferRepository : JpaRepository<RetentionOffer, UUI
         FROM RetentionOffer o
     """)
     fun getOfferAcceptanceStatsRaw(): Array<Any>
+
+    @Query("""
+        SELECT o.offerType, COUNT(o)
+        FROM RetentionOffer o
+        WHERE o.status = com.liyaqa.membership.domain.model.RetentionOfferStatus.ACCEPTED
+        GROUP BY o.offerType
+        ORDER BY COUNT(o) DESC
+    """)
+    fun getAcceptedOfferTypeStats(): List<Array<Any>>
 }
 
 @Repository
@@ -91,19 +100,29 @@ class JpaRetentionOfferRepository(
         springDataRepository.countAcceptedByOfferType(type)
 
     override fun getOfferAcceptanceStats(): Map<String, Any> {
-        val result = springDataRepository.getOfferAcceptanceStatsRaw()
-        val total = (result[0] as? Number)?.toLong() ?: 0L
-        val accepted = (result[1] as? Number)?.toLong() ?: 0L
-        val declined = (result[2] as? Number)?.toLong() ?: 0L
-        val expired = (result[3] as? Number)?.toLong() ?: 0L
-        val acceptanceRate = if (total > 0) accepted.toDouble() / total else 0.0
+        return try {
+            val result = springDataRepository.getOfferAcceptanceStatsRaw()
+            if (result.isEmpty()) {
+                return mapOf("total" to 0L, "accepted" to 0L, "declined" to 0L, "expired" to 0L, "acceptanceRate" to 0.0)
+            }
+            val total = (result[0] as? Number)?.toLong() ?: 0L
+            val accepted = (result[1] as? Number)?.toLong() ?: 0L
+            val declined = (result[2] as? Number)?.toLong() ?: 0L
+            val expired = (result[3] as? Number)?.toLong() ?: 0L
+            val acceptanceRate = if (total > 0) accepted.toDouble() / total else 0.0
 
-        return mapOf(
-            "total" to total,
-            "accepted" to accepted,
-            "declined" to declined,
-            "expired" to expired,
-            "acceptanceRate" to acceptanceRate
-        )
+            mapOf(
+                "total" to total,
+                "accepted" to accepted,
+                "declined" to declined,
+                "expired" to expired,
+                "acceptanceRate" to acceptanceRate
+            )
+        } catch (e: Exception) {
+            mapOf("total" to 0L, "accepted" to 0L, "declined" to 0L, "expired" to 0L, "acceptanceRate" to 0.0)
+        }
     }
+
+    override fun getAcceptedOfferTypeStats(): List<Array<Any>> =
+        springDataRepository.getAcceptedOfferTypeStats()
 }

@@ -8,32 +8,45 @@ import { locales, defaultLocale } from "@liyaqa/shared/i18n/config";
 interface JWTPayload {
   exp?: number;
   role?: string;
+  scope?: string;
+  account_type?: string;
   [key: string]: unknown;
 }
-
-/**
- * Routes that require authentication
- */
-const PROTECTED_ROUTES = ["/admin", "/trainer", "/security"];
 
 /**
  * Public routes that don't require authentication
  */
 const PUBLIC_ROUTES = [
-  "/",
   "/login",
   "/register",
   "/forgot-password",
   "/reset-password",
   "/auth",
+  "/member/login",
+  "/ref",
+  "/forms",
 ];
 
 /**
- * Checks if a path is protected
+ * Checks if a path is protected.
+ * Uses a "default deny" approach: any route that isn't explicitly public
+ * and isn't the bare root is treated as protected.
  */
 function isProtectedRoute(pathname: string): boolean {
   const pathWithoutLocale = pathname.replace(/^\/(en|ar)/, "");
-  return PROTECTED_ROUTES.some((route) => pathWithoutLocale.startsWith(route));
+
+  // Root path is not protected (it's the landing/redirect page)
+  if (pathWithoutLocale === "" || pathWithoutLocale === "/") {
+    return false;
+  }
+
+  // Explicitly public routes are not protected
+  if (isPublicRoute(pathname)) {
+    return false;
+  }
+
+  // Everything else is protected (admin pages like /locations, /classes, /plans, etc.)
+  return true;
 }
 
 /**
@@ -48,19 +61,38 @@ function isPublicRoute(pathname: string): boolean {
 }
 
 /**
- * Extracts and validates JWT token from request
+ * Reads session metadata from the lightweight `session_meta` cookie,
+ * falling back to the full `access_token` cookie or Authorization header.
+ *
+ * The `session_meta` cookie is a base64-encoded JSON object containing only
+ * { exp, scope, role, account_type } — small enough to always fit within
+ * the 4KB browser cookie limit, unlike the full JWT which can exceed it
+ * when the permissions list is large.
  */
-function getTokenFromRequest(request: NextRequest): string | null {
-  // Try to get token from cookie (HTTPOnly cookie auth)
-  const cookieToken = request.cookies.get("access_token")?.value;
-  if (cookieToken) {
-    return cookieToken;
+function getSessionFromRequest(request: NextRequest): JWTPayload | null {
+  // 1. Try lightweight session_meta cookie (preferred)
+  const metaCookie = request.cookies.get("session_meta")?.value;
+  if (metaCookie) {
+    try {
+      const decoded = JSON.parse(
+        Buffer.from(metaCookie, "base64").toString("utf-8")
+      ) as JWTPayload;
+      return decoded;
+    } catch {
+      // Malformed — fall through
+    }
   }
 
-  // Try to get token from Authorization header (Bearer auth)
+  // 2. Fallback: full access_token cookie (backward compat)
+  const cookieToken = request.cookies.get("access_token")?.value;
+  if (cookieToken) {
+    return decodeJWT(cookieToken);
+  }
+
+  // 3. Fallback: Authorization header
   const authHeader = request.headers.get("authorization");
   if (authHeader?.startsWith("Bearer ")) {
-    return authHeader.substring(7);
+    return decodeJWT(authHeader.substring(7));
   }
 
   return null;
@@ -80,7 +112,7 @@ function decodeJWT(token: string): JWTPayload | null {
     ) as JWTPayload;
 
     return decoded;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -111,21 +143,10 @@ async function authMiddleware(request: NextRequest) {
     return null;
   }
 
-  // Get token from request
-  const token = getTokenFromRequest(request);
+  // Get session metadata from cookie (or fallback to full JWT)
+  const decodedToken = getSessionFromRequest(request);
 
-  // No token found - redirect to login
-  if (!token) {
-    const locale = pathname.split("/")[1] || defaultLocale;
-    const loginUrl = new URL(`/${locale}/login`, request.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // Decode and validate token
-  const decodedToken = decodeJWT(token);
-
-  // Invalid token - redirect to login
+  // No valid session found - redirect to login
   if (!decodedToken) {
     const locale = pathname.split("/")[1] || defaultLocale;
     const loginUrl = new URL(`/${locale}/login`, request.url);
@@ -140,6 +161,39 @@ async function authMiddleware(request: NextRequest) {
     loginUrl.searchParams.set("redirect", pathname);
     loginUrl.searchParams.set("expired", "true");
     return NextResponse.redirect(loginUrl);
+  }
+
+  // Reject platform-scoped tokens — they can't access facility endpoints.
+  // This prevents cross-app cookie leakage when both apps run on localhost.
+  if (decodedToken.scope === "platform") {
+    const locale = pathname.split("/")[1] || defaultLocale;
+    const loginUrl = new URL(`/${locale}/login`, request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // For admin routes, validate EMPLOYEE account type (or legacy admin roles)
+  const pathWithoutLocale = pathname.replace(/^\/(en|ar)/, "");
+  const isAdminRoute =
+    !pathWithoutLocale.startsWith("/member") &&
+    !pathWithoutLocale.startsWith("/trainer") &&
+    !pathWithoutLocale.startsWith("/login");
+
+  if (isAdminRoute && pathWithoutLocale !== "" && pathWithoutLocale !== "/") {
+    const accountType = decodedToken.account_type;
+    const role = decodedToken.role;
+    const isEmployeeToken =
+      accountType === "EMPLOYEE" ||
+      (!accountType &&
+        role !== undefined &&
+        ["SUPER_ADMIN", "CLUB_ADMIN", "STAFF"].includes(role));
+
+    if (!isEmployeeToken) {
+      const locale = pathname.split("/")[1] || defaultLocale;
+      const loginUrl = new URL(`/${locale}/login`, request.url);
+      loginUrl.searchParams.set("wrong_portal", "true");
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
   // Token is valid - continue

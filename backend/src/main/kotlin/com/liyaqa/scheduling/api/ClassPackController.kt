@@ -1,8 +1,10 @@
 package com.liyaqa.scheduling.api
 
+import com.liyaqa.scheduling.application.services.CategoryAllocationInput
 import com.liyaqa.scheduling.application.services.ClassPackService
 import com.liyaqa.scheduling.application.services.CreateClassPackCommand
 import com.liyaqa.scheduling.application.services.UpdateClassPackCommand
+import com.liyaqa.scheduling.domain.model.ClassPackAllocationMode
 import com.liyaqa.scheduling.domain.model.ClassPackBalanceStatus
 import com.liyaqa.scheduling.domain.model.ClassPackStatus
 import com.liyaqa.shared.api.PageResponse
@@ -42,7 +44,8 @@ class ClassPackController(
     @PreAuthorize("hasAuthority('classes_create')")
     fun createClassPack(@Valid @RequestBody request: CreateClassPackRequest): ResponseEntity<ClassPackResponse> {
         val classPack = classPackService.createClassPack(request.toCommand())
-        return ResponseEntity.status(HttpStatus.CREATED).body(ClassPackResponse.from(classPack))
+        val allocations = classPackService.getCategoryAllocations(classPack.id)
+        return ResponseEntity.status(HttpStatus.CREATED).body(ClassPackResponse.from(classPack, allocations))
     }
 
     /**
@@ -52,7 +55,8 @@ class ClassPackController(
     @PreAuthorize("hasAuthority('classes_view')")
     fun getClassPack(@PathVariable id: UUID): ResponseEntity<ClassPackResponse> {
         val classPack = classPackService.getClassPack(id)
-        return ResponseEntity.ok(ClassPackResponse.from(classPack))
+        val allocations = classPackService.getCategoryAllocations(classPack.id)
+        return ResponseEntity.ok(ClassPackResponse.from(classPack, allocations))
     }
 
     /**
@@ -65,20 +69,25 @@ class ClassPackController(
         @RequestParam(defaultValue = "20") size: Int,
         @RequestParam(defaultValue = "sortOrder") sortBy: String,
         @RequestParam(defaultValue = "ASC") sortDirection: String,
-        @RequestParam status: ClassPackStatus? = null
+        @RequestParam status: ClassPackStatus? = null,
+        @RequestParam serviceType: com.liyaqa.scheduling.domain.model.ServiceType? = null
     ): ResponseEntity<PageResponse<ClassPackResponse>> {
         val sort = Sort.by(Sort.Direction.valueOf(sortDirection.uppercase()), sortBy)
         val pageable = PageRequest.of(page, size, sort)
 
-        val packsPage = if (status != null) {
-            classPackService.getClassPacksByStatus(status, pageable)
-        } else {
-            classPackService.getClassPacks(pageable)
+        val packsPage = when {
+            status != null && serviceType != null -> classPackService.getClassPacksByStatusAndServiceType(status, serviceType, pageable)
+            status != null -> classPackService.getClassPacksByStatus(status, pageable)
+            serviceType != null -> classPackService.getClassPacksByServiceType(serviceType, pageable)
+            else -> classPackService.getClassPacks(pageable)
         }
 
         return ResponseEntity.ok(
             PageResponse(
-                content = packsPage.content.map { ClassPackResponse.from(it) },
+                content = packsPage.content.map { pack ->
+                    val allocations = classPackService.getCategoryAllocations(pack.id)
+                    ClassPackResponse.from(pack, allocations)
+                },
                 page = packsPage.number,
                 size = packsPage.size,
                 totalElements = packsPage.totalElements,
@@ -96,7 +105,10 @@ class ClassPackController(
     @PreAuthorize("hasAuthority('classes_view')")
     fun getActiveClassPacks(): ResponseEntity<List<ClassPackResponse>> {
         val packs = classPackService.getActiveClassPacks()
-        return ResponseEntity.ok(packs.map { ClassPackResponse.from(it) })
+        return ResponseEntity.ok(packs.map { pack ->
+            val allocations = classPackService.getCategoryAllocations(pack.id)
+            ClassPackResponse.from(pack, allocations)
+        })
     }
 
     /**
@@ -109,7 +121,8 @@ class ClassPackController(
         @Valid @RequestBody request: UpdateClassPackRequest
     ): ResponseEntity<ClassPackResponse> {
         val classPack = classPackService.updateClassPack(id, request.toCommand())
-        return ResponseEntity.ok(ClassPackResponse.from(classPack))
+        val allocations = classPackService.getCategoryAllocations(classPack.id)
+        return ResponseEntity.ok(ClassPackResponse.from(classPack, allocations))
     }
 
     /**
@@ -161,7 +174,8 @@ class ClassPackController(
             PageResponse(
                 content = balancesPage.content.map { balance ->
                     val pack = classPackService.getClassPack(balance.classPackId)
-                    MemberClassPackBalanceResponse.from(balance, pack.name)
+                    val categoryBalances = classPackService.getCategoryBalances(balance.id)
+                    MemberClassPackBalanceResponse.from(balance, pack.name, pack.allocationMode, categoryBalances)
                 },
                 page = balancesPage.number,
                 size = balancesPage.size,
@@ -182,7 +196,8 @@ class ClassPackController(
         val balances = classPackService.getActiveMemberBalances(memberId)
         val responses = balances.map { balance ->
             val pack = classPackService.getClassPack(balance.classPackId)
-            MemberClassPackBalanceResponse.from(balance, pack.name)
+            val categoryBalances = classPackService.getCategoryBalances(balance.id)
+            MemberClassPackBalanceResponse.from(balance, pack.name, pack.allocationMode, categoryBalances)
         }
         return ResponseEntity.ok(responses)
     }
@@ -198,8 +213,9 @@ class ClassPackController(
     ): ResponseEntity<MemberClassPackBalanceResponse> {
         val balance = classPackService.grantPackToMember(memberId, request.classPackId)
         val pack = classPackService.getClassPack(balance.classPackId)
+        val categoryBalances = classPackService.getCategoryBalances(balance.id)
         return ResponseEntity.status(HttpStatus.CREATED).body(
-            MemberClassPackBalanceResponse.from(balance, pack.name)
+            MemberClassPackBalanceResponse.from(balance, pack.name, pack.allocationMode, categoryBalances)
         )
     }
 
@@ -211,11 +227,18 @@ class ClassPackController(
     fun cancelBalance(@PathVariable balanceId: UUID): ResponseEntity<MemberClassPackBalanceResponse> {
         val balance = classPackService.cancelBalance(balanceId)
         val pack = classPackService.getClassPack(balance.classPackId)
-        return ResponseEntity.ok(MemberClassPackBalanceResponse.from(balance, pack.name))
+        val categoryBalances = classPackService.getCategoryBalances(balance.id)
+        return ResponseEntity.ok(MemberClassPackBalanceResponse.from(balance, pack.name, pack.allocationMode, categoryBalances))
     }
 }
 
 // ==================== DTOs ====================
+
+data class CategoryAllocationDto(
+    val categoryId: UUID,
+    @field:Min(1, message = "Credit count must be at least 1")
+    val creditCount: Int
+)
 
 data class CreateClassPackRequest(
     @field:NotBlank(message = "English name is required")
@@ -233,7 +256,9 @@ data class CreateClassPackRequest(
     val validClassTypes: List<String>? = null,
     val validClassIds: List<UUID>? = null,
     val sortOrder: Int = 0,
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val allocationMode: ClassPackAllocationMode = ClassPackAllocationMode.FLAT,
+    val categoryAllocations: List<CategoryAllocationDto>? = null
 ) {
     fun toCommand() = CreateClassPackCommand(
         name = LocalizedText(nameEn, nameAr),
@@ -245,7 +270,11 @@ data class CreateClassPackRequest(
         validClassTypes = validClassTypes,
         validClassIds = validClassIds,
         sortOrder = sortOrder,
-        imageUrl = imageUrl
+        imageUrl = imageUrl,
+        allocationMode = allocationMode,
+        categoryAllocations = categoryAllocations?.map {
+            CategoryAllocationInput(categoryId = it.categoryId, creditCount = it.creditCount)
+        }
     )
 }
 
@@ -264,7 +293,9 @@ data class UpdateClassPackRequest(
     val validClassTypes: List<String>? = null,
     val validClassIds: List<UUID>? = null,
     val sortOrder: Int? = null,
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val allocationMode: ClassPackAllocationMode? = null,
+    val categoryAllocations: List<CategoryAllocationDto>? = null
 ) {
     fun toCommand() = UpdateClassPackCommand(
         name = nameEn?.let { LocalizedText(it, nameAr) },
@@ -276,12 +307,29 @@ data class UpdateClassPackRequest(
         validClassTypes = validClassTypes,
         validClassIds = validClassIds,
         sortOrder = sortOrder,
-        imageUrl = imageUrl
+        imageUrl = imageUrl,
+        allocationMode = allocationMode,
+        categoryAllocations = categoryAllocations?.map {
+            CategoryAllocationInput(categoryId = it.categoryId, creditCount = it.creditCount)
+        }
     )
 }
 
 data class GrantClassPackRequest(
     val classPackId: UUID
+)
+
+data class CategoryAllocationResponse(
+    val id: UUID,
+    val categoryId: UUID,
+    val creditCount: Int
+)
+
+data class CategoryBalanceResponse(
+    val id: UUID,
+    val categoryId: UUID,
+    val creditsAllocated: Int,
+    val creditsRemaining: Int
 )
 
 data class ClassPackResponse(
@@ -298,11 +346,17 @@ data class ClassPackResponse(
     val status: ClassPackStatus,
     val sortOrder: Int,
     val imageUrl: String?,
+    val allocationMode: ClassPackAllocationMode,
+    val serviceType: com.liyaqa.scheduling.domain.model.ServiceType,
+    val categoryAllocations: List<CategoryAllocationResponse>,
     val createdAt: Instant,
     val updatedAt: Instant
 ) {
     companion object {
-        fun from(pack: com.liyaqa.scheduling.domain.model.ClassPack) = ClassPackResponse(
+        fun from(
+            pack: com.liyaqa.scheduling.domain.model.ClassPack,
+            allocations: List<com.liyaqa.scheduling.domain.model.ClassPackCategoryAllocation> = emptyList()
+        ) = ClassPackResponse(
             id = pack.id,
             name = LocalizedTextResponse(pack.name.en, pack.name.ar),
             description = pack.description?.let { LocalizedTextResponse(it.en, it.ar) },
@@ -316,6 +370,11 @@ data class ClassPackResponse(
             status = pack.status,
             sortOrder = pack.sortOrder,
             imageUrl = pack.imageUrl,
+            allocationMode = pack.allocationMode,
+            serviceType = pack.serviceType,
+            categoryAllocations = allocations.map {
+                CategoryAllocationResponse(id = it.id, categoryId = it.categoryId, creditCount = it.creditCount)
+            },
             createdAt = pack.createdAt,
             updatedAt = pack.updatedAt
         )
@@ -333,13 +392,17 @@ data class MemberClassPackBalanceResponse(
     val purchasedAt: Instant,
     val expiresAt: Instant?,
     val status: com.liyaqa.scheduling.domain.model.ClassPackBalanceStatus,
+    val allocationMode: ClassPackAllocationMode,
+    val categoryBalances: List<CategoryBalanceResponse>,
     val createdAt: Instant,
     val updatedAt: Instant
 ) {
     companion object {
         fun from(
             balance: com.liyaqa.scheduling.domain.model.MemberClassPackBalance,
-            packName: LocalizedText
+            packName: LocalizedText,
+            allocationMode: ClassPackAllocationMode = ClassPackAllocationMode.FLAT,
+            categoryBalances: List<com.liyaqa.scheduling.domain.model.MemberCategoryBalance> = emptyList()
         ) = MemberClassPackBalanceResponse(
             id = balance.id,
             memberId = balance.memberId,
@@ -351,6 +414,15 @@ data class MemberClassPackBalanceResponse(
             purchasedAt = balance.purchasedAt,
             expiresAt = balance.expiresAt,
             status = balance.status,
+            allocationMode = allocationMode,
+            categoryBalances = categoryBalances.map {
+                CategoryBalanceResponse(
+                    id = it.id,
+                    categoryId = it.categoryId,
+                    creditsAllocated = it.creditsAllocated,
+                    creditsRemaining = it.creditsRemaining
+                )
+            },
             createdAt = balance.createdAt,
             updatedAt = balance.updatedAt
         )

@@ -232,7 +232,7 @@ export default function SubscriptionsPage() {
                 {(subscription.status === "EXPIRED" ||
                   subscription.status === "CANCELLED") && (
                   <DropdownMenuItem
-                    onClick={() => renewSubscription.mutate(subscription.id)}
+                    onClick={() => renewSubscription.mutate({ id: subscription.id })}
                   >
                     <RefreshCw className="me-2 h-4 w-4" />
                     {texts.renew}

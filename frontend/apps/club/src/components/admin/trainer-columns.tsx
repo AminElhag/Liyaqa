@@ -14,6 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@liyaqa/shared/components/ui/avatar";
 import { TrainerStatusBadge } from "./trainer-status-badge";
 import { TrainerTypeBadge } from "./trainer-type-badge";
+import { Badge } from "@liyaqa/shared/components/ui/badge";
 import { getLocalizedText } from "@liyaqa/shared/utils";
 import type { TrainerSummary } from "@liyaqa/shared/types/trainer";
 
@@ -37,6 +38,8 @@ export function getTrainerColumns(options: TrainerColumnsOptions): ColumnDef<Tra
     type: locale === "ar" ? "النوع" : "Type",
     specializations: locale === "ar" ? "التخصصات" : "Specializations",
     status: locale === "ar" ? "الحالة" : "Status",
+    rating: locale === "ar" ? "التقييم" : "Rating",
+    ptRate: locale === "ar" ? "سعر الجلسة" : "PT Rate",
     actions: locale === "ar" ? "الإجراءات" : "Actions",
     view: locale === "ar" ? "عرض" : "View",
     edit: locale === "ar" ? "تعديل" : "Edit",
@@ -45,6 +48,7 @@ export function getTrainerColumns(options: TrainerColumnsOptions): ColumnDef<Tra
     setOnLeave: locale === "ar" ? "إجازة" : "Set On Leave",
     na: locale === "ar" ? "غير محدد" : "N/A",
     noSpecializations: locale === "ar" ? "لا توجد تخصصات" : "No specializations",
+    noRating: locale === "ar" ? "-" : "-",
   };
 
   return [
@@ -56,7 +60,10 @@ export function getTrainerColumns(options: TrainerColumnsOptions): ColumnDef<Tra
         const initials = name.slice(0, 2).toUpperCase();
 
         return (
-          <div className="flex items-center gap-3 max-w-[250px]">
+          <div
+            className="flex items-center gap-3 max-w-[250px] cursor-pointer"
+            onClick={() => onView(row.original)}
+          >
             <Avatar className="h-10 w-10">
               <AvatarImage src={row.original.profileImageUrl || undefined} alt={name} />
               <AvatarFallback className="bg-primary/10 text-primary">
@@ -64,7 +71,10 @@ export function getTrainerColumns(options: TrainerColumnsOptions): ColumnDef<Tra
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="font-medium truncate">{name}</p>
+              <p className="font-medium truncate hover:underline">{name}</p>
+              {row.original.userEmail && (
+                <p className="text-xs text-muted-foreground truncate">{row.original.userEmail}</p>
+              )}
             </div>
           </div>
         );
@@ -79,13 +89,31 @@ export function getTrainerColumns(options: TrainerColumnsOptions): ColumnDef<Tra
       accessorKey: "specializations",
       header: texts.specializations,
       cell: ({ row }) => {
+        const skills = row.original.skills || [];
         const specs = row.original.specializations || [];
-        if (specs.length === 0) {
+        const hasContent = skills.length > 0 || specs.length > 0;
+
+        if (!hasContent) {
           return <span className="text-sm text-muted-foreground">{texts.noSpecializations}</span>;
         }
+
         return (
-          <div className="flex flex-wrap gap-1 max-w-[200px]">
-            {specs.slice(0, 2).map((spec, i) => (
+          <div className="flex flex-wrap gap-1 max-w-[220px]">
+            {skills.slice(0, 2).map((skill) => (
+              <Badge
+                key={skill.categoryId}
+                variant="secondary"
+                className="text-xs"
+                style={skill.colorCode ? {
+                  backgroundColor: `${skill.colorCode}20`,
+                  color: skill.colorCode,
+                  borderColor: `${skill.colorCode}40`,
+                } : undefined}
+              >
+                {getLocalizedText(skill.categoryName, locale)}
+              </Badge>
+            ))}
+            {skills.length === 0 && specs.slice(0, 2).map((spec, i) => (
               <span
                 key={i}
                 className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-muted"
@@ -93,8 +121,10 @@ export function getTrainerColumns(options: TrainerColumnsOptions): ColumnDef<Tra
                 {spec}
               </span>
             ))}
-            {specs.length > 2 && (
-              <span className="text-xs text-muted-foreground">+{specs.length - 2}</span>
+            {(skills.length > 2 || (skills.length === 0 && specs.length > 2)) && (
+              <span className="text-xs text-muted-foreground">
+                +{skills.length > 2 ? skills.length - 2 : specs.length - 2}
+              </span>
             )}
           </div>
         );
@@ -104,6 +134,21 @@ export function getTrainerColumns(options: TrainerColumnsOptions): ColumnDef<Tra
       accessorKey: "status",
       header: texts.status,
       cell: ({ row }) => <TrainerStatusBadge status={row.original.status} />,
+    },
+    {
+      accessorKey: "ptSessionRate",
+      header: texts.ptRate,
+      cell: ({ row }) => {
+        const rate = row.original.ptSessionRate;
+        if (!rate) {
+          return <span className="text-sm text-muted-foreground">{texts.na}</span>;
+        }
+        return (
+          <span className="text-sm font-medium">
+            {rate} SAR
+          </span>
+        );
+      },
     },
     {
       id: "actions",

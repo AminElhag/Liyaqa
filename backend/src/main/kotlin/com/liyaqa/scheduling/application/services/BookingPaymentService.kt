@@ -273,6 +273,11 @@ class BookingPaymentService(
             throw IllegalStateException("Session is full and waitlist is not available")
         }
 
+        // Mark class deducted if pack credit was used at booking time
+        if (command.paymentSource == BookingPaymentSource.CLASS_PACK && usedBalance != null) {
+            booking.markClassDeducted()
+        }
+
         val savedBooking = bookingRepository.save(booking)
         logger.info("Booking created with ${command.paymentSource}: ${savedBooking.id} for member ${command.memberId}")
 

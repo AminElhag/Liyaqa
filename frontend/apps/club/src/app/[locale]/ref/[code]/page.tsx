@@ -57,7 +57,7 @@ export default function ReferralLandingPage() {
 
   const handleSignUp = () => {
     // Navigate to signup with referral code
-    router.push(`/${locale}/signup?ref=${code}`);
+    router.push(`/${locale}/register?ref=${code}`);
   };
 
   if (isLoading) {

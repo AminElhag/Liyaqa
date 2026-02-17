@@ -1,0 +1,43 @@
+{
+  "common": {
+    "appName": "لياقة - العضو",
+    "loading": "جاري التحميل...",
+    "error": "حدث خطأ",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "back": "رجوع",
+    "next": "التالي",
+    "submit": "إرسال",
+    "search": "بحث",
+    "noResults": "لا توجد نتائج"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "loginTitle": "بوابة العضو",
+    "loginSubtitle": "سجّل الدخول لإدارة عضويتك وحجوزاتك",
+    "wrongPortal": "ليس لديك صلاحية العضو. يرجى استخدام البوابة الصحيحة.",
+    "selectAccountType": "اختر البوابة",
+    "switchPortal": "تبديل البوابة"
+  },
+  "member": {
+    "dashboard": "لوحة التحكم",
+    "bookings": "حجوزاتي",
+    "subscription": "اشتراكي",
+    "profile": "الملف الشخصي",
+    "schedule": "جدول الحصص",
+    "classPacks": "باقات الحصص",
+    "agreements": "الاتفاقيات",
+    "payments": "المدفوعات",
+    "paymentMethods": "طرق الدفع",
+    "qrCode": "رمز QR",
+    "notifications": "الإشعارات",
+    "settings": "الإعدادات",
+    "fitness": "اللياقة",
+    "referrals": "الإحالات",
+    "freeze": "التجميد",
+    "ptSessions": "جلسات التدريب الشخصي"
+  }
+}

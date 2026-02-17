@@ -1,1 +1,1 @@
-export { BookingCalendar } from "./booking-calendar";
+export { BookingCalendar, BookingManageDialog } from "./booking-calendar";

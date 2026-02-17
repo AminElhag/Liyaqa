@@ -37,14 +37,14 @@ interface SpringDataEmployeeRepository : JpaRepository<Employee, UUID> {
 
     @Query("""
         SELECT e FROM Employee e
-        WHERE (:search IS NULL OR (
-            LOWER(CONCAT(COALESCE(e.firstName.en, ''), ' ', COALESCE(e.lastName.en, ''))) LIKE LOWER(CONCAT('%', :search, '%'))
-            OR LOWER(CONCAT(COALESCE(e.firstName.ar, ''), ' ', COALESCE(e.lastName.ar, ''))) LIKE LOWER(CONCAT('%', :search, '%'))
-            OR LOWER(e.email) LIKE LOWER(CONCAT('%', :search, '%'))
+        WHERE (CAST(:search AS string) IS NULL OR (
+            LOWER(CONCAT(COALESCE(e.firstName.en, ''), ' ', COALESCE(e.lastName.en, ''))) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+            OR LOWER(CONCAT(COALESCE(e.firstName.ar, ''), ' ', COALESCE(e.lastName.ar, ''))) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+            OR LOWER(e.email) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
         ))
-        AND (:status IS NULL OR e.status = :status)
-        AND (:departmentId IS NULL OR e.departmentId = :departmentId)
-        AND (:employmentType IS NULL OR e.employmentType = :employmentType)
+        AND (CAST(:status AS string) IS NULL OR e.status = :status)
+        AND (CAST(:departmentId AS string) IS NULL OR e.departmentId = :departmentId)
+        AND (CAST(:employmentType AS string) IS NULL OR e.employmentType = :employmentType)
     """)
     fun search(
         @Param("search") search: String?,

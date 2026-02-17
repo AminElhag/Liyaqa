@@ -60,8 +60,10 @@ class MemberTaskController(
     @PostMapping("/tasks")
     @PreAuthorize("hasAnyAuthority('tasks_create', 'members_manage')")
     fun createTask(
-        @Valid @RequestBody request: CreateTaskRequest
+        @Valid @RequestBody request: CreateTaskRequest,
+        @AuthenticationPrincipal user: JwtUserPrincipal?
     ): ResponseEntity<MemberTaskResponse> {
+        val currentUserId = getCurrentUserId(user)
         val task = taskService.createTask(
             CreateTaskCommand(
                 memberId = request.memberId,
@@ -71,7 +73,7 @@ class MemberTaskController(
                 dueDate = request.dueDate,
                 dueTime = request.dueTime,
                 priority = request.priority,
-                assignedToUserId = request.assignedToUserId,
+                assignedToUserId = request.assignedToUserId ?: currentUserId,
                 metadata = request.metadata
             )
         )

@@ -56,6 +56,105 @@ export type BookingPaymentSource =
 export type ClassPackStatus = "ACTIVE" | "INACTIVE";
 
 /**
+ * Access policy for a gym class
+ */
+export type ClassAccessPolicy =
+  | "MEMBERS_ONLY"
+  | "SPECIFIC_MEMBERSHIPS"
+  | "OPEN_TO_ANYONE";
+
+/**
+ * Class access level on a membership plan
+ */
+export type ClassAccessLevel = "UNLIMITED" | "LIMITED" | "NO_ACCESS";
+
+/**
+ * Spot status in a room layout
+ */
+export type SpotStatus = "AVAILABLE" | "INSTRUCTOR_ONLY" | "DISABLED";
+
+// ==================== PT TYPES ====================
+
+/**
+ * PT session type
+ */
+export type PTSessionType = "ONE_ON_ONE" | "SEMI_PRIVATE";
+
+/**
+ * PT location type
+ */
+export type PTLocationType = "CLUB" | "HOME";
+
+/**
+ * Service type for universal credit packs
+ */
+export type ServiceType = "GX" | "PT" | "GOODS";
+
+/**
+ * Trainer availability status
+ */
+export type TrainerAvailabilityStatus = "AVAILABLE" | "BOOKED" | "BLOCKED";
+
+/**
+ * Trainer profile
+ */
+export interface TrainerProfile {
+  id: UUID;
+  userId: UUID;
+  displayName?: LocalizedText;
+  bio?: LocalizedText;
+  specializations?: string[];
+  gender?: string;
+  experienceYears?: number;
+  employmentType: string;
+  trainerType: string;
+  homeServiceAvailable: boolean;
+  travelFeeAmount?: number;
+  travelFeeCurrency?: string;
+  travelRadiusKm?: number;
+  maxConcurrentClients: number;
+  hourlyRate?: number;
+  ptSessionRate?: number;
+  rating?: number;
+  status: string;
+  phone?: string;
+  profileImageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Trainer availability slot
+ */
+export interface TrainerAvailabilitySlot {
+  id: UUID;
+  trainerId: UUID;
+  dayOfWeek: DayOfWeek;
+  startTime: string;
+  endTime: string;
+  locationType: PTLocationType;
+  locationId?: UUID;
+  isRecurring: boolean;
+  effectiveFrom: string;
+  effectiveUntil?: string;
+  status: TrainerAvailabilityStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * PT dashboard stats
+ */
+export interface PTDashboardStats {
+  totalPTClasses: number;
+  activePTClasses: number;
+  totalPTSessions: number;
+  completedPTSessions: number;
+  cancelledPTSessions: number;
+  upcomingPTSessions: number;
+}
+
+/**
  * Class pack balance status
  */
 export type ClassPackBalanceStatus = "ACTIVE" | "DEPLETED" | "EXPIRED" | "CANCELLED";
@@ -73,7 +172,17 @@ export interface ClassSchedule {
 /**
  * Class type
  */
-export type ClassType = "GROUP_FITNESS" | "PERSONAL_TRAINING" | "SPECIALTY" | "WORKSHOP";
+export type ClassType =
+  | "GROUP_FITNESS"
+  | "PERSONAL_TRAINING"
+  | "YOGA"
+  | "PILATES"
+  | "SPINNING"
+  | "CROSSFIT"
+  | "SWIMMING"
+  | "MARTIAL_ARTS"
+  | "DANCE"
+  | "OTHER";
 
 /**
  * Difficulty level
@@ -109,6 +218,22 @@ export interface GymClass {
   advanceBookingDays: number;
   cancellationDeadlineHours: number;
   lateCancellationFee?: Money;
+  // GX access policy
+  accessPolicy: ClassAccessPolicy;
+  onlineBookableSpots?: number;
+  noShowFee?: Money;
+  // Spot booking
+  spotBookingEnabled: boolean;
+  roomLayoutId?: UUID;
+  // Category
+  categoryId?: UUID;
+  categoryName?: LocalizedText;
+  // PT fields
+  ptSessionType?: PTSessionType;
+  ptLocationType?: PTLocationType;
+  travelFee?: Money;
+  trainerProfileId?: UUID;
+  minCapacity?: number;
   tenantId: UUID;
   createdAt: string;
   updatedAt: string;
@@ -137,6 +262,12 @@ export interface ClassSession {
   bookedByCurrentMember?: boolean;
   waitlistEnabled?: boolean;
   colorCode?: string;
+  // PT fields
+  ptLocationType?: PTLocationType;
+  clientAddress?: string;
+  travelFeeApplied?: Money;
+  trainerNotes?: string;
+  completionNotes?: string;
   tenantId: UUID;
   createdAt: string;
   updatedAt: string;
@@ -163,6 +294,11 @@ export interface Booking {
   classPackBalanceId?: UUID;
   orderId?: UUID;
   paidAmount?: Money;
+  // Spot booking
+  spotId?: string;
+  spotLabel?: string;
+  // PT travel fee
+  travelFeePaid?: Money;
   tenantId: UUID;
   createdAt: string;
   updatedAt: string;
@@ -178,6 +314,13 @@ export interface CreateClassRequest {
   capacity: number;
   durationMinutes: number;
   locationId?: UUID;
+  classType?: ClassType;
+  difficultyLevel?: DifficultyLevel;
+  colorCode?: string;
+  imageUrl?: string;
+  genderRestriction?: string;
+  // Category
+  categoryId?: UUID;
   // Pricing settings
   pricingModel?: ClassPricingModel;
   dropInPriceAmount?: number;
@@ -189,6 +332,15 @@ export interface CreateClassRequest {
   cancellationDeadlineHours?: number;
   lateCancellationFeeAmount?: number;
   lateCancellationFeeCurrency?: string;
+  // GX access policy
+  accessPolicy?: ClassAccessPolicy;
+  eligiblePlanIds?: UUID[];
+  onlineBookableSpots?: number;
+  noShowFeeAmount?: number;
+  noShowFeeCurrency?: string;
+  // Spot booking
+  spotBookingEnabled?: boolean;
+  roomLayoutId?: UUID;
   schedules?: Array<{
     dayOfWeek: DayOfWeek;
     startTime: string;
@@ -207,6 +359,12 @@ export interface UpdateClassRequest {
   durationMinutes?: number;
   locationId?: UUID;
   status?: ClassStatus;
+  classType?: ClassType;
+  difficultyLevel?: DifficultyLevel;
+  colorCode?: string;
+  imageUrl?: string;
+  // Category
+  categoryId?: UUID;
   // Pricing settings
   pricingModel?: ClassPricingModel;
   dropInPriceAmount?: number;
@@ -218,6 +376,15 @@ export interface UpdateClassRequest {
   cancellationDeadlineHours?: number;
   lateCancellationFeeAmount?: number;
   lateCancellationFeeCurrency?: string;
+  // GX access policy
+  accessPolicy?: ClassAccessPolicy;
+  eligiblePlanIds?: UUID[];
+  onlineBookableSpots?: number;
+  noShowFeeAmount?: number;
+  noShowFeeCurrency?: string;
+  // Spot booking
+  spotBookingEnabled?: boolean;
+  roomLayoutId?: UUID;
 }
 
 /**
@@ -234,6 +401,8 @@ export interface GenerateSessionsRequest {
 export interface CreateBookingRequest {
   sessionId: UUID;
   memberId: UUID;
+  spotId?: string;
+  spotLabel?: string;
 }
 
 /**
@@ -268,6 +437,79 @@ export interface BookingQueryParams extends ListQueryParams {
   dateTo?: string;
 }
 
+// ==================== CLASS CATEGORIES ====================
+
+/**
+ * Class category (admin-created class groupings)
+ */
+export interface ClassCategory {
+  id: UUID;
+  name: LocalizedText;
+  description?: LocalizedText;
+  colorCode?: string;
+  icon?: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateClassCategoryRequest {
+  nameEn: string;
+  nameAr?: string;
+  descriptionEn?: string;
+  descriptionAr?: string;
+  colorCode?: string;
+  icon?: string;
+  sortOrder?: number;
+}
+
+export interface UpdateClassCategoryRequest {
+  nameEn?: string;
+  nameAr?: string;
+  descriptionEn?: string;
+  descriptionAr?: string;
+  colorCode?: string;
+  icon?: string;
+  sortOrder?: number;
+}
+
+// ==================== CLASS PACK ALLOCATION ====================
+
+/**
+ * Allocation mode for class packs
+ */
+export type ClassPackAllocationMode = "FLAT" | "PER_CATEGORY";
+
+/**
+ * Per-category credit allocation within a pack
+ */
+export interface CategoryAllocation {
+  id: UUID;
+  categoryId: UUID;
+  categoryName?: LocalizedText;
+  creditCount: number;
+}
+
+/**
+ * Per-category credit balance for a member
+ */
+export interface CategoryBalance {
+  id: UUID;
+  categoryId: UUID;
+  categoryName?: LocalizedText;
+  creditsAllocated: number;
+  creditsRemaining: number;
+}
+
+/**
+ * Input for creating category allocations
+ */
+export interface CategoryAllocationInput {
+  categoryId: UUID;
+  creditCount: number;
+}
+
 // ==================== CLASS PACKS ====================
 
 /**
@@ -287,6 +529,9 @@ export interface ClassPack {
   status: ClassPackStatus;
   sortOrder: number;
   imageUrl?: string;
+  allocationMode: ClassPackAllocationMode;
+  serviceType: ServiceType;
+  categoryAllocations?: CategoryAllocation[];
   createdAt: string;
   updatedAt: string;
 }
@@ -305,6 +550,8 @@ export interface MemberClassPackBalance {
   purchasedAt: string;
   expiresAt?: string;
   status: ClassPackBalanceStatus;
+  allocationMode?: ClassPackAllocationMode;
+  categoryBalances?: CategoryBalance[];
   createdAt: string;
   updatedAt: string;
 }
@@ -326,6 +573,9 @@ export interface CreateClassPackRequest {
   validClassIds?: UUID[];
   sortOrder?: number;
   imageUrl?: string;
+  allocationMode?: ClassPackAllocationMode;
+  serviceType?: ServiceType;
+  categoryAllocations?: CategoryAllocationInput[];
 }
 
 /**
@@ -345,6 +595,8 @@ export interface UpdateClassPackRequest {
   validClassIds?: UUID[];
   sortOrder?: number;
   imageUrl?: string;
+  allocationMode?: ClassPackAllocationMode;
+  categoryAllocations?: CategoryAllocationInput[];
 }
 
 /**
@@ -365,6 +617,8 @@ export interface BookingOptionsResponse {
       packName: LocalizedText;
       classesRemaining: number;
       expiresAt?: string;
+      allocationMode?: ClassPackAllocationMode;
+      categoryBalances?: CategoryBalance[];
     }>;
     payPerEntry?: {
       available: boolean;
@@ -382,5 +636,177 @@ export interface CreateBookingWithPaymentRequest {
   sessionId: UUID;
   paymentSource: BookingPaymentSource;
   classPackBalanceId?: UUID;
+  spotId?: string;
+  spotLabel?: string;
+}
+
+// ==================== ROOM LAYOUTS ====================
+
+/**
+ * Spot definition in a room layout
+ */
+export interface SpotDefinition {
+  id: string;
+  row: number;
+  col: number;
+  label: string;
+  status: SpotStatus;
+}
+
+/**
+ * Room layout for spot-based booking
+ */
+export interface RoomLayout {
+  id: UUID;
+  name: LocalizedText;
+  rows: number;
+  columns: number;
+  layoutJson: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateRoomLayoutRequest {
+  nameEn: string;
+  nameAr?: string;
+  rows?: number;
+  columns?: number;
+  layoutJson?: string;
+}
+
+export interface UpdateRoomLayoutRequest {
+  nameEn?: string;
+  nameAr?: string;
+  rows?: number;
+  columns?: number;
+  layoutJson?: string;
+}
+
+// ==================== GX SETTINGS ====================
+
+/**
+ * GX settings (per-tenant configuration)
+ */
+export interface GxSettings {
+  id: UUID;
+  defaultBookingWindowDays: number;
+  defaultCancellationDeadlineHours: number;
+  defaultLateCancellationFee: Money;
+  defaultNoShowFee: Money;
+  walkinReserveSpots: number;
+  autoMarkNoShows: boolean;
+  preClassReminderMinutes: number;
+  waitlistAutoPromote: boolean;
+  waitlistNotificationChannel: string;
+  prayerTimeBlockingEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateGxSettingsRequest {
+  defaultBookingWindowDays?: number;
+  defaultCancellationDeadlineHours?: number;
+  defaultLateCancellationFeeAmount?: number;
+  defaultLateCancellationFeeCurrency?: string;
+  defaultNoShowFeeAmount?: number;
+  defaultNoShowFeeCurrency?: string;
+  walkinReserveSpots?: number;
+  autoMarkNoShows?: boolean;
+  preClassReminderMinutes?: number;
+  waitlistAutoPromote?: boolean;
+  waitlistNotificationChannel?: string;
+  prayerTimeBlockingEnabled?: boolean;
+}
+
+// ==================== PT REQUESTS ====================
+
+/**
+ * Create PT class request
+ */
+export interface CreatePTClassRequest {
+  nameEn: string;
+  nameAr?: string;
+  descriptionEn?: string;
+  descriptionAr?: string;
+  locationId?: UUID;
+  trainerId: UUID;
+  ptSessionType: PTSessionType;
+  ptLocationType: PTLocationType;
+  durationMinutes?: number;
+  maxCapacity?: number;
+  minCapacity?: number;
+  pricingModel?: ClassPricingModel;
+  dropInPriceAmount?: number;
+  dropInPriceCurrency?: string;
+  travelFeeAmount?: number;
+  travelFeeCurrency?: string;
+  taxRate?: number;
+  categoryId?: UUID;
+}
+
+/**
+ * Schedule PT session request
+ */
+export interface SchedulePTSessionRequest {
+  gymClassId: UUID;
+  sessionDate: string;
+  startTime: string;
+  endTime: string;
+  clientAddress?: string;
+  notesEn?: string;
+  notesAr?: string;
+}
+
+/**
+ * Complete PT session request
+ */
+export interface CompletePTSessionRequest {
+  completionNotes?: string;
+  trainerNotes?: string;
+}
+
+/**
+ * Set trainer availability request
+ */
+export interface SetTrainerAvailabilityRequest {
+  slots: Array<{
+    dayOfWeek: DayOfWeek;
+    startTime: string;
+    endTime: string;
+    locationType?: PTLocationType;
+    locationId?: UUID;
+    isRecurring?: boolean;
+    effectiveFrom?: string;
+    effectiveUntil?: string;
+  }>;
+}
+
+/**
+ * Block slot request
+ */
+export interface BlockSlotRequest {
+  dayOfWeek: DayOfWeek;
+  startTime: string;
+  endTime: string;
+  effectiveFrom: string;
+  effectiveUntil?: string;
+}
+
+/**
+ * PT session query params
+ */
+export interface PTSessionQueryParams extends ListQueryParams {
+  trainerId?: UUID;
+  startDate?: string;
+  endDate?: string;
+}
+
+/**
+ * Class pack query params (with service type filter)
+ */
+export interface ClassPackQueryParams extends ListQueryParams {
+  status?: ClassPackStatus;
+  serviceType?: ServiceType;
 }
 

@@ -25,6 +25,7 @@ import { isSubdomainAccess } from "@liyaqa/shared/lib/subdomain";
 import type { LocalizedText } from "@liyaqa/shared/types/api";
 import { MfaVerificationModal } from "@liyaqa/shared/components/auth/mfa-verification-modal";
 import { OAuthLoginButtons } from "@liyaqa/shared/components/auth/oauth-login-buttons";
+import { AccountTypeSelector } from "@liyaqa/shared/components/auth/account-type-selector";
 
 // Schema when subdomain is detected (tenantId optional)
 const loginSchemaWithSubdomain = z.object({
@@ -62,6 +63,8 @@ export default function LoginPage() {
     mfaRequired,
     mfaEmail,
     clearMfaState,
+    accountTypeSelectionRequired,
+    availableAccountTypes,
   } = useAuthStore();
   const [showPassword, setShowPassword] = React.useState(false);
   const [subdomainTenant, setSubdomainTenant] =
@@ -136,9 +139,14 @@ export default function LoginPage() {
       await login({ ...data, tenantId });
 
       // Check if MFA is required - if so, modal will open automatically
-      const { mfaRequired: isMfaRequired } = useAuthStore.getState();
+      const { mfaRequired: isMfaRequired, accountTypeSelectionRequired: needsSelection } = useAuthStore.getState();
       if (isMfaRequired) {
         return; // Wait for MFA verification
+      }
+
+      // Check if account type selection is needed
+      if (needsSelection) {
+        return; // AccountTypeSelector will be shown
       }
 
       // Small delay to ensure Zustand persist writes to localStorage
@@ -147,11 +155,14 @@ export default function LoginPage() {
       // Get the user from the store to determine redirect
       const { user, logout } = useAuthStore.getState();
 
-      // Validate role - only staff roles can use this login
-      const allowedRoles = ["SUPER_ADMIN", "CLUB_ADMIN", "STAFF"];
-      if (!user?.role || !allowedRoles.includes(user.role)) {
+      // Validate account type or role - only employees can use this login
+      const hasEmployeeAccess =
+        user?.activeAccountType === "EMPLOYEE" ||
+        user?.accountTypes?.includes("EMPLOYEE") ||
+        (user?.role && ["SUPER_ADMIN", "CLUB_ADMIN", "STAFF"].includes(user.role));
+
+      if (!hasEmployeeAccess) {
         setRoleError(texts.wrongRole);
-        // Logout to clear invalid session
         logout();
         return;
       }
@@ -168,17 +179,26 @@ export default function LoginPage() {
     try {
       await verifyMfaAndLogin(code);
 
+      // Check if account type selection is needed after MFA
+      const { accountTypeSelectionRequired: needsSelection } = useAuthStore.getState();
+      if (needsSelection) {
+        return; // AccountTypeSelector will be shown
+      }
+
       // Small delay to ensure Zustand persist writes to localStorage
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Get the user from the store to determine redirect
       const { user, logout } = useAuthStore.getState();
 
-      // Validate role - only staff roles can use this login
-      const allowedRoles = ["SUPER_ADMIN", "CLUB_ADMIN", "STAFF"];
-      if (!user?.role || !allowedRoles.includes(user.role)) {
+      // Validate account type or role - only employees can use this login
+      const hasEmployeeAccess =
+        user?.activeAccountType === "EMPLOYEE" ||
+        user?.accountTypes?.includes("EMPLOYEE") ||
+        (user?.role && ["SUPER_ADMIN", "CLUB_ADMIN", "STAFF"].includes(user.role));
+
+      if (!hasEmployeeAccess) {
         setRoleError(texts.wrongRole);
-        // Logout to clear invalid session
         logout();
         return;
       }
@@ -200,6 +220,28 @@ export default function LoginPage() {
   const getClubName = (clubName: LocalizedText): string => {
     return locale === "ar" ? clubName.ar || clubName.en : clubName.en;
   };
+
+  // Handle account type selection redirect
+  const handleAccountTypeSelected = (type: "EMPLOYEE" | "TRAINER" | "MEMBER") => {
+    if (type === "EMPLOYEE") {
+      router.replace(`/${locale}/dashboard`);
+    } else if (type === "TRAINER") {
+      router.replace(`/${locale}/trainer/dashboard`);
+    } else if (type === "MEMBER") {
+      router.replace(`/${locale}/member/dashboard`);
+    }
+  };
+
+  // Show account type selector when needed
+  if (accountTypeSelectionRequired && availableAccountTypes.length > 0) {
+    return (
+      <Card className="shadow-lg">
+        <CardContent className="py-6">
+          <AccountTypeSelector onSelected={handleAccountTypeSelected} />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="shadow-lg">

@@ -15,6 +15,8 @@ import type {
   SendCodeResponse,
   VerifyCodeRequest,
   PlatformAuthResponse,
+  SelectAccountTypeRequest,
+  SwitchAccountTypeRequest,
 } from "../../types/auth";
 
 /**
@@ -113,6 +115,30 @@ export const authApi = {
    */
   getTenantInfo: async (): Promise<TenantInfoResponse> => {
     return api.get("api/auth/tenant-info").json<TenantInfoResponse>();
+  },
+
+  /**
+   * Select account type after login (for users with multiple account types).
+   * Consumes the session token and returns full JWT tokens.
+   */
+  selectAccountType: async (
+    data: SelectAccountTypeRequest
+  ): Promise<LoginResponse> => {
+    return api
+      .post("api/auth/select-account-type", { json: data })
+      .json<LoginResponse>();
+  },
+
+  /**
+   * Switch to a different account type while already authenticated.
+   * Returns new JWT tokens with the selected account type.
+   */
+  switchAccountType: async (
+    data: SwitchAccountTypeRequest
+  ): Promise<LoginResponse> => {
+    return api
+      .post("api/auth/switch-account-type", { json: data })
+      .json<LoginResponse>();
   },
 
   /**

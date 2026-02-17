@@ -9,7 +9,6 @@ import com.liyaqa.membership.domain.model.MemberStatus
 import com.liyaqa.shared.infrastructure.security.CurrentUser
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 import java.time.Instant
 import java.time.LocalDate
@@ -24,7 +23,7 @@ class StaffMobileController(
 ) {
 
     @GetMapping("/dashboard")
-    fun getDashboard(@AuthenticationPrincipal currentUser: CurrentUser): ResponseEntity<StaffDashboardResponse> {
+    fun getDashboard(currentUser: CurrentUser): ResponseEntity<StaffDashboardResponse> {
         val todayCheckIns = attendanceService.getTodayCheckInCount().toInt()
         val activeMembers = memberService.countMembersByStatus(MemberStatus.ACTIVE).toInt()
         val todayFacilityBookings = facilityBookingService.countTodayBookings()
@@ -114,7 +113,7 @@ class StaffMobileController(
     @PostMapping("/attendance/check-in")
     fun checkInMember(
         @RequestBody request: CheckInRequest,
-        @AuthenticationPrincipal currentUser: CurrentUser
+        currentUser: CurrentUser
     ): ResponseEntity<RecentCheckInDto> {
         val memberId = UUID.fromString(request.memberId)
         val member = memberService.getMember(memberId)

@@ -21,6 +21,16 @@ import {
   getMyUpcomingPTSessions,
   getMemberUpcomingPTSessions,
   getPTTrainerAvailability,
+  createPTClass,
+  getPTClasses,
+  getPTClass,
+  updatePTClass,
+  schedulePTSession,
+  getScheduledPTSessions,
+  completeScheduledPTSession,
+  cancelScheduledPTSession,
+  getTrainerPTSessions,
+  getPTDashboardStats,
 } from "../lib/api/pt-sessions";
 import type { PaginatedResponse, UUID } from "../types/api";
 import type {
@@ -33,6 +43,13 @@ import type {
   PTSessionQueryParams,
   AvailableSlot,
 } from "../types/pt-session";
+import type {
+  GymClass,
+  ClassSession,
+  CreatePTClassRequest,
+  PTDashboardStats,
+  PTSessionQueryParams as PTClassQueryParams,
+} from "../types/scheduling";
 
 // Query keys
 export const ptSessionKeys = {
@@ -46,6 +63,21 @@ export const ptSessionKeys = {
   memberUpcoming: () => [...ptSessionKeys.all, "member", "upcoming"] as const,
   availability: (trainerId: UUID, date: string) =>
     [...ptSessionKeys.all, "availability", trainerId, date] as const,
+  // PT class template keys
+  classes: () => [...ptSessionKeys.all, "classes"] as const,
+  classList: (params: PTClassQueryParams) =>
+    [...ptSessionKeys.classes(), "list", params] as const,
+  classDetail: (id: UUID) =>
+    [...ptSessionKeys.classes(), "detail", id] as const,
+  // Scheduled PT sessions
+  scheduled: () => [...ptSessionKeys.all, "scheduled"] as const,
+  scheduledList: (params: PTClassQueryParams) =>
+    [...ptSessionKeys.scheduled(), "list", params] as const,
+  trainerSessions: (trainerId: UUID) =>
+    [...ptSessionKeys.all, "trainer", trainerId] as const,
+  // Dashboard
+  dashboard: (trainerId?: UUID) =>
+    [...ptSessionKeys.all, "dashboard", trainerId] as const,
 };
 
 // ==================== Query Hooks ====================
@@ -134,6 +166,22 @@ export function usePTTrainerAvailability(
     queryKey: ptSessionKeys.availability(trainerId, date),
     queryFn: () => getPTTrainerAvailability(trainerId, date, slotDurationMinutes),
     enabled: !!trainerId && !!date,
+    ...options,
+  });
+}
+
+/**
+ * Hook to fetch PT sessions for a specific member
+ */
+export function useMemberPTSessions(
+  memberId: UUID,
+  params: { page?: number; size?: number } = {},
+  options?: Omit<UseQueryOptions<PaginatedResponse<PTSessionSummary>>, "queryKey" | "queryFn">
+) {
+  return useQuery({
+    queryKey: ptSessionKeys.list({ memberId, ...params }),
+    queryFn: () => getPTSessions({ memberId, ...params }),
+    enabled: !!memberId,
     ...options,
   });
 }
@@ -270,5 +318,176 @@ export function useDeletePTSession() {
       queryClient.removeQueries({ queryKey: ptSessionKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: ptSessionKeys.lists() });
     },
+  });
+}
+
+// ==================== PT Class Template Hooks ====================
+
+/**
+ * Hook to fetch paginated PT class templates
+ */
+export function usePTClasses(
+  params: PTClassQueryParams = {},
+  options?: Omit<UseQueryOptions<PaginatedResponse<GymClass>>, "queryKey" | "queryFn">
+) {
+  return useQuery({
+    queryKey: ptSessionKeys.classList(params),
+    queryFn: () => getPTClasses(params),
+    ...options,
+  });
+}
+
+/**
+ * Hook to fetch a single PT class template
+ */
+export function usePTClass(
+  id: UUID,
+  options?: Omit<UseQueryOptions<GymClass>, "queryKey" | "queryFn">
+) {
+  return useQuery({
+    queryKey: ptSessionKeys.classDetail(id),
+    queryFn: () => getPTClass(id),
+    enabled: !!id,
+    ...options,
+  });
+}
+
+/**
+ * Hook to create a PT class template
+ */
+export function useCreatePTClass() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreatePTClassRequest) => createPTClass(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ptSessionKeys.classes() });
+    },
+  });
+}
+
+/**
+ * Hook to update a PT class template
+ */
+export function useUpdatePTClass() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: UUID; data: Partial<CreatePTClassRequest> }) =>
+      updatePTClass(id, data),
+    onSuccess: (updatedClass) => {
+      queryClient.setQueryData(ptSessionKeys.classDetail(updatedClass.id), updatedClass);
+      queryClient.invalidateQueries({ queryKey: ptSessionKeys.classes() });
+    },
+  });
+}
+
+// ==================== Scheduled PT Session Hooks ====================
+
+/**
+ * Hook to schedule a PT session from a class template
+ */
+export function useSchedulePTSession() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      gymClassId: UUID;
+      sessionDate: string;
+      startTime: string;
+      endTime: string;
+      clientAddress?: string;
+      notesEn?: string;
+      notesAr?: string;
+      skipAvailabilityCheck?: boolean;
+    }) => schedulePTSession(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ptSessionKeys.scheduled() });
+      queryClient.invalidateQueries({ queryKey: ptSessionKeys.dashboard() });
+    },
+  });
+}
+
+/**
+ * Hook to fetch scheduled PT sessions with filters
+ */
+export function useScheduledPTSessions(
+  params: PTClassQueryParams = {},
+  options?: Omit<UseQueryOptions<PaginatedResponse<ClassSession>>, "queryKey" | "queryFn">
+) {
+  return useQuery({
+    queryKey: ptSessionKeys.scheduledList(params),
+    queryFn: () => getScheduledPTSessions(params),
+    ...options,
+  });
+}
+
+/**
+ * Hook to complete a scheduled PT session with notes
+ */
+export function useCompleteScheduledPTSession() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      sessionId,
+      data,
+    }: {
+      sessionId: UUID;
+      data: { completionNotes?: string; trainerNotes?: string };
+    }) => completeScheduledPTSession(sessionId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ptSessionKeys.scheduled() });
+      queryClient.invalidateQueries({ queryKey: ptSessionKeys.dashboard() });
+    },
+  });
+}
+
+/**
+ * Hook to cancel a scheduled PT session
+ */
+export function useCancelScheduledPTSession() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ sessionId, data }: { sessionId: UUID; data?: { reason?: string } }) =>
+      cancelScheduledPTSession(sessionId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ptSessionKeys.scheduled() });
+      queryClient.invalidateQueries({ queryKey: ptSessionKeys.dashboard() });
+    },
+  });
+}
+
+/**
+ * Hook to fetch PT sessions for a specific trainer
+ */
+export function useTrainerPTSessions(
+  trainerId: UUID,
+  params: { startDate?: string; endDate?: string; page?: number; size?: number } = {},
+  options?: Omit<UseQueryOptions<PaginatedResponse<ClassSession>>, "queryKey" | "queryFn">
+) {
+  return useQuery({
+    queryKey: [...ptSessionKeys.trainerSessions(trainerId), params],
+    queryFn: () => getTrainerPTSessions(trainerId, params),
+    enabled: !!trainerId,
+    ...options,
+  });
+}
+
+// ==================== Dashboard Hook ====================
+
+/**
+ * Hook to fetch PT dashboard stats
+ */
+export function usePTDashboardStats(
+  params: { trainerId?: UUID } = {},
+  options?: Omit<UseQueryOptions<PTDashboardStats>, "queryKey" | "queryFn">
+) {
+  return useQuery({
+    queryKey: ptSessionKeys.dashboard(params.trainerId),
+    queryFn: () => getPTDashboardStats(params),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    ...options,
   });
 }

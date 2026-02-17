@@ -184,7 +184,7 @@ export default function SubscriptionDetailPage() {
   };
 
   const handleRenew = () => {
-    renewSubscription.mutate(subscription.id, {
+    renewSubscription.mutate({ id: subscription.id }, {
       onSuccess: () => {
         refetch();
       },

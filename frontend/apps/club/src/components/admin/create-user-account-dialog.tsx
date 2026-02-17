@@ -19,6 +19,7 @@ import {
 } from "@liyaqa/shared/components/ui/dialog";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import { useCreateUserForMember } from "@liyaqa/shared/queries/use-members";
+import { parseApiError, getLocalizedErrorMessage } from "@liyaqa/shared/lib/api";
 import type { UUID } from "@liyaqa/shared/types/api";
 
 const createUserSchema = z
@@ -123,10 +124,10 @@ export function CreateUserAccountDialog({
       onOpenChange(false);
       onSuccess?.();
     } catch (error) {
+      const apiError = await parseApiError(error);
       toast({
         title: texts.errorTitle,
-        description:
-          error instanceof Error ? error.message : "An error occurred",
+        description: getLocalizedErrorMessage(apiError, locale),
         variant: "destructive",
       });
     } finally {

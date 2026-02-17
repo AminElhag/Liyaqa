@@ -27,26 +27,26 @@ const riskLevelConfig: Record<
   { color: string; bgColor: string; labelEn: string; labelAr: string }
 > = {
   LOW: {
-    color: "text-green-700",
-    bgColor: "bg-green-100",
+    color: "text-green-700 dark:text-green-400",
+    bgColor: "bg-green-100 dark:bg-green-900/30",
     labelEn: "Low",
     labelAr: "منخفض",
   },
   MEDIUM: {
-    color: "text-yellow-700",
-    bgColor: "bg-yellow-100",
+    color: "text-yellow-700 dark:text-yellow-400",
+    bgColor: "bg-yellow-100 dark:bg-yellow-900/30",
     labelEn: "Medium",
     labelAr: "متوسط",
   },
   HIGH: {
-    color: "text-orange-700",
-    bgColor: "bg-orange-100",
+    color: "text-orange-700 dark:text-orange-400",
+    bgColor: "bg-orange-100 dark:bg-orange-900/30",
     labelEn: "High",
     labelAr: "مرتفع",
   },
   CRITICAL: {
-    color: "text-red-700",
-    bgColor: "bg-red-100",
+    color: "text-red-700 dark:text-red-400",
+    bgColor: "bg-red-100 dark:bg-red-900/30",
     labelEn: "Critical",
     labelAr: "حرج",
   },
@@ -86,7 +86,7 @@ export function AtRiskWidget() {
 
   if (error) {
     return (
-      <Card className="border-muted-foreground/20">
+      <Card className="border-muted-foreground/20 dark:border-neutral-800">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-orange-500" />
@@ -104,7 +104,7 @@ export function AtRiskWidget() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="dark:border-neutral-800">
         <CardHeader>
           <Skeleton className="h-6 w-40" />
         </CardHeader>
@@ -130,7 +130,7 @@ export function AtRiskWidget() {
   const highCount = members.filter((m) => m.riskLevel === "HIGH").length;
 
   return (
-    <Card className="border-orange-200">
+    <Card className="border-orange-200 dark:border-orange-800/50">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-orange-500" />
@@ -145,7 +145,7 @@ export function AtRiskWidget() {
         {/* Summary */}
         {members.length > 0 && (
           <div className="flex gap-2 mb-4">
-            <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+            <Badge variant="secondary" className="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
               {members.length} {texts.members} {texts.needAttention}
             </Badge>
             {criticalCount > 0 && (
@@ -154,7 +154,7 @@ export function AtRiskWidget() {
               </Badge>
             )}
             {highCount > 0 && (
-              <Badge variant="outline" className="text-orange-600 border-orange-300">
+              <Badge variant="outline" className="text-orange-600 border-orange-300 dark:text-orange-400 dark:border-orange-700">
                 {highCount} {texts.high}
               </Badge>
             )}
@@ -201,7 +201,7 @@ export function AtRiskWidget() {
                             {member.riskFactors.slice(0, 3).map((factor, index) => (
                               <Tooltip key={index}>
                                 <TooltipTrigger asChild>
-                                  <div className="flex items-center justify-center h-5 w-5 rounded bg-red-100 text-red-600">
+                                  <div className="flex items-center justify-center h-5 w-5 rounded bg-red-500/20 text-red-600 dark:text-red-400">
                                     {riskFactorIcons[factor.code] || <AlertTriangle className="h-3 w-3" />}
                                   </div>
                                 </TooltipTrigger>
@@ -213,7 +213,7 @@ export function AtRiskWidget() {
                             {member.riskFactors.length > 3 && (
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <div className="flex items-center justify-center h-5 px-1.5 rounded bg-gray-100 text-gray-600 text-xs">
+                                  <div className="flex items-center justify-center h-5 px-1.5 rounded bg-muted text-muted-foreground text-xs">
                                     +{member.riskFactors.length - 3}
                                   </div>
                                 </TooltipTrigger>

@@ -22,10 +22,13 @@ import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.shared.domain.TenantContext
 import com.liyaqa.shared.exception.DuplicateField
 import com.liyaqa.shared.exception.DuplicateFieldException
+import com.liyaqa.membership.domain.model.ActivityType
+import com.liyaqa.membership.domain.model.MemberActivity
 import com.liyaqa.webhook.application.services.WebhookEventPublisher
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -45,9 +48,17 @@ class MemberService(
     private val webhookPublisher: WebhookEventPublisher,
     private val referralCodeService: ReferralCodeService,
     private val referralTrackingService: ReferralTrackingService,
-    private val refreshTokenRepository: RefreshTokenRepository
+    private val refreshTokenRepository: RefreshTokenRepository,
+    private val activityService: ActivityService
 ) {
     private val logger = LoggerFactory.getLogger(MemberService::class.java)
+
+    private fun getStaffInfo(): Pair<UUID?, String?> {
+        val auth = SecurityContextHolder.getContext().authentication ?: return null to null
+        val userId = try { UUID.fromString(auth.name) } catch (_: Exception) { null }
+        val staffUser = userId?.let { userRepository.findById(it).orElse(null) }
+        return userId to staffUser?.displayName?.en
+    }
 
     fun createMember(command: CreateMemberCommand): Member {
         // Validate uniqueness for all fields
@@ -165,6 +176,20 @@ class MemberService(
             logger.error("Failed to publish member created webhook for member ${savedMember.id}: ${e.message}", e)
         }
 
+        // Log activity
+        try {
+            val (staffId, staffName) = getStaffInfo()
+            activityService.logActivityAsync(MemberActivity(
+                memberId = savedMember.id,
+                activityType = ActivityType.MEMBER_CREATED,
+                title = "Member created",
+                performedByUserId = staffId,
+                performedByName = staffName
+            ))
+        } catch (e: Exception) {
+            logger.error("Failed to log member created activity for ${savedMember.id}: ${e.message}", e)
+        }
+
         return savedMember
     }
 
@@ -227,22 +252,25 @@ class MemberService(
             nationalId = command.nationalId
         )
 
-        command.firstName?.let { member.firstName = it }
-        command.lastName?.let { member.lastName = it }
-        command.phone?.let { member.phone = it }
-        command.dateOfBirth?.let { member.dateOfBirth = it }
-        command.emergencyContactName?.let { member.emergencyContactName = it }
-        command.emergencyContactPhone?.let { member.emergencyContactPhone = it }
-        command.notes?.let { member.notes = it }
+        // Track changed fields for activity logging
+        val changedFields = mutableListOf<String>()
+        command.firstName?.let { if (member.firstName != it) changedFields.add("firstName"); member.firstName = it }
+        command.lastName?.let { if (member.lastName != it) changedFields.add("lastName"); member.lastName = it }
+        command.phone?.let { if (member.phone != it) changedFields.add("phone"); member.phone = it }
+        command.dateOfBirth?.let { if (member.dateOfBirth != it) changedFields.add("dateOfBirth"); member.dateOfBirth = it }
+        command.emergencyContactName?.let { if (member.emergencyContactName != it) changedFields.add("emergencyContactName"); member.emergencyContactName = it }
+        command.emergencyContactPhone?.let { if (member.emergencyContactPhone != it) changedFields.add("emergencyContactPhone"); member.emergencyContactPhone = it }
+        command.notes?.let { if (member.notes != it) changedFields.add("notes"); member.notes = it }
         command.address?.let {
+            changedFields.add("address")
             member.address = Address(street = it.en, city = it.ar)
         }
         // Enhanced fields
-        command.gender?.let { member.gender = it }
-        command.nationality?.let { member.nationality = it }
-        command.nationalId?.let { member.nationalId = it }
-        command.registrationNotes?.let { member.registrationNotes = it }
-        command.preferredLanguage?.let { member.preferredLanguage = it }
+        command.gender?.let { if (member.gender != it) changedFields.add("gender"); member.gender = it }
+        command.nationality?.let { if (member.nationality != it) changedFields.add("nationality"); member.nationality = it }
+        command.nationalId?.let { if (member.nationalId != it) changedFields.add("nationalId"); member.nationalId = it }
+        command.registrationNotes?.let { if (member.registrationNotes != it) changedFields.add("registrationNotes"); member.registrationNotes = it }
+        command.preferredLanguage?.let { if (member.preferredLanguage != it) changedFields.add("preferredLanguage"); member.preferredLanguage = it }
 
         val savedMember = memberRepository.save(member)
 
@@ -253,42 +281,118 @@ class MemberService(
             logger.error("Failed to publish member updated webhook for member ${savedMember.id}: ${e.message}", e)
         }
 
+        // Log activity
+        if (changedFields.isNotEmpty()) {
+            try {
+                val (staffId, staffName) = getStaffInfo()
+                activityService.logActivityAsync(MemberActivity.profileUpdated(
+                    memberId = savedMember.id,
+                    fieldsChanged = changedFields,
+                    performedByUserId = staffId,
+                    performedByName = staffName
+                ))
+            } catch (e: Exception) {
+                logger.error("Failed to log profile updated activity for ${savedMember.id}: ${e.message}", e)
+            }
+        }
+
         return savedMember
     }
 
     fun suspendMember(id: UUID): Member {
         val member = getMember(id)
+        val oldStatus = member.status
         member.suspend()
-        return memberRepository.save(member)
+        val saved = memberRepository.save(member)
+        try {
+            val (staffId, staffName) = getStaffInfo()
+            activityService.logActivityAsync(MemberActivity.statusChanged(
+                memberId = id, oldStatus = oldStatus, newStatus = MemberStatus.SUSPENDED,
+                performedByUserId = staffId, performedByName = staffName
+            ))
+        } catch (e: Exception) { logger.error("Failed to log suspend activity for $id: ${e.message}", e) }
+        return saved
     }
 
     fun activateMember(id: UUID): Member {
         val member = getMember(id)
+        val oldStatus = member.status
         member.activate()
-        return memberRepository.save(member)
+        val saved = memberRepository.save(member)
+        try {
+            val (staffId, staffName) = getStaffInfo()
+            activityService.logActivityAsync(MemberActivity.statusChanged(
+                memberId = id, oldStatus = oldStatus, newStatus = MemberStatus.ACTIVE,
+                performedByUserId = staffId, performedByName = staffName
+            ))
+        } catch (e: Exception) { logger.error("Failed to log activate activity for $id: ${e.message}", e) }
+        return saved
     }
 
     fun freezeMember(id: UUID): Member {
         val member = getMember(id)
+        val oldStatus = member.status
         member.freeze()
-        return memberRepository.save(member)
+        val saved = memberRepository.save(member)
+        try {
+            val (staffId, staffName) = getStaffInfo()
+            activityService.logActivityAsync(MemberActivity.statusChanged(
+                memberId = id, oldStatus = oldStatus, newStatus = MemberStatus.FROZEN,
+                performedByUserId = staffId, performedByName = staffName
+            ))
+        } catch (e: Exception) { logger.error("Failed to log freeze activity for $id: ${e.message}", e) }
+        return saved
     }
 
     fun unfreezeMember(id: UUID): Member {
         val member = getMember(id)
+        val oldStatus = member.status
         member.unfreeze()
-        return memberRepository.save(member)
+        val saved = memberRepository.save(member)
+        try {
+            val (staffId, staffName) = getStaffInfo()
+            activityService.logActivityAsync(MemberActivity.statusChanged(
+                memberId = id, oldStatus = oldStatus, newStatus = MemberStatus.ACTIVE,
+                performedByUserId = staffId, performedByName = staffName
+            ))
+        } catch (e: Exception) { logger.error("Failed to log unfreeze activity for $id: ${e.message}", e) }
+        return saved
     }
 
     fun cancelMember(id: UUID): Member {
         val member = getMember(id)
+        val oldStatus = member.status
         member.cancel()
-        return memberRepository.save(member)
+        val saved = memberRepository.save(member)
+        try {
+            val (staffId, staffName) = getStaffInfo()
+            activityService.logActivityAsync(MemberActivity.statusChanged(
+                memberId = id, oldStatus = oldStatus, newStatus = MemberStatus.CANCELLED,
+                performedByUserId = staffId, performedByName = staffName
+            ))
+        } catch (e: Exception) { logger.error("Failed to log cancel activity for $id: ${e.message}", e) }
+        return saved
     }
 
     fun deleteMember(id: UUID) {
         val member = getMember(id)
         val tenantId = member.tenantId
+
+        // Log activity before deletion (member record won't exist after)
+        try {
+            val (staffId, staffName) = getStaffInfo()
+            activityService.logActivityAsync(MemberActivity(
+                memberId = id,
+                activityType = ActivityType.SYSTEM_ACTION,
+                title = "Member deleted",
+                metadata = mapOf("memberEmail" to member.email),
+                performedByUserId = staffId,
+                performedByName = staffName
+            ))
+        } catch (e: Exception) {
+            logger.error("Failed to log delete activity for $id: ${e.message}", e)
+        }
+
         memberRepository.deleteById(id)
 
         // Publish webhook event
@@ -339,6 +443,9 @@ class MemberService(
             status = UserStatus.ACTIVE
         )
 
+        // Add MEMBER account type
+        user.addAccountType(com.liyaqa.auth.domain.model.AccountType.MEMBER)
+
         val savedUser = userRepository.save(user)
 
         // Grant default permissions for the member role
@@ -349,6 +456,22 @@ class MemberService(
         memberRepository.save(member)
 
         logger.info("Created user account ${savedUser.id} for member $memberId")
+
+        // Log activity
+        try {
+            val (staffId, staffName) = getStaffInfo()
+            activityService.logActivityAsync(MemberActivity(
+                memberId = memberId,
+                activityType = ActivityType.SYSTEM_ACTION,
+                title = "User account created",
+                metadata = mapOf("userId" to savedUser.id.toString()),
+                performedByUserId = staffId,
+                performedByName = staffName
+            ))
+        } catch (e: Exception) {
+            logger.error("Failed to log user creation activity for $memberId: ${e.message}", e)
+        }
+
         return savedUser
     }
 
@@ -382,6 +505,10 @@ class MemberService(
             "User email (${user.email}) does not match member email (${member.email})"
         }
 
+        // Add MEMBER account type to user
+        user.addAccountType(com.liyaqa.auth.domain.model.AccountType.MEMBER)
+        userRepository.save(user)
+
         member.linkToUser(userId)
         logger.info("Linked user $userId to member $memberId")
         return memberRepository.save(member)
@@ -406,6 +533,32 @@ class MemberService(
         refreshTokenRepository.revokeAllByUserId(userId)
 
         logger.info("Reset password for member $memberId (user $userId)")
+
+        // Log activity
+        try {
+            val (staffId, staffName) = getStaffInfo()
+            activityService.logActivityAsync(MemberActivity(
+                memberId = memberId,
+                activityType = ActivityType.SYSTEM_ACTION,
+                title = "Password reset by admin",
+                performedByUserId = staffId,
+                performedByName = staffName
+            ))
+        } catch (e: Exception) {
+            logger.error("Failed to log password reset activity for $memberId: ${e.message}", e)
+        }
+    }
+
+    fun logProfileView(memberId: UUID, performedByUserId: UUID?, performedByName: String?) {
+        activityService.logActivityAsync(
+            MemberActivity(
+                memberId = memberId,
+                activityType = ActivityType.PROFILE_VIEWED,
+                title = "Profile viewed",
+                performedByUserId = performedByUserId,
+                performedByName = performedByName
+            )
+        )
     }
 
     // ==================== NOTIFICATION HELPERS ====================

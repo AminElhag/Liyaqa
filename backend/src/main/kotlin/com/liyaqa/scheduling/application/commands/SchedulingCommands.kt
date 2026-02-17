@@ -1,5 +1,6 @@
 package com.liyaqa.scheduling.application.commands
 
+import com.liyaqa.scheduling.domain.model.ClassAccessPolicy
 import com.liyaqa.scheduling.domain.model.ClassPricingModel
 import com.liyaqa.scheduling.domain.model.ClassType
 import com.liyaqa.scheduling.domain.model.DayOfWeek
@@ -39,7 +40,17 @@ data class CreateGymClassCommand(
     // Booking settings
     val advanceBookingDays: Int = 7,
     val cancellationDeadlineHours: Int = 2,
-    val lateCancellationFee: Money? = null
+    val lateCancellationFee: Money? = null,
+    // GX access policy
+    val accessPolicy: ClassAccessPolicy = ClassAccessPolicy.MEMBERS_ONLY,
+    val eligiblePlanIds: List<UUID>? = null,
+    val onlineBookableSpots: Int? = null,
+    val noShowFee: Money? = null,
+    // Spot booking
+    val spotBookingEnabled: Boolean = false,
+    val roomLayoutId: UUID? = null,
+    // Category
+    val categoryId: UUID? = null
 )
 
 /**
@@ -69,7 +80,17 @@ data class UpdateGymClassCommand(
     // Booking settings
     val advanceBookingDays: Int? = null,
     val cancellationDeadlineHours: Int? = null,
-    val lateCancellationFee: Money? = null
+    val lateCancellationFee: Money? = null,
+    // GX access policy
+    val accessPolicy: ClassAccessPolicy? = null,
+    val eligiblePlanIds: List<UUID>? = null,
+    val onlineBookableSpots: Int? = null,
+    val noShowFee: Money? = null,
+    // Spot booking
+    val spotBookingEnabled: Boolean? = null,
+    val roomLayoutId: UUID? = null,
+    // Category
+    val categoryId: UUID? = null
 )
 
 /**
@@ -133,7 +154,9 @@ data class CreateBookingCommand(
     val memberId: UUID,
     val subscriptionId: UUID? = null,
     val notes: String? = null,
-    val bookedBy: UUID? = null
+    val bookedBy: UUID? = null,
+    val spotId: String? = null,
+    val spotLabel: String? = null
 )
 
 /**
@@ -159,4 +182,48 @@ data class GenerateSessionsCommand(
     val gymClassId: UUID? = null,
     val fromDate: LocalDate,
     val toDate: LocalDate
+)
+
+// ==================== PT COMMANDS ====================
+
+/**
+ * Command for creating a PT-specific gym class.
+ */
+data class CreatePTClassCommand(
+    val name: com.liyaqa.shared.domain.LocalizedText,
+    val description: com.liyaqa.shared.domain.LocalizedText? = null,
+    val locationId: UUID? = null,
+    val trainerId: UUID,
+    val ptSessionType: com.liyaqa.scheduling.domain.model.PTSessionType,
+    val ptLocationType: com.liyaqa.scheduling.domain.model.PTLocationType,
+    val durationMinutes: Int = 60,
+    val maxCapacity: Int = 1,
+    val minCapacity: Int = 1,
+    val pricingModel: ClassPricingModel = ClassPricingModel.PAY_PER_ENTRY,
+    val dropInPrice: com.liyaqa.shared.domain.Money? = null,
+    val travelFee: com.liyaqa.shared.domain.Money? = null,
+    val taxRate: java.math.BigDecimal? = java.math.BigDecimal("15.00"),
+    val categoryId: UUID? = null
+)
+
+/**
+ * Command for scheduling a PT session from a class template.
+ */
+data class SchedulePTSessionCommand(
+    val gymClassId: UUID,
+    val sessionDate: java.time.LocalDate,
+    val startTime: java.time.LocalTime,
+    val endTime: java.time.LocalTime,
+    val clientAddress: String? = null,
+    val notes: com.liyaqa.shared.domain.LocalizedText? = null,
+    val skipAvailabilityCheck: Boolean = false
+)
+
+/**
+ * Command for completing a PT session with notes.
+ */
+data class CompletePTSessionCommand(
+    val sessionId: UUID,
+    val completionNotes: String? = null,
+    val trainerNotes: String? = null
 )

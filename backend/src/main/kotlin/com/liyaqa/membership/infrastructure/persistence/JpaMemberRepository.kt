@@ -4,7 +4,9 @@ import com.liyaqa.membership.domain.model.Member
 import com.liyaqa.membership.domain.model.MemberStatus
 import com.liyaqa.membership.domain.ports.MemberRepository
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -67,7 +69,7 @@ interface SpringDataMemberRepository : JpaRepository<Member, UUID> {
     """, nativeQuery = true)
     fun search(
         @Param("search") search: String?,
-        @Param("status") status: MemberStatus?,
+        @Param("status") status: String?,
         @Param("joinedAfter") joinedAfter: Instant?,
         @Param("joinedBefore") joinedBefore: Instant?,
         pageable: Pageable
@@ -136,14 +138,36 @@ class JpaMemberRepository(
     ): Page<Member> {
         val joinedAfterInstant = joinedAfter?.atStartOfDay()?.toInstant(ZoneOffset.UTC)
         val joinedBeforeInstant = joinedBefore?.plusDays(1)?.atStartOfDay()?.toInstant(ZoneOffset.UTC)
+        val nativePageable = PageRequest.of(pageable.pageNumber, pageable.pageSize, translateSort(pageable.sort))
 
         return springDataRepository.search(
             search = search?.takeIf { it.isNotBlank() },
-            status = status,
+            status = status?.name,
             joinedAfter = joinedAfterInstant,
             joinedBefore = joinedBeforeInstant,
-            pageable = pageable
+            pageable = nativePageable
         )
+    }
+
+    /**
+     * Translate camelCase entity field names to snake_case column names
+     * for use in native SQL queries.
+     */
+    private fun translateSort(sort: Sort): Sort {
+        val orders = sort.map { order ->
+            val col = when (order.property) {
+                "createdAt" -> "created_at"
+                "updatedAt" -> "updated_at"
+                "firstName" -> "first_name_en"
+                "lastName" -> "last_name_en"
+                "email" -> "email"
+                "status" -> "status"
+                "phone" -> "phone"
+                else -> order.property
+            }
+            Sort.Order(order.direction, col)
+        }.toList()
+        return Sort.by(orders)
     }
 
     override fun findAllByIds(ids: List<UUID>): List<Member> {

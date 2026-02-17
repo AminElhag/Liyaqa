@@ -21,7 +21,8 @@ class UserService(
     private val userRepository: UserRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val passwordEncoder: PasswordEncoder,
-    private val permissionService: PermissionService
+    private val permissionService: PermissionService,
+    private val passwordPolicyService: PasswordPolicyService
 ) {
     /**
      * Creates a new user (admin operation).
@@ -186,5 +187,34 @@ class UserService(
     @Transactional(readOnly = true)
     fun getUserByMemberId(memberId: UUID): User? {
         return userRepository.findByMemberId(memberId).orElse(null)
+    }
+
+    /**
+     * Admin-initiated password reset (sets new password directly).
+     * Validates against password policy, updates password, records in history,
+     * and revokes all refresh tokens for security.
+     * @throws NoSuchElementException if user not found
+     * @throws IllegalArgumentException if password violates policy
+     */
+    fun adminResetPassword(userId: UUID, newPassword: String) {
+        val user = userRepository.findById(userId)
+            .orElseThrow { NoSuchElementException("User not found: $userId") }
+
+        val policyConfig = passwordPolicyService.getPolicyForUser(user.isPlatformUser)
+        val validationResult = passwordPolicyService.validatePasswordWithHistory(
+            newPassword, userId, policyConfig
+        )
+
+        if (!validationResult.isValid) {
+            throw IllegalArgumentException(validationResult.violations.joinToString(". "))
+        }
+
+        val newPasswordHash = passwordEncoder.encode(newPassword)!!
+        user.changePassword(newPasswordHash)
+        userRepository.save(user)
+
+        passwordPolicyService.recordPasswordInHistory(userId, newPasswordHash, policyConfig)
+
+        refreshTokenRepository.revokeAllByUserId(userId)
     }
 }

@@ -273,12 +273,12 @@ class SubscriptionFreezeController(
     @Operation(summary = "Get active freeze for subscription")
     fun getActiveFreeze(
         @PathVariable subscriptionId: UUID
-    ): ResponseEntity<FreezeHistoryResponse> {
+    ): ResponseEntity<FreezeHistoryResponse?> {
         val activeFreeze = freezeService.getActiveFreeze(subscriptionId)
         return if (activeFreeze != null) {
             ResponseEntity.ok(FreezeHistoryResponse.from(activeFreeze))
         } else {
-            ResponseEntity.notFound().build()
+            ResponseEntity.noContent().build()
         }
     }
 }

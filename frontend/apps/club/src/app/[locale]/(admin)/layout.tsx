@@ -6,7 +6,6 @@ export const dynamic = 'force-dynamic';
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
-import { useTheme } from "next-themes";
 import { AdminShell } from "@/components/layouts/admin-shell";
 import { useAuthStore, useHasHydrated } from "@liyaqa/shared/stores/auth-store";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
@@ -20,14 +19,8 @@ export default function AdminLayout({
 }) {
   const locale = useLocale();
   const router = useRouter();
-  const { setTheme } = useTheme();
   const { isAuthenticated, isLoading, user, initialize } = useAuthStore();
   const hasHydrated = useHasHydrated();
-
-  useEffect(() => {
-    // Force light theme for admin routes regardless of OS preference or localStorage
-    setTheme("light");
-  }, [setTheme]);
 
   useEffect(() => {
     // Always call initialize on mount to restore tenant context
@@ -58,13 +51,18 @@ export default function AdminLayout({
     return null;
   }
 
-  // Check if user has admin role
-  const isAdmin = user?.role && ["SUPER_ADMIN", "CLUB_ADMIN", "STAFF"].includes(user.role);
-  if (!isAdmin) {
-    // Redirect members to their portal, others to staff login
-    const isMember = user?.role === "MEMBER";
-    if (isMember) {
+  // Check if user has employee/admin access (account type or legacy role)
+  const hasEmployeeAccess =
+    user?.activeAccountType === "EMPLOYEE" ||
+    user?.accountTypes?.includes("EMPLOYEE") ||
+    (user?.role && ["SUPER_ADMIN", "CLUB_ADMIN", "STAFF"].includes(user.role));
+
+  if (!hasEmployeeAccess) {
+    // Redirect members to their portal, trainers to theirs, others to login
+    if (user?.activeAccountType === "MEMBER" || user?.role === "MEMBER") {
       router.push(`/${locale}/member/dashboard`);
+    } else if (user?.activeAccountType === "TRAINER" || user?.role === "TRAINER") {
+      router.push(`/${locale}/trainer/dashboard`);
     } else {
       router.push(`/${locale}/login`);
     }

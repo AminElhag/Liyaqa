@@ -17,10 +17,14 @@ import com.liyaqa.platform.api.dto.ClubEmployeeStats
 import com.liyaqa.platform.api.dto.ClubStats
 import com.liyaqa.platform.api.dto.ClubSubscriptionStats
 import com.liyaqa.platform.api.dto.ClubUserStats
+import com.liyaqa.platform.api.dto.CreateClubUserRequest
 import com.liyaqa.platform.api.dto.UpdateClubRequest
+import com.liyaqa.platform.api.dto.UpdateClubUserRequest
 import com.liyaqa.shared.domain.AuditAction
 import com.liyaqa.shared.domain.AuditLog
 import com.liyaqa.shared.domain.LocalizedText
+import com.liyaqa.shared.domain.TenantContext
+import com.liyaqa.shared.domain.TenantId
 import com.liyaqa.shared.infrastructure.audit.AuditService
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
@@ -211,6 +215,112 @@ class PlatformClubService(
             entityType = "User",
             entityId = userId,
             description = "Password reset by platform admin"
+        )
+
+        return updatedUser
+    }
+
+    /**
+     * Creates a new user for a club.
+     * Sets TenantContext so BaseEntity.prePersist() picks up the correct tenantId.
+     */
+    fun createUserForClub(clubId: UUID, request: CreateClubUserRequest): User {
+        // Verify club exists
+        getClub(clubId)
+
+        // Check duplicate email within tenant
+        val duplicateQuery = entityManager.createQuery(
+            "SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.email = :email",
+            Long::class.javaObjectType
+        )
+        duplicateQuery.setParameter("tenantId", clubId)
+        duplicateQuery.setParameter("email", request.email)
+        if (duplicateQuery.singleResult > 0) {
+            throw IllegalArgumentException("A user with email '${request.email}' already exists in this club")
+        }
+
+        // Hash password
+        val passwordHash = passwordEncoder.encode(request.password)
+
+        // Create user
+        val displayName = LocalizedText(
+            en = request.displayNameEn,
+            ar = request.displayNameAr
+        )
+        val user = User(
+            email = request.email,
+            passwordHash = passwordHash,
+            displayName = displayName,
+            role = request.role
+        )
+
+        // Set tenant context so BaseEntity.prePersist() picks up the correct tenantId
+        TenantContext.setCurrentTenant(TenantId(clubId))
+        try {
+            entityManager.persist(user)
+            entityManager.flush()
+        } finally {
+            TenantContext.clear()
+        }
+
+        // Log audit action
+        auditService.log(
+            action = AuditAction.CREATE,
+            entityType = "User",
+            entityId = user.id,
+            description = "User created by platform admin: ${request.email} (${request.role})"
+        )
+
+        return user
+    }
+
+    /**
+     * Updates a user in a club (admin action).
+     * Supports partial updates — only non-null fields are applied.
+     * Status is set directly to allow admin overrides (e.g. LOCKED -> ACTIVE).
+     */
+    fun updateUserInClub(clubId: UUID, userId: UUID, request: UpdateClubUserRequest): User {
+        val user = getUser(userId)
+
+        // Verify user belongs to this club
+        if (user.tenantId != clubId) {
+            throw IllegalArgumentException("User does not belong to this club")
+        }
+
+        // Require at least one field
+        requireNotNull(request.displayNameEn ?: request.displayNameAr ?: request.role ?: request.status) {
+            "At least one field must be provided for update"
+        }
+
+        // Update displayName if provided
+        if (request.displayNameEn != null || request.displayNameAr != null) {
+            user.displayName = LocalizedText(
+                en = request.displayNameEn ?: user.displayName.en,
+                ar = request.displayNameAr ?: user.displayName.ar
+            )
+        }
+
+        // Update role if provided
+        if (request.role != null) {
+            user.role = request.role
+        }
+
+        // Update status directly (admin override, bypasses domain transition checks)
+        if (request.status != null) {
+            user.status = request.status
+            // Reset failed login attempts when unlocking
+            if (request.status == UserStatus.ACTIVE) {
+                user.failedLoginAttempts = 0
+            }
+        }
+
+        val updatedUser = entityManager.merge(user)
+
+        auditService.log(
+            action = AuditAction.UPDATE,
+            entityType = "User",
+            entityId = userId,
+            description = "User updated by platform admin: ${user.email}"
         )
 
         return updatedUser

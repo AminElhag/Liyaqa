@@ -14,27 +14,27 @@ interface ClubHealthScoreProps {
 function getScoreColor(score: number): { text: string; bg: string; ring: string } {
   if (score >= 80) {
     return {
-      text: "text-green-600",
+      text: "text-green-600 dark:text-green-400",
       bg: "bg-green-500",
       ring: "ring-green-500/30",
     };
   }
   if (score >= 60) {
     return {
-      text: "text-yellow-600",
+      text: "text-yellow-600 dark:text-yellow-400",
       bg: "bg-yellow-500",
       ring: "ring-yellow-500/30",
     };
   }
   if (score >= 40) {
     return {
-      text: "text-orange-600",
+      text: "text-orange-600 dark:text-orange-400",
       bg: "bg-orange-500",
       ring: "ring-orange-500/30",
     };
   }
   return {
-    text: "text-red-600",
+    text: "text-red-600 dark:text-red-400",
     bg: "bg-red-500",
     ring: "ring-red-500/30",
   };

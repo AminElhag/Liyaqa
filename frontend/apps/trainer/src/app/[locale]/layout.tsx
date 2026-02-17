@@ -1,0 +1,56 @@
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages, setRequestLocale } from "next-intl/server";
+import { notFound } from "next/navigation";
+import { locales, localeDirections, type Locale } from "@liyaqa/shared/i18n/config";
+import { QueryProvider, LocaleProvider } from "@liyaqa/shared/components/providers";
+import { ThemeProvider } from "@liyaqa/shared/providers/theme-provider";
+import { Toaster } from "@liyaqa/shared/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
+
+interface LocaleLayoutProps {
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+}
+
+export function generateStaticParams() {
+  return locales.map((locale) => ({ locale }));
+}
+
+export default async function LocaleLayout({
+  children,
+  params,
+}: LocaleLayoutProps) {
+  const { locale } = await params;
+
+  if (!locales.includes(locale as Locale)) {
+    notFound();
+  }
+
+  setRequestLocale(locale);
+
+  const messages = await getMessages();
+  const direction = localeDirections[locale as Locale];
+
+  return (
+    <html lang={locale} dir={direction} suppressHydrationWarning>
+      <body suppressHydrationWarning>
+        <QueryProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <NextIntlClientProvider messages={messages}>
+              <LocaleProvider locale={locale} direction={direction}>
+                {children}
+                <Toaster />
+                <SonnerToaster richColors position="top-center" />
+              </LocaleProvider>
+            </NextIntlClientProvider>
+          </ThemeProvider>
+        </QueryProvider>
+      </body>
+    </html>
+  );
+}

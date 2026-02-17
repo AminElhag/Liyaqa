@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useLocale } from "next-intl";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -15,6 +16,7 @@ import {
   AlertTriangle,
   ShieldCheck,
   User,
+  Key,
 } from "lucide-react";
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Badge } from "@liyaqa/shared/components/ui/badge";
@@ -29,6 +31,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@liyaqa/shared/components/ui/tabs";
 import { useEmployee } from "@liyaqa/shared/queries/use-employees";
 import { PermissionManager } from "@/components/permissions";
+import { EmployeeResetPasswordDialog } from "@/components/admin/employee-reset-password-dialog";
 import { formatDate, getLocalizedText } from "@liyaqa/shared/utils";
 import type { EmployeeStatus, EmploymentType } from "@liyaqa/shared/types/employee";
 
@@ -38,6 +41,7 @@ export default function EmployeeDetailPage() {
   const id = params.id as string;
 
   const { data: employee, isLoading, error } = useEmployee(id);
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
 
   const getStatusBadge = (status: EmployeeStatus) => {
     const statusConfig: Record<
@@ -138,12 +142,23 @@ export default function EmployeeDetailPage() {
             </div>
           </div>
         </div>
-        <Button asChild>
-          <Link href={`/${locale}/employees/${id}/edit`}>
-            <Pencil className="h-4 w-4 me-2" />
-            {locale === "ar" ? "تعديل" : "Edit"}
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          {employee.userId && (
+            <Button
+              variant="outline"
+              onClick={() => setResetPasswordOpen(true)}
+            >
+              <Key className="h-4 w-4 me-2" />
+              {locale === "ar" ? "إعادة تعيين كلمة المرور" : "Reset Password"}
+            </Button>
+          )}
+          <Button asChild>
+            <Link href={`/${locale}/employees/${id}/edit`}>
+              <Pencil className="h-4 w-4 me-2" />
+              {locale === "ar" ? "تعديل" : "Edit"}
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="profile" className="space-y-4">
@@ -347,6 +362,16 @@ export default function EmployeeDetailPage() {
           />
         </TabsContent>
       </Tabs>
+
+      {employee.userId && (
+        <EmployeeResetPasswordDialog
+          open={resetPasswordOpen}
+          onOpenChange={setResetPasswordOpen}
+          userId={employee.userId}
+          employeeName={getLocalizedText(employee.fullName, locale)}
+          employeeEmail={employee.email}
+        />
+      )}
     </div>
   );
 }

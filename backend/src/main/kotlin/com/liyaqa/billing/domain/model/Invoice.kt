@@ -22,6 +22,7 @@ import org.hibernate.annotations.ParamDef
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 
 /**
@@ -108,6 +109,22 @@ class Invoice(
     @Column(name = "zatca_qr_code", columnDefinition = "TEXT")
     var zatcaQrCode: String? = null,
 
+    // ==================== ZATCA PHASE 1 FIELDS ====================
+
+    @Column(name = "issue_date_time")
+    var issueDateTime: LocalDateTime? = null,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "invoice_type_code")
+    var invoiceTypeCode: InvoiceTypeCode = InvoiceTypeCode.SIMPLIFIED,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "document_type_code")
+    var documentTypeCode: DocumentTypeCode = DocumentTypeCode.INVOICE_388,
+
+    @Column(name = "billing_reference")
+    var billingReference: String? = null,
+
     // ==================== STC PAY FIELDS ====================
     @Column(name = "stcpay_transaction_id")
     var stcpayTransactionId: String? = null,
@@ -169,6 +186,7 @@ class Invoice(
         require(lineItems.isNotEmpty()) { "Invoice must have at least one line item" }
 
         this.issueDate = issueDate
+        this.issueDateTime = LocalDateTime.now()
         this.dueDate = issueDate.plusDays(paymentDueDays.toLong())
         this.status = InvoiceStatus.ISSUED
     }

@@ -4,6 +4,10 @@ import type {
   Subscription,
   SubscriptionStatus,
   CreateSubscriptionRequest,
+  CancelSubscriptionRequest,
+  TransferSubscriptionRequest,
+  RenewSubscriptionRequest,
+  MembershipHistoryEvent,
 } from "../../types/member";
 
 const SUBSCRIPTIONS_ENDPOINT = "api/subscriptions";
@@ -123,8 +127,58 @@ export async function cancelSubscription(id: UUID): Promise<Subscription> {
 /**
  * Renew a subscription
  */
-export async function renewSubscription(id: UUID): Promise<Subscription> {
-  return api.post(`${SUBSCRIPTIONS_ENDPOINT}/${id}/renew`).json();
+export async function renewSubscription(
+  id: UUID,
+  data?: RenewSubscriptionRequest
+): Promise<Subscription> {
+  const json = data ? data : undefined;
+  return api.post(`${SUBSCRIPTIONS_ENDPOINT}/${id}/renew`, { json }).json();
+}
+
+/**
+ * Cancel a subscription with reason and timing details
+ */
+export async function cancelSubscriptionWithReason(
+  id: UUID,
+  data: CancelSubscriptionRequest
+): Promise<Subscription> {
+  try {
+    return await api
+      .post(`${SUBSCRIPTIONS_ENDPOINT}/${id}/cancel`, { json: data })
+      .json();
+  } catch {
+    // Fallback to existing no-body cancel if backend doesn't accept body
+    return api.post(`${SUBSCRIPTIONS_ENDPOINT}/${id}/cancel`).json();
+  }
+}
+
+/**
+ * Transfer a subscription to another member
+ * NEEDS BACKEND — stub with descriptive error
+ */
+export async function transferSubscription(
+  id: UUID,
+  data: TransferSubscriptionRequest
+): Promise<Subscription> {
+  return api
+    .post(`${SUBSCRIPTIONS_ENDPOINT}/${id}/transfer`, { json: data })
+    .json();
+}
+
+/**
+ * Get membership history events for a member
+ * NEEDS BACKEND — returns empty array as fallback
+ */
+export async function getMembershipHistory(
+  memberId: UUID
+): Promise<MembershipHistoryEvent[]> {
+  try {
+    return await api
+      .get(`api/members/${memberId}/membership-history`)
+      .json();
+  } catch {
+    return [];
+  }
 }
 
 /**

@@ -76,11 +76,28 @@ export interface Availability {
 }
 
 /**
+ * Trainer skill summary (category the trainer can teach)
+ */
+export interface TrainerSkillSummary {
+  categoryId: UUID;
+  categoryName?: LocalizedText;
+  colorCode?: string;
+  icon?: string;
+}
+
+/**
+ * Request to update trainer skills
+ */
+export interface UpdateTrainerSkillsRequest {
+  categoryIds: UUID[];
+}
+
+/**
  * Trainer entity (full response)
  */
 export interface Trainer {
   id: UUID;
-  userId: UUID;
+  userId: UUID | null;
   organizationId: UUID;
   // Basic Info
   displayName?: LocalizedText;
@@ -105,7 +122,15 @@ export interface Trainer {
   status: TrainerStatus;
   phone?: string;
   notes?: LocalizedText;
+  skills?: TrainerSkillSummary[];
   assignedClubs?: TrainerClubAssignment[];
+  // PT fields
+  homeServiceAvailable?: boolean;
+  travelFeeAmount?: number;
+  travelFeeCurrency?: string;
+  travelRadiusKm?: number;
+  maxConcurrentClients?: number;
+  rating?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -115,13 +140,14 @@ export interface Trainer {
  */
 export interface TrainerSummary {
   id: UUID;
-  userId: UUID;
+  userId: UUID | null;
   displayName?: LocalizedText;
   userName?: string;
   userEmail?: string;
   profileImageUrl?: string;
   trainerType: TrainerType;
   specializations: string[];
+  skills?: TrainerSkillSummary[];
   status: TrainerStatus;
   ptSessionRate?: number;
   createdAt: string;
@@ -144,7 +170,7 @@ export interface TrainerClubAssignment {
  * Create trainer request
  */
 export interface CreateTrainerRequest {
-  userId: UUID;
+  userId?: UUID | null;
   organizationId: UUID;
   // Basic Info
   displayName?: {
@@ -173,6 +199,14 @@ export interface CreateTrainerRequest {
     en?: string;
     ar?: string;
   };
+  // Skills
+  skillCategoryIds?: UUID[];
+  // PT fields
+  homeServiceAvailable?: boolean;
+  travelFeeAmount?: number;
+  travelFeeCurrency?: string;
+  travelRadiusKm?: number;
+  maxConcurrentClients?: number;
 }
 
 /**
@@ -197,6 +231,12 @@ export interface UpdateTrainerProfileRequest {
     en?: string;
     ar?: string;
   };
+  // PT fields
+  homeServiceAvailable?: boolean;
+  travelFeeAmount?: number;
+  travelFeeCurrency?: string;
+  travelRadiusKm?: number;
+  maxConcurrentClients?: number;
 }
 
 /**

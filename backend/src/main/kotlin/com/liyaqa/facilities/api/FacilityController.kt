@@ -2,6 +2,8 @@ package com.liyaqa.facilities.api
 
 import com.liyaqa.facilities.application.commands.*
 import com.liyaqa.facilities.application.services.FacilityService
+import com.liyaqa.facilities.domain.model.SlotStatus
+import com.liyaqa.facilities.domain.ports.FacilityBookingRepository
 import com.liyaqa.shared.domain.LocalizedText
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -20,7 +22,8 @@ import java.util.*
 @RequestMapping("/api/facilities")
 @Tag(name = "Facilities", description = "Facility management")
 class FacilityController(
-    private val facilityService: FacilityService
+    private val facilityService: FacilityService,
+    private val facilityBookingRepository: FacilityBookingRepository
 ) {
     @PostMapping
     @PreAuthorize("hasAuthority('facilities_create')")
@@ -156,7 +159,7 @@ class FacilityController(
         )
         val slots = facilityService.generateSlots(command)
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(slots.map { FacilitySlotResponse.from(it) })
+            .body(slots.map { FacilitySlotResponse.from(it, null) })
     }
 
     @GetMapping("/{id}/slots")
@@ -185,6 +188,10 @@ class FacilityController(
             }
         }
 
-        return ResponseEntity.ok(slots.map { FacilitySlotResponse.from(it) })
+        val bookedSlotIds = slots.filter { it.status == SlotStatus.BOOKED }.map { it.id }
+        val bookingMap = facilityBookingRepository.findBySlotIdIn(bookedSlotIds)
+            .associateBy { it.slotId }
+
+        return ResponseEntity.ok(slots.map { FacilitySlotResponse.from(it, bookingMap[it.id]) })
     }
 }
