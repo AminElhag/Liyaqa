@@ -2,8 +2,12 @@ package com.liyaqa.trainer.application.services
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.liyaqa.auth.domain.model.AccountType
+import com.liyaqa.auth.domain.model.Role
+import com.liyaqa.auth.domain.model.User
 import com.liyaqa.auth.domain.ports.UserRepository
 import com.liyaqa.organization.domain.ports.ClubRepository
+import com.liyaqa.shared.domain.LocalizedText
 import com.liyaqa.trainer.application.commands.*
 import com.liyaqa.trainer.domain.model.Trainer
 import com.liyaqa.trainer.domain.model.TrainerClubAssignment
@@ -18,6 +22,7 @@ import com.liyaqa.scheduling.domain.ports.ClassCategoryRepository
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -42,7 +47,8 @@ class TrainerService(
     private val userRepository: UserRepository,
     private val clubRepository: ClubRepository,
     private val classCategoryRepository: ClassCategoryRepository,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    private val passwordEncoder: PasswordEncoder
 ) {
     private val logger = LoggerFactory.getLogger(TrainerService::class.java)
 
@@ -52,10 +58,47 @@ class TrainerService(
      * Create a new trainer from an existing user.
      */
     fun createTrainer(command: CreateTrainerCommand): Trainer {
-        // Verify user exists (only if userId is provided)
-        command.userId?.let { uid ->
-            require(userRepository.existsById(uid)) {
-                "User not found with id: $uid"
+        // Validate: cannot provide both userId and email/password
+        require(!(command.userId != null && command.email != null)) {
+            "Cannot provide both userId and email/password. Use one or the other."
+        }
+        require((command.email == null) == (command.password == null)) {
+            "Email and password must both be provided together."
+        }
+
+        // Determine the userId: either from command or by creating a new user
+        var resolvedUserId = command.userId
+
+        // If email+password provided, create a new User account
+        if (command.email != null && command.password != null) {
+            require(command.email.contains("@")) {
+                "Invalid email format"
+            }
+            require(!userRepository.existsByEmailAndTenantId(command.email, command.tenantId)) {
+                "A user with email ${command.email} already exists"
+            }
+
+            val displayName = command.displayName ?: LocalizedText(en = command.email)
+            val passwordHash = passwordEncoder.encode(command.password)
+            val user = User(
+                email = command.email,
+                passwordHash = passwordHash,
+                displayName = displayName,
+                role = Role.TRAINER
+            )
+            user.addAccountType(AccountType.TRAINER)
+            val savedUser = userRepository.save(user)
+            resolvedUserId = savedUser.id
+            logger.info("Created user account ${savedUser.id} for trainer with email ${command.email}")
+        }
+
+        // Verify user exists (only if userId is provided directly)
+        resolvedUserId?.let { uid ->
+            if (command.email == null) {
+                // Only verify existence when linking an existing user, not when we just created one
+                require(userRepository.existsById(uid)) {
+                    "User not found with id: $uid"
+                }
             }
 
             // Verify trainer doesn't already exist for this user in this organization
@@ -72,7 +115,7 @@ class TrainerService(
         }
 
         val trainer = Trainer.create(
-            userId = command.userId,
+            userId = resolvedUserId,
             organizationId = command.organizationId,
             tenantId = command.tenantId,
             employmentType = command.employmentType,
@@ -93,16 +136,18 @@ class TrainerService(
             notes = command.notes
         }
 
-        // Add TRAINER account type to the user (only if userId is provided)
-        command.userId?.let { uid ->
-            userRepository.findById(uid).ifPresent { user ->
-                user.addAccountType(com.liyaqa.auth.domain.model.AccountType.TRAINER)
-                userRepository.save(user)
+        // Add TRAINER account type to the user (only when linking an existing user)
+        if (command.email == null) {
+            resolvedUserId?.let { uid ->
+                userRepository.findById(uid).ifPresent { user ->
+                    user.addAccountType(AccountType.TRAINER)
+                    userRepository.save(user)
+                }
             }
         }
 
         val savedTrainer = trainerRepository.save(trainer)
-        logger.info("Created trainer ${savedTrainer.id} for user ${command.userId}")
+        logger.info("Created trainer ${savedTrainer.id} for user $resolvedUserId")
 
         // Save trainer skills
         command.skillCategoryIds?.forEach { categoryId ->

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useLocale } from "next-intl";
 import { LanguageToggle } from "@liyaqa/shared/components/ui/language-toggle";
 
@@ -16,12 +17,16 @@ export function AuthLayout({ children }: AuthLayoutProps) {
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-neutral-100 flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between p-4">
-        <Link href={`/${locale}`} className="flex items-center gap-2">
-          <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
-            <span className="text-white font-bold text-xl">L</span>
-          </div>
-          <span className="font-bold text-xl text-neutral-800">Liyaqa</span>
-          <span className="text-sm font-medium text-primary-600 ms-2">
+        <Link href={`/${locale}`} className="flex items-center gap-3">
+          <Image
+            src="/assets/logo-liyaqa-primary.svg"
+            alt="Liyaqa"
+            width={120}
+            height={32}
+            className="h-8 w-auto"
+            priority
+          />
+          <span className="text-sm font-medium text-primary ms-1">
             {locale === "ar" ? "المدربون" : "Trainers"}
           </span>
         </Link>

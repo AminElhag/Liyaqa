@@ -3,7 +3,6 @@
 import * as React from "react";
 import { useLocale } from "next-intl";
 import { CreditCard, ShieldCheck, Info } from "lucide-react";
-import { MemberShell } from "@/components/layouts/member-shell";
 import { PaymentMethodsList } from "@/components/member/payment-methods-list";
 import { AddPaymentMethodDialog } from "@/components/member/add-payment-method-dialog";
 import { Alert, AlertDescription } from "@liyaqa/shared/components/ui/alert";
@@ -62,7 +61,6 @@ export default function PaymentMethodsPage() {
   };
 
   return (
-    <MemberShell>
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -71,7 +69,7 @@ export default function PaymentMethodsPage() {
               <CreditCard className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-semibold">
+              <h1 className="text-2xl font-bold">
                 {isArabic ? "طرق الدفع" : "Payment Methods"}
               </h1>
               <p className="text-sm text-muted-foreground">
@@ -117,6 +115,5 @@ export default function PaymentMethodsPage() {
           </Alert>
         )}
       </div>
-    </MemberShell>
   );
 }

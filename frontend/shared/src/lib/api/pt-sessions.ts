@@ -7,6 +7,7 @@ import type {
   ReschedulePTSessionRequest,
   CancelPTSessionRequest,
   CompletePTSessionRequest,
+  CreateTrainerSessionRequest,
   PTSessionQueryParams,
   AvailableSlot,
 } from "../../types/pt-session";
@@ -18,6 +19,7 @@ import type {
   PTSessionQueryParams as PTClassQueryParams,
 } from "../../types/scheduling";
 
+const TRAINER_PORTAL_SCHEDULE_ENDPOINT = "api/trainer-portal/schedule";
 const PT_SESSIONS_ENDPOINT = "api/pt-sessions";
 const PT_ADMIN_ENDPOINT = "api/pt";
 
@@ -36,6 +38,19 @@ function buildQueryString(params: PTSessionQueryParams): string {
   if (params.sortBy) searchParams.set("sortBy", params.sortBy);
   if (params.sortDirection) searchParams.set("sortDirection", params.sortDirection);
   return searchParams.toString();
+}
+
+// ==================== Trainer Session Creation ====================
+
+/**
+ * Trainer creates a PT session (auto-confirmed).
+ */
+export async function createTrainerSession(
+  data: CreateTrainerSessionRequest
+): Promise<PTSession> {
+  return api
+    .post(`${TRAINER_PORTAL_SCHEDULE_ENDPOINT}/sessions`, { json: data })
+    .json();
 }
 
 // ==================== CRUD Operations ====================

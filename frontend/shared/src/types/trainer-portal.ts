@@ -356,6 +356,7 @@ export interface TrainerDashboardResponse {
 export interface TrainerClientsQueryParams {
   trainerId?: UUID;
   status?: TrainerClientStatus;
+  search?: string;
   page?: number;
   size?: number;
   sortBy?: string;

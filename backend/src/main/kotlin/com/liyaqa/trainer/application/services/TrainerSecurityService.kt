@@ -1,5 +1,6 @@
 package com.liyaqa.trainer.application.services
 
+import com.liyaqa.auth.infrastructure.security.JwtUserPrincipal
 import com.liyaqa.trainer.domain.ports.TrainerRepository
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
@@ -26,10 +27,10 @@ class TrainerSecurityService(
         val authentication = SecurityContextHolder.getContext().authentication
             ?: return false
 
-        val userId = try {
-            UUID.fromString(authentication.name)
-        } catch (e: Exception) {
-            return false
+        val principal = authentication.principal
+        val userId = when (principal) {
+            is JwtUserPrincipal -> principal.userId
+            else -> return false
         }
 
         return trainerRepository.findById(trainerId)
@@ -46,10 +47,10 @@ class TrainerSecurityService(
         val authentication = SecurityContextHolder.getContext().authentication
             ?: return false
 
-        val userId = try {
-            UUID.fromString(authentication.name)
-        } catch (e: Exception) {
-            return false
+        val principal = authentication.principal
+        val userId = when (principal) {
+            is JwtUserPrincipal -> principal.userId
+            else -> return false
         }
 
         return trainerRepository.existsByUserId(userId)
@@ -64,10 +65,10 @@ class TrainerSecurityService(
         val authentication = SecurityContextHolder.getContext().authentication
             ?: return null
 
-        val userId = try {
-            UUID.fromString(authentication.name)
-        } catch (e: Exception) {
-            return null
+        val principal = authentication.principal
+        val userId = when (principal) {
+            is JwtUserPrincipal -> principal.userId
+            else -> return null
         }
 
         return trainerRepository.findByUserId(userId)

@@ -109,7 +109,14 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <h1 className="text-2xl font-bold">{t("title")}</h1>
+      <div>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
+        <p className="text-muted-foreground">
+          {locale === "ar"
+            ? "إدارة كلمة المرور وتفضيلات الإشعارات"
+            : "Manage your password and notification preferences"}
+        </p>
+      </div>
 
       {/* Change Password */}
       <Card>
@@ -144,9 +151,9 @@ export default function SettingsPage() {
                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                 >
                   {showCurrentPassword ? (
-                    <EyeOff className="h-4 w-4 text-neutral-500" />
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
                   ) : (
-                    <Eye className="h-4 w-4 text-neutral-500" />
+                    <Eye className="h-4 w-4 text-muted-foreground" />
                   )}
                 </Button>
               </div>
@@ -173,9 +180,9 @@ export default function SettingsPage() {
                   onClick={() => setShowNewPassword(!showNewPassword)}
                 >
                   {showNewPassword ? (
-                    <EyeOff className="h-4 w-4 text-neutral-500" />
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
                   ) : (
-                    <Eye className="h-4 w-4 text-neutral-500" />
+                    <Eye className="h-4 w-4 text-muted-foreground" />
                   )}
                 </Button>
               </div>
@@ -227,13 +234,13 @@ export default function SettingsPage() {
           </CardTitle>
           <CardDescription>{t("channelsDesc")}</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
+        <CardContent className="space-y-0">
+          <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors border-b last:border-0">
             <div className="flex items-center gap-3">
-              <Mail className="h-5 w-5 text-neutral-500" />
+              <Mail className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="font-medium">{t("email")}</p>
-                <p className="text-sm text-neutral-500">{t("emailDesc")}</p>
+                <p className="text-sm text-muted-foreground">{t("emailDesc")}</p>
               </div>
             </div>
             <Switch
@@ -242,12 +249,12 @@ export default function SettingsPage() {
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors border-b last:border-0">
             <div className="flex items-center gap-3">
-              <Smartphone className="h-5 w-5 text-neutral-500" />
+              <Smartphone className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="font-medium">{t("sms")}</p>
-                <p className="text-sm text-neutral-500">{t("smsDesc")}</p>
+                <p className="text-sm text-muted-foreground">{t("smsDesc")}</p>
               </div>
             </div>
             <Switch
@@ -256,12 +263,12 @@ export default function SettingsPage() {
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
             <div className="flex items-center gap-3">
-              <Bell className="h-5 w-5 text-neutral-500" />
+              <Bell className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="font-medium">{t("push")}</p>
-                <p className="text-sm text-neutral-500">{t("pushDesc")}</p>
+                <p className="text-sm text-muted-foreground">{t("pushDesc")}</p>
               </div>
             </div>
             <Switch
@@ -275,14 +282,17 @@ export default function SettingsPage() {
       {/* Notification Types */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">{t("types")}</CardTitle>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Bell className="h-5 w-5 text-primary" />
+            {t("types")}
+          </CardTitle>
           <CardDescription>{t("typesDesc")}</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
+        <CardContent className="space-y-0">
+          <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors border-b last:border-0">
             <div>
               <p className="font-medium">{t("bookingReminders")}</p>
-              <p className="text-sm text-neutral-500">{t("bookingRemindersDesc")}</p>
+              <p className="text-sm text-muted-foreground">{t("bookingRemindersDesc")}</p>
             </div>
             <Switch
               checked={notificationPrefs.bookingReminders}
@@ -290,10 +300,10 @@ export default function SettingsPage() {
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors border-b last:border-0">
             <div>
               <p className="font-medium">{t("subscriptionAlerts")}</p>
-              <p className="text-sm text-neutral-500">{t("subscriptionAlertsDesc")}</p>
+              <p className="text-sm text-muted-foreground">{t("subscriptionAlertsDesc")}</p>
             </div>
             <Switch
               checked={notificationPrefs.subscriptionAlerts}
@@ -301,10 +311,10 @@ export default function SettingsPage() {
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors border-b last:border-0">
             <div>
               <p className="font-medium">{t("invoiceNotifications")}</p>
-              <p className="text-sm text-neutral-500">{t("invoiceNotificationsDesc")}</p>
+              <p className="text-sm text-muted-foreground">{t("invoiceNotificationsDesc")}</p>
             </div>
             <Switch
               checked={notificationPrefs.invoiceNotifications}
@@ -312,10 +322,10 @@ export default function SettingsPage() {
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
             <div>
               <p className="font-medium">{t("marketing")}</p>
-              <p className="text-sm text-neutral-500">{t("marketingDesc")}</p>
+              <p className="text-sm text-muted-foreground">{t("marketingDesc")}</p>
             </div>
             <Switch
               checked={notificationPrefs.marketing}

@@ -11,6 +11,7 @@ import { Eye, EyeOff, Loader2, Building2 } from "lucide-react";
 import { useAuthStore, useHasHydrated } from "@liyaqa/shared/stores/auth-store";
 import { AccountTypeSelector } from "@liyaqa/shared/components/auth/account-type-selector";
 import { isSubdomainAccess } from "@liyaqa/shared/lib/subdomain";
+import { getAccessToken, setAccessToken } from "@liyaqa/shared/lib/api/client";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@liyaqa/shared/components/ui/card";
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Input } from "@liyaqa/shared/components/ui/input";
@@ -33,6 +34,8 @@ export default function MemberLoginPage() {
 
   const {
     login,
+    initialize,
+    isAuthenticated,
     accountTypeSelectionRequired,
     availableAccountTypes,
     accountTypeSessionToken,
@@ -43,6 +46,8 @@ export default function MemberLoginPage() {
   const [showPassword, setShowPassword] = React.useState(false);
   const [loginError, setLoginError] = React.useState<string | null>(null);
   const [wrongPortal, setWrongPortal] = React.useState(false);
+  const initRef = React.useRef(false);
+  const [authChecked, setAuthChecked] = React.useState(false);
 
   const {
     register,
@@ -64,12 +69,28 @@ export default function MemberLoginPage() {
     }
   }, [searchParams]);
 
-  // Check if user is already logged in with MEMBER account
+  // Verify auth session on mount before trusting hydrated state
   React.useEffect(() => {
-    if (hasHydrated && user?.activeAccountType === "MEMBER") {
-      router.push(`/${locale}/member/dashboard`);
+    if (hasHydrated && !initRef.current) {
+      initRef.current = true;
+      initialize()
+        .then(() => {
+          // Re-sync session_meta cookie from localStorage token
+          const token = getAccessToken();
+          if (token) setAccessToken(token);
+        })
+        .finally(() => setAuthChecked(true));
     }
-  }, [hasHydrated, user, locale, router]);
+  }, [hasHydrated, initialize]);
+
+  // Only auto-redirect after auth has been verified (not just hydrated)
+  React.useEffect(() => {
+    if (!authChecked || isLoading) return;
+    if (!isAuthenticated || user?.activeAccountType !== "MEMBER") return;
+    const redirectPath = searchParams.get("redirect");
+    const target = redirectPath || `/${locale}/member/dashboard`;
+    router.replace(target);
+  }, [authChecked, isLoading, isAuthenticated, user, locale, router, searchParams]);
 
   const onSubmit = async (data: LoginFormData) => {
     try {
@@ -184,7 +205,7 @@ export default function MemberLoginPage() {
                 {locale === "ar" ? "معرف النادي" : "Club ID"}
               </Label>
               <div className="relative">
-                <Building2 className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
+                <Building2 className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="tenantId"
                   type="text"
@@ -231,7 +252,7 @@ export default function MemberLoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute end-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-700"
+                className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
@@ -264,7 +285,7 @@ export default function MemberLoginPage() {
             )}
           </Button>
 
-          <div className="text-sm text-center text-neutral-600">
+          <div className="text-sm text-center text-muted-foreground">
             {locale === "ar" ? (
               <>
                 نسيت كلمة المرور؟{" "}

@@ -14,6 +14,9 @@ import java.util.UUID
  */
 data class CreateTrainerCommand(
     val userId: UUID? = null,
+    // Account creation fields (alternative to userId)
+    val email: String? = null,
+    val password: String? = null,
     val organizationId: UUID,
     val tenantId: UUID,
     // Basic Info

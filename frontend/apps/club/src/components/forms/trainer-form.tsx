@@ -32,7 +32,12 @@ import { getLocalizedText } from "@liyaqa/shared/utils";
 import type { Trainer, TrainerEmploymentType, TrainerType, CompensationModel, Gender } from "@liyaqa/shared/types/trainer";
 
 const trainerFormSchema = z.object({
+  accountMode: z.enum(["none", "link", "create"] as const),
   userId: z.string().optional().or(z.literal("")),
+  // Account creation fields
+  email: z.string().optional().or(z.literal("")),
+  password: z.string().optional().or(z.literal("")),
+  confirmPassword: z.string().optional().or(z.literal("")),
   // Skills
   skillCategoryIds: z.array(z.string()).optional(),
   // Basic Info
@@ -66,6 +71,20 @@ const trainerFormSchema = z.object({
   travelFeeCurrency: z.string().optional(),
   travelRadiusKm: z.coerce.number().min(0).optional(),
   maxConcurrentClients: z.coerce.number().min(0).optional(),
+}).superRefine((data, ctx) => {
+  if (data.accountMode === "create") {
+    if (!data.email) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Email is required", path: ["email"] });
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Invalid email address", path: ["email"] });
+    }
+    if (!data.password || data.password.length < 8) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Password must be at least 8 characters", path: ["password"] });
+    }
+    if (data.password !== data.confirmPassword) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Passwords do not match", path: ["confirmPassword"] });
+    }
+  }
 });
 
 export type TrainerFormData = z.infer<typeof trainerFormSchema>;
@@ -126,7 +145,11 @@ export function TrainerForm({ trainer, onSubmit, isPending, showUserField = fals
   } = useForm<TrainerFormData>({
     resolver: zodResolver(trainerFormSchema),
     defaultValues: {
+      accountMode: trainer?.userId ? "link" : "none",
       userId: trainer?.userId || "",
+      email: "",
+      password: "",
+      confirmPassword: "",
       skillCategoryIds: trainer?.skills?.map((s) => s.categoryId) || [],
       // Basic Info
       displayName: {
@@ -162,6 +185,7 @@ export function TrainerForm({ trainer, onSubmit, isPending, showUserField = fals
     },
   });
 
+  const accountMode = watch("accountMode");
   const selectedEmploymentType = watch("employmentType");
   const selectedTrainerType = watch("trainerType");
   const selectedCompensationModel = watch("compensationModel");
@@ -179,7 +203,18 @@ export function TrainerForm({ trainer, onSubmit, isPending, showUserField = fals
   };
 
   const texts = {
-    // User
+    // User / Account
+    userAccount: locale === "ar" ? "حساب المستخدم" : "User Account",
+    accountHint: locale === "ar" ? "اختر كيفية ربط حساب المدرب" : "Choose how to set up the trainer's account",
+    noAccount: locale === "ar" ? "بدون حساب" : "No Account",
+    noAccountDesc: locale === "ar" ? "مقاول خارجي — بدون تسجيل دخول" : "External contractor — no portal login",
+    linkExisting: locale === "ar" ? "ربط حساب موجود" : "Link Existing User",
+    linkExistingDesc: locale === "ar" ? "ربط بحساب مستخدم موجود" : "Link to an existing user account",
+    createAccount: locale === "ar" ? "إنشاء حساب جديد" : "Create New Account",
+    createAccountDesc: locale === "ar" ? "إنشاء حساب بريد وكلمة مرور" : "Create email & password account",
+    trainerEmail: locale === "ar" ? "البريد الإلكتروني للمدرب" : "Trainer Email",
+    trainerPassword: locale === "ar" ? "كلمة المرور" : "Password",
+    confirmPassword: locale === "ar" ? "تأكيد كلمة المرور" : "Confirm Password",
     linkUser: locale === "ar" ? "ربط حساب مستخدم (اختياري)" : "Link User Account (Optional)",
     linkUserHint: locale === "ar" ? "اختياري — المدربون بدون حساب لن يتمكنوا من تسجيل الدخول" : "Optional — trainers without an account won't be able to log in",
     selectUser: locale === "ar" ? "اختر المستخدم" : "Select User",
@@ -234,36 +269,119 @@ export function TrainerForm({ trainer, onSubmit, isPending, showUserField = fals
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* User Selection (optional) */}
+      {/* User Account Section */}
       {showUserField && (
         <Card>
           <CardHeader>
-            <CardTitle>{texts.linkUser}</CardTitle>
+            <CardTitle>{texts.userAccount}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">{texts.linkUserHint}</p>
-              <Select
-                value={selectedUserId || ""}
-                onValueChange={(value) => setValue("userId", value)}
-                disabled={isLoadingUsers}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      isLoadingUsers ? texts.loadingUsers : texts.selectPlaceholder
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">{texts.accountHint}</p>
+
+            {/* Account mode toggle */}
+            <div className="grid gap-3 sm:grid-cols-3">
+              {([
+                { value: "none" as const, label: texts.noAccount, desc: texts.noAccountDesc },
+                { value: "link" as const, label: texts.linkExisting, desc: texts.linkExistingDesc },
+                { value: "create" as const, label: texts.createAccount, desc: texts.createAccountDesc },
+              ]).map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    setValue("accountMode", option.value);
+                    if (option.value !== "link") setValue("userId", "");
+                    if (option.value !== "create") {
+                      setValue("email", "");
+                      setValue("password", "");
+                      setValue("confirmPassword", "");
                     }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {usersData?.content?.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {getLocalizedText(user.displayName, locale) || user.email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  }}
+                  className={`rounded-lg border-2 p-4 text-start transition-colors ${
+                    accountMode === option.value
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/40"
+                  }`}
+                >
+                  <p className="text-sm font-medium">{option.label}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{option.desc}</p>
+                </button>
+              ))}
             </div>
+
+            {/* Link existing user */}
+            {accountMode === "link" && (
+              <div className="space-y-2">
+                <Label>{texts.selectUser}</Label>
+                <Select
+                  value={selectedUserId || ""}
+                  onValueChange={(value) => setValue("userId", value)}
+                  disabled={isLoadingUsers}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        isLoadingUsers ? texts.loadingUsers : texts.selectPlaceholder
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {usersData?.content?.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {getLocalizedText(user.displayName, locale) || user.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Create new account */}
+            {accountMode === "create" && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">{texts.trainerEmail}</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    {...register("email")}
+                    placeholder="trainer@example.com"
+                    autoComplete="off"
+                  />
+                  {errors.email && (
+                    <p className="text-sm text-destructive">{errors.email.message}</p>
+                  )}
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="password">{texts.trainerPassword}</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      {...register("password")}
+                      placeholder="••••••••"
+                      autoComplete="new-password"
+                    />
+                    {errors.password && (
+                      <p className="text-sm text-destructive">{errors.password.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">{texts.confirmPassword}</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      {...register("confirmPassword")}
+                      placeholder="••••••••"
+                      autoComplete="new-password"
+                    />
+                    {errors.confirmPassword && (
+                      <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

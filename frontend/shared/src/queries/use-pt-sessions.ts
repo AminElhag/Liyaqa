@@ -31,7 +31,9 @@ import {
   cancelScheduledPTSession,
   getTrainerPTSessions,
   getPTDashboardStats,
+  createTrainerSession,
 } from "../lib/api/pt-sessions";
+import { trainerPortalKeys } from "./use-trainer-portal";
 import type { PaginatedResponse, UUID } from "../types/api";
 import type {
   PTSession,
@@ -40,6 +42,7 @@ import type {
   ReschedulePTSessionRequest,
   CancelPTSessionRequest,
   CompletePTSessionRequest,
+  CreateTrainerSessionRequest,
   PTSessionQueryParams,
   AvailableSlot,
 } from "../types/pt-session";
@@ -186,6 +189,31 @@ export function useMemberPTSessions(
   });
 }
 
+// ==================== Trainer Session Creation ====================
+
+/**
+ * Hook for trainers to create a PT session (auto-confirmed).
+ * Invalidates both PT session caches and trainer portal schedule/dashboard caches.
+ */
+export function useCreateTrainerSession() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateTrainerSessionRequest) =>
+      createTrainerSession(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ptSessionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ptSessionKeys.myUpcoming() });
+      queryClient.invalidateQueries({
+        queryKey: trainerPortalKeys.schedule(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: trainerPortalKeys.dashboards(),
+      });
+    },
+  });
+}
+
 // ==================== Mutation Hooks ====================
 
 /**
@@ -216,6 +244,7 @@ export function useConfirmPTSession() {
       queryClient.invalidateQueries({ queryKey: ptSessionKeys.lists() });
       queryClient.invalidateQueries({ queryKey: ptSessionKeys.myPending() });
       queryClient.invalidateQueries({ queryKey: ptSessionKeys.myUpcoming() });
+      queryClient.invalidateQueries({ queryKey: trainerPortalKeys.schedule() });
     },
   });
 }
@@ -249,6 +278,9 @@ export function useCompletePTSession() {
       queryClient.setQueryData(ptSessionKeys.detail(updatedSession.id), updatedSession);
       queryClient.invalidateQueries({ queryKey: ptSessionKeys.lists() });
       queryClient.invalidateQueries({ queryKey: ptSessionKeys.myUpcoming() });
+      queryClient.invalidateQueries({ queryKey: trainerPortalKeys.schedule() });
+      queryClient.invalidateQueries({ queryKey: trainerPortalKeys.dashboards() });
+      queryClient.invalidateQueries({ queryKey: trainerPortalKeys.earnings() });
     },
   });
 }
@@ -265,6 +297,8 @@ export function useMarkPTSessionNoShow() {
       queryClient.setQueryData(ptSessionKeys.detail(updatedSession.id), updatedSession);
       queryClient.invalidateQueries({ queryKey: ptSessionKeys.lists() });
       queryClient.invalidateQueries({ queryKey: ptSessionKeys.myUpcoming() });
+      queryClient.invalidateQueries({ queryKey: trainerPortalKeys.schedule() });
+      queryClient.invalidateQueries({ queryKey: trainerPortalKeys.dashboards() });
     },
   });
 }
@@ -302,6 +336,8 @@ export function useCancelPTSession() {
       queryClient.invalidateQueries({ queryKey: ptSessionKeys.myPending() });
       queryClient.invalidateQueries({ queryKey: ptSessionKeys.myUpcoming() });
       queryClient.invalidateQueries({ queryKey: ptSessionKeys.memberUpcoming() });
+      queryClient.invalidateQueries({ queryKey: trainerPortalKeys.schedule() });
+      queryClient.invalidateQueries({ queryKey: trainerPortalKeys.dashboards() });
     },
   });
 }

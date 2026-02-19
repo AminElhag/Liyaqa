@@ -2,6 +2,7 @@ package com.liyaqa.trainer.api
 
 import com.liyaqa.notification.domain.model.NotificationPriority
 import com.liyaqa.trainer.application.services.TrainerNotificationService
+import com.liyaqa.trainer.application.services.TrainerSecurityService
 import com.liyaqa.trainer.infrastructure.persistence.JpaTrainerNotificationRepository
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -28,32 +29,35 @@ import java.util.UUID
 @Tag(name = "Trainer Portal - Notifications", description = "Trainer notification management")
 class TrainerNotificationController(
     private val trainerNotificationService: TrainerNotificationService,
-    private val trainerNotificationRepository: JpaTrainerNotificationRepository
+    private val trainerNotificationRepository: JpaTrainerNotificationRepository,
+    private val trainerSecurityService: TrainerSecurityService
 ) {
     private val logger = LoggerFactory.getLogger(TrainerNotificationController::class.java)
 
     @GetMapping
-    @PreAuthorize("hasAuthority('trainer_portal_view') or @trainerSecurityService.isOwnProfile(#trainerId)")
+    @PreAuthorize("hasAuthority('trainer_portal_view') or @trainerSecurityService.isTrainer()")
     @Operation(summary = "List trainer notifications", description = "Get paginated list of trainer's notifications with optional filtering")
     fun getNotifications(
-        @RequestParam trainerId: UUID,
+        @RequestParam(required = false) trainerId: UUID? = null,
         @RequestParam(required = false) isRead: Boolean?,
         @RequestParam(required = false) priority: NotificationPriority?,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int
     ): ResponseEntity<PageResponse<TrainerNotificationResponse>> {
-        logger.debug("Fetching notifications for trainer $trainerId (isRead: $isRead, priority: $priority)")
+        val resolvedTrainerId = trainerId ?: trainerSecurityService.getCurrentTrainerId()
+            ?: throw NoSuchElementException("No trainer profile found for current user")
+        logger.debug("Fetching notifications for trainer $resolvedTrainerId (isRead: $isRead, priority: $priority)")
 
         val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
 
         val notificationPage = when {
-            isRead == false -> trainerNotificationService.getUnreadNotifications(trainerId, pageable)
+            isRead == false -> trainerNotificationService.getUnreadNotifications(resolvedTrainerId, pageable)
             isRead == true -> {
                 // Filter by read status
-                val allNotifs = trainerNotificationService.getNotificationsForTrainer(trainerId, pageable)
+                val allNotifs = trainerNotificationService.getNotificationsForTrainer(resolvedTrainerId, pageable)
                 allNotifs // The service doesn't have getReadNotifications, so we return all and filter in response
             }
-            else -> trainerNotificationService.getNotificationsForTrainer(trainerId, pageable)
+            else -> trainerNotificationService.getNotificationsForTrainer(resolvedTrainerId, pageable)
         }
 
         val filteredContent = if (isRead == true) {
@@ -76,33 +80,37 @@ class TrainerNotificationController(
     }
 
     @GetMapping("/unread-count")
-    @PreAuthorize("hasAuthority('trainer_portal_view') or @trainerSecurityService.isOwnProfile(#trainerId)")
+    @PreAuthorize("hasAuthority('trainer_portal_view') or @trainerSecurityService.isTrainer()")
     @Operation(summary = "Get unread notification count", description = "Get the count of unread notifications for a trainer")
-    fun getUnreadCount(@RequestParam trainerId: UUID): ResponseEntity<Map<String, Long>> {
-        logger.debug("Fetching unread count for trainer $trainerId")
+    fun getUnreadCount(@RequestParam(required = false) trainerId: UUID? = null): ResponseEntity<Map<String, Long>> {
+        val resolvedTrainerId = trainerId ?: trainerSecurityService.getCurrentTrainerId()
+            ?: throw NoSuchElementException("No trainer profile found for current user")
+        logger.debug("Fetching unread count for trainer $resolvedTrainerId")
 
-        val count = trainerNotificationRepository.countUnreadByTrainerId(trainerId)
+        val count = trainerNotificationRepository.countUnreadByTrainerId(resolvedTrainerId)
         return ResponseEntity.ok(mapOf("unreadCount" to count))
     }
 
     @PutMapping("/mark-read")
-    @PreAuthorize("hasAuthority('trainer_portal_view') or @trainerSecurityService.isOwnProfile(#trainerId)")
+    @PreAuthorize("hasAuthority('trainer_portal_view') or @trainerSecurityService.isTrainer()")
     @Operation(summary = "Mark multiple notifications as read", description = "Mark multiple notifications as read")
     fun markNotificationsRead(
-        @RequestParam trainerId: UUID,
+        @RequestParam(required = false) trainerId: UUID? = null,
         @Valid @RequestBody request: MarkNotificationsReadRequest
     ): ResponseEntity<Void> {
-        logger.debug("Marking ${request.notificationIds.size} notifications as read for trainer $trainerId")
+        val resolvedTrainerId = trainerId ?: trainerSecurityService.getCurrentTrainerId()
+            ?: throw NoSuchElementException("No trainer profile found for current user")
+        logger.debug("Marking ${request.notificationIds.size} notifications as read for trainer $resolvedTrainerId")
 
         request.notificationIds.forEach { notificationId ->
             val notification = trainerNotificationRepository.findById(notificationId).orElse(null)
-            if (notification != null && notification.trainerId == trainerId) {
+            if (notification != null && notification.trainerId == resolvedTrainerId) {
                 notification.markAsRead()
                 trainerNotificationRepository.save(notification)
             }
         }
 
-        logger.info("Marked ${request.notificationIds.size} notifications as read for trainer $trainerId")
+        logger.info("Marked ${request.notificationIds.size} notifications as read for trainer $resolvedTrainerId")
         return ResponseEntity.noContent().build()
     }
 
@@ -133,18 +141,20 @@ class TrainerNotificationController(
     }
 
     @PutMapping("/mark-all-read")
-    @PreAuthorize("hasAuthority('trainer_portal_view') or @trainerSecurityService.isOwnProfile(#trainerId)")
+    @PreAuthorize("hasAuthority('trainer_portal_view') or @trainerSecurityService.isTrainer()")
     @Operation(summary = "Mark all notifications as read", description = "Mark all notifications as read for a trainer")
-    fun markAllNotificationsRead(@RequestParam trainerId: UUID): ResponseEntity<Map<String, Any>> {
-        logger.debug("Marking all notifications as read for trainer $trainerId")
+    fun markAllNotificationsRead(@RequestParam(required = false) trainerId: UUID? = null): ResponseEntity<Map<String, Any>> {
+        val resolvedTrainerId = trainerId ?: trainerSecurityService.getCurrentTrainerId()
+            ?: throw NoSuchElementException("No trainer profile found for current user")
+        logger.debug("Marking all notifications as read for trainer $resolvedTrainerId")
 
-        val notifications = trainerNotificationService.getUnreadNotifications(trainerId, PageRequest.of(0, 1000)).content
+        val notifications = trainerNotificationService.getUnreadNotifications(resolvedTrainerId, PageRequest.of(0, 1000)).content
         notifications.forEach { notification ->
             notification.markAsRead()
             trainerNotificationRepository.save(notification)
         }
 
-        logger.info("Marked ${notifications.size} notifications as read for trainer $trainerId")
+        logger.info("Marked ${notifications.size} notifications as read for trainer $resolvedTrainerId")
         return ResponseEntity.ok(mapOf(
             "message" to "All notifications marked as read",
             "count" to notifications.size

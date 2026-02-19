@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -31,6 +32,7 @@ import {
 } from "@liyaqa/shared/components/ui/dropdown-menu";
 import { ScrollArea } from "@liyaqa/shared/components/ui/scroll-area";
 import { LanguageToggle } from "@liyaqa/shared/components/ui/language-toggle";
+import { ThemeToggle } from "@liyaqa/shared/components/ui/theme-toggle";
 import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import { useUIStore } from "@liyaqa/shared/stores/ui-store";
 import { getInitials } from "@liyaqa/shared/utils";
@@ -79,8 +81,26 @@ export function TrainerShell({ children, unreadCount = 0 }: TrainerShellProps) {
     return pathname === localePath || pathname.startsWith(`${localePath}/`);
   };
 
+  const displayName = locale === "ar"
+    ? user?.displayName?.ar || user?.displayName?.en
+    : user?.displayName?.en;
+
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-background">
+      {/* Skip links for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:bg-primary focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:top-2 focus:start-2"
+      >
+        Skip to main content
+      </a>
+      <a
+        href="#navigation"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:bg-primary focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:top-2 focus:start-36"
+      >
+        Skip to navigation
+      </a>
+
       {mobileMenuOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -89,36 +109,46 @@ export function TrainerShell({ children, unreadCount = 0 }: TrainerShellProps) {
       )}
 
       <aside
+        id="navigation"
+        role="navigation"
+        aria-label="Main navigation"
         className={cn(
-          "fixed top-0 z-50 h-full border-e shadow-sm transition-all duration-300",
-          "bg-gradient-to-b from-white to-neutral-50/80",
+          "fixed top-0 z-50 h-full transition-all duration-300",
+          "bg-neutral-900 dark:bg-neutral-950 text-white",
           sidebarCollapsed ? "w-16" : "w-64",
           mobileMenuOpen ? "start-0" : "-start-64 lg:start-0"
         )}
       >
-        <div className="flex h-16 items-center justify-between px-4 border-b bg-white">
+        <div className="flex h-16 items-center justify-between px-4 border-b border-neutral-700 dark:border-neutral-800">
           {!sidebarCollapsed && (
             <Link href={`/${locale}/trainer/dashboard`} className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm">
-                <span className="text-white font-bold text-lg">L</span>
-              </div>
-              <span className="font-semibold text-lg bg-gradient-to-r from-neutral-800 to-neutral-600 bg-clip-text text-transparent">
-                Liyaqa
-              </span>
+              <Image
+                src="/assets/logo-liyaqa-white.svg"
+                alt="Liyaqa"
+                width={120}
+                height={32}
+                className="h-8 w-auto"
+                priority
+              />
             </Link>
           )}
           {sidebarCollapsed && (
             <Link href={`/${locale}/trainer/dashboard`} className="mx-auto">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm">
-                <span className="text-white font-bold text-lg">L</span>
-              </div>
+              <Image
+                src="/assets/logo-liyaqa-icon.svg"
+                alt="Liyaqa"
+                width={32}
+                height={32}
+                className="h-8 w-8"
+                priority
+              />
             </Link>
           )}
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleSidebarCollapse}
-            className="hidden lg:flex"
+            className="hidden lg:flex text-neutral-400 hover:text-white hover:bg-neutral-800"
           >
             <ChevronLeft
               className={cn(
@@ -131,7 +161,7 @@ export function TrainerShell({ children, unreadCount = 0 }: TrainerShellProps) {
             variant="ghost"
             size="icon"
             onClick={() => setMobileMenuOpen(false)}
-            className="lg:hidden"
+            className="lg:hidden text-neutral-400 hover:text-white hover:bg-neutral-800"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -153,7 +183,7 @@ export function TrainerShell({ children, unreadCount = 0 }: TrainerShellProps) {
                     "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all",
                     active
                       ? "bg-primary text-white"
-                      : "text-neutral-600 hover:bg-neutral-100 hover:translate-x-0.5"
+                      : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
                   )}
                 >
                   <Icon className="h-5 w-5 shrink-0" />
@@ -184,7 +214,7 @@ export function TrainerShell({ children, unreadCount = 0 }: TrainerShellProps) {
           sidebarCollapsed ? "lg:ms-16" : "lg:ms-64"
         )}
       >
-        <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-sm border-b flex items-center justify-between px-4 lg:px-6">
+        <header className="sticky top-0 z-30 h-16 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b dark:border-neutral-800 flex items-center justify-between px-4 lg:px-6">
           <Button
             variant="ghost"
             size="icon"
@@ -198,6 +228,7 @@ export function TrainerShell({ children, unreadCount = 0 }: TrainerShellProps) {
 
           <div className="flex items-center gap-2">
             <PortalSwitcher />
+            <ThemeToggle />
             <LanguageToggle />
 
             <Link href={`/${locale}/trainer/notifications`}>
@@ -214,19 +245,18 @@ export function TrainerShell({ children, unreadCount = 0 }: TrainerShellProps) {
                 <Button variant="ghost" className="gap-2">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="" />
-                    <AvatarFallback className="bg-gradient-to-br from-teal-100 to-teal-200 text-teal-700">
-                      {getInitials(
-                        locale === "ar"
-                          ? user?.displayName?.ar || user?.displayName?.en
-                          : user?.displayName?.en
-                      )}
+                    <AvatarFallback className="bg-primary text-white">
+                      {getInitials(displayName)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="hidden md:inline-block text-sm">
-                    {locale === "ar"
-                      ? user?.displayName?.ar || user?.displayName?.en
-                      : user?.displayName?.en}
-                  </span>
+                  <div className="hidden md:flex flex-col items-start">
+                    <span className="text-sm font-medium">
+                      {displayName}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {locale === "ar" ? "مدرب" : "Trainer"}
+                    </span>
+                  </div>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -248,7 +278,7 @@ export function TrainerShell({ children, unreadCount = 0 }: TrainerShellProps) {
           </div>
         </header>
 
-        <main className="p-4 lg:p-6 pb-20 lg:pb-6">{children}</main>
+        <main id="main-content" role="main" className="p-4 lg:p-6">{children}</main>
       </div>
     </div>
   );

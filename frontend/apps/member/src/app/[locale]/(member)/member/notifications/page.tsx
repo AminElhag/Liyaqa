@@ -66,9 +66,9 @@ export default function NotificationsPage() {
       INVOICE_CREATED: <Receipt className="h-5 w-5 text-green-500" />,
       INVOICE_OVERDUE: <Receipt className="h-5 w-5 text-danger" />,
       PROMOTION: <Megaphone className="h-5 w-5 text-purple-500" />,
-      SYSTEM: <AlertCircle className="h-5 w-5 text-neutral-500" />,
+      SYSTEM: <AlertCircle className="h-5 w-5 text-muted-foreground" />,
     };
-    return iconMap[type] || <Bell className="h-5 w-5 text-neutral-500" />;
+    return iconMap[type] || <Bell className="h-5 w-5 text-muted-foreground" />;
   };
 
   const NotificationItem = ({ notification }: { notification: NotificationLite }) => {
@@ -85,8 +85,8 @@ export default function NotificationsPage() {
     return (
       <div
         className={cn(
-          "flex gap-4 p-4 border-b last:border-0 transition-colors",
-          isUnread && "bg-primary/5"
+          "flex gap-4 p-4 border-b last:border-0 hover:bg-muted/50 transition-colors",
+          isUnread && "bg-primary/5 dark:bg-primary/10"
         )}
       >
         <div className="shrink-0 mt-1">
@@ -103,8 +103,8 @@ export default function NotificationsPage() {
               </Badge>
             )}
           </div>
-          <p className="text-sm text-neutral-600 mt-1">{message}</p>
-          <p className="text-xs text-neutral-400 mt-2">
+          <p className="text-sm text-muted-foreground mt-1">{message}</p>
+          <p className="text-xs text-muted-foreground mt-2">
             {new Date(notification.createdAt).toLocaleDateString(
               locale === "ar" ? "ar-SA" : "en-US",
               {
@@ -132,7 +132,7 @@ export default function NotificationsPage() {
         <div>
           <h1 className="text-2xl font-bold">{t("title")}</h1>
           {unreadCount > 0 && (
-            <p className="text-neutral-500">
+            <p className="text-muted-foreground">
               {unreadCount} {t("unread")}
             </p>
           )}
@@ -189,11 +189,11 @@ export default function NotificationsPage() {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <BellOff className="h-12 w-12 mx-auto text-neutral-300 mb-4" />
+                  <BellOff className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <h3 className="font-medium text-lg mb-2">
                     {activeTab === "unread" ? t("noUnread") : t("noNotifications")}
                   </h3>
-                  <p className="text-neutral-500 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     {locale === "ar"
                       ? "ستظهر إشعاراتك هنا"
                       : "Your notifications will appear here"}

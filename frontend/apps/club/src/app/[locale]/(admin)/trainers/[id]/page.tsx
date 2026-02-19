@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useLocale } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -23,9 +26,28 @@ import {
   Home,
   Car,
   AlertCircle,
+  KeyRound,
+  Send,
 } from "lucide-react";
 import { Button } from "@liyaqa/shared/components/ui/button";
+import { Input } from "@liyaqa/shared/components/ui/input";
+import { Label } from "@liyaqa/shared/components/ui/label";
 import { LoadingButton } from "@liyaqa/shared/components/ui/loading-button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@liyaqa/shared/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@liyaqa/shared/components/ui/dropdown-menu";
 import {
   Card,
   CardContent,
@@ -51,10 +73,13 @@ import {
   useActivateTrainer,
   useDeactivateTrainer,
   useSetTrainerOnLeave,
+  useResetTrainerPassword,
+  useSendTrainerResetEmail,
 } from "@liyaqa/shared/queries/use-trainers";
 import { useTrainerAvailabilitySlots } from "@liyaqa/shared/queries/use-trainer-availability";
 import { useTrainerPTSessions } from "@liyaqa/shared/queries/use-pt-sessions";
 import { getLocalizedText, formatDate } from "@liyaqa/shared/utils";
+import { parseApiError, getLocalizedErrorMessage } from "@liyaqa/shared/lib/api/client";
 import type { UUID } from "@liyaqa/shared/types/api";
 import type { DayOfWeek } from "@liyaqa/shared/types/scheduling";
 
@@ -77,6 +102,8 @@ export default function TrainerDetailPage() {
   const isRTL = locale === "ar";
 
   const [activeTab, setActiveTab] = useState("profile");
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [sendResetEmailOpen, setSendResetEmailOpen] = useState(false);
 
   const { data: trainer, isLoading, error } = useTrainer(id);
   const { data: availabilitySlots, isLoading: isLoadingAvailability } = useTrainerAvailabilitySlots(id);
@@ -84,6 +111,19 @@ export default function TrainerDetailPage() {
   const activateTrainer = useActivateTrainer();
   const deactivateTrainer = useDeactivateTrainer();
   const setOnLeave = useSetTrainerOnLeave();
+  const resetPassword = useResetTrainerPassword();
+  const sendResetEmail = useSendTrainerResetEmail();
+
+  const resetPwSchema = z.object({
+    newPassword: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string(),
+  }).refine((d) => d.newPassword === d.confirmPassword, {
+    message: "Passwords do not match", path: ["confirmPassword"],
+  });
+
+  const resetPwForm = useForm<{ newPassword: string; confirmPassword: string }>({
+    resolver: zodResolver(resetPwSchema),
+  });
 
   const texts = {
     back: locale === "ar" ? "العودة إلى المدربين" : "Back to Trainers",
@@ -153,6 +193,21 @@ export default function TrainerDetailPage() {
     noClients: locale === "ar" ? "لا يوجد عملاء حاليا" : "No active clients",
     clientsComingSoon: locale === "ar" ? "قريبا - قائمة العملاء المرتبطين بالمدرب" : "Coming soon - list of clients assigned to this trainer",
 
+    // Password reset
+    resetPasswordTitle: locale === "ar" ? "إعادة تعيين كلمة المرور" : "Reset Password",
+    setNewPassword: locale === "ar" ? "تعيين كلمة مرور جديدة" : "Set New Password",
+    sendResetEmail: locale === "ar" ? "إرسال بريد إعادة التعيين" : "Send Reset Email",
+    newPassword: locale === "ar" ? "كلمة المرور الجديدة" : "New Password",
+    confirmNewPassword: locale === "ar" ? "تأكيد كلمة المرور" : "Confirm Password",
+    setNewPasswordDesc: locale === "ar" ? "تعيين كلمة مرور جديدة لهذا المدرب" : "Set a new password for this trainer",
+    sendResetEmailDesc: locale === "ar"
+      ? "سيتم إرسال رابط إعادة تعيين كلمة المرور إلى بريد المدرب"
+      : "A password reset link will be sent to the trainer's email",
+    sendResetEmailConfirm: locale === "ar" ? "إرسال" : "Send",
+    passwordResetSuccess: locale === "ar" ? "تم إعادة تعيين كلمة المرور بنجاح" : "Password reset successfully",
+    resetEmailSent: locale === "ar" ? "تم إرسال بريد إعادة التعيين" : "Reset email sent successfully",
+    noUserAccount: locale === "ar" ? "لا يوجد حساب مستخدم مرتبط" : "No linked user account",
+
     // Toast
     activatedSuccess: locale === "ar" ? "تم تفعيل المدرب بنجاح" : "Trainer activated successfully",
     deactivatedSuccess: locale === "ar" ? "تم إلغاء تفعيل المدرب بنجاح" : "Trainer deactivated successfully",
@@ -210,21 +265,60 @@ export default function TrainerDetailPage() {
   const handleActivate = () => {
     activateTrainer.mutate(id, {
       onSuccess: () => toast({ title: texts.activatedSuccess }),
-      onError: () => toast({ title: texts.actionError, variant: "destructive" }),
+      onError: async (error) => {
+        const apiError = await parseApiError(error);
+        toast({ title: texts.actionError, description: getLocalizedErrorMessage(apiError, locale), variant: "destructive" });
+      },
     });
   };
 
   const handleDeactivate = () => {
     deactivateTrainer.mutate(id, {
       onSuccess: () => toast({ title: texts.deactivatedSuccess }),
-      onError: () => toast({ title: texts.actionError, variant: "destructive" }),
+      onError: async (error) => {
+        const apiError = await parseApiError(error);
+        toast({ title: texts.actionError, description: getLocalizedErrorMessage(apiError, locale), variant: "destructive" });
+      },
     });
   };
 
   const handleSetOnLeave = () => {
     setOnLeave.mutate(id, {
       onSuccess: () => toast({ title: texts.onLeaveSuccess }),
-      onError: () => toast({ title: texts.actionError, variant: "destructive" }),
+      onError: async (error) => {
+        const apiError = await parseApiError(error);
+        toast({ title: texts.actionError, description: getLocalizedErrorMessage(apiError, locale), variant: "destructive" });
+      },
+    });
+  };
+
+  const handleResetPassword = (data: { newPassword: string; confirmPassword: string }) => {
+    resetPassword.mutate(
+      { id, data: { newPassword: data.newPassword } },
+      {
+        onSuccess: () => {
+          toast({ title: texts.passwordResetSuccess });
+          setResetPasswordOpen(false);
+          resetPwForm.reset();
+        },
+        onError: async (error) => {
+          const apiError = await parseApiError(error);
+          toast({ title: texts.actionError, description: getLocalizedErrorMessage(apiError, locale), variant: "destructive" });
+        },
+      }
+    );
+  };
+
+  const handleSendResetEmail = () => {
+    sendResetEmail.mutate(id, {
+      onSuccess: () => {
+        toast({ title: texts.resetEmailSent });
+        setSendResetEmailOpen(false);
+      },
+      onError: async (error) => {
+        const apiError = await parseApiError(error);
+        toast({ title: texts.actionError, description: getLocalizedErrorMessage(apiError, locale), variant: "destructive" });
+      },
     });
   };
 
@@ -303,6 +397,26 @@ export default function TrainerDetailPage() {
               {texts.deactivate}
             </LoadingButton>
           )}
+          {trainer.userId && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <KeyRound className="me-2 h-4 w-4" />
+                  {texts.resetPasswordTitle}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setResetPasswordOpen(true)}>
+                  <KeyRound className="me-2 h-4 w-4" />
+                  {texts.setNewPassword}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSendResetEmailOpen(true)}>
+                  <Send className="me-2 h-4 w-4" />
+                  {texts.sendResetEmail}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <Button size="sm" asChild>
             <Link href={`/${locale}/trainers/${id}/edit`}>
               <Edit className="me-2 h-4 w-4" />
@@ -311,6 +425,74 @@ export default function TrainerDetailPage() {
           </Button>
         </div>
       </div>
+
+      {/* Set New Password Dialog */}
+      <Dialog open={resetPasswordOpen} onOpenChange={setResetPasswordOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{texts.setNewPassword}</DialogTitle>
+            <DialogDescription>{texts.setNewPasswordDesc}</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={resetPwForm.handleSubmit(handleResetPassword)}>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">{texts.newPassword}</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  {...resetPwForm.register("newPassword")}
+                />
+                {resetPwForm.formState.errors.newPassword && (
+                  <p className="text-sm text-destructive">{resetPwForm.formState.errors.newPassword.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPw">{texts.confirmNewPassword}</Label>
+                <Input
+                  id="confirmPw"
+                  type="password"
+                  autoComplete="new-password"
+                  {...resetPwForm.register("confirmPassword")}
+                />
+                {resetPwForm.formState.errors.confirmPassword && (
+                  <p className="text-sm text-destructive">{resetPwForm.formState.errors.confirmPassword.message}</p>
+                )}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setResetPasswordOpen(false)}>
+                {locale === "ar" ? "إلغاء" : "Cancel"}
+              </Button>
+              <Button type="submit" disabled={resetPassword.isPending}>
+                {resetPassword.isPending
+                  ? (locale === "ar" ? "جاري الحفظ..." : "Saving...")
+                  : texts.setNewPassword}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Reset Email Dialog */}
+      <Dialog open={sendResetEmailOpen} onOpenChange={setSendResetEmailOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{texts.sendResetEmail}</DialogTitle>
+            <DialogDescription>{texts.sendResetEmailDesc}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSendResetEmailOpen(false)}>
+              {locale === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button onClick={handleSendResetEmail} disabled={sendResetEmail.isPending}>
+              {sendResetEmail.isPending
+                ? (locale === "ar" ? "جاري الإرسال..." : "Sending...")
+                : texts.sendResetEmailConfirm}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

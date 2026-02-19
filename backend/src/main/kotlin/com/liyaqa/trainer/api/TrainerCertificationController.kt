@@ -1,5 +1,6 @@
 package com.liyaqa.trainer.api
 
+import com.liyaqa.trainer.application.services.TrainerSecurityService
 import com.liyaqa.trainer.domain.model.TrainerCertification
 import com.liyaqa.trainer.domain.ports.TrainerRepository
 import com.liyaqa.trainer.infrastructure.persistence.JpaTrainerCertificationRepository
@@ -26,25 +27,28 @@ import java.util.UUID
 @Tag(name = "Trainer Portal - Certifications", description = "Trainer certification management")
 class TrainerCertificationController(
     private val certificationRepository: JpaTrainerCertificationRepository,
-    private val trainerRepository: TrainerRepository
+    private val trainerRepository: TrainerRepository,
+    private val trainerSecurityService: TrainerSecurityService
 ) {
     private val logger = LoggerFactory.getLogger(TrainerCertificationController::class.java)
 
     @PostMapping
-    @PreAuthorize("hasAuthority('trainer_portal_update') or @trainerSecurityService.isOwnProfile(#trainerId)")
+    @PreAuthorize("hasAuthority('trainer_portal_update') or @trainerSecurityService.isTrainer()")
     @Operation(summary = "Create certification", description = "Create a new certification for a trainer")
     fun createCertification(
-        @RequestParam trainerId: UUID,
+        @RequestParam(required = false) trainerId: UUID? = null,
         @Valid @RequestBody request: CreateCertificationRequest
     ): ResponseEntity<TrainerCertificationResponse> {
-        logger.debug("Creating certification for trainer $trainerId: ${request.nameEn}")
+        val resolvedTrainerId = trainerId ?: trainerSecurityService.getCurrentTrainerId()
+            ?: throw NoSuchElementException("No trainer profile found for current user")
+        logger.debug("Creating certification for trainer $resolvedTrainerId: ${request.nameEn}")
 
         // Verify trainer exists
-        val trainer = trainerRepository.findById(trainerId)
-            .orElseThrow { NoSuchElementException("Trainer not found: $trainerId") }
+        val trainer = trainerRepository.findById(resolvedTrainerId)
+            .orElseThrow { NoSuchElementException("Trainer not found: $resolvedTrainerId") }
 
         val certification = TrainerCertification(
-            trainerId = trainerId,
+            trainerId = resolvedTrainerId,
             nameEn = request.nameEn,
             nameAr = request.nameAr,
             issuingOrganization = request.issuingOrganization,
@@ -56,22 +60,37 @@ class TrainerCertificationController(
 
         // tenantId and organizationId will be set automatically by @PrePersist hook
         val saved = certificationRepository.save(certification)
-        logger.info("Created certification ${saved.id} for trainer $trainerId")
+        logger.info("Created certification ${saved.id} for trainer $resolvedTrainerId")
 
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(TrainerCertificationResponse.from(saved))
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('trainer_portal_view') or @trainerSecurityService.isOwnProfile(#trainerId)")
+    @PreAuthorize("hasAuthority('trainer_portal_view') or @trainerSecurityService.isTrainer()")
     @Operation(summary = "List certifications", description = "Get all certifications for a trainer")
-    fun getCertifications(@RequestParam trainerId: UUID): ResponseEntity<List<TrainerCertificationResponse>> {
-        logger.debug("Fetching certifications for trainer $trainerId")
+    fun getCertifications(
+        @RequestParam(required = false) trainerId: UUID? = null,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int
+    ): ResponseEntity<PageResponse<TrainerCertificationResponse>> {
+        val resolvedTrainerId = trainerId ?: trainerSecurityService.getCurrentTrainerId()
+            ?: throw NoSuchElementException("No trainer profile found for current user")
+        logger.debug("Fetching certifications for trainer $resolvedTrainerId")
 
-        val certifications = certificationRepository.findByTrainerId(trainerId, PageRequest.of(0, 100)).content
-        val responses = certifications.map { TrainerCertificationResponse.from(it) }
+        val pageable = PageRequest.of(page, size)
+        val certPage = certificationRepository.findByTrainerId(resolvedTrainerId, pageable)
 
-        return ResponseEntity.ok(responses)
+        val response = PageResponse(
+            content = certPage.content.map { TrainerCertificationResponse.from(it) },
+            page = certPage.number,
+            size = certPage.size,
+            totalElements = certPage.totalElements,
+            totalPages = certPage.totalPages,
+            first = certPage.isFirst,
+            last = certPage.isLast
+        )
+        return ResponseEntity.ok(response)
     }
 
     @GetMapping("/{id}")

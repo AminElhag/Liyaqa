@@ -27,12 +27,22 @@ function isProtectedRoute(pathname: string): boolean {
   return true;
 }
 
-function getTokenFromRequest(request: NextRequest): string | null {
-  const cookieToken = request.cookies.get("access_token")?.value;
-  if (cookieToken) return cookieToken;
+function getTokenPayload(request: NextRequest): JWTPayload | null {
+  // 1. Try session_meta cookie (lightweight metadata set by client)
+  const metaCookie = request.cookies.get("session_meta")?.value;
+  if (metaCookie) {
+    try {
+      return JSON.parse(Buffer.from(metaCookie, "base64").toString("utf-8"));
+    } catch { /* fall through */ }
+  }
 
-  const authHeader = request.headers.get("authorization");
-  if (authHeader?.startsWith("Bearer ")) return authHeader.substring(7);
+  // 2. Fallback: access_token cookie (legacy) or Authorization header
+  const rawToken =
+    request.cookies.get("access_token")?.value ??
+    (request.headers.get("authorization")?.startsWith("Bearer ")
+      ? request.headers.get("authorization")!.substring(7)
+      : null);
+  if (rawToken) return decodeJWT(rawToken);
 
   return null;
 }
@@ -59,20 +69,12 @@ async function authMiddleware(request: NextRequest) {
 
   if (!isProtectedRoute(pathname)) return null;
 
-  const token = getTokenFromRequest(request);
-  if (!token) {
+  const payload = getTokenPayload(request);
+  if (!payload || isTokenExpired(payload)) {
     const locale = pathname.split("/")[1] || defaultLocale;
     const loginUrl = new URL(`/${locale}/login`, request.url);
     loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  const decoded = decodeJWT(token);
-  if (!decoded || isTokenExpired(decoded)) {
-    const locale = pathname.split("/")[1] || defaultLocale;
-    const loginUrl = new URL(`/${locale}/login`, request.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    if (decoded && isTokenExpired(decoded)) {
+    if (payload && isTokenExpired(payload)) {
       loginUrl.searchParams.set("expired", "true");
     }
     return NextResponse.redirect(loginUrl);
@@ -80,8 +82,8 @@ async function authMiddleware(request: NextRequest) {
 
   // Reject tokens that aren't for trainers (account_type claim)
   // Allow TRAINER account type, or legacy tokens with TRAINER role
-  const accountType = decoded.account_type;
-  const role = decoded.role;
+  const accountType = payload.account_type;
+  const role = payload.role;
   const isTrainerToken =
     accountType === "TRAINER" ||
     (!accountType && role === "TRAINER") ||

@@ -25,7 +25,6 @@ import {
 import { Badge } from "@liyaqa/shared/components/ui/badge";
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Skeleton } from "@liyaqa/shared/components/ui/skeleton";
-import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import {
   useTrainerNotifications,
   useMarkNotificationRead,
@@ -69,14 +68,11 @@ export default function TrainerNotificationsPage() {
   const isAr = locale === "ar";
   const t = (key: keyof typeof text) => (isAr ? text[key].ar : text[key].en);
 
-  const { user } = useAuthStore();
-  const trainerId = user?.id;
   const { toast } = useToast();
 
   const [page, setPage] = useState(0);
 
   const { data, isLoading, error } = useTrainerNotifications({
-    trainerId,
     page,
     size: 20,
     sortBy: "createdAt",
@@ -88,21 +84,16 @@ export default function TrainerNotificationsPage() {
   const deleteMutation = useDeleteNotification();
 
   const handleMarkRead = async (notificationId: string) => {
-    if (!trainerId) return;
     try {
-      await markReadMutation.mutateAsync({
-        notificationId,
-        trainerId,
-      });
+      await markReadMutation.mutateAsync({ notificationId });
     } catch {
       // Silently handle
     }
   };
 
   const handleMarkAllRead = async () => {
-    if (!trainerId) return;
     try {
-      await markAllReadMutation.mutateAsync(trainerId);
+      await markAllReadMutation.mutateAsync();
       toast({
         description: t("markedAllRead"),
       });
@@ -112,9 +103,8 @@ export default function TrainerNotificationsPage() {
   };
 
   const handleDelete = async (notificationId: string) => {
-    if (!trainerId) return;
     try {
-      await deleteMutation.mutateAsync({ notificationId, trainerId });
+      await deleteMutation.mutateAsync({ notificationId });
       toast({
         description: t("deleted"),
       });

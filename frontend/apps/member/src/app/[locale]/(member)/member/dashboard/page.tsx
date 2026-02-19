@@ -15,12 +15,10 @@ import { Button } from "@liyaqa/shared/components/ui/button";
 import { Skeleton } from "@liyaqa/shared/components/ui/skeleton";
 import { SubscriptionCard } from "@/components/member/subscription-card";
 import { BookingCard } from "@/components/member/booking-card";
-import { WalletBalanceCard } from "@/components/member/wallet-balance";
 import {
   useMyProfile,
   useMySubscription,
   useMyUpcomingBookings,
-  useMyWallet,
   useCancelMyBooking,
 } from "@liyaqa/shared/queries/use-member-portal";
 import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
@@ -34,7 +32,6 @@ export default function MemberDashboardPage() {
   const { data: profile } = useMyProfile();
   const { data: subscriptionData, isLoading: subscriptionLoading } = useMySubscription();
   const { data: bookingsData, isLoading: bookingsLoading } = useMyUpcomingBookings({ size: 3 });
-  const { data: wallet, isLoading: walletLoading } = useMyWallet();
 
   const cancelBookingMutation = useCancelMyBooking({
     onSuccess: () => {
@@ -58,7 +55,7 @@ export default function MemberDashboardPage() {
   return (
     <div className="space-y-6">
       {/* Welcome header */}
-      <div className="bg-gradient-to-r from-primary to-primary/80 text-white rounded-xl p-6">
+      <div className="bg-gradient-to-r from-primary to-primary/80 text-white rounded-xl p-6 shadow-sm overflow-hidden">
         <h1 className="text-2xl font-bold mb-2">
           {t("welcome")}, {displayName}!
         </h1>
@@ -69,85 +66,78 @@ export default function MemberDashboardPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Link href={`/${locale}/member/qr`}>
           <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-            <CardContent className="pt-6 text-center">
-              <div className="h-12 w-12 mx-auto bg-primary/10 text-primary rounded-full flex items-center justify-center mb-3">
-                <QrCode className="h-6 w-6" />
-              </div>
-              <p className="font-medium text-sm">{t("quickCheckIn")}</p>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t("quickCheckIn")}</CardTitle>
+              <QrCode className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                {locale === "ar" ? "تسجيل الحضور" : "Scan to check in"}
+              </p>
             </CardContent>
           </Card>
         </Link>
         <Link href={`/${locale}/member/bookings/new`}>
           <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-            <CardContent className="pt-6 text-center">
-              <div className="h-12 w-12 mx-auto bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-3">
-                <Calendar className="h-6 w-6" />
-              </div>
-              <p className="font-medium text-sm">{t("bookClass")}</p>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t("bookClass")}</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                {locale === "ar" ? "احجز صفك القادم" : "Book your next class"}
+              </p>
             </CardContent>
           </Card>
         </Link>
         <Link href={`/${locale}/member/subscriptions`}>
           <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-            <CardContent className="pt-6 text-center">
-              <div className="h-12 w-12 mx-auto bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-3">
-                <CreditCard className="h-6 w-6" />
-              </div>
-              <p className="font-medium text-sm">{t("viewSubscriptions")}</p>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t("viewSubscriptions")}</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                {locale === "ar" ? "إدارة اشتراكك" : "Manage subscription"}
+              </p>
             </CardContent>
           </Card>
         </Link>
         <Link href={`/${locale}/member/payments`}>
           <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-            <CardContent className="pt-6 text-center">
-              <div className="h-12 w-12 mx-auto bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mb-3">
-                <Receipt className="h-6 w-6" />
-              </div>
-              <p className="font-medium text-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
                 {locale === "ar" ? "الفواتير" : "Invoices"}
+              </CardTitle>
+              <Receipt className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                {locale === "ar" ? "عرض الفواتير" : "View invoices"}
               </p>
             </CardContent>
           </Card>
         </Link>
       </div>
 
-      {/* Main content grid */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Subscription card - takes 2 columns on large screens */}
-        <div className="lg:col-span-2">
-          {subscriptionLoading ? (
-            <Card>
-              <CardHeader>
-                <Skeleton className="h-6 w-40" />
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-20 w-full" />
-              </CardContent>
-            </Card>
-          ) : (
-            <SubscriptionCard
-              subscription={subscriptionData?.subscription}
-              hasSubscription={subscriptionData?.hasSubscription ?? false}
-            />
-          )}
-        </div>
-
-        {/* Wallet card */}
-        <div>
-          {walletLoading ? (
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                <Skeleton className="h-6 w-32" />
-                <Skeleton className="h-10 w-40" />
-              </CardContent>
-            </Card>
-          ) : (
-            <WalletBalanceCard wallet={wallet} />
-          )}
-        </div>
-      </div>
+      {/* Subscription card */}
+      {subscriptionLoading ? (
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-20 w-full" />
+          </CardContent>
+        </Card>
+      ) : (
+        <SubscriptionCard
+          subscription={subscriptionData?.subscription}
+          hasSubscription={subscriptionData?.hasSubscription ?? false}
+        />
+      )}
 
       {/* Upcoming bookings */}
       <Card>
@@ -183,8 +173,8 @@ export default function MemberDashboardPage() {
             </div>
           ) : (
             <div className="text-center py-8">
-              <Dumbbell className="h-12 w-12 mx-auto text-neutral-300 mb-4" />
-              <p className="text-neutral-500 mb-4">{t("noUpcomingBookings")}</p>
+              <Dumbbell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground mb-4">{t("noUpcomingBookings")}</p>
               <Link href={`/${locale}/member/bookings/new`}>
                 <Button>{t("bookNow")}</Button>
               </Link>

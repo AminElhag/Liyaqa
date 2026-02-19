@@ -55,13 +55,12 @@ export default function TrainerDashboardPage() {
   const t = (key: keyof typeof text) => (isAr ? text[key].ar : text[key].en);
 
   const { user } = useAuthStore();
-  const trainerId = user?.id;
 
   const {
     data: dashboard,
     isLoading: dashboardLoading,
     error: dashboardError,
-  } = useTrainerDashboard(trainerId);
+  } = useTrainerDashboard();
 
   const {
     data: upcomingData,
@@ -207,7 +206,7 @@ export default function TrainerDashboardPage() {
                     {dashboardLoading ? (
                       <Skeleton className="h-6 w-10 mt-1" />
                     ) : (
-                      <p className="text-xl font-bold text-foreground">
+                      <p className="text-2xl font-bold font-display text-foreground">
                         {card.value}
                       </p>
                     )}

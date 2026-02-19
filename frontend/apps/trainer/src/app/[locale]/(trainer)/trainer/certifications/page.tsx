@@ -22,7 +22,6 @@ import {
 import { Badge } from "@liyaqa/shared/components/ui/badge";
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Skeleton } from "@liyaqa/shared/components/ui/skeleton";
-import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import { useTrainerCertifications } from "@liyaqa/shared/queries/use-trainer-portal";
 import { cn, formatDate } from "@liyaqa/shared/utils";
 import type { CertificationStatus } from "@liyaqa/shared/types/trainer-portal";
@@ -64,12 +63,9 @@ export default function TrainerCertificationsPage() {
   const isAr = locale === "ar";
   const t = (key: keyof typeof text) => (isAr ? text[key].ar : text[key].en);
 
-  const { user } = useAuthStore();
-  const trainerId = user?.id;
-
   const [page, setPage] = useState(0);
 
-  const { data, isLoading, error } = useTrainerCertifications(trainerId, {
+  const { data, isLoading, error } = useTrainerCertifications({
     page,
     size: 12,
   });

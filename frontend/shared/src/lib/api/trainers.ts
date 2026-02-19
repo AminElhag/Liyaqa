@@ -5,6 +5,7 @@ import type {
   TrainerSummary,
   TrainerClubAssignment,
   CreateTrainerRequest,
+  ResetTrainerPasswordRequest,
   UpdateTrainerProfileRequest,
   UpdateTrainerBasicInfoRequest,
   UpdateAvailabilityRequest,
@@ -190,6 +191,25 @@ export async function removeTrainerFromClub(
   clubId: UUID
 ): Promise<void> {
   await api.delete(`${TRAINERS_ENDPOINT}/${trainerId}/clubs/${clubId}`);
+}
+
+// ==================== Password Management ====================
+
+/**
+ * Reset a trainer's password (admin action)
+ */
+export async function resetTrainerPassword(
+  id: UUID,
+  data: ResetTrainerPasswordRequest
+): Promise<{ message: string }> {
+  return api.post(`${TRAINERS_ENDPOINT}/${id}/reset-password`, { json: data }).json();
+}
+
+/**
+ * Send password reset email to trainer (admin action)
+ */
+export async function sendTrainerResetEmail(id: UUID): Promise<{ message: string }> {
+  return api.post(`${TRAINERS_ENDPOINT}/${id}/send-reset-email`).json();
 }
 
 // ==================== Current Trainer Operations ====================

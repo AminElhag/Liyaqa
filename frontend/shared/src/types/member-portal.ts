@@ -1,6 +1,6 @@
 import type { UUID, LocalizedText, Money } from "./api";
 import type { MemberStatus } from "./member";
-import type { BookingStatus, SessionStatus } from "./scheduling";
+import type { BookingStatus } from "./scheduling";
 import type { InvoiceStatus, PaymentMethod } from "./billing";
 
 /**
@@ -208,8 +208,6 @@ export interface AvailableSession {
   id: UUID;
   classId: UUID;
   className: LocalizedText;
-  trainerId?: UUID;
-  trainerName?: LocalizedText;
   date: string;
   startTime: string;
   endTime: string;
@@ -217,7 +215,13 @@ export interface AvailableSession {
   bookedCount: number;
   waitlistCount: number;
   availableSpots: number;
-  status: SessionStatus;
+  status: string;
+  trainerId?: UUID;
+  trainerName?: LocalizedText;
   locationId?: UUID;
   locationName?: LocalizedText;
+  colorCode?: string;
+  isBooked?: boolean;
+  isFull?: boolean;
+  waitlistAvailable?: boolean;
 }

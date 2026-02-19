@@ -130,13 +130,16 @@ data class ClassSessionLiteResponse(
 data class BookingLiteResponse(
     val id: UUID,
     val sessionId: UUID,
-    val className: LocalizedTextResponse,
     val sessionDate: LocalDate,
-    val startTime: LocalTime,
-    val endTime: LocalTime,
+    val sessionStartTime: LocalTime,
+    val sessionEndTime: LocalTime,
+    val className: LocalizedTextResponse,
+    val trainerName: LocalizedTextResponse?,
+    val locationName: LocalizedTextResponse?,
     val status: BookingStatus,
-    val checkedIn: Boolean,
-    val bookedAt: Instant
+    val waitlistPosition: Int?,
+    val checkedInAt: Instant?,
+    val createdAt: Instant
 ) {
     companion object {
         fun from(
@@ -146,13 +149,16 @@ data class BookingLiteResponse(
         ) = BookingLiteResponse(
             id = booking.id,
             sessionId = booking.sessionId,
-            className = LocalizedTextResponse.from(gymClass.name),
             sessionDate = session.sessionDate,
-            startTime = session.startTime,
-            endTime = session.endTime,
+            sessionStartTime = session.startTime,
+            sessionEndTime = session.endTime,
+            className = LocalizedTextResponse.from(gymClass.name),
+            trainerName = null,
+            locationName = null,
             status = booking.status,
-            checkedIn = booking.checkedInAt != null,
-            bookedAt = booking.createdAt
+            waitlistPosition = booking.waitlistPosition,
+            checkedInAt = booking.checkedInAt,
+            createdAt = booking.createdAt
         )
     }
 }

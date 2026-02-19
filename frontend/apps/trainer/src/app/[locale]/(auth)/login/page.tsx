@@ -204,7 +204,7 @@ export default function TrainerLoginPage() {
       }
 
       // Check if the user's active account type is TRAINER
-      if (currentUser.accountType === "TRAINER") {
+      if (currentUser.activeAccountType === "TRAINER") {
         router.replace(`/${locale}/trainer/dashboard`);
       } else {
         // Wrong account type - show error

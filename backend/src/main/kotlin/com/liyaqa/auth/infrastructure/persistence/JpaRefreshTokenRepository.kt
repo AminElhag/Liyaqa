@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import java.util.Optional
 import java.util.UUID
@@ -21,10 +22,12 @@ interface SpringDataRefreshTokenRepository : JpaRepository<RefreshToken, UUID> {
     fun deleteByUserId(userId: UUID)
 
     @Modifying
+    @Transactional
     @Query("DELETE FROM RefreshToken rt WHERE rt.expiresAt < :timestamp")
     fun deleteExpiredBefore(@Param("timestamp") timestamp: Instant): Int
 
     @Modifying
+    @Transactional
     @Query("UPDATE RefreshToken rt SET rt.revokedAt = :now WHERE rt.userId = :userId AND rt.revokedAt IS NULL")
     fun revokeAllByUserId(@Param("userId") userId: UUID, @Param("now") now: Instant)
 }

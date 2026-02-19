@@ -207,6 +207,11 @@ interface TrainerClientRepository {
      * Check if a trainer-member relationship exists.
      */
     fun existsByTrainerIdAndMemberId(trainerId: UUID, memberId: UUID): Boolean
+
+    /**
+     * Search clients by name, email, or phone.
+     */
+    fun searchByTrainerIdAndTerm(trainerId: UUID, search: String, pageable: Pageable): Page<TrainerClient>
 }
 
 /**

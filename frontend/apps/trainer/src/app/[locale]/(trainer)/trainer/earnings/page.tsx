@@ -18,7 +18,6 @@ import {
 } from "@liyaqa/shared/components/ui/card";
 import { Badge } from "@liyaqa/shared/components/ui/badge";
 import { Skeleton } from "@liyaqa/shared/components/ui/skeleton";
-import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import { useEarningsSummary } from "@liyaqa/shared/queries/use-trainer-portal";
 import { cn, formatCurrency, formatDate } from "@liyaqa/shared/utils";
 import type { EarningStatus, EarningType } from "@liyaqa/shared/types/trainer-portal";
@@ -67,10 +66,7 @@ export default function TrainerEarningsPage() {
   const isAr = locale === "ar";
   const t = (key: keyof typeof text) => (isAr ? text[key].ar : text[key].en);
 
-  const { user } = useAuthStore();
-  const trainerId = user?.id;
-
-  const { data: summary, isLoading, error } = useEarningsSummary(trainerId);
+  const { data: summary, isLoading, error } = useEarningsSummary();
 
   const statCards = useMemo(() => {
     if (!summary) return [];
@@ -168,7 +164,7 @@ export default function TrainerEarningsPage() {
                         <p className="text-xs text-muted-foreground">
                           {card.label}
                         </p>
-                        <p className="text-lg font-bold text-foreground">
+                        <p className="text-2xl font-bold font-display text-foreground">
                           {card.value}
                         </p>
                       </div>

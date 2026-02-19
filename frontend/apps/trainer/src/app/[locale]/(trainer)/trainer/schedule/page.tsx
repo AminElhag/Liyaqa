@@ -2,14 +2,13 @@
 
 import { useState, useMemo } from "react";
 import { useLocale } from "next-intl";
-import Link from "next/link";
 import {
-  Calendar,
   Clock,
   MapPin,
   ChevronLeft,
   ChevronRight,
   User,
+  Plus,
 } from "lucide-react";
 import {
   Card,
@@ -20,24 +19,37 @@ import {
 import { Badge } from "@liyaqa/shared/components/ui/badge";
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Skeleton } from "@liyaqa/shared/components/ui/skeleton";
-import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import { useUpcomingSessions } from "@liyaqa/shared/queries/use-trainer-portal";
 import { cn, formatDate } from "@liyaqa/shared/utils";
 import type { UpcomingSessionResponse } from "@liyaqa/shared/types/trainer-portal";
+import { CreateSessionDialog } from "../../../../../components/schedule/create-session-dialog";
+import { SessionDetailDialog } from "../../../../../components/schedule/session-detail-dialog";
 
 const text = {
   title: { en: "Schedule", ar: "الجدول" },
   subtitle: { en: "Your weekly schedule", ar: "جدولك الأسبوعي" },
+  newSession: { en: "New Session", ar: "جلسة جديدة" },
   noSessions: { en: "No sessions this week", ar: "لا توجد جلسات هذا الأسبوع" },
   today: { en: "Today", ar: "اليوم" },
   pt: { en: "PT", ar: "تدريب شخصي" },
   class: { en: "Class", ar: "فصل" },
   loading: { en: "Loading schedule...", ar: "جاري تحميل الجدول..." },
+  completed: { en: "Completed", ar: "مكتملة" },
+  noShow: { en: "No Show", ar: "لم يحضر" },
 };
 
 const dayNames = {
   en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
   ar: ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"],
+};
+
+const statusLabels: Record<string, { en: string; ar: string }> = {
+  REQUESTED: { en: "Requested", ar: "مطلوبة" },
+  CONFIRMED: { en: "Confirmed", ar: "مؤكدة" },
+  IN_PROGRESS: { en: "In Progress", ar: "قيد التنفيذ" },
+  COMPLETED: { en: "Completed", ar: "مكتملة" },
+  CANCELLED: { en: "Cancelled", ar: "ملغاة" },
+  NO_SHOW: { en: "No Show", ar: "لم يحضر" },
 };
 
 function getWeekRange(baseDate: Date): { start: Date; end: Date } {
@@ -78,11 +90,23 @@ function getStatusStyle(status: string) {
         dot: "bg-red-500",
         text: "text-red-700 dark:text-red-300",
       };
+    case "NO_SHOW":
+      return {
+        bg: "bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800",
+        dot: "bg-orange-500",
+        text: "text-orange-700 dark:text-orange-300",
+      };
     case "IN_PROGRESS":
       return {
         bg: "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800",
         dot: "bg-amber-500",
         text: "text-amber-700 dark:text-amber-300",
+      };
+    case "REQUESTED":
+      return {
+        bg: "bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800",
+        dot: "bg-purple-500",
+        text: "text-purple-700 dark:text-purple-300",
       };
     default:
       return {
@@ -98,10 +122,9 @@ export default function TrainerSchedulePage() {
   const isAr = locale === "ar";
   const t = (key: keyof typeof text) => (isAr ? text[key].ar : text[key].en);
 
-  const { user } = useAuthStore();
-  const trainerId = user?.id;
-
   const [weekOffset, setWeekOffset] = useState(0);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   const { start: weekStart, end: weekEnd } = useMemo(() => {
     const base = new Date();
@@ -110,7 +133,6 @@ export default function TrainerSchedulePage() {
   }, [weekOffset]);
 
   const { data: sessions, isLoading } = useUpcomingSessions({
-    trainerId,
     startDate: formatISODate(weekStart),
     endDate: formatISODate(weekEnd),
     limit: 50,
@@ -161,6 +183,10 @@ export default function TrainerSchedulePage() {
           <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
+        <Button onClick={() => setShowCreateDialog(true)}>
+          <Plus className="me-2 h-4 w-4" />
+          {t("newSession")}
+        </Button>
       </div>
 
       {/* Week navigation */}
@@ -242,7 +268,7 @@ export default function TrainerSchedulePage() {
                       </Badge>
                     )}
                     <Badge variant="outline" className="text-xs ms-auto">
-                      {daySessions.length} {t("pt") === "PT" ? "sessions" : "جلسات"}
+                      {daySessions.length} {isAr ? "جلسات" : "sessions"}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -255,12 +281,14 @@ export default function TrainerSchedulePage() {
                     <div className="space-y-2">
                       {daySessions.map((session) => {
                         const style = getStatusStyle(session.status);
+                        const label = statusLabels[session.status];
                         return (
-                          <Link
+                          <button
                             key={session.sessionId}
-                            href={`/${locale}/trainer/sessions/${session.sessionId}`}
+                            type="button"
+                            onClick={() => setSelectedSessionId(session.sessionId)}
                             className={cn(
-                              "flex items-center gap-3 p-3 rounded-lg border transition-colors hover:shadow-sm",
+                              "flex items-center gap-3 p-3 rounded-lg border transition-colors hover:shadow-sm w-full text-start",
                               style.bg
                             )}
                           >
@@ -300,10 +328,10 @@ export default function TrainerSchedulePage() {
                                   : t("class")}
                               </Badge>
                               <span className={cn("text-xs font-medium", style.text)}>
-                                {session.status}
+                                {label ? (isAr ? label.ar : label.en) : session.status}
                               </span>
                             </div>
-                          </Link>
+                          </button>
                         );
                       })}
                     </div>
@@ -314,6 +342,19 @@ export default function TrainerSchedulePage() {
           })}
         </div>
       )}
+
+      {/* Dialogs */}
+      <CreateSessionDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+      />
+      <SessionDetailDialog
+        sessionId={selectedSessionId}
+        open={!!selectedSessionId}
+        onOpenChange={(open) => {
+          if (!open) setSelectedSessionId(null);
+        }}
+      />
     </div>
   );
 }

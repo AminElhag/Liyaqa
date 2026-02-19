@@ -39,7 +39,7 @@ export default function QRCodePage() {
         width: 300,
         margin: 2,
         color: {
-          dark: "#0F766E", // primary color
+          dark: "#FF6B4A", // primary coral
           light: "#FFFFFF",
         },
       });
@@ -96,7 +96,7 @@ export default function QRCodePage() {
     <div className="max-w-md mx-auto space-y-6">
       <div className="text-center">
         <h1 className="text-2xl font-bold">{t("title")}</h1>
-        <p className="text-neutral-500">{t("subtitle")}</p>
+        <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       {/* QR Code Card */}
@@ -134,14 +134,14 @@ export default function QRCodePage() {
               </div>
             ) : (
               <div className="h-[300px] flex items-center justify-center">
-                <QrCode className="h-16 w-16 text-neutral-300 animate-pulse" />
+                <QrCode className="h-16 w-16 text-muted-foreground animate-pulse" />
               </div>
             )}
 
             {!isExpired && expiresAt && (
-              <div className="mt-4 text-sm text-neutral-600">
+              <div className="mt-4 text-sm text-muted-foreground">
                 {t("validFor")}{" "}
-                <span className="font-mono font-medium">{getTimeRemaining()}</span>
+                <span className="font-display font-medium">{getTimeRemaining()}</span>
               </div>
             )}
 
@@ -171,13 +171,13 @@ export default function QRCodePage() {
             <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 text-sm font-medium">
               1
             </div>
-            <p className="text-sm text-neutral-600">{t("step1")}</p>
+            <p className="text-sm text-muted-foreground">{t("step1")}</p>
           </div>
           <div className="flex items-start gap-3">
             <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 text-sm font-medium">
               2
             </div>
-            <p className="text-sm text-neutral-600">{t("step2")}</p>
+            <p className="text-sm text-muted-foreground">{t("step2")}</p>
           </div>
           <div className="flex items-start gap-3">
             <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 text-sm font-medium">
@@ -185,7 +185,7 @@ export default function QRCodePage() {
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
-              <p className="text-sm text-neutral-600">{t("step3")}</p>
+              <p className="text-sm text-muted-foreground">{t("step3")}</p>
             </div>
           </div>
         </CardContent>

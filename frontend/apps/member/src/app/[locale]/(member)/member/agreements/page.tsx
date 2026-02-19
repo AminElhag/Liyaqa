@@ -8,8 +8,6 @@ import { useMyAgreementStatus } from "@liyaqa/shared/queries/use-agreements";
 import { Card, CardContent } from "@liyaqa/shared/components/ui/card";
 import { Badge } from "@liyaqa/shared/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@liyaqa/shared/components/ui/alert";
-import { MemberShell } from "@/components/layouts/member-shell";
-
 export default function MemberAgreementsPage() {
   const locale = useLocale();
   const isArabic = locale === "ar";
@@ -21,7 +19,6 @@ export default function MemberAgreementsPage() {
   const allSigned = status?.allMandatorySigned ?? true;
 
   return (
-    <MemberShell>
       <div className="space-y-6">
         <PageHeader
           title={isArabic ? "الاتفاقيات" : "Agreements"}
@@ -74,7 +71,7 @@ export default function MemberAgreementsPage() {
 
         {/* All Signed Success State */}
         {!isLoading && allSigned && signedAgreements.length > 0 && (
-          <Card className="border-green-200 bg-green-50">
+          <Card className="border-green-200 dark:border-green-800/50 bg-green-500/5">
             <CardContent className="py-6 text-center">
               <FileCheck className="h-12 w-12 text-green-600 mx-auto mb-4" />
               <p className="font-medium text-green-900">
@@ -91,6 +88,5 @@ export default function MemberAgreementsPage() {
           </Card>
         )}
       </div>
-    </MemberShell>
   );
 }

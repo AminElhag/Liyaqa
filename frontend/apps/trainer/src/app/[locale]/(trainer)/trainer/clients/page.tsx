@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useLocale } from "next-intl";
 import {
   Users,
@@ -19,7 +19,6 @@ import { Badge } from "@liyaqa/shared/components/ui/badge";
 import { Button } from "@liyaqa/shared/components/ui/button";
 import { Input } from "@liyaqa/shared/components/ui/input";
 import { Skeleton } from "@liyaqa/shared/components/ui/skeleton";
-import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import {
   useTrainerClients,
   useClientStats,
@@ -58,32 +57,30 @@ export default function TrainerClientsPage() {
   const isAr = locale === "ar";
   const t = (key: keyof typeof text) => (isAr ? text[key].ar : text[key].en);
 
-  const { user } = useAuthStore();
-  const trainerId = user?.id;
-
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedSearch]);
 
   const { data, isLoading, error } = useTrainerClients({
-    trainerId,
     page,
     size: 15,
+    search: debouncedSearch || undefined,
     sortBy: "startDate",
     sortDirection: "DESC",
   });
 
-  const { data: stats, isLoading: statsLoading } = useClientStats(trainerId);
+  const { data: stats, isLoading: statsLoading } = useClientStats();
 
-  const filteredClients = useMemo(() => {
-    if (!data?.content) return [];
-    if (!searchQuery.trim()) return data.content;
-    const query = searchQuery.toLowerCase();
-    return data.content.filter(
-      (c) =>
-        c.memberName?.toLowerCase().includes(query) ||
-        c.memberEmail?.toLowerCase().includes(query)
-    );
-  }, [data, searchQuery]);
+  const clients = data?.content ?? [];
 
   const statCards = [
     {
@@ -140,7 +137,7 @@ export default function TrainerClientsPage() {
                     {statsLoading ? (
                       <Skeleton className="h-6 w-10 mt-1" />
                     ) : (
-                      <p className="text-xl font-bold text-foreground">
+                      <p className="text-2xl font-bold font-display text-foreground">
                         {card.value}
                       </p>
                     )}
@@ -198,7 +195,7 @@ export default function TrainerClientsPage() {
       {/* Clients list */}
       {!isLoading && !error && (
         <>
-          {filteredClients.length === 0 ? (
+          {clients.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center text-muted-foreground">
                 <Users className="h-12 w-12 mx-auto mb-3 opacity-40" />
@@ -207,7 +204,7 @@ export default function TrainerClientsPage() {
             </Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredClients.map((client) => {
+              {clients.map((client) => {
                 const status = statusConfig[client.status];
                 const initials =
                   client.memberName

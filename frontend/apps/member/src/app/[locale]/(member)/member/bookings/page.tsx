@@ -52,7 +52,7 @@ export default function BookingsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{t("title")}</h1>
-          <p className="text-neutral-500">{t("subtitle")}</p>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Link href={`/${locale}/member/bookings/new`}>
           <Button>
@@ -68,7 +68,7 @@ export default function BookingsPage() {
             <Calendar className="h-4 w-4" />
             {t("upcoming")}
             {upcomingBookings.length > 0 && (
-              <span className="ml-1 px-2 py-0.5 bg-primary text-white text-xs rounded-full">
+              <span className="ms-1 px-2 py-0.5 bg-primary text-white text-xs rounded-full">
                 {upcomingBookings.length}
               </span>
             )}
@@ -97,9 +97,9 @@ export default function BookingsPage() {
           ) : (
             <Card className="border-dashed">
               <CardContent className="pt-12 pb-12 text-center">
-                <Dumbbell className="h-16 w-16 mx-auto text-neutral-300 mb-4" />
+                <Dumbbell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium mb-2">{t("noUpcoming")}</h3>
-                <p className="text-neutral-500 mb-6">
+                <p className="text-muted-foreground mb-6">
                   {locale === "ar"
                     ? "لم تقم بحجز أي صفوف بعد"
                     : "You haven't booked any classes yet"}
@@ -135,11 +135,11 @@ export default function BookingsPage() {
           ) : (
             <Card className="border-dashed">
               <CardContent className="pt-12 pb-12 text-center">
-                <Calendar className="h-16 w-16 mx-auto text-neutral-300 mb-4" />
+                <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium mb-2">
                   {locale === "ar" ? "لا توجد حجوزات سابقة" : "No Past Bookings"}
                 </h3>
-                <p className="text-neutral-500">
+                <p className="text-muted-foreground">
                   {locale === "ar"
                     ? "لم تحضر أي صفوف بعد"
                     : "You haven't attended any classes yet"}

@@ -311,6 +311,33 @@ data class UpdateCertificationRequest(
     val status: CertificationStatus? = null
 )
 
+// ==================== TRAINER SESSION CREATION DTOs ====================
+
+/**
+ * Request DTO for a trainer to create a PT session on behalf of a member.
+ * Unlike BookPTSessionRequest, this does not require @Future on sessionDate
+ * (allows same-day sessions) and requires an explicit memberId.
+ */
+data class CreateTrainerSessionRequest(
+    @field:NotNull(message = "Member ID is required")
+    val memberId: UUID,
+
+    @field:NotNull(message = "Session date is required")
+    val sessionDate: LocalDate,
+
+    @field:NotNull(message = "Start time is required")
+    @field:Pattern(regexp = "^([01]?[0-9]|2[0-3]):[0-5][0-9]$", message = "Start time must be in HH:mm format")
+    val startTime: String,
+
+    @field:Min(15, message = "Duration must be at least 15 minutes")
+    @field:Max(180, message = "Duration cannot exceed 180 minutes")
+    val durationMinutes: Int = 60,
+
+    val locationId: UUID? = null,
+
+    val notes: String? = null
+)
+
 // ==================== DASHBOARD DTOs ====================
 
 /**

@@ -1,17 +1,18 @@
 package com.liyaqa.billing.api
 
+import com.liyaqa.auth.infrastructure.security.JwtUserPrincipal
 import com.liyaqa.billing.application.services.PaymentMethodService
 import com.liyaqa.billing.domain.model.PaymentMethodType
 import com.liyaqa.billing.domain.model.PaymentProviderType
 import com.liyaqa.billing.domain.model.SavedPaymentMethod
-import com.liyaqa.shared.infrastructure.security.CurrentUserService
+import com.liyaqa.membership.application.services.MemberService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import jakarta.validation.constraints.NotBlank
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -32,33 +33,43 @@ import java.util.UUID
 @Tag(name = "Member Payment Methods", description = "Self-service payment method management")
 class PaymentMethodController(
     private val paymentMethodService: PaymentMethodService,
-    private val currentUserService: CurrentUserService
+    private val memberService: MemberService
 ) {
 
     @GetMapping
     @PreAuthorize("hasRole('MEMBER')")
     @Operation(summary = "Get my saved payment methods")
-    fun getMyPaymentMethods(): ResponseEntity<List<PaymentMethodResponse>> {
-        val memberId = currentUserService.requireCurrentMemberId()
-        val methods = paymentMethodService.getMemberPaymentMethods(memberId)
+    fun getMyPaymentMethods(
+        @AuthenticationPrincipal principal: JwtUserPrincipal
+    ): ResponseEntity<List<PaymentMethodResponse>> {
+        val member = memberService.findMemberByUserId(principal.userId)
+            ?: return ResponseEntity.notFound().build()
+        val methods = paymentMethodService.getMemberPaymentMethods(member.id)
         return ResponseEntity.ok(methods.map { PaymentMethodResponse.from(it) })
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('MEMBER')")
     @Operation(summary = "Get a specific payment method")
-    fun getPaymentMethod(@PathVariable id: UUID): ResponseEntity<PaymentMethodResponse> {
-        val memberId = currentUserService.requireCurrentMemberId()
-        val method = paymentMethodService.getPaymentMethod(id, memberId)
+    fun getPaymentMethod(
+        @PathVariable id: UUID,
+        @AuthenticationPrincipal principal: JwtUserPrincipal
+    ): ResponseEntity<PaymentMethodResponse> {
+        val member = memberService.findMemberByUserId(principal.userId)
+            ?: return ResponseEntity.notFound().build()
+        val method = paymentMethodService.getPaymentMethod(id, member.id)
         return ResponseEntity.ok(PaymentMethodResponse.from(method))
     }
 
     @GetMapping("/default")
     @PreAuthorize("hasRole('MEMBER')")
     @Operation(summary = "Get my default payment method")
-    fun getDefaultPaymentMethod(): ResponseEntity<Any> {
-        val memberId = currentUserService.requireCurrentMemberId()
-        val method = paymentMethodService.getDefaultPaymentMethod(memberId)
+    fun getDefaultPaymentMethod(
+        @AuthenticationPrincipal principal: JwtUserPrincipal
+    ): ResponseEntity<Any> {
+        val member = memberService.findMemberByUserId(principal.userId)
+            ?: return ResponseEntity.notFound().build()
+        val method = paymentMethodService.getDefaultPaymentMethod(member.id)
         return if (method != null) {
             ResponseEntity.ok(PaymentMethodResponse.from(method))
         } else {
@@ -70,12 +81,14 @@ class PaymentMethodController(
     @PreAuthorize("hasRole('MEMBER')")
     @Operation(summary = "Add a new payment method")
     fun addPaymentMethod(
-        @Valid @RequestBody request: AddPaymentMethodRequest
+        @Valid @RequestBody request: AddPaymentMethodRequest,
+        @AuthenticationPrincipal principal: JwtUserPrincipal
     ): ResponseEntity<PaymentMethodResponse> {
-        val memberId = currentUserService.requireCurrentMemberId()
+        val member = memberService.findMemberByUserId(principal.userId)
+            ?: return ResponseEntity.notFound().build()
 
         val method = paymentMethodService.addPaymentMethod(
-            memberId = memberId,
+            memberId = member.id,
             paymentType = request.paymentType,
             providerType = request.providerType,
             providerToken = request.providerToken,
@@ -97,9 +110,13 @@ class PaymentMethodController(
     @PutMapping("/{id}/default")
     @PreAuthorize("hasRole('MEMBER')")
     @Operation(summary = "Set a payment method as default")
-    fun setAsDefault(@PathVariable id: UUID): ResponseEntity<PaymentMethodResponse> {
-        val memberId = currentUserService.requireCurrentMemberId()
-        val method = paymentMethodService.setAsDefault(id, memberId)
+    fun setAsDefault(
+        @PathVariable id: UUID,
+        @AuthenticationPrincipal principal: JwtUserPrincipal
+    ): ResponseEntity<PaymentMethodResponse> {
+        val member = memberService.findMemberByUserId(principal.userId)
+            ?: return ResponseEntity.notFound().build()
+        val method = paymentMethodService.setAsDefault(id, member.id)
         return ResponseEntity.ok(PaymentMethodResponse.from(method))
     }
 
@@ -108,28 +125,37 @@ class PaymentMethodController(
     @Operation(summary = "Update payment method (nickname)")
     fun updatePaymentMethod(
         @PathVariable id: UUID,
-        @Valid @RequestBody request: UpdatePaymentMethodRequest
+        @Valid @RequestBody request: UpdatePaymentMethodRequest,
+        @AuthenticationPrincipal principal: JwtUserPrincipal
     ): ResponseEntity<PaymentMethodResponse> {
-        val memberId = currentUserService.requireCurrentMemberId()
-        val method = paymentMethodService.updateNickname(id, memberId, request.nickname)
+        val member = memberService.findMemberByUserId(principal.userId)
+            ?: return ResponseEntity.notFound().build()
+        val method = paymentMethodService.updateNickname(id, member.id, request.nickname)
         return ResponseEntity.ok(PaymentMethodResponse.from(method))
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('MEMBER')")
     @Operation(summary = "Remove a payment method")
-    fun removePaymentMethod(@PathVariable id: UUID): ResponseEntity<Void> {
-        val memberId = currentUserService.requireCurrentMemberId()
-        paymentMethodService.removePaymentMethod(id, memberId)
+    fun removePaymentMethod(
+        @PathVariable id: UUID,
+        @AuthenticationPrincipal principal: JwtUserPrincipal
+    ): ResponseEntity<Void> {
+        val member = memberService.findMemberByUserId(principal.userId)
+            ?: return ResponseEntity.noContent().build()
+        paymentMethodService.removePaymentMethod(id, member.id)
         return ResponseEntity.noContent().build()
     }
 
     @GetMapping("/has-saved")
     @PreAuthorize("hasRole('MEMBER')")
     @Operation(summary = "Check if member has any saved payment methods")
-    fun hasSavedPaymentMethods(): ResponseEntity<Map<String, Boolean>> {
-        val memberId = currentUserService.requireCurrentMemberId()
-        val hasSaved = paymentMethodService.hasSavedPaymentMethods(memberId)
+    fun hasSavedPaymentMethods(
+        @AuthenticationPrincipal principal: JwtUserPrincipal
+    ): ResponseEntity<Map<String, Boolean>> {
+        val member = memberService.findMemberByUserId(principal.userId)
+            ?: return ResponseEntity.notFound().build()
+        val hasSaved = paymentMethodService.hasSavedPaymentMethods(member.id)
         return ResponseEntity.ok(mapOf("hasSavedPaymentMethods" to hasSaved))
     }
 }

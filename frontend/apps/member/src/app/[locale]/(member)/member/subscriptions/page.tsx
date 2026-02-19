@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { CreditCard, Info } from "lucide-react";
+import { Calendar, CreditCard, Info } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -38,7 +38,14 @@ export default function SubscriptionsPage() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <h1 className="text-2xl font-bold">{t("mySubscription")}</h1>
+      <div>
+        <h1 className="text-2xl font-bold">{t("mySubscription")}</h1>
+        <p className="text-muted-foreground">
+          {locale === "ar"
+            ? "إدارة اشتراكك وسجل الحضور"
+            : "Manage your subscription and attendance"}
+        </p>
+      </div>
 
       {/* Current Subscription */}
       <SubscriptionCard
@@ -87,7 +94,7 @@ export default function SubscriptionsPage() {
                 {attendanceData.items.map((attendance) => (
                   <div
                     key={attendance.id}
-                    className="py-3 flex items-center justify-between"
+                    className="py-3 px-3 flex items-center justify-between hover:bg-muted/50 rounded-lg transition-colors"
                   >
                     <div>
                       <p className="font-medium">
@@ -96,7 +103,7 @@ export default function SubscriptionsPage() {
                           { weekday: "short", month: "short", day: "numeric" }
                         )}
                       </p>
-                      <p className="text-sm text-neutral-500">
+                      <p className="text-sm text-muted-foreground">
                         {new Date(attendance.checkInTime).toLocaleTimeString(
                           locale === "ar" ? "ar-SA" : "en-US",
                           { hour: "numeric", minute: "2-digit" }
@@ -113,7 +120,7 @@ export default function SubscriptionsPage() {
                       </p>
                     </div>
                     {attendance.duration && (
-                      <div className="text-sm text-neutral-600">
+                      <div className="bg-muted px-2 py-0.5 rounded text-xs text-muted-foreground">
                         {Math.round(attendance.duration / 60)}{" "}
                         {locale === "ar" ? "دقيقة" : "min"}
                       </div>
@@ -122,9 +129,12 @@ export default function SubscriptionsPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-neutral-500 text-center py-6">
-                {locale === "ar" ? "لا يوجد سجل حضور" : "No attendance records"}
-              </p>
+              <div className="text-center py-8">
+                <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">
+                  {locale === "ar" ? "لا يوجد سجل حضور" : "No attendance records"}
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>

@@ -35,7 +35,8 @@ class WebConfig(
                 "/api/health/**",
                 "/api/organizations/**",  // Orgs don't require tenant context
                 "/api/clubs/**",          // Clubs are accessed via organization context
-                "/api/platform/**"        // Platform endpoints don't require tenant context
+                "/api/platform/**",       // Platform endpoints don't require tenant context
+                "/api/trainer-portal/**"  // Trainer portal resolves identity via JWT, not tenant header
             )
 
         // Mobile cache control interceptor for all API endpoints
@@ -62,7 +63,8 @@ class WebConfig(
                 "X-Super-Tenant",
                 "Accept",
                 "Accept-Language",
-                "Cache-Control"
+                "Cache-Control",
+                "X-Permission-Retry"
             )
             .exposedHeaders(
                 "X-RateLimit-Limit",

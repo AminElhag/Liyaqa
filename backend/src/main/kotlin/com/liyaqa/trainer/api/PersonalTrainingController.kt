@@ -154,7 +154,7 @@ class PersonalTrainingController(
 
     // ==================== QUERY OPERATIONS ====================
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}}")
     @PreAuthorize("hasAuthority('pt_sessions_view')")
     @Operation(summary = "Get session by ID", description = "Get a personal training session by ID")
     fun getSession(@PathVariable id: UUID): ResponseEntity<PTSessionResponse> {
@@ -211,7 +211,12 @@ class PersonalTrainingController(
         @RequestParam(defaultValue = "20") size: Int
     ): ResponseEntity<PageResponse<PTSessionSummaryResponse>> {
         val trainerId = trainerSecurityService.getCurrentTrainerId()
-            ?: throw IllegalStateException("No trainer profile found for current user")
+            ?: return ResponseEntity.ok(PageResponse(
+                content = emptyList(),
+                page = page, size = size,
+                totalElements = 0, totalPages = 0,
+                first = true, last = true
+            ))
 
         val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "sessionDate", "startTime"))
         val sessionPage = ptService.getPendingSessionsForTrainer(trainerId, pageable)
@@ -237,7 +242,12 @@ class PersonalTrainingController(
         @RequestParam(defaultValue = "20") size: Int
     ): ResponseEntity<PageResponse<PTSessionSummaryResponse>> {
         val trainerId = trainerSecurityService.getCurrentTrainerId()
-            ?: throw IllegalStateException("No trainer profile found for current user")
+            ?: return ResponseEntity.ok(PageResponse(
+                content = emptyList(),
+                page = page, size = size,
+                totalElements = 0, totalPages = 0,
+                first = true, last = true
+            ))
 
         val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "sessionDate", "startTime"))
         val sessionPage = ptService.getUpcomingSessionsForTrainer(trainerId, pageable)
@@ -289,7 +299,7 @@ class PersonalTrainingController(
 
     // ==================== DELETE ====================
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}}")
     @PreAuthorize("hasAuthority('pt_sessions_delete')")
     @Operation(summary = "Delete session", description = "Permanently delete a PT session (admin only)")
     fun deleteSession(@PathVariable id: UUID): ResponseEntity<Void> {

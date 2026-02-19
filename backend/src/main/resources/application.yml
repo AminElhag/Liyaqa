@@ -97,8 +97,8 @@ liyaqa:
       auth-token: ${TWILIO_AUTH_TOKEN:}
       from-number: ${TWILIO_FROM_NUMBER:}
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001,http://localhost:3003,http://localhost:3004,http://localhost:3005,http://liyaqa.local:3000,http://liyaqa.local:3003}
-    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:http://*.liyaqa.local:3000,http://*.liyaqa.local:3003,http://*.localhost:3000,http://*.localhost:3003}  # Wildcard patterns for subdomains
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3004,http://localhost:3005,http://liyaqa.local:3000,http://liyaqa.local:3003}
+    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:http://*.liyaqa.local:3000,http://*.liyaqa.local:3002,http://*.liyaqa.local:3003,http://*.localhost:3000,http://*.localhost:3002,http://*.localhost:3003}  # Wildcard patterns for subdomains
   impersonation:
     token-expiration-ms: ${IMPERSONATION_TOKEN_EXPIRATION_MS:1800000}  # 30 minutes
   team:

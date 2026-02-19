@@ -30,7 +30,8 @@ export type BookingStatus =
   | "WAITLISTED"
   | "CANCELLED"
   | "CHECKED_IN"
-  | "NO_SHOW";
+  | "NO_SHOW"
+  | "COMPLETED";
 
 /**
  * Pricing model for classes

@@ -7,9 +7,15 @@ import com.liyaqa.auth.domain.ports.UserRepository
 import com.liyaqa.auth.infrastructure.security.JwtUserPrincipal
 import com.liyaqa.billing.application.services.InvoiceService
 import com.liyaqa.billing.domain.model.InvoiceStatus
+import com.liyaqa.membership.api.AgreementSummaryResponse
+import com.liyaqa.membership.api.MemberAgreementResponse
+import com.liyaqa.membership.api.MemberAgreementStatusResponse
+import com.liyaqa.membership.api.SignAgreementDetailsRequest
+import com.liyaqa.membership.api.SignAgreementsRequest
 import com.liyaqa.membership.api.WalletResponse
 import com.liyaqa.membership.api.WalletTransactionResponse
 import com.liyaqa.membership.application.commands.UpdateMemberCommand
+import com.liyaqa.membership.application.services.AgreementService
 import com.liyaqa.membership.application.services.MemberService
 import com.liyaqa.membership.application.services.MembershipPlanService
 import com.liyaqa.membership.application.services.SubscriptionService
@@ -63,7 +69,8 @@ class MeController(
     private val notificationService: NotificationService,
     private val authService: AuthService,
     private val userRepository: UserRepository,
-    private val walletService: WalletService
+    private val walletService: WalletService,
+    private val agreementService: AgreementService
 ) {
     private val logger = LoggerFactory.getLogger(MeController::class.java)
 
@@ -657,6 +664,136 @@ class MeController(
                 totalCount = transactionsPage.totalElements
             )
         )
+    }
+
+    // ==================== AGREEMENTS ====================
+
+    /**
+     * Get my signed agreements.
+     */
+    @GetMapping("/agreements")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Get my agreements", description = "Get the authenticated member's signed agreements")
+    fun getMyAgreements(
+        @AuthenticationPrincipal principal: JwtUserPrincipal
+    ): ResponseEntity<List<MemberAgreementResponse>> {
+        val member = memberService.findMemberByUserId(principal.userId)
+            ?: return ResponseEntity.notFound().build()
+
+        if (!validateMemberTenant(member, principal.userId)) {
+            return ResponseEntity.notFound().build()
+        }
+
+        val memberAgreements = agreementService.getMemberAgreements(member.id)
+        val responses = memberAgreements.map { ma ->
+            val agreement = try {
+                agreementService.getAgreement(ma.agreementId)
+            } catch (e: NoSuchElementException) {
+                null
+            }
+            MemberAgreementResponse.from(ma, agreement)
+        }
+        return ResponseEntity.ok(responses)
+    }
+
+    /**
+     * Get my agreement status (signed + pending mandatory).
+     */
+    @GetMapping("/agreements/status")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Get my agreement status", description = "Get signed and pending mandatory agreements")
+    fun getMyAgreementStatus(
+        @AuthenticationPrincipal principal: JwtUserPrincipal
+    ): ResponseEntity<MemberAgreementStatusResponse> {
+        val member = memberService.findMemberByUserId(principal.userId)
+            ?: return ResponseEntity.notFound().build()
+
+        if (!validateMemberTenant(member, principal.userId)) {
+            return ResponseEntity.notFound().build()
+        }
+
+        val signedAgreements = agreementService.getMemberAgreements(member.id)
+        val pendingMandatory = agreementService.getPendingMandatoryAgreements(member.id)
+        val allMandatorySigned = agreementService.hasSignedAllMandatoryAgreements(member.id)
+
+        val response = MemberAgreementStatusResponse(
+            memberId = member.id,
+            signedAgreements = signedAgreements.map { ma ->
+                val agreement = try {
+                    agreementService.getAgreement(ma.agreementId)
+                } catch (e: NoSuchElementException) {
+                    null
+                }
+                MemberAgreementResponse.from(ma, agreement)
+            },
+            pendingMandatoryAgreements = pendingMandatory.map { AgreementSummaryResponse.from(it) },
+            allMandatorySigned = allMandatorySigned
+        )
+
+        return ResponseEntity.ok(response)
+    }
+
+    /**
+     * Sign a specific agreement.
+     */
+    @PostMapping("/agreements/{agreementId}/sign")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Sign an agreement", description = "Sign a specific agreement for the authenticated member")
+    fun signMyAgreement(
+        @AuthenticationPrincipal principal: JwtUserPrincipal,
+        @PathVariable agreementId: UUID,
+        @RequestBody(required = false) request: SignAgreementDetailsRequest?
+    ): ResponseEntity<MemberAgreementResponse> {
+        val member = memberService.findMemberByUserId(principal.userId)
+            ?: return ResponseEntity.notFound().build()
+
+        if (!validateMemberTenant(member, principal.userId)) {
+            return ResponseEntity.notFound().build()
+        }
+
+        val memberAgreement = agreementService.signAgreement(
+            memberId = member.id,
+            agreementId = agreementId,
+            ipAddress = request?.ipAddress,
+            userAgent = request?.userAgent,
+            signatureData = request?.signatureData,
+            healthData = request?.healthData
+        )
+        val agreement = agreementService.getAgreement(agreementId)
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED)
+            .body(MemberAgreementResponse.from(memberAgreement, agreement))
+    }
+
+    /**
+     * Sign multiple agreements at once.
+     */
+    @PostMapping("/agreements/bulk")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Sign multiple agreements", description = "Sign multiple agreements for the authenticated member")
+    fun signMyAgreementsBulk(
+        @AuthenticationPrincipal principal: JwtUserPrincipal,
+        @Valid @RequestBody request: SignAgreementsRequest
+    ): ResponseEntity<List<MemberAgreementResponse>> {
+        val member = memberService.findMemberByUserId(principal.userId)
+            ?: return ResponseEntity.notFound().build()
+
+        if (!validateMemberTenant(member, principal.userId)) {
+            return ResponseEntity.notFound().build()
+        }
+
+        val memberAgreements = agreementService.signAgreements(
+            memberId = member.id,
+            agreementIds = request.agreementIds,
+            ipAddress = request.ipAddress,
+            userAgent = request.userAgent,
+            signatureData = request.signatureData,
+            healthData = request.healthData
+        )
+        val responses = memberAgreements.map { ma ->
+            val agreement = agreementService.getAgreement(ma.agreementId)
+            MemberAgreementResponse.from(ma, agreement)
+        }
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(responses)
     }
 
     // ==================== SELF-SERVICE BOOKINGS ====================

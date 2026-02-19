@@ -29,7 +29,6 @@ import {
   SelectValue,
 } from "@liyaqa/shared/components/ui/select";
 import { usePTSessions } from "@liyaqa/shared/queries/use-pt-sessions";
-import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import { cn, formatDate } from "@liyaqa/shared/utils";
 import type { PTSessionStatus } from "@liyaqa/shared/types/pt-session";
 
@@ -87,14 +86,11 @@ export default function TrainerSessionsPage() {
   const isAr = locale === "ar";
   const t = (key: keyof typeof text) => (isAr ? text[key].ar : text[key].en);
 
-  const { user } = useAuthStore();
-
   const [page, setPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data, isLoading, error } = usePTSessions({
-    trainerId: user?.id,
     status: statusFilter === "all" ? undefined : statusFilter,
     page,
     size: 15,

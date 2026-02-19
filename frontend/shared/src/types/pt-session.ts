@@ -87,6 +87,18 @@ export interface CompletePTSessionRequest {
 }
 
 /**
+ * Create trainer session request (trainer-initiated, auto-confirmed)
+ */
+export interface CreateTrainerSessionRequest {
+  memberId: UUID;
+  sessionDate: string; // ISO date
+  startTime: string; // HH:mm
+  durationMinutes?: number;
+  locationId?: UUID;
+  notes?: string;
+}
+
+/**
  * PT session query params
  */
 export interface PTSessionQueryParams {

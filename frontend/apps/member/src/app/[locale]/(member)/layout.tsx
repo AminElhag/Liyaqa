@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import { MemberShell } from "@/components/layouts/member-shell";
 import { useAuthStore, useHasHydrated } from "@liyaqa/shared/stores/auth-store";
+import { getAccessToken } from "@liyaqa/shared/lib/api/client";
 import { Loading } from "@liyaqa/shared/components/ui/spinner";
 
 export default function MemberLayout({
@@ -16,16 +17,24 @@ export default function MemberLayout({
   const router = useRouter();
   const { isAuthenticated, isLoading, user, initialize } = useAuthStore();
   const hasHydrated = useHasHydrated();
+  const initializeCalledRef = useRef(false);
 
+  // Guard: call initialize() exactly once after hydration
   useEffect(() => {
-    initialize();
-  }, [initialize]);
+    if (hasHydrated && !initializeCalledRef.current) {
+      initializeCalledRef.current = true;
+      initialize();
+    }
+  }, [hasHydrated, initialize]);
 
+  // Auth redirect — with localStorage token tiebreaker to prevent loops
   useEffect(() => {
     if (!hasHydrated) return;
 
-    if (!isLoading && !isAuthenticated) {
-      router.push(`/${locale}/login`);
+    const hasToken = getAccessToken() !== null;
+
+    if (!isLoading && !isAuthenticated && !hasToken) {
+      router.replace(`/${locale}/login`);
     }
   }, [hasHydrated, isLoading, isAuthenticated, router, locale]);
 
@@ -41,7 +50,6 @@ export default function MemberLayout({
     return null;
   }
 
-  // Check account type: MEMBER type, or legacy MEMBER role, or admin override
   const hasMemberAccess =
     user?.activeAccountType === "MEMBER" ||
     user?.accountTypes?.includes("MEMBER") ||
@@ -49,7 +57,7 @@ export default function MemberLayout({
     (user?.role && ["SUPER_ADMIN", "CLUB_ADMIN"].includes(user.role));
 
   if (!hasMemberAccess) {
-    router.push(`/${locale}/login?wrong_portal=true`);
+    router.replace(`/${locale}/login?wrong_portal=true`);
     return null;
   }
 

@@ -256,6 +256,18 @@ function createApiClient(): KyInstance {
           }
         },
       ],
+      beforeError: [
+        async (error) => {
+          // Eagerly parse JSON body while the response stream is guaranteed fresh.
+          // Store on the error so parseApiError can use it later without re-reading the body.
+          try {
+            (error as any)._parsedBody = await error.response.clone().json();
+          } catch {
+            // Non-JSON or empty body — leave _parsedBody undefined
+          }
+          return error;
+        },
+      ],
       afterResponse: [
         async (request, options, response) => {
           // ky's NormalizedOptions doesn't expose `json` in its type, but
@@ -266,13 +278,17 @@ function createApiClient(): KyInstance {
           // Build retry options shared by 401 and 403 handlers.
           // Explicitly preserves Content-Type so that JSON bodies aren't
           // downgraded to text/plain by some fetch implementations.
+          // NOTE: Headers.entries() returns lowercase keys, so we must
+          // exclude "authorization" before setting the new one to avoid
+          // the Fetch API combining both into a single malformed header.
           const buildRetryOptions = () => {
-            const headers: Record<string, string> = {
-              ...Object.fromEntries(request.headers.entries()),
-              Authorization: `Bearer ${getAccessToken()}`,
-            };
-            const ct = request.headers.get("Content-Type");
-            if (ct) headers["Content-Type"] = ct;
+            const headers: Record<string, string> = {};
+            for (const [key, value] of request.headers.entries()) {
+              if (key.toLowerCase() !== "authorization") {
+                headers[key] = value;
+              }
+            }
+            headers["Authorization"] = `Bearer ${getAccessToken()}`;
 
             return {
               method: request.method,
@@ -328,8 +344,14 @@ export const apiClient = api;
  */
 export async function parseApiError(error: unknown): Promise<ApiError> {
   if (error instanceof HTTPError) {
+    // Prefer eagerly-parsed body from beforeError hook (guaranteed fresh)
+    const eager = (error as any)._parsedBody;
+    if (eager && typeof eager === "object" && "message" in eager) {
+      return eager as ApiError;
+    }
+    // Fallback: try parsing the response directly
     try {
-      const errorResponse = await error.response.json();
+      const errorResponse = await error.response.clone().json();
       return errorResponse as ApiError;
     } catch {
       return {

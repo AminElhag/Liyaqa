@@ -55,7 +55,7 @@ interface MemberShellProps {
 }
 
 export function MemberShell({ children }: MemberShellProps) {
-  const t = useTranslations("member");
+  const t = useTranslations("member.nav");
   const locale = useLocale();
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
@@ -72,7 +72,7 @@ export function MemberShell({ children }: MemberShellProps) {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-background">
       {mobileMenuOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -82,29 +82,29 @@ export function MemberShell({ children }: MemberShellProps) {
 
       <aside
         className={cn(
-          "fixed top-0 z-50 h-full border-e shadow-sm transition-all duration-300",
-          "bg-gradient-to-b from-white to-neutral-50/80",
+          "fixed top-0 z-50 h-full border-e border-neutral-800 transition-all duration-300",
+          "bg-neutral-900 dark:bg-neutral-950",
           sidebarCollapsed ? "w-16" : "w-64",
           mobileMenuOpen ? "start-0" : "-start-64 lg:start-0"
         )}
       >
-        <div className="flex h-16 items-center justify-between px-4 border-b bg-white">
+        <div className="flex h-16 items-center justify-between px-4 border-b border-neutral-800">
           {!sidebarCollapsed && (
             <Link
               href={`/${locale}/member/dashboard`}
               className="flex items-center gap-2"
             >
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm">
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-sm">
                 <span className="text-white font-bold text-lg">L</span>
               </div>
-              <span className="font-semibold text-lg bg-gradient-to-r from-neutral-800 to-neutral-600 bg-clip-text text-transparent">
+              <span className="font-semibold text-lg text-white">
                 Liyaqa
               </span>
             </Link>
           )}
           {sidebarCollapsed && (
             <Link href={`/${locale}/member/dashboard`} className="mx-auto">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm">
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-sm">
                 <span className="text-white font-bold text-lg">L</span>
               </div>
             </Link>
@@ -113,7 +113,7 @@ export function MemberShell({ children }: MemberShellProps) {
             variant="ghost"
             size="icon"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="hidden lg:flex"
+            className="hidden lg:flex text-neutral-400 hover:text-white hover:bg-neutral-800"
           >
             <ChevronLeft
               className={cn(
@@ -126,7 +126,7 @@ export function MemberShell({ children }: MemberShellProps) {
             variant="ghost"
             size="icon"
             onClick={() => setMobileMenuOpen(false)}
-            className="lg:hidden"
+            className="lg:hidden text-neutral-400 hover:text-white hover:bg-neutral-800"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -147,7 +147,7 @@ export function MemberShell({ children }: MemberShellProps) {
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
                     active
                       ? "bg-primary text-white shadow-sm"
-                      : "text-neutral-600 hover:bg-neutral-100 hover:translate-x-0.5"
+                      : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
                   )}
                 >
                   <Icon className="h-5 w-5 shrink-0" />
@@ -167,7 +167,7 @@ export function MemberShell({ children }: MemberShellProps) {
           sidebarCollapsed ? "lg:ms-16" : "lg:ms-64"
         )}
       >
-        <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-sm border-b flex items-center justify-between px-4 lg:px-6">
+        <header className="sticky top-0 z-30 h-16 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b dark:border-neutral-800 flex items-center justify-between px-4 lg:px-6">
           <Button
             variant="ghost"
             size="icon"
@@ -195,7 +195,7 @@ export function MemberShell({ children }: MemberShellProps) {
                 <Button variant="ghost" className="gap-2">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="" />
-                    <AvatarFallback className="bg-gradient-to-br from-teal-100 to-teal-200 text-teal-700">
+                    <AvatarFallback className="bg-gradient-to-br from-primary/10 to-primary/20 text-primary">
                       {getInitials(
                         locale === "ar"
                           ? user?.displayName?.ar || user?.displayName?.en

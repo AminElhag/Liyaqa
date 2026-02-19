@@ -4,9 +4,11 @@ import { SessionExpiredError } from "./api/client";
 export function makeQueryClient() {
   return new QueryClient({
     queryCache: new QueryCache({
-      onError: (error) => {
+      onError: (error, query) => {
         // SessionExpiredError is expected when token expires — suppress it
         if (error instanceof SessionExpiredError) return;
+        // Queries can opt out of error logging via meta.suppressErrors
+        if (query.meta?.suppressErrors) return;
         // Only log in development
         if (process.env.NODE_ENV === "development") {
           console.error("[React Query Error]", error);

@@ -139,9 +139,22 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-3xl">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t("title")}</h1>
+        <div className="flex items-center gap-4">
+          <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center">
+            <User className="h-8 w-8 text-primary" />
+          </div>
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold">
+                {profile?.fullName || t("title")}
+              </h1>
+              {profile?.status && getStatusBadge(profile.status)}
+            </div>
+            <p className="text-muted-foreground">{profile?.email}</p>
+          </div>
+        </div>
         {!isEditing && (
           <Button variant="outline" onClick={() => setIsEditing(true)}>
             <Pencil className="h-4 w-4 me-2" />
@@ -154,13 +167,10 @@ export default function ProfilePage() {
         {/* Basic Info Card */}
         <Card className="mb-6">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <User className="h-5 w-5 text-primary" />
-                {t("contactInfo")}
-              </CardTitle>
-              {profile?.status && getStatusBadge(profile.status)}
-            </div>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <User className="h-5 w-5 text-primary" />
+              {t("contactInfo")}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
@@ -176,7 +186,7 @@ export default function ProfilePage() {
                     )}
                   </>
                 ) : (
-                  <p className="text-neutral-700">{profile?.firstName || "-"}</p>
+                  <p className="text-foreground">{profile?.firstName || "-"}</p>
                 )}
               </div>
               <div className="space-y-2">
@@ -191,18 +201,18 @@ export default function ProfilePage() {
                     )}
                   </>
                 ) : (
-                  <p className="text-neutral-700">{profile?.lastName || "-"}</p>
+                  <p className="text-foreground">{profile?.lastName || "-"}</p>
                 )}
               </div>
             </div>
 
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-neutral-500" />
+                <Mail className="h-4 w-4 text-muted-foreground" />
                 {locale === "ar" ? "البريد الإلكتروني" : "Email"}
               </Label>
-              <p className="text-neutral-700">{profile?.email || "-"}</p>
-              <p className="text-xs text-neutral-500">
+              <p className="text-foreground">{profile?.email || "-"}</p>
+              <p className="text-xs text-muted-foreground">
                 {locale === "ar"
                   ? "لا يمكن تغيير البريد الإلكتروني"
                   : "Email cannot be changed"}
@@ -212,24 +222,24 @@ export default function ProfilePage() {
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="phone" className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-neutral-500" />
+                  <Phone className="h-4 w-4 text-muted-foreground" />
                   {locale === "ar" ? "رقم الهاتف" : "Phone Number"}
                 </Label>
                 {isEditing ? (
                   <Input id="phone" {...register("phone")} />
                 ) : (
-                  <p className="text-neutral-700">{profile?.phone || "-"}</p>
+                  <p className="text-foreground">{profile?.phone || "-"}</p>
                 )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="dateOfBirth" className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-neutral-500" />
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
                   {locale === "ar" ? "تاريخ الميلاد" : "Date of Birth"}
                 </Label>
                 {isEditing ? (
                   <Input id="dateOfBirth" type="date" {...register("dateOfBirth")} />
                 ) : (
-                  <p className="text-neutral-700">
+                  <p className="text-foreground">
                     {profile?.dateOfBirth
                       ? new Date(profile.dateOfBirth).toLocaleDateString(
                           locale === "ar" ? "ar-SA" : "en-US"
@@ -243,10 +253,10 @@ export default function ProfilePage() {
             {profile?.address && (
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-neutral-500" />
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
                   {locale === "ar" ? "العنوان" : "Address"}
                 </Label>
-                <p className="text-neutral-700">
+                <p className="text-foreground">
                   {[
                     profile.address.street,
                     profile.address.city,
@@ -286,7 +296,7 @@ export default function ProfilePage() {
                     {...register("emergencyContactName")}
                   />
                 ) : (
-                  <p className="text-neutral-700">
+                  <p className="text-foreground">
                     {profile?.emergencyContactName || "-"}
                   </p>
                 )}
@@ -301,7 +311,7 @@ export default function ProfilePage() {
                     {...register("emergencyContactPhone")}
                   />
                 ) : (
-                  <p className="text-neutral-700">
+                  <p className="text-foreground">
                     {profile?.emergencyContactPhone || "-"}
                   </p>
                 )}

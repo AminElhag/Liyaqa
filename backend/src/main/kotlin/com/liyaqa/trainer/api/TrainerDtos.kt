@@ -13,6 +13,7 @@ import com.liyaqa.trainer.domain.model.TrainerClubAssignmentStatus
 import com.liyaqa.trainer.domain.model.TrainerEmploymentType
 import com.liyaqa.trainer.domain.model.TrainerStatus
 import com.liyaqa.trainer.domain.model.TrainerType
+import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.Past
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
@@ -21,6 +22,7 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.PositiveOrZero
+import jakarta.validation.constraints.Size
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
@@ -33,6 +35,12 @@ import java.util.UUID
  */
 data class CreateTrainerRequest(
     val userId: UUID? = null,
+
+    // Account creation fields (alternative to userId)
+    val email: String? = null,
+
+    @field:Size(min = 8, message = "Password must be at least 8 characters")
+    val password: String? = null,
 
     @field:NotNull(message = "Organization ID is required")
     val organizationId: UUID,
@@ -228,6 +236,15 @@ data class TimeSlotInput(
     @field:NotBlank(message = "End time is required")
     @field:Pattern(regexp = "^([01]?[0-9]|2[0-3]):[0-5][0-9]$", message = "End time must be in HH:mm format")
     val end: String
+)
+
+/**
+ * Request to reset a trainer's password (admin action).
+ */
+data class ResetTrainerPasswordRequest(
+    @field:Size(min = 8, message = "Password must be at least 8 characters")
+    @field:NotBlank(message = "Password is required")
+    val newPassword: String
 )
 
 // ==================== RESPONSE DTOs ====================

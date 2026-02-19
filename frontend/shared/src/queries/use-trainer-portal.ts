@@ -63,8 +63,10 @@ export const trainerPortalKeys = {
 
   // Dashboard
   dashboards: () => [...trainerPortalKeys.all, "dashboard"] as const,
-  dashboard: (trainerId: UUID) =>
-    [...trainerPortalKeys.dashboards(), trainerId] as const,
+  dashboard: (trainerId?: UUID) =>
+    trainerId
+      ? ([...trainerPortalKeys.dashboards(), trainerId] as const)
+      : ([...trainerPortalKeys.dashboards(), "self"] as const),
 
   // Clients
   clients: () => [...trainerPortalKeys.all, "clients"] as const,
@@ -72,8 +74,8 @@ export const trainerPortalKeys = {
     [...trainerPortalKeys.clients(), "list", params] as const,
   clientDetail: (clientId: UUID) =>
     [...trainerPortalKeys.clients(), "detail", clientId] as const,
-  clientStats: (trainerId: UUID) =>
-    [...trainerPortalKeys.clients(), "stats", trainerId] as const,
+  clientStats: (trainerId?: UUID) =>
+    [...trainerPortalKeys.clients(), "stats", trainerId ?? "self"] as const,
 
   // Earnings
   earnings: () => [...trainerPortalKeys.all, "earnings"] as const,
@@ -81,31 +83,31 @@ export const trainerPortalKeys = {
     [...trainerPortalKeys.earnings(), "list", params] as const,
   earningDetail: (earningId: UUID) =>
     [...trainerPortalKeys.earnings(), "detail", earningId] as const,
-  earningsSummary: (trainerId: UUID) =>
-    [...trainerPortalKeys.earnings(), "summary", trainerId] as const,
+  earningsSummary: (trainerId?: UUID) =>
+    [...trainerPortalKeys.earnings(), "summary", trainerId ?? "self"] as const,
 
   // Notifications
   notifications: () => [...trainerPortalKeys.all, "notifications"] as const,
   notificationsList: (params: TrainerNotificationsQueryParams) =>
     [...trainerPortalKeys.notifications(), "list", params] as const,
-  unreadCount: (trainerId: UUID) =>
-    [...trainerPortalKeys.notifications(), "unreadCount", trainerId] as const,
+  unreadCount: (trainerId?: UUID) =>
+    [...trainerPortalKeys.notifications(), "unreadCount", trainerId ?? "self"] as const,
 
   // Schedule
   schedule: () => [...trainerPortalKeys.all, "schedule"] as const,
-  scheduleDetail: (trainerId: UUID) =>
-    [...trainerPortalKeys.schedule(), trainerId] as const,
+  scheduleDetail: (trainerId?: UUID) =>
+    [...trainerPortalKeys.schedule(), trainerId ?? "self"] as const,
   upcomingSessions: (params: UpcomingSessionsQueryParams) =>
     [...trainerPortalKeys.schedule(), "upcoming", params] as const,
-  todaySchedule: (trainerId: UUID) =>
-    [...trainerPortalKeys.schedule(), "today", trainerId] as const,
+  todaySchedule: (trainerId?: UUID) =>
+    [...trainerPortalKeys.schedule(), "today", trainerId ?? "self"] as const,
 
   // Certifications
   certifications: () => [...trainerPortalKeys.all, "certifications"] as const,
   certificationsList: (
-    trainerId: UUID,
-    params: { page?: number; size?: number }
-  ) => [...trainerPortalKeys.certifications(), "list", trainerId, params] as const,
+    params: { page?: number; size?: number },
+    trainerId?: UUID
+  ) => [...trainerPortalKeys.certifications(), "list", trainerId ?? "self", params] as const,
   certificationDetail: (certificationId: UUID) =>
     [...trainerPortalKeys.certifications(), "detail", certificationId] as const,
 };
@@ -113,19 +115,19 @@ export const trainerPortalKeys = {
 // ==================== DASHBOARD QUERIES ====================
 
 /**
- * Hook to fetch complete trainer dashboard (aggregated data)
+ * Hook to fetch complete trainer dashboard (aggregated data).
+ * When trainerId is omitted/undefined, fetches for the current authenticated trainer (self-service).
  */
 export function useTrainerDashboard(
-  trainerId: UUID | undefined,
+  trainerId?: UUID,
   options?: Omit<
     UseQueryOptions<TrainerDashboardResponse>,
     "queryKey" | "queryFn"
   >
 ) {
   return useQuery({
-    queryKey: trainerPortalKeys.dashboard(trainerId!),
-    queryFn: () => getTrainerDashboard(trainerId!),
-    enabled: !!trainerId,
+    queryKey: trainerPortalKeys.dashboard(trainerId),
+    queryFn: () => getTrainerDashboard(trainerId),
     staleTime: 60000, // 1 minute
     ...options,
   });
@@ -134,7 +136,8 @@ export function useTrainerDashboard(
 // ==================== CLIENT QUERIES ====================
 
 /**
- * Hook to fetch paginated trainer clients
+ * Hook to fetch paginated trainer clients.
+ * trainerId in params is optional — backend resolves from JWT when omitted.
  */
 export function useTrainerClients(
   params: TrainerClientsQueryParams = {},
@@ -146,7 +149,6 @@ export function useTrainerClients(
   return useQuery({
     queryKey: trainerPortalKeys.clientsList(params),
     queryFn: () => getTrainerClients(params),
-    enabled: !!params.trainerId,
     ...options,
   });
 }
@@ -167,16 +169,16 @@ export function useTrainerClient(
 }
 
 /**
- * Hook to fetch client statistics
+ * Hook to fetch client statistics.
+ * When trainerId is omitted, backend resolves from JWT.
  */
 export function useClientStats(
-  trainerId: UUID | undefined,
+  trainerId?: UUID,
   options?: Omit<UseQueryOptions<ClientStatsResponse>, "queryKey" | "queryFn">
 ) {
   return useQuery({
-    queryKey: trainerPortalKeys.clientStats(trainerId!),
-    queryFn: () => getClientStats(trainerId!),
-    enabled: !!trainerId,
+    queryKey: trainerPortalKeys.clientStats(trainerId),
+    queryFn: () => getClientStats(trainerId),
     ...options,
   });
 }
@@ -184,7 +186,8 @@ export function useClientStats(
 // ==================== EARNINGS QUERIES ====================
 
 /**
- * Hook to fetch paginated trainer earnings
+ * Hook to fetch paginated trainer earnings.
+ * trainerId in params is optional — backend resolves from JWT when omitted.
  */
 export function useTrainerEarnings(
   params: TrainerEarningsQueryParams = {},
@@ -196,7 +199,6 @@ export function useTrainerEarnings(
   return useQuery({
     queryKey: trainerPortalKeys.earningsList(params),
     queryFn: () => getTrainerEarnings(params),
-    enabled: !!params.trainerId,
     ...options,
   });
 }
@@ -220,19 +222,19 @@ export function useTrainerEarning(
 }
 
 /**
- * Hook to fetch earnings summary
+ * Hook to fetch earnings summary.
+ * When trainerId is omitted, backend resolves from JWT.
  */
 export function useEarningsSummary(
-  trainerId: UUID | undefined,
+  trainerId?: UUID,
   options?: Omit<
     UseQueryOptions<EarningsSummaryResponse>,
     "queryKey" | "queryFn"
   >
 ) {
   return useQuery({
-    queryKey: trainerPortalKeys.earningsSummary(trainerId!),
-    queryFn: () => getEarningsSummary(trainerId!),
-    enabled: !!trainerId,
+    queryKey: trainerPortalKeys.earningsSummary(trainerId),
+    queryFn: () => getEarningsSummary(trainerId),
     staleTime: 60000, // 1 minute
     ...options,
   });
@@ -241,7 +243,8 @@ export function useEarningsSummary(
 // ==================== NOTIFICATION QUERIES ====================
 
 /**
- * Hook to fetch paginated trainer notifications
+ * Hook to fetch paginated trainer notifications.
+ * trainerId in params is optional — backend resolves from JWT when omitted.
  */
 export function useTrainerNotifications(
   params: TrainerNotificationsQueryParams = {},
@@ -253,22 +256,21 @@ export function useTrainerNotifications(
   return useQuery({
     queryKey: trainerPortalKeys.notificationsList(params),
     queryFn: () => getTrainerNotifications(params),
-    enabled: !!params.trainerId,
     ...options,
   });
 }
 
 /**
- * Hook to fetch unread notifications count
+ * Hook to fetch unread notifications count.
+ * When trainerId is omitted, backend resolves from JWT.
  */
 export function useUnreadNotificationsCount(
-  trainerId: UUID | undefined,
+  trainerId?: UUID,
   options?: Omit<UseQueryOptions<UnreadCountResponse>, "queryKey" | "queryFn">
 ) {
   return useQuery({
-    queryKey: trainerPortalKeys.unreadCount(trainerId!),
-    queryFn: () => getUnreadNotificationsCount(trainerId!),
-    enabled: !!trainerId,
+    queryKey: trainerPortalKeys.unreadCount(trainerId),
+    queryFn: () => getUnreadNotificationsCount(trainerId),
     refetchInterval: 30000, // Refetch every 30 seconds
     ...options,
   });
@@ -277,25 +279,26 @@ export function useUnreadNotificationsCount(
 // ==================== SCHEDULE QUERIES ====================
 
 /**
- * Hook to fetch trainer schedule
+ * Hook to fetch trainer schedule.
+ * When trainerId is omitted, backend resolves from JWT.
  */
 export function useTrainerSchedule(
-  trainerId: UUID | undefined,
+  trainerId?: UUID,
   options?: Omit<
     UseQueryOptions<TrainerScheduleResponse>,
     "queryKey" | "queryFn"
   >
 ) {
   return useQuery({
-    queryKey: trainerPortalKeys.scheduleDetail(trainerId!),
-    queryFn: () => getTrainerSchedule(trainerId!),
-    enabled: !!trainerId,
+    queryKey: trainerPortalKeys.scheduleDetail(trainerId),
+    queryFn: () => getTrainerSchedule(trainerId),
     ...options,
   });
 }
 
 /**
- * Hook to fetch upcoming sessions
+ * Hook to fetch upcoming sessions.
+ * trainerId in params is optional — backend resolves from JWT when omitted.
  */
 export function useUpcomingSessions(
   params: UpcomingSessionsQueryParams = {},
@@ -307,25 +310,24 @@ export function useUpcomingSessions(
   return useQuery({
     queryKey: trainerPortalKeys.upcomingSessions(params),
     queryFn: () => getUpcomingSessions(params),
-    enabled: !!params.trainerId,
     ...options,
   });
 }
 
 /**
- * Hook to fetch today's schedule
+ * Hook to fetch today's schedule.
+ * When trainerId is omitted, backend resolves from JWT.
  */
 export function useTodaySchedule(
-  trainerId: UUID | undefined,
+  trainerId?: UUID,
   options?: Omit<
     UseQueryOptions<UpcomingSessionResponse[]>,
     "queryKey" | "queryFn"
   >
 ) {
   return useQuery({
-    queryKey: trainerPortalKeys.todaySchedule(trainerId!),
-    queryFn: () => getTodaySchedule(trainerId!),
-    enabled: !!trainerId,
+    queryKey: trainerPortalKeys.todaySchedule(trainerId),
+    queryFn: () => getTodaySchedule(trainerId),
     refetchInterval: 300000, // Refetch every 5 minutes
     ...options,
   });
@@ -334,20 +336,20 @@ export function useTodaySchedule(
 // ==================== CERTIFICATION QUERIES ====================
 
 /**
- * Hook to fetch paginated trainer certifications
+ * Hook to fetch paginated trainer certifications.
+ * When trainerId is omitted, backend resolves from JWT.
  */
 export function useTrainerCertifications(
-  trainerId: UUID | undefined,
   params: { page?: number; size?: number } = {},
+  trainerId?: UUID,
   options?: Omit<
     UseQueryOptions<PaginatedResponse<TrainerCertificationResponse>>,
     "queryKey" | "queryFn"
   >
 ) {
   return useQuery({
-    queryKey: trainerPortalKeys.certificationsList(trainerId!, params),
-    queryFn: () => getTrainerCertifications(trainerId!, params),
-    enabled: !!trainerId,
+    queryKey: trainerPortalKeys.certificationsList(params, trainerId),
+    queryFn: () => getTrainerCertifications(params, trainerId),
     ...options,
   });
 }
@@ -437,27 +439,22 @@ export function useUpdateEarningStatus() {
 }
 
 /**
- * Hook to mark notifications as read
+ * Hook to mark notifications as read.
+ * trainerId is no longer required — backend resolves from JWT.
  */
 export function useMarkNotificationsRead() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({
-      trainerId,
       data,
     }: {
-      trainerId: UUID;
       data: MarkNotificationsReadRequest;
-    }) => markNotificationsRead(trainerId, data),
-    onSuccess: (_, { trainerId }) => {
-      // Invalidate notification lists
+    }) => markNotificationsRead(data),
+    onSuccess: () => {
+      // Invalidate all notification queries (lists + unread count)
       queryClient.invalidateQueries({
         queryKey: trainerPortalKeys.notifications(),
-      });
-      // Invalidate unread count
-      queryClient.invalidateQueries({
-        queryKey: trainerPortalKeys.unreadCount(trainerId),
       });
       // Invalidate dashboard
       queryClient.invalidateQueries({
@@ -468,7 +465,8 @@ export function useMarkNotificationsRead() {
 }
 
 /**
- * Hook to mark single notification as read
+ * Hook to mark single notification as read.
+ * trainerId is no longer required — backend resolves from JWT.
  */
 export function useMarkNotificationRead() {
   const queryClient = useQueryClient();
@@ -476,19 +474,13 @@ export function useMarkNotificationRead() {
   return useMutation({
     mutationFn: ({
       notificationId,
-      trainerId,
     }: {
       notificationId: UUID;
-      trainerId: UUID;
-    }) => markNotificationRead(notificationId, trainerId),
-    onSuccess: (_, { trainerId }) => {
-      // Invalidate notification lists
+    }) => markNotificationRead(notificationId),
+    onSuccess: () => {
+      // Invalidate all notification queries (lists + unread count)
       queryClient.invalidateQueries({
         queryKey: trainerPortalKeys.notifications(),
-      });
-      // Invalidate unread count
-      queryClient.invalidateQueries({
-        queryKey: trainerPortalKeys.unreadCount(trainerId),
       });
       // Invalidate dashboard
       queryClient.invalidateQueries({
@@ -499,21 +491,18 @@ export function useMarkNotificationRead() {
 }
 
 /**
- * Hook to mark all notifications as read
+ * Hook to mark all notifications as read.
+ * trainerId is no longer required — backend resolves from JWT.
  */
 export function useMarkAllNotificationsRead() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (trainerId: UUID) => markAllNotificationsRead(trainerId),
-    onSuccess: (_, trainerId) => {
-      // Invalidate notification lists
+    mutationFn: () => markAllNotificationsRead(),
+    onSuccess: () => {
+      // Invalidate all notification queries (lists + unread count)
       queryClient.invalidateQueries({
         queryKey: trainerPortalKeys.notifications(),
-      });
-      // Invalidate unread count
-      queryClient.invalidateQueries({
-        queryKey: trainerPortalKeys.unreadCount(trainerId),
       });
       // Invalidate dashboard
       queryClient.invalidateQueries({
@@ -524,7 +513,8 @@ export function useMarkAllNotificationsRead() {
 }
 
 /**
- * Hook to delete a notification
+ * Hook to delete a notification.
+ * trainerId is no longer required — backend resolves from JWT.
  */
 export function useDeleteNotification() {
   const queryClient = useQueryClient();
@@ -532,19 +522,13 @@ export function useDeleteNotification() {
   return useMutation({
     mutationFn: ({
       notificationId,
-      trainerId,
     }: {
       notificationId: UUID;
-      trainerId: UUID;
-    }) => deleteNotification(notificationId, trainerId),
-    onSuccess: (_, { trainerId }) => {
-      // Invalidate notification lists
+    }) => deleteNotification(notificationId),
+    onSuccess: () => {
+      // Invalidate all notification queries (lists + unread count)
       queryClient.invalidateQueries({
         queryKey: trainerPortalKeys.notifications(),
-      });
-      // Invalidate unread count
-      queryClient.invalidateQueries({
-        queryKey: trainerPortalKeys.unreadCount(trainerId),
       });
       // Invalidate dashboard
       queryClient.invalidateQueries({
@@ -555,23 +539,22 @@ export function useDeleteNotification() {
 }
 
 /**
- * Hook to update trainer availability
+ * Hook to update trainer availability.
+ * trainerId is no longer required — backend resolves from JWT.
  */
 export function useUpdateTrainerAvailability() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({
-      trainerId,
       data,
     }: {
-      trainerId: UUID;
       data: UpdateAvailabilityRequest;
-    }) => updateTrainerAvailability(trainerId, data),
-    onSuccess: (_, { trainerId }) => {
+    }) => updateTrainerAvailability(data),
+    onSuccess: () => {
       // Invalidate schedule
       queryClient.invalidateQueries({
-        queryKey: trainerPortalKeys.scheduleDetail(trainerId),
+        queryKey: trainerPortalKeys.schedule(),
       });
       // Invalidate dashboard
       queryClient.invalidateQueries({
@@ -582,20 +565,19 @@ export function useUpdateTrainerAvailability() {
 }
 
 /**
- * Hook to create a certification
+ * Hook to create a certification.
+ * trainerId is no longer required — backend resolves from JWT.
  */
 export function useCreateCertification() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({
-      trainerId,
       data,
     }: {
-      trainerId: UUID;
       data: CreateCertificationRequest;
-    }) => createTrainerCertification(trainerId, data),
-    onSuccess: (_, { trainerId }) => {
+    }) => createTrainerCertification(data),
+    onSuccess: () => {
       // Invalidate certification lists
       queryClient.invalidateQueries({
         queryKey: trainerPortalKeys.certifications(),

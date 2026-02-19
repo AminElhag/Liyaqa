@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liyaqa — Pricing Proposal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & Base ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #FF6B4A;
+      --primary-hover: #E85D3A;
+      --primary-light: #FF6B4A1a;
+      --primary-tint: #FFF5F2;
+      --success: #22c55e;
+      --success-light: #dcfce7;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --purple: #8b5cf6;
+      --purple-light: #ede9fe;
+      --white: #FFFFFF;
+      --gray-50: #F8FAFC;
+      --gray-100: #F1F5F9;
+      --gray-200: #E2E8F0;
+      --gray-300: #CBD5E1;
+      --gray-400: #94A3B8;
+      --gray-500: #64748B;
+      --gray-600: #475569;
+      --gray-700: #334155;
+      --gray-800: #1E293B;
+      --gray-900: #0F172A;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 28px;
+    }
+
+    html { font-size: 16px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', 'Cairo', sans-serif;
+      color: var(--gray-900);
+      background: linear-gradient(to bottom, var(--gray-50), var(--white));
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Utility ──────────────────────────────────────── */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+    .text-center { text-align: center; }
+
+    /* ── Header / Nav ─────────────────────────────────── */
+    .nav {
+      border-bottom: 1px solid var(--gray-200);
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      text-decoration: none;
+    }
+
+    .nav-logo span { color: var(--primary); }
+
+    .nav-contact {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-link {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      text-decoration: none;
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius-sm);
+      transition: color 0.15s;
+    }
+
+    .nav-link:hover { color: var(--gray-900); }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--white);
+      background: var(--primary);
+      padding: 0.5rem 1.25rem;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      transition: background 0.15s;
+      border: none;
+      cursor: pointer;
+    }
+
+    .nav-btn:hover { background: var(--primary-hover); }
+
+    /* ── Hero Section ─────────────────────────────────── */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 5rem 2rem 4rem;
+      text-align: center;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,107,74,0.05) 0%, transparent 50%, rgba(255,107,74,0.08) 100%);
+      pointer-events: none;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: -10rem;
+      right: -10rem;
+      width: 20rem;
+      height: 20rem;
+      border-radius: 50%;
+      background: rgba(255,107,74,0.08);
+      filter: blur(80px);
+      pointer-events: none;
+    }
+
+    .hero-content { position: relative; z-index: 1; }
+
+    .hero-badge {
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-tint);
+      padding: 0.4rem 1.25rem;
+      border-radius: 100px;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(255,107,74,0.15);
+    }
+
+    .hero-title {
+      font-size: 2.75rem;
+      font-weight: 700;
+      line-height: 1.15;
+      max-width: 700px;
+      margin: 0 auto 1rem;
+      color: var(--gray-900);
+    }
+
+    .hero-title-highlight {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-desc {
+      font-size: 1.125rem;
+      color: var(--gray-500);
+      max-width: 600px;
+      margin: 0 auto 2rem;
+      line-height: 1.7;
+    }
+
+    .hero-note {
+      font-size: 0.875rem;
+      color: var(--gray-400);
+      margin-top: 0.5rem;
+    }
+
+    /* ── Section Common ──────────────────────────────── */
+    .section { padding: 4.5rem 2rem; }
+    .section-alt { background: var(--gray-50); }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .section-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--primary);
+      background: var(--primary-tint);
+      padding: 0.35rem 1rem;
+      border-radius: 100px;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(255,107,74,0.12);
+    }
+
+    .section-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 0.75rem;
+    }
+
+    .section-desc {
+      font-size: 1.05rem;
+      color: var(--gray-500);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* ── Pricing Cards ───────────────────────────────── */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      align-items: start;
+    }
+
+    .pricing-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      position: relative;
+      transition: box-shadow 0.2s;
+    }
+
+    .pricing-card:hover { box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08); }
+
+    .pricing-card.featured {
+      border: 2px solid var(--primary);
+      box-shadow: 0 20px 60px rgba(255, 107, 74, 0.12);
+      transform: scale(1.03);
+    }
+
+    .card-badge {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--primary);
+      color: var(--white);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.35rem 1.25rem;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .card-icon.starter { background: var(--success-light); color: var(--success); }
+    .card-icon.pro { background: var(--warning-light); color: var(--warning); }
+    .card-icon.enterprise { background: var(--purple-light); color: var(--purple); }
+
+    .card-plan-name {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 0.25rem;
+    }
+
+    .card-plan-target {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      margin-bottom: 1.25rem;
+    }
+
+    .card-price {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .price-amount {
+      font-size: 2.75rem;
+      font-weight: 800;
+      color: var(--gray-900);
+      line-height: 1;
+    }
+
+    .price-currency {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      margin-inline-start: 0.25rem;
+    }
+
+    .price-period {
+      font-size: 0.85rem;
+      color: var(--gray-400);
+      font-weight: 500;
+    }
+
+    .price-usd {
+      font-size: 0.9rem;
+      color: var(--gray-400);
+      margin-top: 0.25rem;
+    }
+
+    .card-features { list-style: none; margin-bottom: 1.5rem; }
+
+    .card-features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      font-size: 0.88rem;
+      color: var(--gray-600);
+      padding: 0.35rem 0;
+      line-height: 1.4;
+    }
+
+    .card-features li .check {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      margin-top: 1px;
+    }
+
+    .check.green { background: var(--success-light); color: var(--success); }
+    .check.amber { background: var(--warning-light); color: var(--warning); }
+    .check.purple { background: var(--purple-light); color: var(--purple); }
+
+    .card-includes {
+      font-size: 0.8rem;
+      color: var(--primary);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .card-cta {
+      display: block;
+      width: 100%;
+      padding: 0.85rem 1.5rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .cta-primary {
+      background: var(--primary);
+      color: var(--white);
+    }
+
+    .cta-primary:hover { background: var(--primary-hover); box-shadow: 0 8px 24px rgba(255, 107, 74, 0.3); }
+
+    .cta-outline {
+      background: transparent;
+      color: var(--gray-900);
+      border: 2px solid var(--gray-200);
+    }
+
+    .cta-outline:hover { border-color: var(--primary); color: var(--primary); }
+
+    .cta-dark {
+      background: var(--gray-900);
+      color: var(--white);
+    }
+
+    .cta-dark:hover { background: var(--gray-800); }
+
+    /* ── Comparison Table ─────────────────────────────── */
+    .comparison-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .comparison-table thead th {
+      background: var(--gray-900);
+      color: var(--white);
+      font-weight: 600;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .comparison-table thead th:first-child {
+      text-align: start;
+      border-radius: var(--radius-sm) 0 0 0;
+    }
+
+    .comparison-table thead th:last-child { border-radius: 0 var(--radius-sm) 0 0; }
+
+    .comparison-table thead th.highlight {
+      background: var(--primary);
+    }
+
+    .comparison-table tbody td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--gray-100);
+      text-align: center;
+      color: var(--gray-600);
+    }
+
+    .comparison-table tbody td:first-child {
+      text-align: start;
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .comparison-table tbody td.highlight-col {
+      background: rgba(255, 107, 74, 0.03);
+    }
+
+    .comparison-table tbody tr:hover td { background: var(--gray-50); }
+    .comparison-table tbody tr:hover td.highlight-col { background: rgba(255, 107, 74, 0.06); }
+
+    .comparison-table .category-row td {
+      background: var(--gray-100);
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--gray-500);
+      padding: 0.6rem 1rem;
+    }
+
+    .tick { color: var(--success); font-weight: 700; font-size: 1.1rem; }
+    .cross { color: var(--gray-300); font-size: 1rem; }
+    .text-val { color: var(--gray-600); font-weight: 500; font-size: 0.82rem; }
+
+    /* ── Included Section ─────────────────────────────── */
+    .included-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .included-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .included-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      background: var(--primary-tint);
+      color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .included-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 0.35rem;
+    }
+
+    .included-desc {
+      font-size: 0.8rem;
+      color: var(--gray-500);
+      line-height: 1.5;
+    }
+
+    /* ── Add-ons ──────────────────────────────────────── */
+    .addons-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .addon-card {
+      background: var(--white);
+      border: 1px dashed var(--gray-300);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .addon-price {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--gray-900);
+      margin-bottom: 0.15rem;
+    }
+
+    .addon-price-sub {
+      font-size: 0.8rem;
+      color: var(--gray-400);
+      margin-bottom: 0.75rem;
+    }
+
+    .addon-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 0.25rem;
+    }
+
+    .addon-desc {
+      font-size: 0.82rem;
+      color: var(--gray-500);
+      line-height: 1.5;
+    }
+
+    /* ── FAQ ───────────────────────────────────────────── */
+    .faq-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .faq-item {
+      padding: 1.5rem;
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+    }
+
+    .faq-question {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 0.5rem;
+    }
+
+    .faq-answer {
+      font-size: 0.88rem;
+      color: var(--gray-500);
+      line-height: 1.6;
+    }
+
+    /* ── Volume Discount Banner ────────────────────────── */
+    .volume-banner {
+      background: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-800) 100%);
+      color: var(--white);
+      padding: 2rem;
+      border-radius: var(--radius-lg);
+      text-align: center;
+      max-width: 800px;
+      margin: 2.5rem auto 0;
+    }
+
+    .volume-banner-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .volume-banner-desc {
+      font-size: 0.95rem;
+      color: var(--gray-300);
+    }
+
+    .volume-banner .highlight { color: var(--primary); font-weight: 700; }
+
+    /* ── CTA Section ──────────────────────────────────── */
+    .cta-section {
+      padding: 5rem 2rem;
+    }
+
+    .cta-box {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius-xl);
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      padding: 3rem 2rem;
+      text-align: center;
+      color: var(--white);
+    }
+
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      top: -6rem;
+      right: -6rem;
+      width: 12rem;
+      height: 12rem;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      filter: blur(40px);
+      pointer-events: none;
+    }
+
+    .cta-box::after {
+      content: '';
+      position: absolute;
+      bottom: -6rem;
+      left: -6rem;
+      width: 12rem;
+      height: 12rem;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      filter: blur(40px);
+      pointer-events: none;
+    }
+
+    .cta-box > * { position: relative; z-index: 1; }
+
+    .cta-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .cta-desc {
+      font-size: 1.05rem;
+      color: rgba(255,255,255,0.8);
+      max-width: 500px;
+      margin: 0 auto 2rem;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .cta-btn-white {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--white);
+      padding: 0.75rem 2rem;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      transition: all 0.15s;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .cta-btn-white:hover { background: rgba(255,255,255,0.9); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+
+    .cta-btn-outline-white {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--white);
+      background: transparent;
+      padding: 0.75rem 2rem;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      transition: all 0.15s;
+      border: 2px solid rgba(255,255,255,0.4);
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .cta-btn-outline-white:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.6); }
+
+    /* ── Footer ────────────────────────────────────────── */
+    .footer {
+      border-top: 1px solid var(--gray-200);
+      background: var(--gray-50);
+      padding: 2.5rem 2rem;
+      text-align: center;
+    }
+
+    .footer-contact {
+      font-size: 0.9rem;
+      color: var(--gray-500);
+      margin-bottom: 0.5rem;
+    }
+
+    .footer-contact a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .footer-contact a:hover { text-decoration: underline; }
+
+    .footer-copy {
+      font-size: 0.8rem;
+      color: var(--gray-400);
+      margin-top: 1rem;
+    }
+
+    /* WhatsApp icon */
+    .wa-icon {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      vertical-align: middle;
+      margin-inline-end: 0.35rem;
+    }
+
+    /* ── Print Footer ─────────────────────────────────── */
+    .print-footer {
+      display: none;
+    }
+
+    /* ── Print Styles ─────────────────────────────────── */
+    @media print {
+      @page {
+        size: A4;
+        margin: 20mm 15mm 25mm 15mm;
+      }
+      @page :first {
+        margin-top: 10mm;
+      }
+
+      html { font-size: 11px; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; }
+
+      /* Hide web-only elements */
+      .nav { display: none !important; }
+      .cta-section { display: none !important; }
+      .card-cta { display: none !important; }
+
+      /* Section spacing */
+      .hero { padding: 2.5rem 1.5rem 2rem; }
+      .section { padding: 2rem 1.5rem; }
+
+      /* Page breaks */
+      .section-alt { break-before: page; }
+      .pricing-card { break-inside: avoid; }
+      .pricing-card.featured { transform: none; }
+      .pricing-card:hover { box-shadow: none; }
+      .faq-item, .addon-card, .included-card { break-inside: avoid; }
+
+      /* Table */
+      .comparison-table { font-size: 0.78rem; }
+      .comparison-table thead th { padding: 0.6rem; }
+      .comparison-table tbody td { padding: 0.5rem 0.6rem; }
+
+      /* Grids */
+      .included-grid { grid-template-columns: repeat(4, 1fr); }
+      .addons-grid { grid-template-columns: repeat(3, 1fr); }
+      .faq-grid { grid-template-columns: repeat(2, 1fr); }
+
+      /* Links */
+      a { text-decoration: none !important; }
+
+      /* Remove decorative backgrounds */
+      .hero::before, .hero::after { display: none; }
+
+      /* Footer as document footer */
+      .footer {
+        border-top: 2px solid var(--gray-200);
+        background: none;
+        padding: 1.5rem 2rem;
+        margin-top: 2rem;
+      }
+
+      /* Print footer */
+      .print-footer {
+        display: block;
+        text-align: center;
+        padding: 1rem 2rem;
+        font-size: 0.75rem;
+        color: var(--gray-400);
+        border-top: 1px solid var(--gray-200);
+      }
+    }
+
+    /* ── Responsive ────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .pricing-grid { grid-template-columns: 1fr; max-width: 420px; }
+      .pricing-card.featured { transform: none; }
+      .included-grid { grid-template-columns: repeat(2, 1fr); }
+      .addons-grid { grid-template-columns: 1fr; max-width: 380px; }
+      .faq-grid { grid-template-columns: 1fr; }
+      .cta-buttons { flex-direction: column; align-items: center; }
+    }
+
+    @media (max-width: 600px) {
+      .hero { padding: 3rem 1.25rem 2rem; }
+      .hero-title { font-size: 1.75rem; }
+      .section { padding: 2.5rem 1.25rem; }
+      .section-title { font-size: 1.5rem; }
+      .included-grid { grid-template-columns: 1fr; }
+      .nav-link { display: none; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ═══════════ NAV ═══════════ -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">Liyaqa<span>.</span></a>
+      <div class="nav-contact">
+        <a href="mailto:liyaqasaas@gmail.com" class="nav-link">liyaqasaas@gmail.com</a>
+        <a href="https://wa.me/249119285991" class="nav-btn" target="_blank" rel="noopener noreferrer">
+          <svg class="wa-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Contact Us
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════ HERO ═══════════ -->
+  <header class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">Pricing Proposal</div>
+      <h1 class="hero-title">
+        Simple, transparent pricing<br>
+        <span class="hero-title-highlight">for every facility size</span>
+      </h1>
+      <p class="hero-desc">Choose the plan that fits your gym. No hidden fees, no long-term contracts. Scale up or down anytime.</p>
+      <p class="hero-note">Per facility, billed monthly. All prices exclude 15% VAT.</p>
+      <div style="margin-top:1.5rem;display:inline-block;background:linear-gradient(135deg,#FF6B4A,#E85D3A);color:#fff;padding:0.75rem 2rem;border-radius:100px;font-size:0.95rem;font-weight:600;">
+        We appreciate the challenges of starting out, so we have special offers for new clubs. Contact us to learn more about our new club offers.
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════ PRICING CARDS ═══════════ -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">Plans</span>
+        <h2 class="section-title">Choose your plan</h2>
+        <p class="section-desc">Per facility, billed monthly. Annual billing available with 2 months free.</p>
+      </div>
+
+      <div style="max-width:800px;margin:0 auto 2rem;background:linear-gradient(135deg,#FF6B4A,#E85D3A);color:#fff;padding:1rem 2rem;border-radius:var(--radius-md);text-align:center;font-size:0.95rem;font-weight:500;">
+        We appreciate the challenges of starting out, so we have special offers for new clubs. Contact us to learn more about our new club offers.
+      </div>
+
+      <div class="pricing-grid">
+
+        <!-- ── Starter ────────── -->
+        <div class="pricing-card">
+          <div class="card-icon starter">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </div>
+          <h3 class="card-plan-name">Starter</h3>
+          <p class="card-plan-target">Single-location studios &amp; small gyms, up to 200 members</p>
+          <div class="card-price">
+            <div>
+              <span class="price-currency">$</span><span class="price-amount">99</span>
+              <span class="price-period">/ facility / month</span>
+            </div>
+            <div class="price-usd">~371 SAR</div>
+          </div>
+          <ul class="card-features">
+            <li><span class="check green">&#10003;</span>Member management (profiles, notes, attendance)</li>
+            <li><span class="check green">&#10003;</span>Class &amp; appointment scheduling</li>
+            <li><span class="check green">&#10003;</span>Online booking widget</li>
+            <li><span class="check green">&#10003;</span>Basic billing &amp; invoicing (MADA, Visa/MC)</li>
+            <li><span class="check green">&#10003;</span>Digital waivers &amp; contracts</li>
+            <li><span class="check green">&#10003;</span>Basic reporting (attendance, revenue)</li>
+            <li><span class="check green">&#10003;</span>Email notifications (transactional)</li>
+            <li><span class="check green">&#10003;</span>Mobile app access (Liyaqa shared app)</li>
+            <li><span class="check green">&#10003;</span>Arabic + English UI</li>
+            <li><span class="check green">&#10003;</span>500 SMS / month included</li>
+            <li><span class="check green">&#10003;</span>Email support (business hours)</li>
+          </ul>
+          <a class="card-cta cta-outline" href="https://wa.me/249119285991" target="_blank" rel="noopener noreferrer">Contact Us</a>
+        </div>
+
+        <!-- ── Professional ───── -->
+        <div class="pricing-card featured">
+          <span class="card-badge">Most Popular</span>
+          <div class="card-icon pro">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <h3 class="card-plan-name">Professional</h3>
+          <p class="card-plan-target">Growing gyms, 200 &ndash; 1,000 members, multi-staff</p>
+          <div class="card-price">
+            <div>
+              <span class="price-currency">$</span><span class="price-amount">249</span>
+              <span class="price-period">/ facility / month</span>
+            </div>
+            <div class="price-usd">~934 SAR</div>
+          </div>
+          <p class="card-includes">Everything in Starter, plus:</p>
+          <ul class="card-features">
+            <li><span class="check amber">&#10003;</span>Lead management &amp; CRM pipeline</li>
+            <li><span class="check amber">&#10003;</span>Marketing automation (email campaigns)</li>
+            <li><span class="check amber">&#10003;</span>Advanced scheduling (waitlists, recurring)</li>
+            <li><span class="check amber">&#10003;</span>Staff management (roles, permissions, scheduling)</li>
+            <li><span class="check amber">&#10003;</span>Family &amp; group billing</li>
+            <li><span class="check amber">&#10003;</span>Advanced analytics dashboard</li>
+            <li><span class="check amber">&#10003;</span>WhatsApp booking reminders</li>
+            <li><span class="check amber">&#10003;</span>Inventory &amp; POS management</li>
+            <li><span class="check amber">&#10003;</span>Integration support (Zapier, webhooks)</li>
+            <li><span class="check amber">&#10003;</span>2,000 SMS / month included</li>
+            <li><span class="check amber">&#10003;</span>Gender-segregated facility management</li>
+            <li><span class="check amber">&#10003;</span>Priority email + chat support</li>
+          </ul>
+          <a class="card-cta cta-primary" href="https://wa.me/249119285991" target="_blank" rel="noopener noreferrer">Contact Us</a>
+        </div>
+
+        <!-- ── Enterprise ─────── -->
+        <div class="pricing-card">
+          <div class="card-icon enterprise">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </div>
+          <h3 class="card-plan-name">Enterprise</h3>
+          <p class="card-plan-target">Multi-location chains, 1,000+ members per location</p>
+          <div class="card-price">
+            <div>
+              <span class="price-currency">$</span><span class="price-amount">459</span>
+              <span class="price-period">/ facility / month</span>
+            </div>
+            <div class="price-usd">~1,722 SAR</div>
+          </div>
+          <p class="card-includes">Everything in Professional, plus:</p>
+          <ul class="card-features">
+            <li><span class="check purple">&#10003;</span>Branded white-label mobile app</li>
+            <li><span class="check purple">&#10003;</span>Multi-location HQ dashboard</li>
+            <li><span class="check purple">&#10003;</span>Custom API access</li>
+            <li><span class="check purple">&#10003;</span>Unlimited workflow automation</li>
+            <li><span class="check purple">&#10003;</span>Custom report builder</li>
+            <li><span class="check purple">&#10003;</span>Referral &amp; loyalty programs</li>
+            <li><span class="check purple">&#10003;</span>5,000 SMS / month included</li>
+            <li><span class="check purple">&#10003;</span>WhatsApp Business integration (full)</li>
+            <li><span class="check purple">&#10003;</span>Dedicated account manager</li>
+            <li><span class="check purple">&#10003;</span>Custom integrations</li>
+            <li><span class="check purple">&#10003;</span>SLA guarantee (99.9% uptime)</li>
+          </ul>
+          <a class="card-cta cta-dark" href="https://wa.me/249119285991" target="_blank" rel="noopener noreferrer">Contact Sales</a>
+        </div>
+
+      </div>
+
+      <!-- Volume Discount -->
+      <div class="volume-banner">
+        <div class="volume-banner-title">Multi-Location Discount</div>
+        <p class="volume-banner-desc">Enterprise plan customers with <span class="highlight">3+ locations</span> receive a <span class="highlight">15% discount</span> on every facility. Contact our sales team for a custom quote.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════ FEATURE COMPARISON TABLE ═══════════ -->
+  <section class="section section-alt">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">Compare</span>
+        <h2 class="section-title">Full feature comparison</h2>
+        <p class="section-desc">See exactly what's included in each plan.</p>
+      </div>
+
+      <div class="comparison-wrapper">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th style="width:40%">Feature</th>
+              <th style="width:20%">Starter</th>
+              <th style="width:20%" class="highlight">Professional</th>
+              <th style="width:20%">Enterprise</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Pricing -->
+            <tr class="category-row"><td colspan="4">Pricing</td></tr>
+            <tr>
+              <td>Monthly price (USD / facility)</td>
+              <td><span class="text-val">$99</span></td>
+              <td class="highlight-col"><span class="text-val">$249</span></td>
+              <td><span class="text-val">$459</span></td>
+            </tr>
+            <tr>
+              <td>Monthly price (SAR / facility)</td>
+              <td><span class="text-val">~371 SAR</span></td>
+              <td class="highlight-col"><span class="text-val">~934 SAR</span></td>
+              <td><span class="text-val">~1,722 SAR</span></td>
+            </tr>
+
+            <!-- Member Management -->
+            <tr class="category-row"><td colspan="4">Member Management</td></tr>
+            <tr>
+              <td>Member profiles, notes &amp; attendance</td>
+              <td><span class="tick">&#10003;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Digital waivers &amp; contracts</td>
+              <td><span class="tick">&#10003;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Family &amp; group billing</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Referral &amp; loyalty programs</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="cross">&mdash;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+
+            <!-- Scheduling -->
+            <tr class="category-row"><td colspan="4">Scheduling</td></tr>
+            <tr>
+              <td>Class &amp; appointment scheduling</td>
+              <td><span class="tick">&#10003;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Online booking widget</td>
+              <td><span class="tick">&#10003;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Waitlists, recurring &amp; resource management</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Gender-segregated facility management</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+
+            <!-- Billing & Payments -->
+            <tr class="category-row"><td colspan="4">Billing &amp; Payments</td></tr>
+            <tr>
+              <td>MADA, Visa/MC via Tap Payments</td>
+              <td><span class="tick">&#10003;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Invoicing</td>
+              <td><span class="text-val">Basic</span></td>
+              <td class="highlight-col"><span class="text-val">Advanced</span></td>
+              <td><span class="text-val">Advanced</span></td>
+            </tr>
+            <tr>
+              <td>Inventory &amp; POS management</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+
+            <!-- CRM & Marketing -->
+            <tr class="category-row"><td colspan="4">CRM &amp; Marketing</td></tr>
+            <tr>
+              <td>Lead management &amp; CRM pipeline</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Marketing automation (email campaigns)</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+
+            <!-- Staff -->
+            <tr class="category-row"><td colspan="4">Staff Management</td></tr>
+            <tr>
+              <td>Staff roles, permissions &amp; scheduling</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+
+            <!-- Reporting -->
+            <tr class="category-row"><td colspan="4">Analytics &amp; Reporting</td></tr>
+            <tr>
+              <td>Basic reporting (attendance, revenue)</td>
+              <td><span class="tick">&#10003;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Advanced analytics dashboard</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Custom report builder</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="cross">&mdash;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+
+            <!-- Communications -->
+            <tr class="category-row"><td colspan="4">Communications</td></tr>
+            <tr>
+              <td>Email notifications (transactional)</td>
+              <td><span class="tick">&#10003;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>SMS included per month</td>
+              <td><span class="text-val">500</span></td>
+              <td class="highlight-col"><span class="text-val">2,000</span></td>
+              <td><span class="text-val">5,000</span></td>
+            </tr>
+            <tr>
+              <td>WhatsApp booking reminders</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>WhatsApp Business integration (full)</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="cross">&mdash;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+
+            <!-- Apps & Integrations -->
+            <tr class="category-row"><td colspan="4">Apps &amp; Integrations</td></tr>
+            <tr>
+              <td>Mobile app access (Liyaqa shared app)</td>
+              <td><span class="tick">&#10003;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Branded white-label mobile app</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="text-val">Add-on</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Integration support (Zapier, webhooks)</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Custom API access</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="cross">&mdash;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Custom integrations</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="cross">&mdash;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+
+            <!-- Platform -->
+            <tr class="category-row"><td colspan="4">Platform &amp; Operations</td></tr>
+            <tr>
+              <td>Arabic + English UI</td>
+              <td><span class="tick">&#10003;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Multi-location HQ dashboard</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="cross">&mdash;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Unlimited workflow automation</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="cross">&mdash;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+
+            <!-- Support -->
+            <tr class="category-row"><td colspan="4">Support</td></tr>
+            <tr>
+              <td>Email support (business hours)</td>
+              <td><span class="tick">&#10003;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Priority email + chat support</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="tick">&#10003;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Dedicated account manager</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="cross">&mdash;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>SLA guarantee (99.9% uptime)</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="cross">&mdash;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+            <tr>
+              <td>Multi-location discount (15% on 3+ locations)</td>
+              <td><span class="cross">&mdash;</span></td>
+              <td class="highlight-col"><span class="cross">&mdash;</span></td>
+              <td><span class="tick">&#10003;</span></td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ WHAT'S INCLUDED ═══════════ -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">Included</span>
+        <h2 class="section-title">What's included in every plan</h2>
+        <p class="section-desc">No extra charges for infrastructure. We handle it all so you can focus on your business.</p>
+      </div>
+
+      <div class="included-grid">
+        <div class="included-card">
+          <div class="included-icon">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="18" height="18" rx="2"/><path d="M6 6h.01M10 6h.01M6 10h.01"/></svg>
+          </div>
+          <div class="included-title">Saudi Cloud Hosting</div>
+          <div class="included-desc">GCP Dammam data center. Your data stays in Saudi Arabia, NDMO compliant.</div>
+        </div>
+        <div class="included-card">
+          <div class="included-icon">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="included-title">Security &amp; SSL</div>
+          <div class="included-desc">SSL encryption, DDoS protection, and automatic security updates at no extra cost.</div>
+        </div>
+        <div class="included-card">
+          <div class="included-icon">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div class="included-title">Automatic Backups</div>
+          <div class="included-desc">Daily backups with disaster recovery. Your data is always safe and recoverable.</div>
+        </div>
+        <div class="included-card">
+          <div class="included-icon">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="20" height="16" rx="2"/><path d="M1 10h20"/></svg>
+          </div>
+          <div class="included-title">Payment Processing</div>
+          <div class="included-desc">MADA + Visa/Mastercard via Tap Payments. Lowest fees in Saudi Arabia.</div>
+        </div>
+        <div class="included-card">
+          <div class="included-icon">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <div class="included-title">Unlimited Emails</div>
+          <div class="included-desc">Transactional emails (confirmations, reminders, receipts) at no per-message cost.</div>
+        </div>
+        <div class="included-card">
+          <div class="included-icon">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+          </div>
+          <div class="included-title">Free Updates</div>
+          <div class="included-desc">All software updates, new features, and improvements included automatically.</div>
+        </div>
+        <div class="included-card">
+          <div class="included-icon">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <div class="included-title">VAT Compliant</div>
+          <div class="included-desc">15% VAT compliant billing and invoicing built-in. ZATCA e-invoicing ready.</div>
+        </div>
+        <div class="included-card">
+          <div class="included-icon">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+          </div>
+          <div class="included-title">Data Residency</div>
+          <div class="included-desc">All data stored in Saudi Arabia. Full NDMO and NCA compliance for data sovereignty.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ ADD-ONS ═══════════ -->
+  <section class="section section-alt">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">Add-ons</span>
+        <h2 class="section-title">Optional add-ons</h2>
+        <p class="section-desc">Extend your plan with additional capabilities.</p>
+      </div>
+
+      <div class="addons-grid">
+        <div class="addon-card">
+          <div class="addon-price">55 <span style="font-size:0.6em;font-weight:600;color:var(--gray-500)">SAR/mo</span></div>
+          <div class="addon-price-sub">~$15 USD</div>
+          <div class="addon-name">Extra SMS Bundle</div>
+          <div class="addon-desc">1,000 additional SMS messages per month via Unifonic. Saudi local delivery.</div>
+        </div>
+        <div class="addon-card">
+          <div class="addon-price">299 <span style="font-size:0.6em;font-weight:600;color:var(--gray-500)">SAR/mo</span></div>
+          <div class="addon-price-sub">~$80 USD</div>
+          <div class="addon-name">Branded Mobile App</div>
+          <div class="addon-desc">Your own branded iOS &amp; Android app. Available for Professional plan customers.</div>
+        </div>
+        <div class="addon-card">
+          <div class="addon-price" style="font-size:1.2rem;padding-top:0.3rem;">Usage-based</div>
+          <div class="addon-price-sub">billed monthly</div>
+          <div class="addon-name">Extra WhatsApp Messages</div>
+          <div class="addon-desc">Additional WhatsApp Business API messages beyond your plan's included allowance.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ FAQ ═══════════ -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">FAQ</span>
+        <h2 class="section-title">Frequently asked questions</h2>
+      </div>
+
+      <div class="faq-grid">
+        <div class="faq-item">
+          <div class="faq-question">Are there any setup fees?</div>
+          <div class="faq-answer">No setup fees. You can start using Liyaqa immediately after signing up. Our onboarding team will help you migrate your existing data at no extra cost.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">Is there a long-term contract?</div>
+          <div class="faq-answer">No long-term contracts. All plans are month-to-month. We also offer annual billing with 2 months free. You can cancel or change plans anytime.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">Is VAT included in the prices shown?</div>
+          <div class="faq-answer">Prices shown are exclusive of 15% VAT. VAT will be added to your invoice as required by ZATCA regulations. All invoices are e-invoicing compliant.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">Can I upgrade or downgrade my plan?</div>
+          <div class="faq-answer">Yes, you can change your plan at any time. Upgrades take effect immediately with prorated billing. Downgrades take effect at the start of the next billing cycle.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">What happens if I exceed my SMS limit?</div>
+          <div class="faq-answer">You'll be notified when you reach 80% of your SMS allowance. Additional SMS can be purchased in bundles of 1,000 for 55 SAR/month.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">How is payment processing handled?</div>
+          <div class="faq-answer">We use Tap Payments, the leading payment gateway in Saudi Arabia. MADA transactions are 1% and international cards are 2.85%. Gateway fees are separate from your Liyaqa subscription.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">Do you support data migration?</div>
+          <div class="faq-answer">Yes. Our onboarding team will help you migrate member data, schedules, and billing history from your current system at no additional cost for all plans.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">Where is my data stored?</div>
+          <div class="faq-answer">All data is stored in Google Cloud's Dammam region within Saudi Arabia. We are fully compliant with NDMO data residency requirements and NCA cybersecurity standards.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ CTA ═══════════ -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-box">
+        <h2 class="cta-title">Ready to Transform Your Gym?</h2>
+        <p class="cta-desc">Join hundreds of Saudi fitness businesses already using Liyaqa to grow their membership and streamline operations.</p>
+        <div class="cta-buttons">
+          <a href="https://wa.me/249119285991" class="cta-btn-white" target="_blank" rel="noopener noreferrer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Contact Us on WhatsApp
+          </a>
+          <a href="mailto:liyaqasaas@gmail.com" class="cta-btn-outline-white">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Email Us
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ FOOTER ═══════════ -->
+  <footer class="footer">
+    <p class="footer-contact">
+      <a href="mailto:liyaqasaas@gmail.com">liyaqasaas@gmail.com</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://wa.me/249119285991" target="_blank" rel="noopener noreferrer">WhatsApp: +249 119 285 991</a>
+    </p>
+    <div class="footer-copy">&copy; 2026 Liyaqa. All rights reserved. Prices valid as of February 2026. All prices are in US Dollars (USD) and exclude 15% VAT.</div>
+  </footer>
+
+  <div class="print-footer">Liyaqa Pricing Proposal &mdash; February 2026 &mdash; Confidential</div>
+
+</body>
+</html>

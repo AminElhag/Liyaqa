@@ -208,6 +208,13 @@ class TrainerClientService(
     // ==================== QUERY OPERATIONS ====================
 
     /**
+     * Search clients for a trainer by name, email, or phone.
+     */
+    fun searchClientsForTrainer(trainerId: UUID, search: String, pageable: Pageable): Page<TrainerClient> {
+        return trainerClientRepository.searchByTrainerIdAndTerm(trainerId, search, pageable)
+    }
+
+    /**
      * Get a client relationship by ID.
      */
     fun getClient(id: UUID): TrainerClient {

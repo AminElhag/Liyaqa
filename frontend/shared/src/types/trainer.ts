@@ -169,8 +169,21 @@ export interface TrainerClubAssignment {
 /**
  * Create trainer request
  */
+/**
+ * Reset trainer password request (admin action)
+ */
+export interface ResetTrainerPasswordRequest {
+  newPassword: string;
+}
+
+/**
+ * Create trainer request
+ */
 export interface CreateTrainerRequest {
   userId?: UUID | null;
+  // Account creation fields (alternative to userId)
+  email?: string;
+  password?: string;
   organizationId: UUID;
   // Basic Info
   displayName?: {

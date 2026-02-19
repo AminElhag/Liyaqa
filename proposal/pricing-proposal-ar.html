@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لياقة — عرض الأسعار</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & Base ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #FF6B4A;
+      --primary-hover: #E85D3A;
+      --primary-light: #FF6B4A1a;
+      --primary-tint: #FFF5F2;
+      --success: #22c55e;
+      --success-light: #dcfce7;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --purple: #8b5cf6;
+      --purple-light: #ede9fe;
+      --white: #FFFFFF;
+      --gray-50: #F8FAFC;
+      --gray-100: #F1F5F9;
+      --gray-200: #E2E8F0;
+      --gray-300: #CBD5E1;
+      --gray-400: #94A3B8;
+      --gray-500: #64748B;
+      --gray-600: #475569;
+      --gray-700: #334155;
+      --gray-800: #1E293B;
+      --gray-900: #0F172A;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 28px;
+    }
+
+    html { font-size: 16px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    body {
+      font-family: 'Cairo', sans-serif;
+      color: var(--gray-900);
+      background: linear-gradient(to bottom, var(--gray-50), var(--white));
+      line-height: 1.8;
+      -webkit-font-smoothing: antialiased;
+      direction: rtl;
+    }
+
+    /* ── Utility ──────────────────────────────────────── */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+
+    /* ── Header / Nav ─────────────────────────────────── */
+    .nav {
+      border-bottom: 1px solid var(--gray-200);
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-family: 'Space Grotesk', 'Cairo', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      text-decoration: none;
+      direction: ltr;
+    }
+
+    .nav-logo span { color: var(--primary); }
+
+    .nav-contact {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-link {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      text-decoration: none;
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius-sm);
+      transition: color 0.15s;
+      direction: ltr;
+    }
+
+    .nav-link:hover { color: var(--gray-900); }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--white);
+      background: var(--primary);
+      padding: 0.5rem 1.25rem;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      transition: background 0.15s;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .nav-btn:hover { background: var(--primary-hover); }
+
+    .wa-icon {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      vertical-align: middle;
+    }
+
+    /* ── Hero Section ─────────────────────────────────── */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 5rem 2rem 4rem;
+      text-align: center;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,107,74,0.05) 0%, transparent 50%, rgba(255,107,74,0.08) 100%);
+      pointer-events: none;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: -10rem;
+      left: -10rem;
+      width: 20rem;
+      height: 20rem;
+      border-radius: 50%;
+      background: rgba(255,107,74,0.08);
+      filter: blur(80px);
+      pointer-events: none;
+    }
+
+    .hero-content { position: relative; z-index: 1; }
+
+    .hero-badge {
+      display: inline-block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-tint);
+      padding: 0.4rem 1.25rem;
+      border-radius: 100px;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(255,107,74,0.15);
+    }
+
+    .hero-title {
+      font-size: 2.75rem;
+      font-weight: 700;
+      line-height: 1.3;
+      max-width: 700px;
+      margin: 0 auto 1rem;
+      color: var(--gray-900);
+    }
+
+    .hero-title-highlight {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-desc {
+      font-size: 1.125rem;
+      color: var(--gray-500);
+      max-width: 600px;
+      margin: 0 auto 2rem;
+      line-height: 1.9;
+    }
+
+    .hero-note {
+      font-size: 0.875rem;
+      color: var(--gray-400);
+      margin-top: 0.5rem;
+    }
+
+    /* ── Section Common ──────────────────────────────── */
+    .section { padding: 4.5rem 2rem; }
+    .section-alt { background: var(--gray-50); }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .section-badge {
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--primary);
+      background: var(--primary-tint);
+      padding: 0.35rem 1rem;
+      border-radius: 100px;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(255,107,74,0.12);
+    }
+
+    .section-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 0.75rem;
+    }
+
+    .section-desc {
+      font-size: 1.05rem;
+      color: var(--gray-500);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* ── Pricing Cards ───────────────────────────────── */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      align-items: start;
+      direction: rtl;
+    }
+
+    .pricing-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      position: relative;
+      transition: box-shadow 0.2s;
+    }
+
+    .pricing-card:hover { box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08); }
+
+    .pricing-card.featured {
+      border: 2px solid var(--primary);
+      box-shadow: 0 20px 60px rgba(255, 107, 74, 0.12);
+      transform: scale(1.03);
+    }
+
+    .card-badge {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--primary);
+      color: var(--white);
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.35rem 1.25rem;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .card-icon.starter { background: var(--success-light); color: var(--success); }
+    .card-icon.pro { background: var(--warning-light); color: var(--warning); }
+    .card-icon.enterprise { background: var(--purple-light); color: var(--purple); }
+
+    .card-plan-name {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 0.25rem;
+    }
+
+    .card-plan-target {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      margin-bottom: 1.25rem;
+    }
+
+    .card-price {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.25rem;
+    }
+
+    .price-amount {
+      font-size: 2.75rem;
+      font-weight: 800;
+      color: var(--gray-900);
+      line-height: 1;
+      direction: ltr;
+      display: inline-block;
+    }
+
+    .price-currency {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-500);
+    }
+
+    .price-period {
+      font-size: 0.85rem;
+      color: var(--gray-400);
+      font-weight: 500;
+    }
+
+    .price-usd {
+      font-size: 0.9rem;
+      color: var(--gray-400);
+      margin-top: 0.25rem;
+      direction: ltr;
+      display: inline-block;
+    }
+
+    .card-features { list-style: none; margin-bottom: 1.5rem; }
+
+    .card-features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      font-size: 0.88rem;
+      color: var(--gray-600);
+      padding: 0.35rem 0;
+      line-height: 1.6;
+    }
+
+    .card-features li .check {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      margin-top: 3px;
+    }
+
+    .check.green { background: var(--success-light); color: var(--success); }
+    .check.amber { background: var(--warning-light); color: var(--warning); }
+    .check.purple { background: var(--purple-light); color: var(--purple); }
+
+    .card-includes {
+      font-size: 0.85rem;
+      color: var(--primary);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .card-cta {
+      display: block;
+      width: 100%;
+      padding: 0.85rem 1.5rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .cta-primary { background: var(--primary); color: var(--white); }
+    .cta-primary:hover { background: var(--primary-hover); box-shadow: 0 8px 24px rgba(255, 107, 74, 0.3); }
+    .cta-outline { background: transparent; color: var(--gray-900); border: 2px solid var(--gray-200); }
+    .cta-outline:hover { border-color: var(--primary); color: var(--primary); }
+    .cta-dark { background: var(--gray-900); color: var(--white); }
+    .cta-dark:hover { background: var(--gray-800); }
+
+    /* ── Comparison Table ─────────────────────────────── */
+    .comparison-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      direction: rtl;
+    }
+
+    .comparison-table thead th {
+      background: var(--gray-900);
+      color: var(--white);
+      font-weight: 600;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .comparison-table thead th:first-child { text-align: start; border-radius: var(--radius-sm) 0 0 0; }
+    .comparison-table thead th:last-child { border-radius: 0 var(--radius-sm) 0 0; }
+    .comparison-table thead th.highlight { background: var(--primary); }
+
+    .comparison-table tbody td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--gray-100);
+      text-align: center;
+      color: var(--gray-600);
+    }
+
+    .comparison-table tbody td:first-child {
+      text-align: start;
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .comparison-table tbody td.highlight-col { background: rgba(255, 107, 74, 0.03); }
+    .comparison-table tbody tr:hover td { background: var(--gray-50); }
+    .comparison-table tbody tr:hover td.highlight-col { background: rgba(255, 107, 74, 0.06); }
+
+    .comparison-table .category-row td {
+      background: var(--gray-100);
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      padding: 0.6rem 1rem;
+    }
+
+    .tick { color: var(--success); font-weight: 700; font-size: 1.1rem; }
+    .cross { color: var(--gray-300); font-size: 1rem; }
+    .text-val { color: var(--gray-600); font-weight: 500; font-size: 0.82rem; }
+
+    /* ── Included Section ─────────────────────────────── */
+    .included-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .included-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .included-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      background: var(--primary-tint);
+      color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .included-title { font-size: 0.9rem; font-weight: 700; color: var(--gray-900); margin-bottom: 0.35rem; }
+    .included-desc { font-size: 0.8rem; color: var(--gray-500); line-height: 1.7; }
+
+    /* ── Add-ons ──────────────────────────────────────── */
+    .addons-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .addon-card {
+      background: var(--white);
+      border: 1px dashed var(--gray-300);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .addon-price { font-size: 1.5rem; font-weight: 800; color: var(--gray-900); margin-bottom: 0.15rem; }
+    .addon-price-sub { font-size: 0.8rem; color: var(--gray-400); margin-bottom: 0.75rem; }
+    .addon-name { font-size: 0.95rem; font-weight: 700; color: var(--gray-900); margin-bottom: 0.25rem; }
+    .addon-desc { font-size: 0.82rem; color: var(--gray-500); line-height: 1.7; }
+
+    /* ── FAQ ───────────────────────────────────────────── */
+    .faq-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .faq-item {
+      padding: 1.5rem;
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+    }
+
+    .faq-question { font-size: 0.95rem; font-weight: 700; color: var(--gray-900); margin-bottom: 0.5rem; }
+    .faq-answer { font-size: 0.88rem; color: var(--gray-500); line-height: 1.8; }
+
+    /* ── Volume Discount Banner ────────────────────────── */
+    .volume-banner {
+      background: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-800) 100%);
+      color: var(--white);
+      padding: 2rem;
+      border-radius: var(--radius-lg);
+      text-align: center;
+      max-width: 800px;
+      margin: 2.5rem auto 0;
+    }
+
+    .volume-banner-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .volume-banner-desc { font-size: 0.95rem; color: var(--gray-300); }
+    .volume-banner .highlight { color: var(--primary); font-weight: 700; }
+
+    /* ── CTA Section ──────────────────────────────────── */
+    .cta-section { padding: 5rem 2rem; }
+
+    .cta-box {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius-xl);
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      padding: 3rem 2rem;
+      text-align: center;
+      color: var(--white);
+    }
+
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      top: -6rem; left: -6rem;
+      width: 12rem; height: 12rem;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      filter: blur(40px);
+      pointer-events: none;
+    }
+
+    .cta-box::after {
+      content: '';
+      position: absolute;
+      bottom: -6rem; right: -6rem;
+      width: 12rem; height: 12rem;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      filter: blur(40px);
+      pointer-events: none;
+    }
+
+    .cta-box > * { position: relative; z-index: 1; }
+    .cta-title { font-size: 2rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .cta-desc { font-size: 1.05rem; color: rgba(255,255,255,0.8); max-width: 500px; margin: 0 auto 2rem; }
+
+    .cta-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    .cta-btn-white {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--white);
+      padding: 0.75rem 2rem;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      transition: all 0.15s;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .cta-btn-white:hover { background: rgba(255,255,255,0.9); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+
+    .cta-btn-outline-white {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--white);
+      background: transparent;
+      padding: 0.75rem 2rem;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      transition: all 0.15s;
+      border: 2px solid rgba(255,255,255,0.4);
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .cta-btn-outline-white:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.6); }
+
+    /* ── Footer ────────────────────────────────────────── */
+    .footer {
+      border-top: 1px solid var(--gray-200);
+      background: var(--gray-50);
+      padding: 2.5rem 2rem;
+      text-align: center;
+    }
+
+    .footer-contact { font-size: 0.9rem; color: var(--gray-500); margin-bottom: 0.5rem; }
+    .footer-contact a { color: var(--primary); text-decoration: none; font-weight: 500; }
+    .footer-contact a:hover { text-decoration: underline; }
+    .footer-copy { font-size: 0.8rem; color: var(--gray-400); margin-top: 1rem; }
+
+    /* ── Numbers stay LTR ─────────────────────────────── */
+    .ltr-num { direction: ltr; display: inline-block; unicode-bidi: embed; }
+
+    /* ── Print Footer ─────────────────────────────────── */
+    .print-footer {
+      display: none;
+    }
+
+    /* ── Print Styles ─────────────────────────────────── */
+    @media print {
+      @page {
+        size: A4;
+        margin: 20mm 15mm 25mm 15mm;
+      }
+      @page :first {
+        margin-top: 10mm;
+      }
+
+      html { font-size: 11px; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; }
+
+      /* Hide web-only elements */
+      .nav { display: none !important; }
+      .cta-section { display: none !important; }
+      .card-cta { display: none !important; }
+
+      /* Section spacing */
+      .hero { padding: 2.5rem 1.5rem 2rem; }
+      .section { padding: 2rem 1.5rem; }
+
+      /* Page breaks */
+      .section-alt { break-before: page; }
+      .pricing-card { break-inside: avoid; }
+      .pricing-card.featured { transform: none; }
+      .faq-item, .addon-card, .included-card { break-inside: avoid; }
+
+      /* Table */
+      .comparison-table { font-size: 0.78rem; }
+
+      /* Grids */
+      .included-grid { grid-template-columns: repeat(4, 1fr); }
+      .addons-grid { grid-template-columns: repeat(3, 1fr); }
+      .faq-grid { grid-template-columns: repeat(2, 1fr); }
+
+      /* Links */
+      a { text-decoration: none !important; }
+
+      /* Remove decorative backgrounds */
+      .hero::before, .hero::after { display: none; }
+
+      /* Footer as document footer */
+      .footer {
+        border-top: 2px solid var(--gray-200);
+        background: none;
+        padding: 1.5rem 2rem;
+        margin-top: 2rem;
+      }
+
+      /* Print footer */
+      .print-footer {
+        display: block;
+        text-align: center;
+        padding: 1rem 2rem;
+        font-size: 0.75rem;
+        color: var(--gray-400);
+        border-top: 1px solid var(--gray-200);
+      }
+    }
+
+    /* ── Responsive ────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .pricing-grid { grid-template-columns: 1fr; max-width: 420px; }
+      .pricing-card.featured { transform: none; }
+      .included-grid { grid-template-columns: repeat(2, 1fr); }
+      .addons-grid { grid-template-columns: 1fr; max-width: 380px; }
+      .faq-grid { grid-template-columns: 1fr; }
+      .cta-buttons { flex-direction: column; align-items: center; }
+    }
+
+    @media (max-width: 600px) {
+      .hero { padding: 3rem 1.25rem 2rem; }
+      .hero-title { font-size: 1.75rem; }
+      .section { padding: 2.5rem 1.25rem; }
+      .section-title { font-size: 1.5rem; }
+      .included-grid { grid-template-columns: 1fr; }
+      .nav-link { display: none; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ═══════════ NAV ═══════════ -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">Liyaqa<span>.</span></a>
+      <div class="nav-contact">
+        <a href="mailto:liyaqasaas@gmail.com" class="nav-link">liyaqasaas@gmail.com</a>
+        <a href="https://wa.me/249119285991" class="nav-btn" target="_blank" rel="noopener noreferrer">
+          <svg class="wa-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          تواصل معنا
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════ HERO ═══════════ -->
+  <header class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">عرض الأسعار</div>
+      <h1 class="hero-title">
+        أسعار بسيطة وشفافة<br>
+        <span class="hero-title-highlight">لكل حجم منشأة</span>
+      </h1>
+      <p class="hero-desc">اختر الخطة المناسبة لصالتك. لا رسوم خفية، لا عقود طويلة الأمد. قم بالترقية أو التخفيض في أي وقت.</p>
+      <p class="hero-note">لكل منشأة، تُحاسب شهرياً. جميع الأسعار لا تشمل 15% ضريبة القيمة المضافة.</p>
+      <div style="margin-top:1.5rem;display:inline-block;background:linear-gradient(135deg,#FF6B4A,#E85D3A);color:#fff;padding:0.75rem 2rem;border-radius:100px;font-size:0.95rem;font-weight:600;">
+        نقدّر تحديات البداية، لذلك لدينا عروض خاصة للأندية الجديدة. تواصل معنا لمعرفة المزيد عن عروضنا للأندية الجديدة.
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════ PRICING CARDS ═══════════ -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">الخطط</span>
+        <h2 class="section-title">اختر خطتك</h2>
+        <p class="section-desc">لكل منشأة، تُحاسب شهرياً. الفوترة السنوية متاحة مع شهرين مجاناً.</p>
+      </div>
+
+      <div style="max-width:800px;margin:0 auto 2rem;background:linear-gradient(135deg,#FF6B4A,#E85D3A);color:#fff;padding:1rem 2rem;border-radius:var(--radius-md);text-align:center;font-size:0.95rem;font-weight:500;">
+        نقدّر تحديات البداية، لذلك لدينا عروض خاصة للأندية الجديدة. تواصل معنا لمعرفة المزيد عن عروضنا للأندية الجديدة.
+      </div>
+
+      <div class="pricing-grid">
+
+        <!-- ── الأساسية ────────── -->
+        <div class="pricing-card">
+          <div class="card-icon starter">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </div>
+          <h3 class="card-plan-name">الأساسية</h3>
+          <p class="card-plan-target">استوديوهات الموقع الواحد والصالات الصغيرة، حتى 200 عضو</p>
+          <div class="card-price">
+            <div>
+              <span class="price-currency">$</span><span class="price-amount ltr-num">99</span>
+              <span class="price-period">/ منشأة / شهر</span>
+            </div>
+            <div class="price-usd ltr-num">~371 SAR</div>
+          </div>
+          <ul class="card-features">
+            <li><span class="check green">&#10003;</span>إدارة الأعضاء (الملفات، الملاحظات، الحضور)</li>
+            <li><span class="check green">&#10003;</span>جدولة الصفوف والمواعيد</li>
+            <li><span class="check green">&#10003;</span>أداة الحجز عبر الإنترنت</li>
+            <li><span class="check green">&#10003;</span>الفوترة الأساسية (مدى، فيزا/ماستركارد)</li>
+            <li><span class="check green">&#10003;</span>إعفاءات وعقود رقمية</li>
+            <li><span class="check green">&#10003;</span>تقارير أساسية (الحضور، الإيرادات)</li>
+            <li><span class="check green">&#10003;</span>إشعارات البريد الإلكتروني</li>
+            <li><span class="check green">&#10003;</span>الوصول لتطبيق الجوال (تطبيق لياقة المشترك)</li>
+            <li><span class="check green">&#10003;</span>واجهة عربية + إنجليزية</li>
+            <li><span class="check green">&#10003;</span><span class="ltr-num">500</span> رسالة نصية / شهر</li>
+            <li><span class="check green">&#10003;</span>دعم بالبريد الإلكتروني (ساعات العمل)</li>
+          </ul>
+          <a class="card-cta cta-outline" href="https://wa.me/249119285991" target="_blank" rel="noopener noreferrer">تواصل معنا</a>
+        </div>
+
+        <!-- ── الاحترافية ───── -->
+        <div class="pricing-card featured">
+          <span class="card-badge">الأكثر شعبية</span>
+          <div class="card-icon pro">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <h3 class="card-plan-name">الاحترافية</h3>
+          <p class="card-plan-target">صالات متنامية، 200 – 1,000 عضو، فرق عمل متعددة</p>
+          <div class="card-price">
+            <div>
+              <span class="price-currency">$</span><span class="price-amount ltr-num">249</span>
+              <span class="price-period">/ منشأة / شهر</span>
+            </div>
+            <div class="price-usd ltr-num">~934 SAR</div>
+          </div>
+          <p class="card-includes">كل ما في الأساسية، بالإضافة إلى:</p>
+          <ul class="card-features">
+            <li><span class="check amber">&#10003;</span>إدارة العملاء المحتملين وأنبوب المبيعات</li>
+            <li><span class="check amber">&#10003;</span>أتمتة التسويق (حملات البريد الإلكتروني)</li>
+            <li><span class="check amber">&#10003;</span>جدولة متقدمة (قوائم الانتظار، متكررة)</li>
+            <li><span class="check amber">&#10003;</span>إدارة الموظفين (الأدوار، الصلاحيات، الجدولة)</li>
+            <li><span class="check amber">&#10003;</span>فواتير الأسرة والمجموعات</li>
+            <li><span class="check amber">&#10003;</span>لوحة تحليلات متقدمة</li>
+            <li><span class="check amber">&#10003;</span>تذكيرات الحجز عبر واتساب</li>
+            <li><span class="check amber">&#10003;</span>إدارة المخزون ونقاط البيع</li>
+            <li><span class="check amber">&#10003;</span>دعم التكاملات (Zapier، webhooks)</li>
+            <li><span class="check amber">&#10003;</span><span class="ltr-num">2,000</span> رسالة نصية / شهر</li>
+            <li><span class="check amber">&#10003;</span>إدارة المرافق المفصولة حسب الجنس</li>
+            <li><span class="check amber">&#10003;</span>دعم أولوي بالبريد والمحادثة</li>
+          </ul>
+          <a class="card-cta cta-primary" href="https://wa.me/249119285991" target="_blank" rel="noopener noreferrer">تواصل معنا</a>
+        </div>
+
+        <!-- ── المؤسسات ─────── -->
+        <div class="pricing-card">
+          <div class="card-icon enterprise">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </div>
+          <h3 class="card-plan-name">المؤسسات</h3>
+          <p class="card-plan-target">سلاسل متعددة المواقع، أكثر من 1,000 عضو لكل موقع</p>
+          <div class="card-price">
+            <div>
+              <span class="price-currency">$</span><span class="price-amount ltr-num">459</span>
+              <span class="price-period">/ منشأة / شهر</span>
+            </div>
+            <div class="price-usd ltr-num">~1,722 SAR</div>
+          </div>
+          <p class="card-includes">كل ما في الاحترافية، بالإضافة إلى:</p>
+          <ul class="card-features">
+            <li><span class="check purple">&#10003;</span>تطبيق جوال بعلامتك التجارية</li>
+            <li><span class="check purple">&#10003;</span>لوحة إدارة المقر المركزي متعددة المواقع</li>
+            <li><span class="check purple">&#10003;</span>وصول مخصص لواجهة برمجة التطبيقات</li>
+            <li><span class="check purple">&#10003;</span>أتمتة سير العمل بلا حدود</li>
+            <li><span class="check purple">&#10003;</span>منشئ تقارير مخصص</li>
+            <li><span class="check purple">&#10003;</span>برامج الإحالة والولاء</li>
+            <li><span class="check purple">&#10003;</span><span class="ltr-num">5,000</span> رسالة نصية / شهر</li>
+            <li><span class="check purple">&#10003;</span>تكامل كامل مع واتساب للأعمال</li>
+            <li><span class="check purple">&#10003;</span>مدير حساب مخصص</li>
+            <li><span class="check purple">&#10003;</span>تكاملات مخصصة</li>
+            <li><span class="check purple">&#10003;</span>ضمان اتفاقية مستوى الخدمة (<span class="ltr-num">99.9%</span> تشغيل)</li>
+          </ul>
+          <a class="card-cta cta-dark" href="https://wa.me/249119285991" target="_blank" rel="noopener noreferrer">تواصل مع المبيعات</a>
+        </div>
+
+      </div>
+
+      <!-- خصم المواقع المتعددة -->
+      <div class="volume-banner">
+        <div class="volume-banner-title">خصم المواقع المتعددة</div>
+        <p class="volume-banner-desc">عملاء خطة المؤسسات مع <span class="highlight">3+ مواقع</span> يحصلون على <span class="highlight">خصم 15%</span> على كل منشأة. تواصل مع فريق المبيعات للحصول على عرض مخصص.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════ جدول مقارنة الميزات ═══════════ -->
+  <section class="section section-alt">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">قارن</span>
+        <h2 class="section-title">مقارنة الميزات الكاملة</h2>
+        <p class="section-desc">شاهد بالضبط ما هو مشمول في كل خطة.</p>
+      </div>
+
+      <div class="comparison-wrapper">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th style="width:40%">الميزة</th>
+              <th style="width:20%">الأساسية</th>
+              <th style="width:20%" class="highlight">الاحترافية</th>
+              <th style="width:20%">المؤسسات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="category-row"><td colspan="4">الأسعار</td></tr>
+            <tr><td>السعر الشهري (دولار / منشأة)</td><td><span class="text-val ltr-num">$99</span></td><td class="highlight-col"><span class="text-val ltr-num">$249</span></td><td><span class="text-val ltr-num">$459</span></td></tr>
+            <tr><td>السعر الشهري (ريال / منشأة)</td><td><span class="text-val ltr-num">~371 SAR</span></td><td class="highlight-col"><span class="text-val ltr-num">~934 SAR</span></td><td><span class="text-val ltr-num">~1,722 SAR</span></td></tr>
+
+            <tr class="category-row"><td colspan="4">إدارة الأعضاء</td></tr>
+            <tr><td>ملفات الأعضاء والملاحظات والحضور</td><td><span class="tick">&#10003;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>إعفاءات وعقود رقمية</td><td><span class="tick">&#10003;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>فواتير الأسرة والمجموعات</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>برامج الإحالة والولاء</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="cross">&mdash;</span></td><td><span class="tick">&#10003;</span></td></tr>
+
+            <tr class="category-row"><td colspan="4">الجدولة</td></tr>
+            <tr><td>جدولة الصفوف والمواعيد</td><td><span class="tick">&#10003;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>أداة الحجز عبر الإنترنت</td><td><span class="tick">&#10003;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>قوائم الانتظار والتكرار وإدارة الموارد</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>إدارة المرافق المفصولة حسب الجنس</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+
+            <tr class="category-row"><td colspan="4">الفوترة والمدفوعات</td></tr>
+            <tr><td>مدى، فيزا/ماستركارد عبر Tap Payments</td><td><span class="tick">&#10003;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>الفوترة</td><td><span class="text-val">أساسية</span></td><td class="highlight-col"><span class="text-val">متقدمة</span></td><td><span class="text-val">متقدمة</span></td></tr>
+            <tr><td>إدارة المخزون ونقاط البيع</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+
+            <tr class="category-row"><td colspan="4">إدارة العملاء والتسويق</td></tr>
+            <tr><td>إدارة العملاء المحتملين وأنبوب المبيعات</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>أتمتة التسويق (حملات البريد الإلكتروني)</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+
+            <tr class="category-row"><td colspan="4">إدارة الموظفين</td></tr>
+            <tr><td>أدوار الموظفين والصلاحيات والجدولة</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+
+            <tr class="category-row"><td colspan="4">التحليلات والتقارير</td></tr>
+            <tr><td>تقارير أساسية (الحضور، الإيرادات)</td><td><span class="tick">&#10003;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>لوحة تحليلات متقدمة</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>منشئ تقارير مخصص</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="cross">&mdash;</span></td><td><span class="tick">&#10003;</span></td></tr>
+
+            <tr class="category-row"><td colspan="4">الاتصالات</td></tr>
+            <tr><td>إشعارات البريد الإلكتروني</td><td><span class="tick">&#10003;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>الرسائل النصية المشمولة شهرياً</td><td><span class="text-val ltr-num">500</span></td><td class="highlight-col"><span class="text-val ltr-num">2,000</span></td><td><span class="text-val ltr-num">5,000</span></td></tr>
+            <tr><td>تذكيرات الحجز عبر واتساب</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>تكامل كامل مع واتساب للأعمال</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="cross">&mdash;</span></td><td><span class="tick">&#10003;</span></td></tr>
+
+            <tr class="category-row"><td colspan="4">التطبيقات والتكاملات</td></tr>
+            <tr><td>الوصول لتطبيق الجوال (تطبيق لياقة المشترك)</td><td><span class="tick">&#10003;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>تطبيق جوال بعلامتك التجارية</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="text-val">إضافة</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>دعم التكاملات (Zapier، webhooks)</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>وصول مخصص لواجهة برمجة التطبيقات</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="cross">&mdash;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>تكاملات مخصصة</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="cross">&mdash;</span></td><td><span class="tick">&#10003;</span></td></tr>
+
+            <tr class="category-row"><td colspan="4">المنصة والعمليات</td></tr>
+            <tr><td>واجهة عربية + إنجليزية</td><td><span class="tick">&#10003;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>لوحة إدارة المقر المركزي متعددة المواقع</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="cross">&mdash;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>أتمتة سير العمل بلا حدود</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="cross">&mdash;</span></td><td><span class="tick">&#10003;</span></td></tr>
+
+            <tr class="category-row"><td colspan="4">الدعم</td></tr>
+            <tr><td>دعم بالبريد الإلكتروني (ساعات العمل)</td><td><span class="tick">&#10003;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>دعم أولوي بالبريد والمحادثة</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="tick">&#10003;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>مدير حساب مخصص</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="cross">&mdash;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>ضمان اتفاقية مستوى الخدمة (<span class="ltr-num">99.9%</span> تشغيل)</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="cross">&mdash;</span></td><td><span class="tick">&#10003;</span></td></tr>
+            <tr><td>خصم المواقع المتعددة (<span class="ltr-num">15%</span> على <span class="ltr-num">3+</span> مواقع)</td><td><span class="cross">&mdash;</span></td><td class="highlight-col"><span class="cross">&mdash;</span></td><td><span class="tick">&#10003;</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ ما هو مشمول ═══════════ -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">مشمول</span>
+        <h2 class="section-title">ما هو مشمول في كل خطة</h2>
+        <p class="section-desc">لا رسوم إضافية للبنية التحتية. نتولى كل شيء حتى تركز على عملك.</p>
+      </div>
+
+      <div class="included-grid">
+        <div class="included-card">
+          <div class="included-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="18" height="18" rx="2"/><path d="M6 6h.01M10 6h.01M6 10h.01"/></svg></div>
+          <div class="included-title">استضافة سحابية سعودية</div>
+          <div class="included-desc">مركز بيانات GCP الدمام. بياناتك تبقى في السعودية، متوافقة مع NDMO.</div>
+        </div>
+        <div class="included-card">
+          <div class="included-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <div class="included-title">الأمان وSSL</div>
+          <div class="included-desc">تشفير SSL، حماية DDoS، وتحديثات أمنية تلقائية بدون تكلفة إضافية.</div>
+        </div>
+        <div class="included-card">
+          <div class="included-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+          <div class="included-title">نسخ احتياطي تلقائي</div>
+          <div class="included-desc">نسخ احتياطي يومي مع التعافي من الكوارث. بياناتك دائماً آمنة وقابلة للاسترداد.</div>
+        </div>
+        <div class="included-card">
+          <div class="included-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="20" height="16" rx="2"/><path d="M1 10h20"/></svg></div>
+          <div class="included-title">معالجة المدفوعات</div>
+          <div class="included-desc">مدى + فيزا/ماستركارد عبر Tap Payments. أقل رسوم في السعودية.</div>
+        </div>
+        <div class="included-card">
+          <div class="included-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+          <div class="included-title">بريد إلكتروني غير محدود</div>
+          <div class="included-desc">رسائل بريد إلكتروني (تأكيدات، تذكيرات، إيصالات) بدون تكلفة لكل رسالة.</div>
+        </div>
+        <div class="included-card">
+          <div class="included-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg></div>
+          <div class="included-title">تحديثات مجانية</div>
+          <div class="included-desc">جميع تحديثات البرامج والميزات الجديدة والتحسينات مشمولة تلقائياً.</div>
+        </div>
+        <div class="included-card">
+          <div class="included-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+          <div class="included-title">متوافق مع ضريبة القيمة المضافة</div>
+          <div class="included-desc">فوترة متوافقة مع ضريبة القيمة المضافة 15% مدمجة. جاهزة للفوترة الإلكترونية.</div>
+        </div>
+        <div class="included-card">
+          <div class="included-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></div>
+          <div class="included-title">إقامة البيانات</div>
+          <div class="included-desc">جميع البيانات مخزنة في السعودية. امتثال كامل لـ NDMO وNCA لسيادة البيانات.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ الإضافات ═══════════ -->
+  <section class="section section-alt">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">إضافات</span>
+        <h2 class="section-title">إضافات اختيارية</h2>
+        <p class="section-desc">وسّع خطتك بقدرات إضافية.</p>
+      </div>
+
+      <div class="addons-grid">
+        <div class="addon-card">
+          <div class="addon-price"><span class="ltr-num">55</span> <span style="font-size:0.6em;font-weight:600;color:var(--gray-500)">ريال/شهر</span></div>
+          <div class="addon-price-sub"><span class="ltr-num">~$15</span> دولار</div>
+          <div class="addon-name">حزمة رسائل نصية إضافية</div>
+          <div class="addon-desc"><span class="ltr-num">1,000</span> رسالة نصية إضافية شهرياً عبر Unifonic. تسليم محلي سعودي.</div>
+        </div>
+        <div class="addon-card">
+          <div class="addon-price"><span class="ltr-num">299</span> <span style="font-size:0.6em;font-weight:600;color:var(--gray-500)">ريال/شهر</span></div>
+          <div class="addon-price-sub"><span class="ltr-num">~$80</span> دولار</div>
+          <div class="addon-name">تطبيق جوال بعلامتك التجارية</div>
+          <div class="addon-desc">تطبيقك الخاص لـ iOS وAndroid بعلامتك التجارية. متاح لعملاء الخطة الاحترافية.</div>
+        </div>
+        <div class="addon-card">
+          <div class="addon-price" style="font-size:1.2rem;padding-top:0.3rem;">حسب الاستخدام</div>
+          <div class="addon-price-sub">تُحاسب شهرياً</div>
+          <div class="addon-name">رسائل واتساب إضافية</div>
+          <div class="addon-desc">رسائل إضافية عبر واجهة واتساب للأعمال تتجاوز الحد المشمول في خطتك.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ الأسئلة الشائعة ═══════════ -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">الأسئلة الشائعة</span>
+        <h2 class="section-title">الأسئلة الشائعة</h2>
+      </div>
+
+      <div class="faq-grid">
+        <div class="faq-item">
+          <div class="faq-question">هل هناك رسوم إعداد؟</div>
+          <div class="faq-answer">لا توجد رسوم إعداد. يمكنك البدء باستخدام لياقة فوراً بعد التسجيل. فريق الإعداد سيساعدك في ترحيل بياناتك الحالية بدون تكلفة إضافية.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">هل هناك عقد طويل الأمد؟</div>
+          <div class="faq-answer">لا عقود طويلة الأمد. جميع الخطط شهرية. نقدم أيضاً فوترة سنوية مع شهرين مجاناً. يمكنك الإلغاء أو تغيير الخطة في أي وقت.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">هل ضريبة القيمة المضافة مشمولة في الأسعار المعروضة؟</div>
+          <div class="faq-answer">الأسعار المعروضة لا تشمل 15% ضريبة القيمة المضافة. ستُضاف الضريبة إلى فاتورتك وفقاً لأنظمة هيئة الزكاة والضريبة. جميع الفواتير متوافقة مع الفوترة الإلكترونية.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">هل يمكنني ترقية أو تخفيض خطتي؟</div>
+          <div class="faq-answer">نعم، يمكنك تغيير خطتك في أي وقت. الترقيات تسري فوراً مع فوترة نسبية. التخفيضات تسري في بداية دورة الفوترة التالية.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">ماذا يحدث إذا تجاوزت حد الرسائل النصية؟</div>
+          <div class="faq-answer">ستُبلّغ عند وصولك إلى 80% من حصتك من الرسائل النصية. يمكن شراء رسائل إضافية بحزم من 1,000 رسالة مقابل 55 ريال/شهر.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">كيف تتم معالجة المدفوعات؟</div>
+          <div class="faq-answer">نستخدم Tap Payments، بوابة الدفع الرائدة في السعودية. معاملات مدى 1% والبطاقات الدولية 2.85%. رسوم البوابة منفصلة عن اشتراكك في لياقة.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">هل تدعمون ترحيل البيانات؟</div>
+          <div class="faq-answer">نعم. فريق الإعداد سيساعدك في ترحيل بيانات الأعضاء والجداول وسجل الفواتير من نظامك الحالي بدون تكلفة إضافية لجميع الخطط.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">أين تُخزّن بياناتي؟</div>
+          <div class="faq-answer">جميع البيانات مخزنة في منطقة الدمام من Google Cloud داخل السعودية. نحن ممتثلون بالكامل لمتطلبات إقامة البيانات NDMO ومعايير الأمن السيبراني NCA.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ CTA ═══════════ -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-box">
+        <h2 class="cta-title">مستعد لتحويل صالتك الرياضية؟</h2>
+        <p class="cta-desc">انضم إلى مئات الشركات السعودية في مجال اللياقة البدنية التي تستخدم لياقة بالفعل لتنمية عضويتها وتبسيط عملياتها.</p>
+        <div class="cta-buttons">
+          <a href="https://wa.me/249119285991" class="cta-btn-white" target="_blank" rel="noopener noreferrer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            تواصل معنا عبر واتساب
+          </a>
+          <a href="mailto:liyaqasaas@gmail.com" class="cta-btn-outline-white">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            راسلنا بالبريد الإلكتروني
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ FOOTER ═══════════ -->
+  <footer class="footer">
+    <p class="footer-contact">
+      <a href="mailto:liyaqasaas@gmail.com">liyaqasaas@gmail.com</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://wa.me/249119285991" target="_blank" rel="noopener noreferrer">واتساب: <span class="ltr-num">+249 119 285 991</span></a>
+    </p>
+    <div class="footer-copy">&copy; 2026 لياقة. جميع الحقوق محفوظة. الأسعار سارية اعتباراً من فبراير 2026. جميع الأسعار بالدولار الأمريكي ولا تشمل 15% ضريبة القيمة المضافة.</div>
+  </footer>
+
+  <div class="print-footer">عرض أسعار لياقة &mdash; فبراير 2026 &mdash; سري</div>
+
+</body>
+</html>

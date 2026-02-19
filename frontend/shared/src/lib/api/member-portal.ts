@@ -246,9 +246,43 @@ export async function getMyWalletTransactions(params?: {
 
 // ==================== CLASS SESSIONS (for booking) ====================
 
+interface BackendSessionResponse {
+  id: string;
+  gymClassId: string;
+  className: { en: string; ar: string } | null;
+  classType: string | null;
+  difficultyLevel: string | null;
+  colorCode: string | null;
+  sessionDate: string;
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  maxCapacity: number;
+  availableSpots: number;
+  isBooked: boolean;
+  isFull: boolean;
+  waitlistAvailable: boolean;
+}
+
+function mapSessionResponse(s: BackendSessionResponse): AvailableSession {
+  return {
+    id: s.id,
+    classId: s.gymClassId,
+    className: s.className ?? { en: "", ar: "" },
+    date: s.sessionDate,
+    startTime: s.startTime,
+    endTime: s.endTime,
+    capacity: s.maxCapacity,
+    bookedCount: s.maxCapacity - s.availableSpots,
+    waitlistCount: 0,
+    availableSpots: s.availableSpots,
+    status: "SCHEDULED",
+  };
+}
+
 /**
  * Get available class sessions for booking
- * Uses the existing class sessions API with date range filter
+ * Backend: GET /api/me/sessions (MemberClassController)
  */
 export async function getAvailableSessions(params: {
   dateFrom: string;
@@ -258,14 +292,18 @@ export async function getAvailableSessions(params: {
   size?: number;
 }): Promise<{ content: AvailableSession[]; totalElements: number; last: boolean }> {
   const searchParams = new URLSearchParams();
-  searchParams.set("dateFrom", params.dateFrom);
-  searchParams.set("dateTo", params.dateTo);
-  searchParams.set("status", "SCHEDULED");
+  searchParams.set("from", params.dateFrom);
+  searchParams.set("to", params.dateTo);
   if (params.classId) searchParams.set("classId", params.classId);
   if (params.page !== undefined) searchParams.set("page", String(params.page));
   if (params.size !== undefined) searchParams.set("size", String(params.size));
 
-  return api
-    .get("api/sessions", { searchParams })
-    .json<{ content: AvailableSession[]; totalElements: number; last: boolean }>();
+  const response = await api
+    .get("api/me/sessions", { searchParams })
+    .json<{ content: BackendSessionResponse[]; totalElements: number; last: boolean }>();
+
+  return {
+    ...response,
+    content: response.content.map(mapSessionResponse),
+  };
 }

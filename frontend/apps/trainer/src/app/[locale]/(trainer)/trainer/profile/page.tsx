@@ -87,9 +87,8 @@ export default function TrainerProfilePage() {
   const t = (key: keyof typeof text) => (isAr ? text[key].ar : text[key].en);
 
   const { user } = useAuthStore();
-  const trainerId = user?.id;
 
-  const { data: dashboard, isLoading, error } = useTrainerDashboard(trainerId);
+  const { data: dashboard, isLoading, error } = useTrainerDashboard();
 
   const displayName = useMemo(() => {
     if (!user?.displayName) return "-";
@@ -261,7 +260,7 @@ export default function TrainerProfilePage() {
                 <p className="text-xs text-muted-foreground">
                   {t("totalClients")}
                 </p>
-                <p className="text-2xl font-bold text-foreground">
+                <p className="text-2xl font-bold font-display text-foreground">
                   {clients?.totalClients ?? 0}
                 </p>
               </div>
@@ -269,7 +268,7 @@ export default function TrainerProfilePage() {
                 <p className="text-xs text-muted-foreground">
                   {t("activeClients")}
                 </p>
-                <p className="text-2xl font-bold text-foreground">
+                <p className="text-2xl font-bold font-display text-foreground">
                   {clients?.activeClients ?? 0}
                 </p>
               </div>
@@ -277,7 +276,7 @@ export default function TrainerProfilePage() {
                 <p className="text-xs text-muted-foreground">
                   {t("sessionsCompleted")}
                 </p>
-                <p className="text-2xl font-bold text-foreground">
+                <p className="text-2xl font-bold font-display text-foreground">
                   {schedule?.completedThisMonth ?? 0}
                 </p>
               </div>

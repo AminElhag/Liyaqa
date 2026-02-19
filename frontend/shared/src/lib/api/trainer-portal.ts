@@ -41,13 +41,17 @@ function buildQueryString(params: Record<string, unknown> | { [key: string]: unk
 // ==================== DASHBOARD ====================
 
 /**
- * Get complete trainer dashboard data (aggregated)
+ * Get complete trainer dashboard data (aggregated).
+ * When trainerId is omitted, the backend resolves the trainer from the JWT.
  */
 export async function getTrainerDashboard(
-  trainerId: UUID
+  trainerId?: UUID
 ): Promise<TrainerDashboardResponse> {
-  const params = new URLSearchParams({ trainerId });
-  return api.get(`${TRAINER_PORTAL_ENDPOINT}/dashboard?${params}`).json();
+  if (trainerId) {
+    const params = new URLSearchParams({ trainerId });
+    return api.get(`${TRAINER_PORTAL_ENDPOINT}/dashboard?${params}`).json();
+  }
+  return api.get(`${TRAINER_PORTAL_ENDPOINT}/dashboard`).json();
 }
 
 // ==================== CLIENT MANAGEMENT ====================
@@ -87,13 +91,16 @@ export async function updateTrainerClient(
 }
 
 /**
- * Get client statistics
+ * Get client statistics.
+ * When trainerId is omitted, the backend resolves the trainer from the JWT.
  */
 export async function getClientStats(
-  trainerId: UUID
+  trainerId?: UUID
 ): Promise<ClientStatsResponse> {
-  const params = new URLSearchParams({ trainerId });
-  return api.get(`${TRAINER_PORTAL_ENDPOINT}/clients/stats?${params}`).json();
+  const url = trainerId
+    ? `${TRAINER_PORTAL_ENDPOINT}/clients/stats?${new URLSearchParams({ trainerId })}`
+    : `${TRAINER_PORTAL_ENDPOINT}/clients/stats`;
+  return api.get(url).json();
 }
 
 // ==================== EARNINGS MANAGEMENT ====================
@@ -121,13 +128,16 @@ export async function getTrainerEarning(
 }
 
 /**
- * Get earnings summary with statistics
+ * Get earnings summary with statistics.
+ * When trainerId is omitted, the backend resolves the trainer from the JWT.
  */
 export async function getEarningsSummary(
-  trainerId: UUID
+  trainerId?: UUID
 ): Promise<EarningsSummaryResponse> {
-  const params = new URLSearchParams({ trainerId });
-  return api.get(`${TRAINER_PORTAL_ENDPOINT}/earnings/summary?${params}`).json();
+  const url = trainerId
+    ? `${TRAINER_PORTAL_ENDPOINT}/earnings/summary?${new URLSearchParams({ trainerId })}`
+    : `${TRAINER_PORTAL_ENDPOINT}/earnings/summary`;
+  return api.get(url).json();
 }
 
 /**
@@ -160,91 +170,98 @@ export async function getTrainerNotifications(
 }
 
 /**
- * Get unread notifications count (for badge)
+ * Get unread notifications count (for badge).
+ * When trainerId is omitted, the backend resolves the trainer from the JWT.
  */
 export async function getUnreadNotificationsCount(
-  trainerId: UUID
+  trainerId?: UUID
 ): Promise<UnreadCountResponse> {
-  const params = new URLSearchParams({ trainerId });
-  return api
-    .get(`${TRAINER_PORTAL_ENDPOINT}/notifications/unread-count?${params}`)
-    .json();
+  const url = trainerId
+    ? `${TRAINER_PORTAL_ENDPOINT}/notifications/unread-count?${new URLSearchParams({ trainerId })}`
+    : `${TRAINER_PORTAL_ENDPOINT}/notifications/unread-count`;
+  return api.get(url).json();
 }
 
 /**
- * Mark multiple notifications as read
+ * Mark multiple notifications as read.
+ * When trainerId is omitted, the backend resolves the trainer from the JWT.
  */
 export async function markNotificationsRead(
-  trainerId: UUID,
-  data: MarkNotificationsReadRequest
+  data: MarkNotificationsReadRequest,
+  trainerId?: UUID
 ): Promise<void> {
-  const params = new URLSearchParams({ trainerId });
-  await api.put(
-    `${TRAINER_PORTAL_ENDPOINT}/notifications/mark-read?${params}`,
-    { json: data }
-  );
+  const url = trainerId
+    ? `${TRAINER_PORTAL_ENDPOINT}/notifications/mark-read?${new URLSearchParams({ trainerId })}`
+    : `${TRAINER_PORTAL_ENDPOINT}/notifications/mark-read`;
+  await api.put(url, { json: data });
 }
 
 /**
- * Mark single notification as read
+ * Mark single notification as read.
+ * When trainerId is omitted, the backend resolves the trainer from the JWT.
  */
 export async function markNotificationRead(
   notificationId: UUID,
-  trainerId: UUID
+  trainerId?: UUID
 ): Promise<void> {
-  const params = new URLSearchParams({ trainerId });
-  await api.put(
-    `${TRAINER_PORTAL_ENDPOINT}/notifications/${notificationId}/read?${params}`
-  );
+  const url = trainerId
+    ? `${TRAINER_PORTAL_ENDPOINT}/notifications/${notificationId}/read?${new URLSearchParams({ trainerId })}`
+    : `${TRAINER_PORTAL_ENDPOINT}/notifications/${notificationId}/read`;
+  await api.put(url);
 }
 
 /**
- * Mark all notifications as read
+ * Mark all notifications as read.
+ * When trainerId is omitted, the backend resolves the trainer from the JWT.
  */
-export async function markAllNotificationsRead(trainerId: UUID): Promise<void> {
-  const params = new URLSearchParams({ trainerId });
-  await api.put(
-    `${TRAINER_PORTAL_ENDPOINT}/notifications/mark-all-read?${params}`
-  );
+export async function markAllNotificationsRead(trainerId?: UUID): Promise<void> {
+  const url = trainerId
+    ? `${TRAINER_PORTAL_ENDPOINT}/notifications/mark-all-read?${new URLSearchParams({ trainerId })}`
+    : `${TRAINER_PORTAL_ENDPOINT}/notifications/mark-all-read`;
+  await api.put(url);
 }
 
 /**
- * Delete a notification
+ * Delete a notification.
+ * When trainerId is omitted, the backend resolves the trainer from the JWT.
  */
 export async function deleteNotification(
   notificationId: UUID,
-  trainerId: UUID
+  trainerId?: UUID
 ): Promise<void> {
-  const params = new URLSearchParams({ trainerId });
-  await api.delete(
-    `${TRAINER_PORTAL_ENDPOINT}/notifications/${notificationId}?${params}`
-  );
+  const url = trainerId
+    ? `${TRAINER_PORTAL_ENDPOINT}/notifications/${notificationId}?${new URLSearchParams({ trainerId })}`
+    : `${TRAINER_PORTAL_ENDPOINT}/notifications/${notificationId}`;
+  await api.delete(url);
 }
 
 // ==================== SCHEDULE MANAGEMENT ====================
 
 /**
- * Get complete trainer schedule (availability + sessions)
+ * Get complete trainer schedule (availability + sessions).
+ * When trainerId is omitted, the backend resolves the trainer from the JWT.
  */
 export async function getTrainerSchedule(
-  trainerId: UUID
+  trainerId?: UUID
 ): Promise<TrainerScheduleResponse> {
-  const params = new URLSearchParams({ trainerId });
-  return api.get(`${TRAINER_PORTAL_ENDPOINT}/schedule?${params}`).json();
+  const url = trainerId
+    ? `${TRAINER_PORTAL_ENDPOINT}/schedule?${new URLSearchParams({ trainerId })}`
+    : `${TRAINER_PORTAL_ENDPOINT}/schedule`;
+  return api.get(url).json();
 }
 
 /**
- * Update trainer weekly availability
+ * Update trainer weekly availability.
+ * When trainerId is omitted, the backend resolves the trainer from the JWT.
  */
 export async function updateTrainerAvailability(
-  trainerId: UUID,
-  data: UpdateAvailabilityRequest
+  data: UpdateAvailabilityRequest,
+  trainerId?: UUID
 ): Promise<void> {
-  const params = new URLSearchParams({ trainerId });
-  await api.put(
-    `${TRAINER_PORTAL_ENDPOINT}/schedule/availability?${params}`,
-    { json: data }
-  );
+  const url = trainerId
+    ? `${TRAINER_PORTAL_ENDPOINT}/schedule/availability?${new URLSearchParams({ trainerId })}`
+    : `${TRAINER_PORTAL_ENDPOINT}/schedule/availability`;
+  await api.put(url, { json: data });
 }
 
 /**
@@ -261,30 +278,37 @@ export async function getUpcomingSessions(
 }
 
 /**
- * Get today's schedule
+ * Get today's schedule.
+ * When trainerId is omitted, the backend resolves the trainer from the JWT.
  */
 export async function getTodaySchedule(
-  trainerId: UUID
+  trainerId?: UUID
 ): Promise<UpcomingSessionResponse[]> {
-  const params = new URLSearchParams({ trainerId });
-  return api.get(`${TRAINER_PORTAL_ENDPOINT}/schedule/today?${params}`).json();
+  const url = trainerId
+    ? `${TRAINER_PORTAL_ENDPOINT}/schedule/today?${new URLSearchParams({ trainerId })}`
+    : `${TRAINER_PORTAL_ENDPOINT}/schedule/today`;
+  return api.get(url).json();
 }
 
 // ==================== CERTIFICATION MANAGEMENT ====================
 
 /**
- * Get paginated list of trainer certifications
+ * Get paginated list of trainer certifications.
+ * When trainerId is omitted, the backend resolves the trainer from the JWT.
  */
 export async function getTrainerCertifications(
-  trainerId: UUID,
-  params: { page?: number; size?: number } = {}
+  params: { page?: number; size?: number } = {},
+  trainerId?: UUID
 ): Promise<PaginatedResponse<TrainerCertificationResponse>> {
-  const searchParams = new URLSearchParams({ trainerId });
+  const searchParams = new URLSearchParams();
+  if (trainerId) searchParams.set("trainerId", trainerId);
   if (params.page !== undefined) searchParams.set("page", String(params.page));
   if (params.size !== undefined) searchParams.set("size", String(params.size));
-  return api
-    .get(`${TRAINER_PORTAL_ENDPOINT}/certifications?${searchParams}`)
-    .json();
+  const query = searchParams.toString();
+  const url = query
+    ? `${TRAINER_PORTAL_ENDPOINT}/certifications?${query}`
+    : `${TRAINER_PORTAL_ENDPOINT}/certifications`;
+  return api.get(url).json();
 }
 
 /**
@@ -299,16 +323,17 @@ export async function getTrainerCertification(
 }
 
 /**
- * Create a new certification
+ * Create a new certification.
+ * When trainerId is omitted, the backend resolves the trainer from the JWT.
  */
 export async function createTrainerCertification(
-  trainerId: UUID,
-  data: CreateCertificationRequest
+  data: CreateCertificationRequest,
+  trainerId?: UUID
 ): Promise<TrainerCertificationResponse> {
-  const params = new URLSearchParams({ trainerId });
-  return api
-    .post(`${TRAINER_PORTAL_ENDPOINT}/certifications?${params}`, { json: data })
-    .json();
+  const url = trainerId
+    ? `${TRAINER_PORTAL_ENDPOINT}/certifications?${new URLSearchParams({ trainerId })}`
+    : `${TRAINER_PORTAL_ENDPOINT}/certifications`;
+  return api.post(url, { json: data }).json();
 }
 
 /**

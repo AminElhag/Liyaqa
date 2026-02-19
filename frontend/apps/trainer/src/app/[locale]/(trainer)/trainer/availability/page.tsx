@@ -30,11 +30,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@liyaqa/shared/components/ui/select";
-import { useAuthStore } from "@liyaqa/shared/stores/auth-store";
 import {
   useTrainerAvailabilitySlots,
   useSetTrainerAvailability,
 } from "@liyaqa/shared/queries/use-trainer-availability";
+import { useTrainerDashboard } from "@liyaqa/shared/queries/use-trainer-portal";
 import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import { cn } from "@liyaqa/shared/utils";
 import type { DayOfWeek, PTLocationType } from "@liyaqa/shared/types/scheduling";
@@ -97,9 +97,11 @@ export default function TrainerAvailabilityPage() {
   const isAr = locale === "ar";
   const t = (key: keyof typeof text) => (isAr ? text[key].ar : text[key].en);
 
-  const { user } = useAuthStore();
-  const trainerId = user?.id || "";
   const { toast } = useToast();
+
+  // Get the real trainerId from the dashboard (resolved from JWT by the backend)
+  const { data: dashboard } = useTrainerDashboard();
+  const trainerId = dashboard?.trainerId || "";
 
   const { data: existingSlots, isLoading } = useTrainerAvailabilitySlots(
     trainerId

@@ -46,6 +46,34 @@ interface SpringDataTrainerClientRepository : JpaRepository<TrainerClient, UUID>
      * Check if a trainer-member relationship exists.
      */
     fun existsByTrainerIdAndMemberId(trainerId: UUID, memberId: UUID): Boolean
+
+    /**
+     * Search clients by name, email, or phone across members and users tables.
+     */
+    @Query("""
+        SELECT tc FROM TrainerClient tc
+        WHERE tc.trainerId = :trainerId
+        AND tc.memberId IN (
+            SELECT m.id FROM Member m
+            WHERE LOWER(m.firstName.en) LIKE LOWER(CONCAT('%', :search, '%'))
+               OR LOWER(m.lastName.en) LIKE LOWER(CONCAT('%', :search, '%'))
+               OR LOWER(m.firstName.ar) LIKE LOWER(CONCAT('%', :search, '%'))
+               OR LOWER(m.lastName.ar) LIKE LOWER(CONCAT('%', :search, '%'))
+               OR LOWER(m.email) LIKE LOWER(CONCAT('%', :search, '%'))
+               OR LOWER(m.phone) LIKE LOWER(CONCAT('%', :search, '%'))
+               OR m.userId IN (
+                   SELECT u.id FROM User u
+                   WHERE LOWER(u.displayName.en) LIKE LOWER(CONCAT('%', :search, '%'))
+                      OR LOWER(u.displayName.ar) LIKE LOWER(CONCAT('%', :search, '%'))
+                      OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))
+               )
+        )
+    """)
+    fun searchByTrainerIdAndTerm(
+        @Param("trainerId") trainerId: UUID,
+        @Param("search") search: String,
+        pageable: Pageable
+    ): Page<TrainerClient>
 }
 
 /**
@@ -106,5 +134,9 @@ class JpaTrainerClientRepository(
 
     override fun existsByTrainerIdAndMemberId(trainerId: UUID, memberId: UUID): Boolean {
         return springDataRepository.existsByTrainerIdAndMemberId(trainerId, memberId)
+    }
+
+    override fun searchByTrainerIdAndTerm(trainerId: UUID, search: String, pageable: Pageable): Page<TrainerClient> {
+        return springDataRepository.searchByTrainerIdAndTerm(trainerId, search, pageable)
     }
 }

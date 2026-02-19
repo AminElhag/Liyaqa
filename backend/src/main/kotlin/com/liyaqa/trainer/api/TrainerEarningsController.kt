@@ -2,6 +2,7 @@ package com.liyaqa.trainer.api
 
 import com.liyaqa.shared.domain.Money
 import com.liyaqa.trainer.application.services.TrainerEarningsService
+import com.liyaqa.trainer.application.services.TrainerSecurityService
 import com.liyaqa.trainer.domain.model.EarningStatus
 import com.liyaqa.trainer.domain.model.EarningType
 import com.liyaqa.trainer.infrastructure.persistence.JpaTrainerEarningsRepository
@@ -33,15 +34,16 @@ import java.util.UUID
 @Tag(name = "Trainer Portal - Earnings", description = "Trainer earnings management")
 class TrainerEarningsController(
     private val trainerEarningsService: TrainerEarningsService,
-    private val trainerEarningsRepository: JpaTrainerEarningsRepository
+    private val trainerEarningsRepository: JpaTrainerEarningsRepository,
+    private val trainerSecurityService: TrainerSecurityService
 ) {
     private val logger = LoggerFactory.getLogger(TrainerEarningsController::class.java)
 
     @GetMapping
-    @PreAuthorize("hasAuthority('trainer_portal_view') or @trainerSecurityService.isOwnProfile(#trainerId)")
+    @PreAuthorize("hasAuthority('trainer_portal_view') or @trainerSecurityService.isTrainer()")
     @Operation(summary = "List trainer earnings", description = "Get paginated list of trainer's earnings with optional filtering")
     fun getEarnings(
-        @RequestParam trainerId: UUID,
+        @RequestParam(required = false) trainerId: UUID? = null,
         @RequestParam(required = false) status: EarningStatus?,
         @RequestParam(required = false) earningType: EarningType?,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) startDate: LocalDate?,
@@ -51,20 +53,22 @@ class TrainerEarningsController(
         @RequestParam(defaultValue = "earningDate") sortBy: String,
         @RequestParam(defaultValue = "DESC") sortDirection: String
     ): ResponseEntity<PageResponse<TrainerEarningsResponse>> {
-        logger.debug("Fetching earnings for trainer $trainerId (status: $status, type: $earningType, dates: $startDate to $endDate)")
+        val resolvedTrainerId = trainerId ?: trainerSecurityService.getCurrentTrainerId()
+            ?: throw NoSuchElementException("No trainer profile found for current user")
+        logger.debug("Fetching earnings for trainer $resolvedTrainerId (status: $status, type: $earningType, dates: $startDate to $endDate)")
 
         val direction = Sort.Direction.valueOf(sortDirection.uppercase())
         val pageable = PageRequest.of(page, size, Sort.by(direction, sortBy))
 
         val earningsPage = when {
             startDate != null && endDate != null -> {
-                trainerEarningsService.getEarningsByDateRange(trainerId, startDate, endDate, pageable)
+                trainerEarningsService.getEarningsByDateRange(resolvedTrainerId, startDate, endDate, pageable)
             }
             status != null -> {
-                trainerEarningsService.getEarningsByStatus(trainerId, status, pageable)
+                trainerEarningsService.getEarningsByStatus(resolvedTrainerId, status, pageable)
             }
             else -> {
-                trainerEarningsService.getEarningsForTrainer(trainerId, pageable)
+                trainerEarningsService.getEarningsForTrainer(resolvedTrainerId, pageable)
             }
         }
 
@@ -92,19 +96,21 @@ class TrainerEarningsController(
     }
 
     @GetMapping("/summary")
-    @PreAuthorize("hasAuthority('trainer_portal_view') or @trainerSecurityService.isOwnProfile(#trainerId)")
+    @PreAuthorize("hasAuthority('trainer_portal_view') or @trainerSecurityService.isTrainer()")
     @Operation(summary = "Get earnings summary", description = "Get summary statistics of trainer's earnings")
     fun getEarningsSummary(
-        @RequestParam trainerId: UUID,
+        @RequestParam(required = false) trainerId: UUID? = null,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) startDate: LocalDate?,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) endDate: LocalDate?
     ): ResponseEntity<EarningsSummaryResponse> {
-        logger.debug("Fetching earnings summary for trainer $trainerId")
+        val resolvedTrainerId = trainerId ?: trainerSecurityService.getCurrentTrainerId()
+            ?: throw NoSuchElementException("No trainer profile found for current user")
+        logger.debug("Fetching earnings summary for trainer $resolvedTrainerId")
 
         val start = startDate ?: LocalDate.now().minusMonths(12)
         val end = endDate ?: LocalDate.now()
 
-        val allEarnings = trainerEarningsService.getEarningsByDateRange(trainerId, start, end, PageRequest.of(0, 10000)).content
+        val allEarnings = trainerEarningsService.getEarningsByDateRange(resolvedTrainerId, start, end, PageRequest.of(0, 10000)).content
 
         // Calculate current month
         val currentMonthStart = LocalDate.now().withDayOfMonth(1)

@@ -437,28 +437,45 @@ export const useAuthStore = create<AuthState>()(
         // If already authenticated with valid tokens, just restore tenant context
         const currentAccessToken = getAccessToken();
         if (get().isAuthenticated && currentAccessToken) {
-          const storedUser = get().user;
-          if (storedUser) {
-            // Restore tenant context from stored user
-            if (storedUser.isPlatformUser || isPlatformRole(storedUser.role)) {
-              setPlatformMode(true);
-              setTenantContext(null);
-            } else if (storedUser.tenantId) {
-              setPlatformMode(false);
-              setTenantContext(
-                storedUser.tenantId,
-                storedUser.organizationId || null,
-                storedUser.role === "SUPER_ADMIN"
-              );
-              useTenantStore.getState().setTenant(
-                storedUser.tenantId,
-                undefined,
-                storedUser.organizationId || undefined
-              );
+          // Validate JWT expiry before trusting the fast path
+          let tokenValid = false;
+          try {
+            const parts = currentAccessToken.split('.');
+            if (parts.length === 3) {
+              const payload = JSON.parse(atob(parts[1]));
+              tokenValid = !payload.exp || payload.exp >= Math.floor(Date.now() / 1000);
             }
+          } catch {
+            // Undecodable token — treat as expired
           }
-          set({ isLoading: false });
-          return;
+
+          if (tokenValid) {
+            const storedUser = get().user;
+            if (storedUser) {
+              // Restore tenant context from stored user
+              if (storedUser.isPlatformUser || isPlatformRole(storedUser.role)) {
+                setPlatformMode(true);
+                setTenantContext(null);
+              } else if (storedUser.tenantId) {
+                setPlatformMode(false);
+                setTenantContext(
+                  storedUser.tenantId,
+                  storedUser.organizationId || null,
+                  storedUser.role === "SUPER_ADMIN"
+                );
+                useTenantStore.getState().setTenant(
+                  storedUser.tenantId,
+                  undefined,
+                  storedUser.organizationId || undefined
+                );
+              }
+            }
+            // Re-sync session_meta cookie (may have expired independently)
+            setAccessToken(currentAccessToken);
+            set({ isLoading: false });
+            return;
+          }
+          // Token expired — fall through to refresh path
         }
 
         const refreshToken = getRefreshToken();

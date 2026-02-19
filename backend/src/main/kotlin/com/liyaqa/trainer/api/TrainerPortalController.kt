@@ -1,6 +1,7 @@
 package com.liyaqa.trainer.api
 
 import com.liyaqa.auth.domain.ports.UserRepository
+import com.liyaqa.membership.domain.ports.MemberRepository
 import com.liyaqa.shared.domain.Money
 import com.liyaqa.trainer.application.services.*
 import com.liyaqa.trainer.domain.model.EarningStatus
@@ -35,18 +36,22 @@ class TrainerPortalController(
     private val trainerEarningsService: TrainerEarningsService,
     private val trainerNotificationService: TrainerNotificationService,
     private val personalTrainingService: PersonalTrainingService,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val trainerSecurityService: TrainerSecurityService,
+    private val memberRepository: MemberRepository
 ) {
     private val logger = LoggerFactory.getLogger(TrainerPortalController::class.java)
 
     @GetMapping("/dashboard")
-    @PreAuthorize("hasAuthority('trainer_portal_view') or @trainerSecurityService.isOwnProfile(#trainerId)")
+    @PreAuthorize("hasAuthority('trainer_portal_view') or @trainerSecurityService.isTrainer()")
     @Operation(summary = "Get trainer dashboard", description = "Get aggregated dashboard data for a trainer")
-    fun getDashboard(@RequestParam trainerId: UUID): ResponseEntity<TrainerDashboardResponse> {
-        logger.debug("Fetching dashboard for trainer $trainerId")
+    fun getDashboard(@RequestParam(required = false) trainerId: UUID? = null): ResponseEntity<TrainerDashboardResponse> {
+        val resolvedTrainerId = trainerId ?: trainerSecurityService.getCurrentTrainerId()
+            ?: throw NoSuchElementException("No trainer profile found for current user")
+        logger.debug("Fetching dashboard for trainer $resolvedTrainerId")
 
         // Get trainer details
-        val trainer = trainerService.getTrainer(trainerId)
+        val trainer = trainerService.getTrainer(resolvedTrainerId)
         val user = trainer.userId?.let { userRepository.findById(it).orElse(null) }
         val specializations = trainerService.deserializeSpecializations(trainer.specializations)
 
@@ -60,19 +65,19 @@ class TrainerPortalController(
         )
 
         // Earnings summary
-        val earningsSummary = buildEarningsSummary(trainerId)
+        val earningsSummary = buildEarningsSummary(resolvedTrainerId)
 
         // Schedule summary
-        val scheduleSummary = buildScheduleSummary(trainerId)
+        val scheduleSummary = buildScheduleSummary(resolvedTrainerId)
 
         // Clients summary
-        val clientsSummary = buildClientsSummary(trainerId)
+        val clientsSummary = buildClientsSummary(resolvedTrainerId)
 
         // Notifications summary
-        val notificationsSummary = buildNotificationsSummary(trainerId)
+        val notificationsSummary = buildNotificationsSummary(resolvedTrainerId)
 
         val dashboard = TrainerDashboardResponse(
-            trainerId = trainerId,
+            trainerId = resolvedTrainerId,
             overview = overview,
             earnings = earningsSummary,
             schedule = scheduleSummary,
@@ -169,13 +174,14 @@ class TrainerPortalController(
 
         // Next session
         val nextSession = upcomingSessions.firstOrNull()?.let { session ->
+            val member = memberRepository.findById(session.memberId).orElse(null)
             UpcomingSessionResponse(
                 sessionId = session.id,
                 sessionType = "PT",
                 sessionDate = session.sessionDate,
                 startTime = session.startTime,
                 endTime = session.endTime,
-                clientName = null,
+                clientName = member?.fullName?.get("en")?.ifBlank { null },
                 className = null,
                 location = null,
                 status = session.status.name

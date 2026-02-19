@@ -10,6 +10,7 @@ import { useToast } from "@liyaqa/shared/hooks/use-toast";
 import { TrainerForm, type TrainerFormData } from "@/components/forms/trainer-form";
 import { useCreateTrainer } from "@liyaqa/shared/queries/use-trainers";
 import { useTenantStore } from "@liyaqa/shared/stores";
+import { parseApiError, getLocalizedErrorMessage } from "@liyaqa/shared/lib/api/client";
 import type { CreateTrainerRequest } from "@liyaqa/shared/types/trainer";
 
 export default function NewTrainerPage() {
@@ -32,9 +33,11 @@ export default function NewTrainerPage() {
 
   const handleSubmit = (data: TrainerFormData) => {
     const request: CreateTrainerRequest = {
-      userId: data.userId
+      userId: data.accountMode === "link" && data.userId
         ? (data.userId as `${string}-${string}-${string}-${string}-${string}`)
         : undefined,
+      email: data.accountMode === "create" && data.email ? data.email : undefined,
+      password: data.accountMode === "create" && data.password ? data.password : undefined,
       organizationId: organizationId as `${string}-${string}-${string}-${string}-${string}`,
       // Basic Info
       displayName: data.displayName?.en || data.displayName?.ar
@@ -76,10 +79,12 @@ export default function NewTrainerPage() {
         });
         router.push(`/${locale}/trainers/${trainer.id}`);
       },
-      onError: () => {
+      onError: async (error) => {
+        const apiError = await parseApiError(error);
+        const message = getLocalizedErrorMessage(apiError, locale);
         toast({
           title: texts.errorTitle,
-          description: texts.errorDesc,
+          description: message,
           variant: "destructive",
         });
       },

@@ -24,6 +24,7 @@ import { Skeleton } from "@liyaqa/shared/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@liyaqa/shared/components/ui/alert";
 import { cn } from "@liyaqa/shared/utils";
 import { useAvailableSessions, useBookSession } from "@liyaqa/shared/queries/use-member-portal";
+import { parseApiError, getLocalizedErrorMessage } from "@liyaqa/shared/lib/api/client";
 import { toast } from "sonner";
 import type { AvailableSession } from "@liyaqa/shared/types/member-portal";
 
@@ -51,10 +52,9 @@ export default function NewBookingPage() {
       toast.success(t("bookingConfirmed"));
       router.push(`/${locale}/member/bookings`);
     },
-    onError: () => {
-      toast.error(
-        locale === "ar" ? "فشل في حجز الصف" : "Failed to book class"
-      );
+    onError: async (error) => {
+      const apiError = await parseApiError(error);
+      toast.error(getLocalizedErrorMessage(apiError, locale));
     },
   });
 
@@ -132,7 +132,7 @@ export default function NewBookingPage() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold">{t("bookClass")}</h1>
-          <p className="text-neutral-500">
+          <p className="text-muted-foreground">
             {locale === "ar"
               ? "اختر صفاً وموعداً للحجز"
               : "Select a class and time to book"}
@@ -169,14 +169,14 @@ export default function NewBookingPage() {
                   key={dateStr}
                   onClick={() => setSelectedSession(null)}
                   className={cn(
-                    "flex flex-col items-center px-4 py-2 rounded-lg min-w-[70px] transition-colors",
+                    "flex flex-col items-center px-4 py-2 rounded-lg min-w-[70px] border transition-colors",
                     hasClasses
                       ? "hover:bg-primary/10"
                       : "opacity-50 cursor-not-allowed",
-                    isToday && "ring-2 ring-primary"
+                    isToday && "ring-2 ring-primary border-primary"
                   )}
                 >
-                  <span className="text-xs text-neutral-500">
+                  <span className="text-xs text-muted-foreground">
                     {format(date, "EEE", { locale: dateLocale })}
                   </span>
                   <span className="text-lg font-semibold">{format(date, "d")}</span>
@@ -233,7 +233,7 @@ export default function NewBookingPage() {
                       <Card
                         key={session.id}
                         className={cn(
-                          "cursor-pointer transition-all",
+                          "cursor-pointer transition-all hover:shadow-md",
                           isSelected && "ring-2 ring-primary bg-primary/5",
                           isFull && "opacity-60 cursor-not-allowed"
                         )}
@@ -246,7 +246,7 @@ export default function NewBookingPage() {
                                 <h4 className="font-semibold">{className}</h4>
                                 <Badge variant={status.variant}>{status.label}</Badge>
                               </div>
-                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-neutral-600">
+                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                   <Clock className="h-4 w-4" />
                                   {formatTime(session.startTime)} - {formatTime(session.endTime)}
@@ -302,7 +302,7 @@ export default function NewBookingPage() {
 
       {/* Confirm Booking Button */}
       {selectedSession && (
-        <div className="fixed bottom-0 start-0 end-0 p-4 bg-white border-t shadow-lg lg:ms-64">
+        <div className="fixed bottom-0 start-0 end-0 p-4 bg-background/95 backdrop-blur-sm border-t lg:ms-64">
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
             <div>
               <p className="font-medium">
@@ -310,7 +310,7 @@ export default function NewBookingPage() {
                   ? selectedSession.className?.ar || selectedSession.className?.en
                   : selectedSession.className?.en}
               </p>
-              <p className="text-sm text-neutral-500">
+              <p className="text-sm text-muted-foreground">
                 {format(new Date(selectedSession.date), "EEE, d MMM", { locale: dateLocale })} •{" "}
                 {formatTime(selectedSession.startTime)}
               </p>

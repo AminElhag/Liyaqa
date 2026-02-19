@@ -1,5 +1,8 @@
 package com.liyaqa.trainer.api
 
+import com.liyaqa.auth.application.commands.ForgotPasswordCommand
+import com.liyaqa.auth.application.services.AuthService
+import com.liyaqa.auth.domain.ports.RefreshTokenRepository
 import com.liyaqa.auth.domain.ports.UserRepository
 import com.liyaqa.organization.domain.ports.ClubRepository
 import com.liyaqa.scheduling.domain.ports.ClassCategoryRepository
@@ -16,6 +19,7 @@ import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.bind.annotation.*
 import java.util.UUID
 
@@ -35,7 +39,10 @@ class TrainerController(
     private val trainerService: TrainerService,
     private val userRepository: UserRepository,
     private val clubRepository: ClubRepository,
-    private val classCategoryRepository: ClassCategoryRepository
+    private val classCategoryRepository: ClassCategoryRepository,
+    private val passwordEncoder: PasswordEncoder,
+    private val authService: AuthService,
+    private val refreshTokenRepository: RefreshTokenRepository
 ) {
 
     // ==================== CRUD OPERATIONS ====================
@@ -51,6 +58,8 @@ class TrainerController(
 
         val command = CreateTrainerCommand(
             userId = request.userId,
+            email = request.email?.takeIf { it.isNotBlank() },
+            password = request.password?.takeIf { it.isNotBlank() },
             organizationId = request.organizationId,
             tenantId = tenantId,
             displayName = request.displayName?.toLocalizedText(),
@@ -453,6 +462,52 @@ class TrainerController(
     fun deleteTrainer(@PathVariable id: UUID): ResponseEntity<Void> {
         trainerService.deleteTrainer(id)
         return ResponseEntity.noContent().build()
+    }
+
+    // ==================== PASSWORD MANAGEMENT ====================
+
+    @PostMapping("/{id}/reset-password")
+    @PreAuthorize("hasAuthority('trainers_update')")
+    @Operation(summary = "Reset trainer password", description = "Admin sets a new password for the trainer")
+    fun resetTrainerPassword(
+        @PathVariable id: UUID,
+        @Valid @RequestBody request: ResetTrainerPasswordRequest
+    ): ResponseEntity<Map<String, String>> {
+        val trainer = trainerService.getTrainer(id)
+        val userId = trainer.userId
+            ?: throw IllegalStateException("Trainer $id has no linked user account")
+
+        val user = userRepository.findById(userId)
+            .orElseThrow { NoSuchElementException("User not found with id: $userId") }
+
+        user.changePassword(passwordEncoder.encode(request.newPassword))
+        userRepository.save(user)
+
+        // Revoke all refresh tokens to force re-login
+        refreshTokenRepository.revokeAllByUserId(userId)
+
+        return ResponseEntity.ok(mapOf("message" to "Password reset successfully"))
+    }
+
+    @PostMapping("/{id}/send-reset-email")
+    @PreAuthorize("hasAuthority('trainers_update')")
+    @Operation(summary = "Send password reset email", description = "Admin triggers a password reset email for the trainer")
+    fun sendTrainerResetEmail(@PathVariable id: UUID): ResponseEntity<Map<String, String>> {
+        val trainer = trainerService.getTrainer(id)
+        val userId = trainer.userId
+            ?: throw IllegalStateException("Trainer $id has no linked user account")
+
+        val user = userRepository.findById(userId)
+            .orElseThrow { NoSuchElementException("User not found with id: $userId") }
+
+        val tenantId = TenantContext.getCurrentTenant()?.value
+            ?: throw IllegalStateException("Tenant context not set")
+
+        authService.forgotPassword(
+            ForgotPasswordCommand(email = user.email, tenantId = tenantId)
+        )
+
+        return ResponseEntity.ok(mapOf("message" to "Password reset email sent"))
     }
 
     // ==================== HELPER METHODS ====================

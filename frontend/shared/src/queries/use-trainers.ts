@@ -23,6 +23,8 @@ import {
   getTrainerClubs,
   assignTrainerToClub,
   removeTrainerFromClub,
+  resetTrainerPassword,
+  sendTrainerResetEmail,
   getMyTrainerProfile,
   getTrainersByClub,
   getTrainerAvailableSlots,
@@ -34,6 +36,7 @@ import type {
   TrainerSummary,
   TrainerClubAssignment,
   CreateTrainerRequest,
+  ResetTrainerPasswordRequest,
   UpdateTrainerProfileRequest,
   UpdateTrainerBasicInfoRequest,
   UpdateAvailabilityRequest,
@@ -364,5 +367,24 @@ export function useUpdateTrainerSkills() {
       queryClient.setQueryData(trainerKeys.detail(updatedTrainer.id), updatedTrainer);
       queryClient.invalidateQueries({ queryKey: trainerKeys.lists() });
     },
+  });
+}
+
+/**
+ * Hook to reset a trainer's password (admin action)
+ */
+export function useResetTrainerPassword() {
+  return useMutation({
+    mutationFn: ({ id, data }: { id: UUID; data: ResetTrainerPasswordRequest }) =>
+      resetTrainerPassword(id, data),
+  });
+}
+
+/**
+ * Hook to send password reset email to trainer (admin action)
+ */
+export function useSendTrainerResetEmail() {
+  return useMutation({
+    mutationFn: (id: UUID) => sendTrainerResetEmail(id),
   });
 }

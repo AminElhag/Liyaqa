@@ -82,7 +82,8 @@ class SecurityConfig(
             "Accept",
             "Accept-Language",
             "Cache-Control",
-            "X-API-Key"
+            "X-API-Key",
+            "X-Permission-Retry"
         )
         configuration.exposedHeaders = listOf(
             "X-RateLimit-Limit",
